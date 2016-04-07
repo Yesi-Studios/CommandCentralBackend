@@ -681,6 +681,10 @@ namespace CommandDB_Plugin
         {
             try
             {
+                //If the client is super user, then give them all fields.
+                if (clientPermissions.Exists(x => x.CustomPermissions.Exists(y => (CustomPermissionTypes)Enum.Parse(typeof(CustomPermissionTypes), y) == CustomPermissionTypes.Super_User)))
+                    return typeof(Person).GetProperties().Select(x => x.Name).ToList();
+
                 //The variable that will store the authorized fields.
                 List<string> authorizedFields = new List<string>();
 
@@ -2211,7 +2215,9 @@ namespace CommandDB_Plugin
                 foreach (var variance in finalVariances)
                 {
                     //First, validation.
-                    errors.Concat(await ValidateProperty(variance.PropertyName, variance.NewValue));
+                    List<string> objectErrors = await ValidateProperty(variance.PropertyName, variance.NewValue);
+                    if (objectErrors != null)
+                        errors.Concat(objectErrors);
 
                     //Now authorization.  We're going to make sure that all the fields the client is trying to edit the client can actually edit.
                     if (!authorizedEditFields.Contains(variance.PropertyName))
