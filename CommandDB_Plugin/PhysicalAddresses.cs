@@ -460,22 +460,24 @@ namespace CommandDB_Plugin
                     case "route":
                     case "city":
                     case "state":
+                    case "zipcode":
+                    case "country":
                         {
                             break;
                         }
                     case "ishomeaddress":
                         {
                             if (!(value is bool))
-                                throw new Exception("During validation of a physical address, the value passed as the is home address was not in the right type.");
+                                return "During validation of a physical address, the value passed as the is home address was not in the right type.";
 
                             break;
                         }
-                    case "Latitude":
+                    case "latitude":
                         {
                             var lat = value as float?;
 
                             if (lat == null)
-                                throw new Exception("During validation of a physical address, the latitude was in the wrong type.");
+                                return "Latitude was null on a physical address.";
 
                             if (lat.HasValue)
                             {
@@ -485,12 +487,12 @@ namespace CommandDB_Plugin
 
                             break;
                         }
-                    case "Longitude":
+                    case "longitude":
                         {
                             var lng = value as float?;
 
                             if (lng == null)
-                                throw new Exception("During validation of a physical address, the longitude was in the wrong type.");
+                                return "Longitude was null on a physical address.";
 
                             if (lng.HasValue)
                             {
@@ -502,7 +504,7 @@ namespace CommandDB_Plugin
                         }
                     default:
                         {
-                            throw new NotImplementedException(string.Format("While validating a phone number, the property '{0}' had no validation rules defined.", propertyName));
+                            throw new NotImplementedException(string.Format("While validating a physical address, the property '{0}' had no validation rules defined.", propertyName));
                         }
                 }
 

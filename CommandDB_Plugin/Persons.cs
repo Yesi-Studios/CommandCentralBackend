@@ -372,11 +372,7 @@ namespace CommandDB_Plugin
                     }
                 case "dateofbirth":
                     {
-                        var date = value as DateTime?;
-
-                        if (date == null)
-                            throw new Exception("The value for the DateOfBirth field was not in the right type.");
-
+                        //Validation doesn't happen on this shit.
                         break;
                     }
                 case "gender":
@@ -536,20 +532,12 @@ namespace CommandDB_Plugin
                     }
                 case "eaos":
                     {
-                        var date = value as DateTime?;
-
-                        if (date == null)
-                            throw new Exception("The value for the eaos field was not in the right type.");
-
+                        //No validaiton occurs on this date time, null date times for this field are allowed.
                         break;
                     }
                 case "dateofdeparture":
                     {
-                        var date = value as DateTime?;
-
-                        if (date == null)
-                            throw new Exception("The value for the date of departure field was not in the right type.");
-
+                        //No validaiton occurs on this date time, null date times for this field are allowed.
                         break;
                     }
                 case "emailaddresses":
@@ -763,7 +751,7 @@ namespace CommandDB_Plugin
                             case "dateofdeparture":
                                 {
 
-                                    //Is teh client in the user's chain of command and allowed to edit this field?
+                                    //Is the client in the user's chain of command and allowed to edit this field?
                                     if (isClientInChainOfCommandOfPerson && clientModelPermission.EditableFields.Contains(x))
                                     {
                                         authorizedFields.Add(x);
@@ -1944,7 +1932,7 @@ namespace CommandDB_Plugin
                 List<string> errors = await Persons.ValidatePerson(result);
 
                 //Now we're going to take teh result and combien it with some otehr fields.
-                token.Result = new { Result = result, IsMyProfile = personID == token.Session.PersonID, ReturnableFields = returnableFields, EditableFields = editableFields, Errors = errors };
+                token.Result = new { Person = result, IsMyProfile = personID == token.Session.PersonID, ReturnableFields = returnableFields, EditableFields = editableFields, Errors = errors };
 
                 return token;
             }
@@ -2240,6 +2228,18 @@ namespace CommandDB_Plugin
                     await Persons.DBUpdate(finalVariances, newPerson.ID);
                     token.Result = "Success";
                 }
+
+                //Ok, now that we've completed the update, let's log the changes.
+                var changes = variances.Select(x => new Changes.Change()
+                {
+                    EditorID = token.Session.PersonID,
+                    ID = Guid.NewGuid().ToString(),
+                    ObjectID = oldPerson.ID,
+                    ObjectName = "Person",
+                    Remarks = "Person Edited",
+                    Time = token.CallTime,
+                    Variance = x
+                }).ToList();
 
                 return token;
             }

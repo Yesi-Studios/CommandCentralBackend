@@ -28,6 +28,12 @@ namespace CommandDB_Plugin.CustomAuthorization
         {
             try
             {
+
+                //First, we can check if the person and client are the same.  If so, the answer is false, persons are not in their own chains of command.
+                if (personID == clientID)
+                    return false;
+
+
                 var clientCustomPermissions = clientPerms.Select(x => x.CustomPermissions).SelectMany(x => x).Distinct().Select(x =>
                     {
                         CustomPermissionTypes customPermission;

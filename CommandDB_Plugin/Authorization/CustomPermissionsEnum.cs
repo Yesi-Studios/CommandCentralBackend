@@ -24,7 +24,8 @@ namespace CommandDB_Plugin
         Developer,
         Manpower_Admin,
         Conduct_Muster,
-        Manage_News
+        Manage_News,
+        Super_User
     }
 
 

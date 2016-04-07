@@ -451,7 +451,7 @@ namespace CommandDB_Plugin
                 AuthorizationNote = "Any fields a client is not allowed to view are set to null.",
                 ExampleOutput = () =>
                     {
-                        return new { Result = new Persons.Person(), 
+                        return new { Person = new Persons.Person(), 
                             IsMyProfile = true, 
                             ReturnableFields = typeof(Persons.Person).GetProperties().Select(x => x.Name).ToList(), 
                             EditableFields = new List<string>(),
