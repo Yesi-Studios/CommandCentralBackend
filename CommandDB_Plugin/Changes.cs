@@ -113,7 +113,7 @@ namespace CommandDB_Plugin
                         command.Parameters.AddWithValue("@OldValue", (this.Variance.OldValue == null) ? null : this.Variance.OldValue.Serialize());
                         command.Parameters.AddWithValue("@NewValue", (this.Variance.NewValue == null) ? null : this.Variance.NewValue.Serialize());
                         command.Parameters.AddWithValue("@Time", this.Time.ToMySqlDateTimeString());
-                        command.Parameters.AddWithValue("@Time", this.Remarks);
+                        command.Parameters.AddWithValue("@Remarks", this.Remarks);
                         
                         await command.ExecuteNonQueryAsync();
                     }

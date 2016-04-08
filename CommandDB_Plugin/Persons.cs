@@ -2232,7 +2232,7 @@ namespace CommandDB_Plugin
                 }
 
                 //Ok, now that we've completed the update, let's log the changes.
-                var changes = variances.Select(x => new Changes.Change()
+                var changes = finalVariances.Select(x => new Changes.Change()
                 {
                     EditorID = token.Session.PersonID,
                     ID = Guid.NewGuid().ToString(),
