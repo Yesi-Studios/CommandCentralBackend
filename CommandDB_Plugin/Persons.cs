@@ -516,11 +516,7 @@ namespace CommandDB_Plugin
                     }
                 case "dateofarrival":
                     {
-                        var date = value as DateTime?;
-
-                        if (date == null)
-                            throw new Exception("The value for the date of arrival field was not in the right type.");
-
+                        
                         break;
                     }
                 case "jobtitle":
@@ -2247,6 +2243,10 @@ namespace CommandDB_Plugin
                     Variance = x
                 }).ToList();
 
+                //And then start the change insert.
+                Changes.DBInsertAll(changes);
+
+                //That change insert will have fired off and however long that takes we don't care.
                 return token;
             }
             catch
