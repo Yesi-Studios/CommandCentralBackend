@@ -581,6 +581,59 @@ namespace CommandDB_Plugin
                 IsActive = true,
                 
             }),
+            new KeyValuePair<string, EndpointDescription>("LoadChanges", new EndpointDescription() 
+            {
+                DataMethodAsync = Changes.LoadChanges_Client,
+                Description = "Loads all changes that have been made to a given object.  If the object matches a model, then non-returnable fields will have their values redacted.",
+                RequiresAuthentication = true,
+                AllowArgumentLogging = true,
+                AllowResponseLogging = true,
+                RequiredParameters = new List<string>()
+                {
+                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
+                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.", 
+                    "objectid - the ID of the object for which to load changes."
+                },
+                AuthorizationNote = "Fields a client is not allowed to return on valid models will have their values set to 'REDACTED'.",
+                ExampleOutput = () => 
+                    {
+                        return new List<Changes.Change>()
+                        {
+                            new Changes.Change()
+                            {
+                                EditorID = Guid.NewGuid().ToString(),
+                                ID = Guid.NewGuid().ToString(),
+                                ObjectID = Guid.NewGuid().ToString(),
+                                ObjectName = "Person",
+                                Remarks = "Person Edited",
+                                Time = DateTime.Now,
+                                Variance = new Variance()
+                                {
+                                    NewValue = "Atwood",
+                                    OldValue = "Atwod",
+                                    PropertyName = "LastName"
+                                }
+                            },
+                            new Changes.Change()
+                            {
+                                EditorID = Guid.NewGuid().ToString(),
+                                ID = Guid.NewGuid().ToString(),
+                                ObjectID = Guid.NewGuid().ToString(),
+                                ObjectName = "Person",
+                                Remarks = "Person Edited",
+                                Time = DateTime.Now,
+                                Variance = new Variance()
+                                {
+                                    NewValue = "Dan",
+                                    OldValue = "Daniel",
+                                    PropertyName = "FirstName"
+                                }
+                            }
+                        }.Serialize();
+                    },
+                IsActive = true,
+                
+            }),
             /*
             new KeyValuePair<string, EndpointDescription>("CreatePerson", new EndpointDescription() 
             {

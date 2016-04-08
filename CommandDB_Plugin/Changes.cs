@@ -110,103 +110,12 @@ namespace CommandDB_Plugin
                         command.Parameters.AddWithValue("@ObjectName", this.ObjectName);
                         command.Parameters.AddWithValue("@ObjectID", this.ObjectID);
                         command.Parameters.AddWithValue("@PropertyName", this.Variance.PropertyName);
-                        command.Parameters.AddWithValue("@OldValue", this.Variance.OldValue as string);
-                        command.Parameters.AddWithValue("@NewValue", this.Variance.NewValue as string);
+                        command.Parameters.AddWithValue("@OldValue", (this.Variance.OldValue == null) ? null : this.Variance.OldValue.Serialize());
+                        command.Parameters.AddWithValue("@NewValue", (this.Variance.NewValue == null) ? null : this.Variance.NewValue.Serialize());
                         command.Parameters.AddWithValue("@Time", this.Time.ToMySqlDateTimeString());
                         command.Parameters.AddWithValue("@Time", this.Remarks);
                         
                         await command.ExecuteNonQueryAsync();
-                    }
-                }
-                catch
-                {
-                    throw;
-                }
-            }
-
-            /// <summary>
-            /// Updates the current change instance by resetting all columns to the current instance and uses the ID to index.  The ID itself cannot be updated.
-            /// </summary>
-            /// <returns></returns>
-            public async Task DBUpdate()
-            {
-                try
-                {
-                    using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
-                    {
-                        await connection.OpenAsync();
-
-                        MySqlCommand command = connection.CreateCommand();
-                        command.CommandType = CommandType.Text;
-                        command.CommandText = string.Format("UPDATE `{0}` SET `EditorID` = @EditorID, `ObjectName` = @ObjectName, `ObjectID` = @ObjectID, ", _tableName) + //This thing got stupid long fast :(
-                            "`PropertyName` = @PropertyName, `OldValue` = @OldValue, `NewValue` = @NewValue, `Time` = @Time, `Remarks` = @Remarks WHERE `ID` = @ID";
-
-                        command.Parameters.AddWithValue("@EditorID", this.EditorID);
-                        command.Parameters.AddWithValue("@ObjectName", this.ObjectName);
-                        command.Parameters.AddWithValue("@ObjectID", this.ObjectID);
-                        command.Parameters.AddWithValue("@PropertyName", this.Variance.PropertyName);
-                        command.Parameters.AddWithValue("@OldValue", this.Variance.OldValue as string);
-                        command.Parameters.AddWithValue("@NewValue", this.Variance.NewValue as string);
-                        command.Parameters.AddWithValue("@Time", this.Time.ToMySqlDateTimeString());
-                        command.Parameters.AddWithValue("@Remarks", this.Remarks);
-                        command.Parameters.AddWithValue("@ID", this.ID);
-
-                        await command.ExecuteNonQueryAsync();
-                    }
-                }
-                catch
-                {
-                    throw;
-                }
-            }
-
-            /// <summary>
-            /// Deletes the current change instance from the database by using the current ID as the primary key.
-            /// </summary>
-            /// <returns></returns>
-            public async Task DBDelete()
-            {
-                try
-                {
-                    using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
-                    {
-                        await connection.OpenAsync();
-
-                        MySqlCommand command = connection.CreateCommand();
-                        command.CommandType = CommandType.Text;
-                        command.CommandText = string.Format("DELETE FROM `{0}` WHERE `ID` = @ID", _tableName);
-
-                        command.Parameters.AddWithValue("@ID", this.ID);
-
-                        await command.ExecuteNonQueryAsync();
-                    }
-                }
-                catch
-                {
-                    throw;
-                }
-            }
-
-            /// <summary>
-            /// Returns a boolean indicating whether or not the current change instance exists in the database.  Uses the ID to do this comparison.
-            /// </summary>
-            /// <param name="useCache"></param>
-            /// <returns></returns>
-            public async Task<bool> DBExists()
-            {
-                try
-                {
-                    using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
-                    {
-                        await connection.OpenAsync();
-
-                        MySqlCommand command = connection.CreateCommand();
-                        command.CommandType = CommandType.Text;
-                        command.CommandText = string.Format("SELECT CASE WHEN EXISTS(SELECT * FROM `{0}` WHERE `ID` = @ID) THEN 1 ELSE 0 END", _tableName);
-
-                        command.Parameters.AddWithValue("@ID", this.ID);
-
-                        return Convert.ToBoolean(await command.ExecuteScalarAsync());
                     }
                 }
                 catch
@@ -257,6 +166,61 @@ namespace CommandDB_Plugin
                 });
         }
 
+        /// <summary>
+        /// Loads all changes for a given object ID.  
+        /// </summary>
+        /// <param name="objectName"></param>
+        /// <param name="objectID"></param>
+        /// <returns></returns>
+        public static async Task<List<Change>> DBLoadAllByObject(string objectID)
+        {
+            try
+            {
+                List<Change> results = new List<Change>();
+                using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (MySqlCommand command = new MySqlCommand("", connection))
+                    {
+                        command.CommandText = string.Format("SELECT * FROM `{0}` WHERE `ObjectID` = @ObjectID", _tableName);
+
+                        command.Parameters.AddWithValue("@ObjectID", objectID);
+
+                        using (MySqlDataReader reader = (MySqlDataReader)await command.ExecuteReaderAsync())
+                        {
+                            if (reader.HasRows)
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    results.Add(new Change()
+                                    {
+                                        EditorID = reader["EditorID"] as string,
+                                        ID = reader["ID"] as string,
+                                        ObjectID = reader["ObjectID"] as string,
+                                        ObjectName = reader["ObjectName"] as string,
+                                        Remarks = reader["Remarks"] as string,
+                                        Time = DateTime.Parse(reader["Time"] as string),
+                                        Variance = new Variance()
+                                        {
+                                            NewValue = (reader["NewValue"] as string).DeserializeToJObject(),
+                                            OldValue = (reader["OldValue"] as string).DeserializeToJObject(),
+                                            PropertyName = reader["PropertyName"] as string
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                return results;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
         #endregion
 
         #region Client Access Methods
@@ -264,79 +228,65 @@ namespace CommandDB_Plugin
         /// <summary>
         /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Loads all changes that have been made to a user profile and redacts information that the user is not allowed to see.
+        /// Loads all changes that have been made to a given object.  If the object matches a model, then non-returnable fields will have their values redacted.
         /// <para />
         /// Options: 
         /// <para />
-        /// personid : The person whose changes the client wants to load.
+        /// objectid : the ID of the object for which to load changes.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<MessageTokens.MessageToken> LoadChangesByPersonAsync(MessageTokens.MessageToken token)
+        public static async Task<MessageTokens.MessageToken> LoadChanges_Client(MessageTokens.MessageToken token)
         {
             try
             {
                 //First we need the id of the person for whom we want the changes.
-                if (!token.Args.ContainsKey("personid"))
-                    throw new ServiceException("In order to load the changes belonging to a person, you must send a person's id.  Duh?", ErrorTypes.Validation);
-                string personID = token.Args["personid"] as string;
+                if (!token.Args.ContainsKey("objectid"))
+                    throw new ServiceException("In order to load the changes belonging to an object, you must send an object's id.  Duh?", ErrorTypes.Validation);
+                string objectID = token.Args["objectid"] as string;
 
                 //Let's do some basic validaiton on this shit.
-                if (!ValidationMethods.IsValidGuid(personID))
-                    throw new ServiceException("Welp, you managed to send a person id... but it doens't even look like a person ID should.  Bummer.  NO CHANGES FOR YOU.", ErrorTypes.Validation);
+                if (!ValidationMethods.IsValidGuid(objectID))
+                    throw new ServiceException("Well, you managed to send an object id... but it doens't even look like a GUID should.  Bummer.  NO CHANGES FOR YOU.", ErrorTypes.Validation);
 
                 //We'll use this variable to catch our changes.
-                List<Change> changes = new List<Change>();
+                List<Change> changes = await Changes.DBLoadAllByObject(objectID);
 
-                //Now let's go do our load.
-                using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
+                //If we got any changes we need to check if we should drop field values.
+                if (changes.Any())
                 {
-                    await connection.OpenAsync();
+                    //Ok we have all the changes, now we just need to make sure the requesting client is actually allowed to view all the changes.
+                    //To do this, we need to know what object these changes came from.  Let's just make sure that all the object names are the same, for reasons.
+                    if (changes.Select(x => x.ObjectName).Distinct().Count() != 1)
+                        throw new Exception(string.Format("While loading changes for the object whose ID is '{0}', that object had multiple object names.", objectID));
 
-                    MySqlCommand command = connection.CreateCommand();
-                    command.CommandType = CommandType.Text;
-                    command.CommandText = string.Format("SELECT * FROM `{0}` WHERE `PersonID` = @PersonID", _tableName);
+                    //Since we know they're all the same, let's just pull one's object name.
+                    string objectName = changes.First().ObjectName;
 
-                    command.Parameters.AddWithValue("@PersonID", personID);
+                    //Now get the client's model permissions
+                    var modelPermissions = UnifiedServiceFramework.Authorization.Permissions.GetModelPermissionsForUser(token, objectName);
 
-                    using (MySqlDataReader reader = (MySqlDataReader)await command.ExecuteReaderAsync())
+                    //If model permissions comes back null, it's because the object name doesn't match a model.  
+                    //That's ok, in this case, we just give the client all the changes and we don't implement permissions on it.
+
+                    if (modelPermissions != null)
                     {
-                        if (reader.HasRows)
+                        changes.ForEach(x =>
                         {
-                            while (await reader.ReadAsync())
+                            //If the client doesn't have permission to return this field, then set the values to REDACTED.  Like they some classified shit.
+                            if (!modelPermissions.ReturnableFields.Contains(x.Variance.PropertyName, StringComparer.CurrentCultureIgnoreCase))
                             {
-                                changes.Add(new Change()
-                                {
-                                    EditorID = reader["EditorID"] as string,
-                                    ID = reader["ID"] as string,
-                                    ObjectID = reader["ObjectID"] as string,
-                                    ObjectName = reader["ObjectName"] as string,
-                                    Remarks = reader["Remarks"] as string,
-                                    Time = DateTime.Parse(reader["Time"] as string),
-                                    Variance = new Variance()
-                                    {
-                                        NewValue = reader["NewValue"] as string,
-                                        OldValue = reader["OldValue"] as string,
-                                        PropertyName = reader["PropertyName"] as string
-                                    }
-                                });
+                                x.Variance.NewValue = "REDACTED";
+                                x.Variance.OldValue = "REDACTED";
                             }
-                        }
+                        });
                     }
                 }
-
-                //Ok we have all the changes, now we just need to make sure the requesting client is actually allowed to view all the changes.
-                var clientPermissions = UnifiedServiceFramework.Authorization.Permissions.GetModelPermissionsForUser(token, "Person");
-
-                changes.ForEach(x =>
-                    {
-                        //If the client doesn't have permission to return this field, then set the values to REDACTED.  Like they some classified shit.
-                        if (!clientPermissions.ReturnableFields.Contains(x.Variance.PropertyName, StringComparer.CurrentCultureIgnoreCase))
-                        {
-                            x.Variance.NewValue = "REDACTED";
-                            x.Variance.OldValue = "REDACTED";
-                        }
-                    });
+                else
+                {
+                    //If we got here, it means there are no changes, so just return it.
+                    token.Result = changes;
+                }
 
                 token.Result = changes;
 

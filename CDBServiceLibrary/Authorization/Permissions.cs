@@ -448,7 +448,9 @@ namespace UnifiedServiceFramework.Authorization
 
         /// <summary>
         /// Returns a model permission object containing the sum total of the user's permissions to a model, which are the model permissions from all 
-        /// the permission groups the user is a part of flattened into one model permission
+        /// the permission groups the user is a part of flattened into one model permission.
+        /// <para />
+        /// If the model name doesn't match a model, then we return null.
         /// </summary>
         /// <param name="token"></param>
         /// <param name="modelName"></param>
@@ -457,9 +459,6 @@ namespace UnifiedServiceFramework.Authorization
         {
             try
             {
-                //First,
-
-
                 /*
                  *
                  * Here, I loop through all of the permissions and pick out anywhere this model is mentioned.
@@ -467,7 +466,7 @@ namespace UnifiedServiceFramework.Authorization
                  * to say about this model.  And we want to return the TOTAL amount of fields the user is allowed to 
                  * use from their permissions.
                  * 
-                 * During this entire process, if nothing allows the user to search at all, we should just return an empty list.
+                 * During this entire process, if nothing allows the user to search or return or whatever, we should just return an empty list.
                  *
                  */
                 List<PermissionGroup.ModelPermission> modelPermissions = new List<PermissionGroup.ModelPermission>();
@@ -481,6 +480,10 @@ namespace UnifiedServiceFramework.Authorization
                                 }
                             });
                     });
+
+                //If there are no model permissions after that thing above, then return null cause the model name didn't exist.
+                if (!modelPermissions.Any())
+                    return null;
 
                 PermissionGroup.ModelPermission modelPermission = new PermissionGroup.ModelPermission();
 
