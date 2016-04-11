@@ -19,9 +19,8 @@ In order to build the project, you'll need Visual Studio 2013 and you'll need to
 
 * Writing tests
 * Code review
-* Other guidelines
+* CTI2 is responsible for all pull requests to this repository.
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* CTI2 Atwood is the primary POC for this repository.  You can reach him at sundevilgoalie13@gmail.com or daniel.k.atwood.mil@mail.mil.  You can also reach him at 505-401-7252.
