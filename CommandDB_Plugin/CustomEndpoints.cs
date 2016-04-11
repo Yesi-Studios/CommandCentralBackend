@@ -634,6 +634,30 @@ namespace CommandDB_Plugin
                 IsActive = true,
                 
             }),
+            new KeyValuePair<string, EndpointDescription>("CreatePerson", new EndpointDescription() 
+            {
+                DataMethodAsync = Persons.CreateNewPerson_Client,
+                Description = "Creates a new person in the database and returns that person.  All fields will be blank save for the client's ID.",
+                RequiresAuthentication = true,
+                AllowArgumentLogging = true,
+                AllowResponseLogging = true,
+                RequiredParameters = new List<string>()
+                {
+                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
+                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
+                },
+                AuthorizationNote = "Client must have permission to create a new person",
+                RequiredSpecialPermissions = new List<string>() { "Add_New_User" },
+                ExampleOutput = () => 
+                    {
+                        return new Persons.Person
+                        {
+                            ID = Guid.NewGuid().ToString()
+                        }.Serialize();
+                    },
+                IsActive = true,
+                
+            }),
             /*
             new KeyValuePair<string, EndpointDescription>("CreatePerson", new EndpointDescription() 
             {

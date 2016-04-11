@@ -812,16 +812,29 @@ namespace CommandDB_Plugin
                 {
                     await connection.OpenAsync();
 
-                    //We're going to do this a little backwards.  We're going to set the parameter and then loop through the table names.
-                    MySqlCommand command = connection.CreateCommand();
-                    command.CommandType = CommandType.Text;
-                    command.Parameters.AddWithValue("@ID", person.ID);
-
-                    //Go through all tables and update the ID.
-                    foreach (string table in _tableNames)
+                    using (MySqlTransaction transaction = await connection.BeginTransactionAsync())
                     {
-                        command.CommandText = string.Format("INSERT INTO `{0}` (`ID`) VALUES (@ID)", table);
-                        await command.ExecuteNonQueryAsync();
+                        try
+                        {
+
+                            using (MySqlCommand command = new MySqlCommand("", connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@ID", person.ID);
+
+                                foreach (string table in _tableNames)
+                                {
+                                    command.CommandText = string.Format("INSERT INTO `{0}` (`ID`) VALUES (@ID)", table);
+                                    await command.ExecuteNonQueryAsync();
+                                }
+                            }
+
+                            transaction.Commit();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
                     }
                 }
                 return person;
