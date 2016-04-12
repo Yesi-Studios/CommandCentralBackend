@@ -637,7 +637,7 @@ namespace CommandDB_Plugin
             new KeyValuePair<string, EndpointDescription>("CreatePerson", new EndpointDescription() 
             {
                 DataMethodAsync = Persons.CreateNewPerson_Client,
-                Description = "Creates a new person in the database and returns that person.  All fields will be blank save for the client's ID.",
+                Description = "Creates a new person in the database and returns that person's ID.  All fields will be blank save for the client's ID.  THe new person's division, department, and command are defaulted to the logged in client's",
                 RequiresAuthentication = true,
                 AllowArgumentLogging = true,
                 AllowResponseLogging = true,
@@ -650,10 +650,7 @@ namespace CommandDB_Plugin
                 RequiredSpecialPermissions = new List<string>() { "Add_New_User" },
                 ExampleOutput = () => 
                     {
-                        return new Persons.Person
-                        {
-                            ID = Guid.NewGuid().ToString()
-                        }.Serialize();
+                        return Guid.NewGuid().ToString();
                     },
                 IsActive = true,
                 

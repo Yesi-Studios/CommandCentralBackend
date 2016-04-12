@@ -799,15 +799,15 @@ namespace CommandDB_Plugin
         #region Static Data Access Methods
 
         /// <summary>
-        /// Creates a new person record in all of the persons tables, leaving all fields blank.  Returns the new person that was created with only the ID field set to a new ID.
+        /// Creates a new person record in all of the persons tables, leaving all fields blank exceot the div/dep/command tree.  Returns the new person's ID.
         /// </summary>
         /// <returns></returns>
-        public static async Task<Person> DBCreateNew()
+        public static async Task<string> DBCreateNew(string division, string department, string cmd)
         {
             try
             {
                 //Create the new person.
-                Person person = new Person() { ID = Guid.NewGuid().ToString() };
+                string  newID = Guid.NewGuid().ToString();
                 using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
                 {
                     await connection.OpenAsync();
@@ -819,13 +819,25 @@ namespace CommandDB_Plugin
 
                             using (MySqlCommand command = new MySqlCommand("", connection, transaction))
                             {
-                                command.Parameters.AddWithValue("@ID", person.ID);
+                                command.Parameters.AddWithValue("@ID", newID);
 
                                 foreach (string table in _tableNames)
                                 {
                                     command.CommandText = string.Format("INSERT INTO `{0}` (`ID`) VALUES (@ID)", table);
                                     await command.ExecuteNonQueryAsync();
                                 }
+
+                                //Now that the person is created in all of these tables, we're going to update the division, department, and command.
+                                command.Parameters.Clear();
+                                command.CommandText = "UPDATE `persons_main` SET `Division` = @Division, `Department` = @Department, `Command` = @Command WHERE `ID` = @ID";
+
+                                command.Parameters.AddWithValue("@Division", division);
+                                command.Parameters.AddWithValue("@Department", department);
+                                command.Parameters.AddWithValue("@Command", cmd);
+
+                                command.Parameters.AddWithValue("@ID", newID);
+
+                                await command.ExecuteNonQueryAsync();
                             }
 
                             transaction.Commit();
@@ -837,7 +849,7 @@ namespace CommandDB_Plugin
                         }
                     }
                 }
-                return person;
+                return newID;
             }
             catch
             {
@@ -1878,8 +1890,37 @@ namespace CommandDB_Plugin
                 if (!customPerms.Contains(CustomPermissionTypes.Add_New_User))
                     throw new ServiceException("You do not have permission to add new persons!", ErrorTypes.Authorization);
 
-                //Create the new user
-                token.Result = await Persons.DBCreateNew();
+                //Create the new user.  To do this, we need to which division, department and command the client is in.
+                string division = null, department = null, cmd = null;
+                using (MySqlConnection connection = new MySqlConnection(Properties.ConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (MySqlCommand command = new MySqlCommand("", connection))
+                    {
+                        command.CommandText = "SELECT `Division`,`Department`,`Command` FROM `persons_main` WHERE `ID` = @ID";
+
+                        command.Parameters.AddWithValue("@ID", token.Session.PersonID);
+
+                        using (MySqlDataReader reader = (MySqlDataReader)await command.ExecuteReaderAsync())
+                        {
+                            if (reader.HasRows)
+                            {
+                                await reader.ReadAsync();
+
+                                division = reader["Division"] as string;
+                                department = reader["Department"] as string;
+                                cmd = reader["Command"] as string;
+                            }
+                        }
+                    }
+                }
+
+                //Make sure we got division, department, and command from the person.
+                if (string.IsNullOrWhiteSpace(division) || string.IsNullOrWhiteSpace(department) || string.IsNullOrWhiteSpace(cmd))
+                    throw new ServiceException("You can not create a person because your division, department, or command is not set.", ErrorTypes.Validation);
+
+                token.Result = await Persons.DBCreateNew(division, department, cmd);
 
                 //Here's the token!
                 return token;

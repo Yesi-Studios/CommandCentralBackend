@@ -44,6 +44,10 @@ namespace CommandDB_Plugin.CustomAuthorization
 
                     }).ToList();
 
+                //Developers are in everyone's chain of commands.
+                if (clientCustomPermissions.Contains(CustomPermissionTypes.Developer))
+                    return true;
+
                 Dictionary<string, Dictionary<string, string>> persons = new Dictionary<string, Dictionary<string, string>>();
 
                 //First, we need to go get the division, department and command of the person.  
