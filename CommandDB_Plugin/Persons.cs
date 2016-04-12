@@ -1325,7 +1325,7 @@ namespace CommandDB_Plugin
         /// <param name="orderByField"></param>
         /// <param name="limit"></param>
         /// <returns></returns>
-        public static async Task<List<Dictionary<string, object>>> DBAdvancedSearch(List<KeyValuePair<string, object>> filters, List<string> returnFields, int? limit)
+        public static async Task<List<Dictionary<string, object>>> DBAdvancedSearch(Dictionary<string, object> filters, List<string> returnFields, int? limit)
         {
             try
             {
@@ -1418,19 +1418,19 @@ namespace CommandDB_Plugin
                                     {
                                         case "EmailAddresses":
                                             {
-                                                outerReturnClause += string.Format("`{0}`.`Address`", EmailAddresses.TableName);
+                                                outerReturnClause += string.Format("`{0}`.`Address` AS `EmailAddresses`", EmailAddresses.TableName);
 
                                                 break;
                                             }
                                         case "PhoneNumbers":
                                             {
-                                                outerReturnClause += string.Format("`{0}`.`Number`", PhoneNumbers.TableName);
+                                                outerReturnClause += string.Format("`{0}`.`Number` AS `PhoneNumbers`", PhoneNumbers.TableName);
 
                                                 break;
                                             }
                                         case "PhysicalAddresses":
                                             {
-                                                outerReturnClause += string.Format("`{0}`.`StreetNumber`,`{0}`.`Route`,`{0}`.`City`,`{0}`.`State`,`{0}`.`Country`,`{0}`.`ZipCode`", PhysicalAddresses.TableName);
+                                                outerReturnClause += string.Format("CONCAT_WS(' ',`{0}`.`StreetNumber`,`{0}`.`Route`,`{0}`.`City`,`{0}`.`State`,`{0}`.`Country`,`{0}`.`ZipCode`) AS `PhysicalAddresses`", PhysicalAddresses.TableName);
 
                                                 break;
                                             }
@@ -1445,6 +1445,10 @@ namespace CommandDB_Plugin
                                         case "Billet":
                                             {
                                                 throw new NotImplementedException("A search was attempted against the billet field in a person search.  This is not yet implemented.");
+                                            }
+                                        case "AccountHistory":
+                                            {
+                                                throw new NotImplementedException("A search was attempted against the account history field in a person search.  This is not yet implemented.");
                                             }
                                         default:
                                             {
@@ -1476,13 +1480,13 @@ namespace CommandDB_Plugin
                                         }
                                     case "PhoneNumbers":
                                         {
-                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", EmailAddresses.TableName, innerResultName);
+                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", PhoneNumbers.TableName, innerResultName);
 
                                             break;
                                         }
                                     case "PhysicalAddresses":
                                         {
-                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", EmailAddresses.TableName, innerResultName);
+                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", PhysicalAddresses.TableName, innerResultName);
 
                                             break;
                                         }
@@ -2084,8 +2088,11 @@ namespace CommandDB_Plugin
                 //Ok cool, since we have the basic permissions down, let's start getting our fields.
                 if (!token.Args.ContainsKey("filters"))
                     throw new ServiceException("You must send a 'filters' parameter.", ErrorTypes.Validation);
-                List<KeyValuePair<string, object>> filters = token.Args["filters"].CastJObject<List<KeyValuePair<string, object>>>();
-
+                Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
+                
+                /*if (!(token.Args["filters"] as string).TryDeserialize<Dictionary<string, object>>(out filters))
+                    throw new ServiceException(string.Format("The value in the parameter 'filters' was not valid.  It must be a dictionary."), ErrorTypes.Validation);
+                */
                 //Now let's make sure the client is allowed to search in all of these fields.
                 filters.Select(x => x.Key).ToList().ForEach(x =>
                     {
@@ -2096,7 +2103,7 @@ namespace CommandDB_Plugin
                 //Since the client is allowed to search in the field, let's go get the return fields.
                 if (!token.Args.ContainsKey("returnfields"))
                     throw new ServiceException("You must send a 'returnfields' parameter.", ErrorTypes.Validation);
-                List<string> returnFields = token.Args["returnfields"].CastJObject<List<string>>();
+                List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
                 //Is the client allowed ot return these fields?
                 returnFields.ForEach(x =>
@@ -2109,7 +2116,7 @@ namespace CommandDB_Plugin
                 string orderByField = null;
                 if (token.Args.ContainsKey("orderby"))
                     orderByField = token.Args["orderby"] as string;
-                if (!returnFields.Contains(orderByField))
+                if (!string.IsNullOrWhiteSpace(orderByField) && !returnFields.Contains(orderByField))
                     throw new ServiceException(string.Format("In order to ask that we order the results by the field '{0}', you must ask that field be returned.", orderByField), ErrorTypes.Validation);
 
                 //And then get the limit
@@ -2175,7 +2182,7 @@ namespace CommandDB_Plugin
                 //Now let's try to get a person object.
                 if (!token.Args.ContainsKey("person"))
                     throw new ServiceException("You must send a person object in order to conduct a person update.", ErrorTypes.Validation);
-                Person newPerson = token.Args["person"].CastJObject<Person>();
+                Person newPerson = token.Args["person"].CastJToken<Person>();
 
                 //Ok, now let's find out who this person is and make sure they exist.
                 Person oldPerson = await Persons.DBLoadOne(newPerson.ID);

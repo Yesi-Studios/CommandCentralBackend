@@ -801,7 +801,7 @@ namespace CommandDB_Plugin
                     throw new ServiceException("In order to update or insert a physical address, you must first send one.", ErrorTypes.Validation);
 
                 //And then cast it
-                PhysicalAddress physicalAddress = token.Args["physicaladdress"].CastJObject<PhysicalAddress>();
+                PhysicalAddress physicalAddress = token.Args["physicaladdress"].CastJToken<PhysicalAddress>();
 
                 //Does it already exist?
                 if (await physicalAddress.DBExists())

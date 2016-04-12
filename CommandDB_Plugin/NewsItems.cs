@@ -513,7 +513,7 @@ namespace CommandDB_Plugin
                 //And create it if they did.
                 if (!token.Args.ContainsKey("newsitem"))
                     throw new ServiceException("You must send a news item!", ErrorTypes.Validation);
-                NewsItem item = token.Args["newsitem"].CastJObject<NewsItem>();
+                NewsItem item = token.Args["newsitem"].CastJToken<NewsItem>();
 
                 //Since the client is handing us information to insert, we're going to reset some things.\
                 item.ID = Guid.NewGuid().ToString();
@@ -583,7 +583,7 @@ namespace CommandDB_Plugin
                 //And create it if they did.
                 if (!token.Args.ContainsKey("newsitem"))
                     throw new ServiceException("You must send a news item!", ErrorTypes.Validation);
-                NewsItem item = token.Args["newsitem"].CastJObject<NewsItem>();
+                NewsItem item = token.Args["newsitem"].CastJToken<NewsItem>();
 
                 //Now let's make sure that the news item actually exists.
                 //We're going to do this by loading the old item as it exists in the database and then we can use the loaded news item for comparison.

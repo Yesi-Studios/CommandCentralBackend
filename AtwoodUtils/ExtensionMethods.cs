@@ -278,9 +278,12 @@ namespace AtwoodUtils
         {
             try
             {
+                obj = default(T);
+                if (string.IsNullOrWhiteSpace(json))
+                    return false;
+
                 if (!Utilities.IsValidJSON(json))
                 {
-                    obj = default(T);
                     return false;
                 }
 
@@ -294,7 +297,6 @@ namespace AtwoodUtils
                     return true;
                 }
 
-                obj = default(T);
                 return false;
             }
             catch
@@ -336,15 +338,15 @@ namespace AtwoodUtils
         /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static T CastJObject<T>(this object value) where T : class, new()
+        public static T CastJToken<T>(this object value) where T : class, new()
         {
             try
             {
-                if (value as JObject == null)
-                    throw new Exception("The value could not be cast to a JObject.");
+                if (value as JToken == null)
+                    throw new Exception("The value could not be cast to a JToken.");
 
 
-                return (value as JObject).ToObject<T>();
+                return (value as JToken).ToObject<T>();
             }
             catch
             {

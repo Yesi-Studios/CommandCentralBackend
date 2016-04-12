@@ -19,7 +19,6 @@ namespace CommandDB_Plugin
     public static class Billets
     {
 
-
         /// <summary>
         /// This local, readonly property is intended to standardize all methods in this class that access the database and allow easy maintenance.
         /// </summary>
@@ -616,7 +615,7 @@ namespace CommandDB_Plugin
 
                 //Now we're going to cast the object.
                 //TODO: it is unknown if JSON.NET will call the class's setters, so we should test this.  If JSON.NET doesn't call the setters, that could be a serious issue.
-                Billet billet = token.Args["billet"].CastJObject<Billet>();
+                Billet billet = token.Args["billet"].CastJToken<Billet>();
 
                 //Now we need to know if our billet already exists or not.
                 if (await billet.DBExists(true))
@@ -718,7 +717,7 @@ namespace CommandDB_Plugin
 
                 //Now we're going to cast the object.
                 //TODO: it is unknown if JSON.NET will call the class's setters, so we should test this.  If JSON.NET doesn't call the setters, that could be a serious issue.
-                Billet billet = token.Args["billet"].CastJObject<Billet>();
+                Billet billet = token.Args["billet"].CastJToken<Billet>();
 
                 //Ok this next part is going to be interesting.  
                 //We need to find all users that have this billet as their billet, delete the billet from them, send those users an alert email,

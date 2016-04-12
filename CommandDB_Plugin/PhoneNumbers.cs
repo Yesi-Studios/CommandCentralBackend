@@ -778,7 +778,7 @@ namespace CommandDB_Plugin
                     throw new ServiceException("You must send a phone number in order to update/insert a phone number.  ::he said, sarcastically::", ErrorTypes.Validation);
 
                 //And then cast it.
-                PhoneNumber phoneNumber = token.Args["phonenumber"].CastJObject<PhoneNumber>();
+                PhoneNumber phoneNumber = token.Args["phonenumber"].CastJToken<PhoneNumber>();
 
                 //Alright, now we need to know if this phone number already exists or not.
                 if (await phoneNumber.DBExists())
