@@ -1474,19 +1474,19 @@ namespace CommandDB_Plugin
                                 {
                                     case "EmailAddresses":
                                         {
-                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", EmailAddresses.TableName, innerResultName);
+                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID` AND `{0}`.`IsPreferred`", EmailAddresses.TableName, innerResultName);
 
                                             break;
                                         }
                                     case "PhoneNumbers":
                                         {
-                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", PhoneNumbers.TableName, innerResultName);
+                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID` AND `{0}`.`IsPreferred`", PhoneNumbers.TableName, innerResultName);
 
                                             break;
                                         }
                                     case "PhysicalAddresses":
                                         {
-                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID`", PhysicalAddresses.TableName, innerResultName);
+                                            additionalTablesClause += string.Format("LEFT OUTER JOIN `{0}` ON `{1}`.`ID` = `{0}`.`OwnerID` AND `{0}`.`IsHomeAddress`", PhysicalAddresses.TableName, innerResultName);
 
                                             break;
                                         }
