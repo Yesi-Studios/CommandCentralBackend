@@ -26,9 +26,9 @@ namespace CommandDB_Plugin
         private static readonly List<string> _tableNames = new List<string>() { "persons_main", "persons_accounts", "persons_work" };
 
         /// <summary>
-        /// Describes which properties in the Person object are located in a separate table.
+        /// Describes which properties in the Person object are located in a separate table or should be handled differently.
         /// </summary>
-        private static readonly List<string> _recursiveProperties = new List<string>() { "EmailAddresses", "PhoneNumbers", "PhysicalAddresses", "PermissionGroups", "SubscribedChangeEvents", "Billet", "AccountHistory" };
+        private static readonly List<string> _specialProperties = new List<string>() { "EmailAddresses", "PhoneNumbers", "PhysicalAddresses", "PermissionGroups", "SubscribedChangeEvents", "Billet", "AccountHistory" };
 
         /// <summary>
         /// Describes those fields that should be used during a simple search.  These are the metadata fields of a Person object.
@@ -874,13 +874,13 @@ namespace CommandDB_Plugin
 
                 //At this point, we need to select out the properties that need to be updated in a seperate table from one of the persons tables.
                 //These special properties are defined in a private static method in this class.  We're going to handle these recursive updates later.
-                var specialVariances = variances.Where(x => _recursiveProperties.Contains(x.PropertyName)).ToList();
+                var specialVariances = variances.Where(x => _specialProperties.Contains(x.PropertyName)).ToList();
                 variances = variances.Except(specialVariances).ToList();
 
                 //Ok now we know that we have unique property updates. Let's go find out what tables we're going to update
                 //Here we need to go through all of the fields that we want to update and find out what table they are in and then group the properties by that.
                 var propsByTable = typeof(Person).GetProperties() //Get the person class's properties
-                    .Where(x => variances.Exists(y => y.PropertyName.Equals(x.Name)) && !_recursiveProperties.Contains(x.Name)) //Get only those properties that are also in our variances and those properties that aren't in a relational table.
+                    .Where(x => variances.Exists(y => y.PropertyName.Equals(x.Name)) && !_specialProperties.Contains(x.Name)) //Get only those properties that are also in our variances and those properties that aren't in a relational table.
                     .Select(x => new //Find out what table our property came from.  
                     {
                         Table = UnifiedServiceFramework.Validation.SchemaValidation.DatabaseSchema.First(y => y.Key.Contains("persons") && y.Value.Contains(x.Name)).Key,
@@ -922,7 +922,17 @@ namespace CommandDB_Plugin
                                             sets += ",";
 
                                         sets += string.Format("`{0}` = @{0} ", groupIterator[x].Field);
-                                        command.Parameters.AddWithValue(string.Format("@{0}", groupIterator[x].Field), variances.First(y => y.PropertyName.Equals(groupIterator[x].Field)).NewValue);
+                                        if (groupIterator[x].Field.SafeEquals("necs"))
+                                        {
+                                            //HACK: NECs aren't recursive fields so we store them here.  SHoot me, this should be done better.
+                                            command.Parameters.AddWithValue(string.Format("@{0}", groupIterator[x].Field), variances.First(y => y.PropertyName.Equals(groupIterator[x].Field)).NewValue.Serialize());
+                                        }
+                                        else
+                                        {
+                                            //THis is the generic handling for a field update.
+                                            command.Parameters.AddWithValue(string.Format("@{0}", groupIterator[x].Field), variances.First(y => y.PropertyName.Equals(groupIterator[x].Field)).NewValue);
+
+                                        }
                                     }
 
                                     //Now build the command string
@@ -1337,7 +1347,7 @@ namespace CommandDB_Plugin
 
                 //We need to know which fields to handle specially and which to handle normally.
                 //These are the fields the client wants returned.
-                var specialReturnFields = returnFields.Where(x => _recursiveProperties.Contains(x)).ToList();
+                var specialReturnFields = returnFields.Where(x => _specialProperties.Contains(x)).ToList();
                 var normalReturnFields = returnFields.Except(specialReturnFields).ToList();
 
                 //We want to ensure that the client is returning 'ID' from the inner search of the persons object, so we're going to add that.
@@ -1345,7 +1355,7 @@ namespace CommandDB_Plugin
                     normalReturnFields.Add("ID");
 
                 //Now we need to know which search fields are special and which search fields we can search in the persons tables.
-                var specialFilters = filters.Where(x => _recursiveProperties.Contains(x.Key)).ToList();
+                var specialFilters = filters.Where(x => _specialProperties.Contains(x.Key)).ToList();
                 var normalFilters = filters.Except(specialFilters).ToList();
 
                 //Ok, now we know which fields to search in and which fields to return.
