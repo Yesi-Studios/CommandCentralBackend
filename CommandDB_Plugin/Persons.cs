@@ -1149,13 +1149,13 @@ namespace CommandDB_Plugin
                             person.SubscribedChangeEvents = await ChangeEvents.DBLoadAllByChangeEventSubscriptions(await ChangeEventSubscriptions.DBLoadAllByPerson(personID), true);
                             person.Command = reader["Command"] as string;
                             person.ContactRemarks = reader["ContactRemarks"] as string;
-                            person.DateOfArrival = (reader.IsDBNull(reader.GetOrdinal("DateOfArrival")) || string.IsNullOrWhiteSpace(reader["DateOfArrival"] as string)) ? null : new Nullable<DateTime>(reader.GetDateTime("DateOfArrival"));
-                            person.DateOfBirth = (reader.IsDBNull(reader.GetOrdinal("DateOfBirth")) || string.IsNullOrWhiteSpace(reader["DateOfBirth"] as string)) ? null : new Nullable<DateTime>(reader.GetDateTime("DateOfBirth"));
-                            person.DateOfDeparture = (reader.IsDBNull(reader.GetOrdinal("DateOfDeparture")) || string.IsNullOrWhiteSpace(reader["DateOfDeparture"] as string)) ? null : new Nullable<DateTime>(reader.GetDateTime("DateOfDeparture"));
+                            person.DateOfArrival = (reader.IsDBNull(reader.GetOrdinal("DateOfArrival")) || string.IsNullOrWhiteSpace(reader["DateOfArrival"] as string)) ? null : new Nullable<DateTime>(DateTime.Parse(reader["DateOfArrival"] as string));
+                            person.DateOfBirth = (reader.IsDBNull(reader.GetOrdinal("DateOfBirth")) || string.IsNullOrWhiteSpace(reader["DateOfBirth"] as string)) ? null : new Nullable<DateTime>(DateTime.Parse(reader["DateOfBirth"] as string));
+                            person.DateOfDeparture = (reader.IsDBNull(reader.GetOrdinal("DateOfDeparture")) || string.IsNullOrWhiteSpace(reader["DateOfDeparture"] as string)) ? null : new Nullable<DateTime>(DateTime.Parse(reader["DateOfDeparture"] as string));
                             person.Department = reader["Department"] as string;
                             person.Division = reader["Division"] as string;
                             person.DutyStatus = reader["DutyStatus"] as string;
-                            person.EAOS = (reader.IsDBNull(reader.GetOrdinal("EAOS")) || string.IsNullOrWhiteSpace(reader["EAOS"] as string)) ? null : new Nullable<DateTime>(reader.GetDateTime("EAOS"));
+                            person.EAOS = (reader.IsDBNull(reader.GetOrdinal("EAOS")) || string.IsNullOrWhiteSpace(reader["EAOS"] as string)) ? null : new Nullable<DateTime>(DateTime.Parse(reader["EAOS"] as string));
                             person.EmailAddresses = await EmailAddresses.DBLoadAll(personID);
                             person.EmergencyContactInstructions = reader["EmergencyContactInstructions"] as string;
                             person.Ethnicity = reader["Ethnicity"] as string;
@@ -1578,9 +1578,12 @@ namespace CommandDB_Plugin
                                                         if (z != 0)
                                                             outerWhereClause += " OR ";
 
-                                                        outerWhereClause += string.Format("`{0}` LIKE @{0}{1}simplephysical", physicalAddressFields[z], z);
-                                                        command.Parameters.AddWithValue(string.Format("@{0}{1}simplephysical", physicalAddressFields[z], z), string.Format("%{0}%", searchTerms[y]));
+                                                        outerWhereClause += string.Format("`{0}` LIKE @{0}{1}{2}simplephysical", physicalAddressFields[z], z, y);
+                                                        command.Parameters.AddWithValue(string.Format("@{0}{1}{2}simplephysical", physicalAddressFields[z], z, y), string.Format("%{0}%", searchTerms[y]));
                                                     }
+
+                                                    if (y + 1 == searchTerms.Count)
+                                                        outerWhereClause += ")";
                                                 }
 
                                                 break;
