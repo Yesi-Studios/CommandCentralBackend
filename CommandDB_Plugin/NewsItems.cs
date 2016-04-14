@@ -658,6 +658,42 @@ namespace CommandDB_Plugin
         /// <summary>
         /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Loads a single news entry for the given news item ID and returns null if non exists.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// newsitemid - the ID of the news item to load.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static async Task<MessageTokens.MessageToken> LoadEntry_Client(MessageTokens.MessageToken token)
+        {
+            try
+            {
+                //The authorization for this endpoint is a little different. Here, there are no permissions that are required... we just need to make sure that the session isn't null.
+                //Basically, as long as you logged in, you can see the news entries.
+                if (token.Session == null)
+                    throw new ServiceException("You must be logged in to view the news.", ErrorTypes.Authentication);
+
+                //Now we're going to get the ID of the entry the client wants to load.
+                if (!token.Args.ContainsKey("newsitemid"))
+                    throw new ServiceException("You must send a 'newsitemid' parameter.", ErrorTypes.Validation);
+                string newsItemID = token.Args["newsitemid"] as string;
+
+                token.Result = await NewsItems.DBLoadOne(newsItemID);
+
+                return token;
+
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Deletes a given news item assuming the client has permission to manage news items.
         /// <para />
         /// Options: 
@@ -725,6 +761,8 @@ namespace CommandDB_Plugin
                 throw;
             }
         }
+
+
 
         #endregion
 

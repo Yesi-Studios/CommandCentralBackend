@@ -275,6 +275,21 @@ namespace CommandDB_Plugin
                 },
                 IsActive = true
             }),
+            new KeyValuePair<string, EndpointDescription>("LoadNewsItem", new EndpointDescription() 
+            {
+                DataMethodAsync = NewsItems.LoadEntry_Client,
+                Description = "Loads a single news entry for the given news item ID and returns null if non exists.",
+                RequiresAuthentication = true,
+                AllowArgumentLogging = true,
+                AllowResponseLogging = true,
+                RequiredParameters = new List<string>() 
+                { 
+                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
+                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                    "newsitemid - The ID of the news item to load."
+                },
+                IsActive = true
+            }),
             new KeyValuePair<string, EndpointDescription>("UpdateNewsItem", new EndpointDescription() 
             {
                 DataMethodAsync = NewsItems.UpdateEntry_Client,
