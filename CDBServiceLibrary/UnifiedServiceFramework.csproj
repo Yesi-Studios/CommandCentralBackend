@@ -65,11 +65,9 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Authentication\APIKeys.cs" />
     <Compile Include="Authentication\Sessions.cs" />
     <Compile Include="Authorization\Permissions.cs" />
     <Compile Include="CronOperations.cs" />
-    <Compile Include="FilesProvider.cs" />
     <Compile Include="Framework\ErrorTypes.cs" />
     <Compile Include="Framework\ServiceException.cs" />
     <Compile Include="Framework\EndpointDescription.cs" />
@@ -77,12 +75,7 @@
     <Compile Include="Framework\Settings.cs" />
     <Compile Include="Framework\ServiceManager.cs" />
     <Compile Include="UnifiedEmailHelper.cs" />
-    <Compile Include="UnifiedModel.cs" />
-    <Compile Include="UnifiedProperties.cs" />
-    <Compile Include="Validation\SchemaValidation.cs" />
     <Compile Include="Communicator.cs" />
-    <Compile Include="Diagnostics.cs" />
-    <Compile Include="Administration\Executer.cs" />
     <Compile Include="Framework\ReturnContainer.cs" />
     <Compile Include="IUnifiedService.cs" />
     <Compile Include="Framework\MessageTokens.cs" />

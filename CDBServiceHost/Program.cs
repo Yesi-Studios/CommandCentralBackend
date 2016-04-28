@@ -19,17 +19,10 @@ namespace CDBServiceHost
                     new NHibernate.Cfg.Configuration().Configure().BuildSessionFactory();
 
                 using (NHibernate.ISession session = factory.OpenSession())
+                using (var transaction = session.BeginTransaction())
                 {
 
-                    CommandCentral.Domain.Product product = new CommandCentral.Domain.Product
-                    {
-                        Category = "some cat",
-                        Discontinued = false,
-                        Name = "some shit"
-                    };
-
-                    session.SaveOrUpdate(product);
-                    session.Transaction.Commit();
+                   
                 }
 
                 factory.Close();

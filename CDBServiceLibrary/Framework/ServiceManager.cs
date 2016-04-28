@@ -20,55 +20,6 @@ namespace UnifiedServiceFramework.Framework
         /// </summary>
         public static ConcurrentDictionary<string, EndpointDescription> EndpointDescriptions = new ConcurrentDictionary<string,EndpointDescription>();
 
-        private static readonly List<KeyValuePair<string, EndpointDescription>> _unifiedEndpointDescriptions = new List<KeyValuePair<string, EndpointDescription>>()
-        {
-            new KeyValuePair<string, EndpointDescription>("LoadModelPermissions", new EndpointDescription() 
-            {
-                DataMethodAsync = Authorization.Permissions.LoadModelPermission_Client,
-                Description = "Loads all permissions a user has to a given model.  This works by going through all permission groups the user is a part of and then collating all of the permissions together into a single object.",
-                RequiresAuthentication = true,
-                AllowArgumentLogging = true,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.", 
-                    "model - Instructs the service which model to return permissions for.  If the model isn't in the parameters an error is thrown.  If the model isn't valid, a blank list is returned.  Not case senstive." 
-                },
-                IsActive = true
-            }),
-            new KeyValuePair<string, EndpointDescription>("LoadPermissionGroups", new EndpointDescription() 
-            {
-                DataMethodAsync = Authorization.Permissions.LoadPermissionGroups_Client,
-                Description = "Loads all of the permission groups the client is a part of.  The permissions are loaded from the cache so if the permission groups have somehow been edited without updating the cache, strange things could start to happen.",
-                RequiresAuthentication = true,
-                AllowArgumentLogging = true,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.", 
-                },
-                IsActive = true
-            }),
-            new KeyValuePair<string, EndpointDescription>("LoadAllPermissionGroups", new EndpointDescription() 
-            {
-                DataMethodAsync = Authorization.Permissions.LoadAllPermissionGroups_Client,
-                Description = "Loads all permission groups...",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = true,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login." 
-                },
-                IsActive = true
-            })
-        };
-
-
-
         /// <summary>
         /// Prepares the service to respond to client requests by initializing all the caches and setting up other things.
         /// </summary>
@@ -79,8 +30,8 @@ namespace UnifiedServiceFramework.Framework
         /// <param name="cronOperations"></param>
         /// <param name="modelsAndFields"></param>
         /// <returns></returns>
-        public static async Task InitializeService(TextWriter communicationsWriter, IEnumerable<Communicator.MessagePriority> listeningPriorities, string connectionString, 
-            List<KeyValuePair<string, EndpointDescription>> customEndpointDescriptions, List<Action> cronOperations, Dictionary<string, List<string>> modelsAndFields)
+        public static async Task InitializeService(TextWriter communicationsWriter, IEnumerable<Communicator.MessagePriority> listeningPriorities, 
+            List<Action> cronOperations)
         {
             try
             {
@@ -90,40 +41,11 @@ namespace UnifiedServiceFramework.Framework
                 Communicator.Unfreeze();
                 Communicator.PostMessageToHost("Communicator Initialized", Communicator.MessagePriority.Informational);
 
-                //Now let's set up the framework's database connection
-                Framework.Settings.ConnectionString = connectionString;
-                await Diagnostics.TestDBConnection(Framework.Settings.ConnectionString);
-                Communicator.PostMessageToHost("Database Connection Established", Communicator.MessagePriority.Informational);
-
-                //Set up the permissions system
-                foreach (var keyValuePair in modelsAndFields)
-                {
-                    if (!Authorization.Permissions.ModelsAndFields.TryAdd(keyValuePair.Key, new ConcurrentBag<string>(keyValuePair.Value)))
-                        throw new Exception("There was an issue while initializing the models and fields cache.");
-                }
-
                 //Initialize all the caches.
                 await Authentication.APIKeys.DBLoadAll(true);
                 await Authentication.Sessions.DBLoadAll(true);
                 await Authorization.Permissions.DBLoadAll(true);
                 await MessageTokens.DBLoadAll(true, true);
-                await Validation.SchemaValidation.LoadDatabaseSchema(Settings.ConnectionString);
-                Communicator.PostMessageToHost("Caches Initialized", Communicator.MessagePriority.Informational);
-
-                //Add the unified endpoint descriptions
-                _unifiedEndpointDescriptions.ForEach(x =>
-                    {
-                        if (!EndpointDescriptions.TryAdd(x.Key, x.Value))
-                            throw new Exception(string.Format("There was an issue with adding the unfied endpoint '{0}'!", x.Key));
-                    });
-
-                //Add the custom endpoints
-                customEndpointDescriptions.ForEach(x =>
-                    {
-                        if (!EndpointDescriptions.TryAdd(x.Key, x.Value))
-                            throw new Exception(string.Format("There was an issue with adding the endpoint '{0}'!", x.Key));
-                    });
-                Communicator.PostMessageToHost("Endpoints Registered", Communicator.MessagePriority.Informational);
 
                 //Add the different cron operations and then start the cron operations timer.  Shut it down if it's already running.
                 if (CronOperations.IsActive)
@@ -131,10 +53,6 @@ namespace UnifiedServiceFramework.Framework
                 cronOperations.ForEach(x => CronOperations.RegisterCronOperation(x));
                 CronOperations.StartCronOperations();
                 Communicator.PostMessageToHost("Cron Operations Registered and Started", Communicator.MessagePriority.Informational);
-
-                //Initialize the Files Provider
-                FilesProvider.Initialize();
-                Communicator.PostMessageToHost("Files Provider Initialized", Communicator.MessagePriority.Informational);
 
                 Communicator.PostMessageToHost(string.Format("Completed In: {0} seconds\n", DateTime.Now.Subtract(start).TotalSeconds), Communicator.MessagePriority.Informational);
             }
@@ -160,7 +78,6 @@ namespace UnifiedServiceFramework.Framework
                 MessageTokens.ReleaseCache();
                 EndpointDescriptions.Clear();
                 CronOperations.StopAndRelease();
-                FilesProvider.Release();
 
                 //Clear the models cache
                 Authorization.Permissions.ModelsAndFields.Clear();

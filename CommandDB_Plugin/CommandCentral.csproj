@@ -68,7 +68,10 @@
     <Compile Include="Changes.cs" />
     <Compile Include="Commands.cs" />
     <Compile Include="CustomEndpoints.cs" />
-    <Compile Include="Domain\Product.cs" />
+    <Compile Include="DataAccess\CachedModel.cs" />
+    <Compile Include="DataAccess\SessionProvider.cs" />
+    <Compile Include="DataAccess\UncachedModel.cs" />
+    <Compile Include="Domain\APIKey.cs" />
     <Compile Include="EmailAddresses.cs" />
     <Compile Include="EmailHelper.cs" />
     <Compile Include="MainData.cs" />
@@ -148,7 +151,7 @@
     <Content Include="hibernate.cfg.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="Mappings\Product.hbm.xml" />
+    <EmbeddedResource Include="Mappings\APIKey.hbm.xml" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

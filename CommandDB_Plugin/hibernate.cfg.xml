@@ -15,6 +15,6 @@
     <property name="dialect">
       NHibernate.Dialect.MySQL5Dialect
     </property>
-    <mapping assembly="CommandCentral.Domain.Product"/>
+    <mapping assembly="CommandCentral"/>
   </session-factory>
 </hibernate-configuration>
