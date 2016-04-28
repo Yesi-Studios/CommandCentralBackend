@@ -60,8 +60,16 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MySql.Data">
       <HintPath>..\packages\MySql.Data.6.9.8\lib\net45\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="NHibernate, Version=4.0.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
+      <HintPath>..\packages\NHibernate.4.0.4.4000\lib\net40\NHibernate.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -108,9 +116,9 @@
       <Project>{b640527f-ded5-4939-b7ca-5deeeedc782a}</Project>
       <Name>UnifiedServiceFramework</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CommandDB_Plugin\CommandDB_Plugin.csproj">
+    <ProjectReference Include="..\CommandDB_Plugin\CommandCentral.csproj">
       <Project>{f2d303ea-4081-4b7b-8bc2-54686d907c94}</Project>
-      <Name>CommandDB_Plugin</Name>
+      <Name>CommandCentral</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

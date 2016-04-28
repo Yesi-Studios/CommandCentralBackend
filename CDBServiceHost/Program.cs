@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using AtwoodUtils;
 
 namespace CDBServiceHost
@@ -11,18 +10,40 @@ namespace CDBServiceHost
     class Program
     {
 
-        const int SWP_NOSIZE = 0x0001;
-
-
-        [DllImport("kernel32.dll", ExactSpelling = true)]
-        private static extern IntPtr GetConsoleWindow();
-
-        private static IntPtr MyConsole = GetConsoleWindow();
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
-
         static void Main(string[] args)
+        {
+            try
+            {
+                System.Collections.IList list;
+                NHibernate.ISessionFactory factory =
+                    new NHibernate.Cfg.Configuration().Configure().BuildSessionFactory();
+
+                using (NHibernate.ISession session = factory.OpenSession())
+                {
+
+                    CommandCentral.Domain.Product product = new CommandCentral.Domain.Product
+                    {
+                        Category = "some cat",
+                        Discontinued = false,
+                        Name = "some shit"
+                    };
+
+                    session.SaveOrUpdate(product);
+                    session.Transaction.Commit();
+                }
+
+                factory.Close();
+
+                Console.ReadLine();
+            }
+            catch
+            {
+                
+                throw;
+            }
+        }
+
+        /*static void Main(string[] args)
         {
             try
             {
@@ -1011,6 +1032,6 @@ namespace CDBServiceHost
 
             Console.WriteLine("The application has shutdown. Press any key to finish shutdown...");
             Console.ReadKey();
-        }
+        }*/
     }
 }

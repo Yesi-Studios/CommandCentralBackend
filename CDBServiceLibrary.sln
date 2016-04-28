@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnifiedServiceFramework", "CDBServiceLibrary\UnifiedServiceFramework.csproj", "{B640527F-DED5-4939-B7CA-5DEEEEDC782A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDBServiceHost", "CDBServiceHost\CDBServiceHost.csproj", "{79396ACA-E67E-44B5-AAC7-2B87073A5CC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandDB_Plugin", "CommandDB_Plugin\CommandDB_Plugin.csproj", "{F2D303EA-4081-4B7B-8BC2-54686D907C94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandCentral", "CommandDB_Plugin\CommandCentral.csproj", "{F2D303EA-4081-4B7B-8BC2-54686D907C94}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtwoodUtils", "AtwoodUtils\AtwoodUtils.csproj", "{689992A9-0C1F-4B2C-92AB-0241F7C82A42}"
 EndProject
