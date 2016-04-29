@@ -11,7 +11,7 @@ using MySql.Data.Common;
 using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
 
-namespace CommandDB_Plugin.CustomAuthorization
+namespace CommandCentral.CustomAuthorization
 {
     public static class CustomPermissions
     {
@@ -36,7 +36,7 @@ namespace CommandDB_Plugin.CustomAuthorization
 
                 var clientCustomPermissions = clientPerms.Select(x => x.CustomPermissions).SelectMany(x => x).Distinct().Select(x =>
                     {
-                        CustomPermissionTypes customPermission;
+                        SpecialPermissionTypes customPermission;
                         if (!Enum.TryParse(x, false, out customPermission))
                             throw new Exception(string.Format("While attempting to parse the permission '{0}' into the custom permissions list, an error occurred.", x));
 
@@ -45,7 +45,7 @@ namespace CommandDB_Plugin.CustomAuthorization
                     }).ToList();
 
                 //Developers are in everyone's chain of commands.
-                if (clientCustomPermissions.Contains(CustomPermissionTypes.Developer))
+                if (clientCustomPermissions.Contains(SpecialPermissionTypes.Developer))
                     return true;
 
                 Dictionary<string, Dictionary<string, string>> persons = new Dictionary<string, Dictionary<string, string>>();
@@ -91,16 +91,16 @@ namespace CommandDB_Plugin.CustomAuthorization
                 //Now that we have everything we need, let's start comparing some shit.
 
                 //If the client is command leadership and the client and the person are in the same command, true
-                if (clientCustomPermissions.Contains(CustomPermissionTypes.Command_Leadership)
+                if (clientCustomPermissions.Contains(SpecialPermissionTypes.Command_Leadership)
                     && persons[clientID]["Command"].SafeEquals(persons[personID]["Command"]))
                     return true;
 
-                if (clientCustomPermissions.Contains(CustomPermissionTypes.Department_Leadership)
+                if (clientCustomPermissions.Contains(SpecialPermissionTypes.Department_Leadership)
                     && persons[clientID]["Command"].SafeEquals(persons[personID]["Command"])
                     && persons[clientID]["Department"].SafeEquals(persons[personID]["Department"]))
                     return true;
 
-                if (clientCustomPermissions.Contains(CustomPermissionTypes.Division_Leadership)
+                if (clientCustomPermissions.Contains(SpecialPermissionTypes.Division_Leadership)
                     && persons[clientID]["Command"].SafeEquals(persons[personID]["Command"])
                     && persons[clientID]["Department"].SafeEquals(persons[personID]["Department"])
                     && persons[clientID]["Division"].SafeEquals(persons[personID]["Division"]))

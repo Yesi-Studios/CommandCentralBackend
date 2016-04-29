@@ -31,6 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FluentNHibernate, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentNHibernate.2.0.3.0\lib\net40\FluentNHibernate.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
       <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
       <Private>True</Private>
@@ -47,7 +55,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -59,32 +69,38 @@
     <Compile Include="AccountHistoryEvents.cs" />
     <Compile Include="AccountServices.cs" />
     <Compile Include="Authorization\CustomPermissions.cs" />
-    <Compile Include="Authorization\CustomPermissionsEnum.cs" />
-    <Compile Include="BilletAssignments.cs" />
-    <Compile Include="Billets.cs" />
-    <Compile Include="CDBLists.cs" />
+    <Compile Include="Authorization\SpecialPermission.cs" />
+    <Compile Include="Authorization\ModelPermission.cs" />
+    <Compile Include="Authorization\PermissionGroup.cs" />
+    <Compile Include="Entities\Billet.cs" />
     <Compile Include="ChangeEvents.cs" />
-    <Compile Include="ChangeEventSubscriptions.cs" />
     <Compile Include="Changes.cs" />
-    <Compile Include="Commands.cs" />
+    <Compile Include="ClientAccess\EndpointDescription.cs" />
+    <Compile Include="ClientAccess\IExposable.cs" />
+    <Compile Include="ClientAccess\MessageToken.cs" />
+    <Compile Include="ClientAccess\Session.cs" />
     <Compile Include="CustomEndpoints.cs" />
     <Compile Include="DataAccess\CachedModel.cs" />
     <Compile Include="DataAccess\SessionProvider.cs" />
     <Compile Include="DataAccess\UncachedModel.cs" />
-    <Compile Include="Domain\APIKey.cs" />
-    <Compile Include="EmailAddresses.cs" />
+    <Compile Include="ClientAccess\APIKey.cs" />
+    <Compile Include="Entities\Command.cs" />
+    <Compile Include="Entities\Department.cs" />
+    <Compile Include="Entities\Division.cs" />
+    <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="EmailHelper.cs" />
-    <Compile Include="MainData.cs" />
+    <Compile Include="Entities\NEC.cs" />
+    <Compile Include="Entities\UIC.cs" />
+    <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="MusterRecords.cs" />
-    <Compile Include="NewsItems.cs" />
+    <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="PasswordHash.cs" />
     <Compile Include="Persons.cs" />
     <Compile Include="PhoneNumbers.cs" />
-    <Compile Include="PhysicalAddresses.cs" />
+    <Compile Include="Entities\PhysicalAddresses.cs" />
     <Compile Include="ProfileLocks.cs" />
     <Compile Include="Properties.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Scripts\Scripts.cs" />
     <Compile Include="TextMessageHelper.cs" />
     <Compile Include="ValidationMethods.cs" />
   </ItemGroup>
@@ -120,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <Compile Include="Entities\Person.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -151,7 +168,6 @@
     <Content Include="hibernate.cfg.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="Mappings\APIKey.hbm.xml" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

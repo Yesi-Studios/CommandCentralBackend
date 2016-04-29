@@ -11,7 +11,7 @@ using MySql.Data.Common;
 using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Describes members and such for interacting with a phone number
@@ -760,9 +760,9 @@ namespace CommandDB_Plugin
                     UnifiedServiceFramework.Authorization.Permissions.GetModelPermissionsForUser(token, "Person");
 
                 //Get the flattened list of all the permissions.
-                List<CustomPermissionTypes> customPerms = UnifiedServiceFramework.Authorization.Permissions.GetUniqueCustomPermissions(clientPermissions).Select(x =>
+                List<SpecialPermissionTypes> customPerms = UnifiedServiceFramework.Authorization.Permissions.GetUniqueCustomPermissions(clientPermissions).Select(x =>
                 {
-                    CustomPermissionTypes customPerm;
+                    SpecialPermissionTypes customPerm;
                     if (!Enum.TryParse(x, out customPerm))
                         throw new Exception(string.Format("An error occurred while trying to parse the custom permission '{0}' into the custom permissions enum.", x));
 
@@ -770,7 +770,7 @@ namespace CommandDB_Plugin
                 }).ToList();
 
                 //Is the client allowed to update/insert phone numbers?
-                if (!customPerms.Contains(CustomPermissionTypes.Edit_Users))
+                if (!customPerms.Contains(SpecialPermissionTypes.Edit_Users))
                     throw new ServiceException("You do not have permission to edit users.", ErrorTypes.Authorization);
 
                 //Make sure we got a phone number

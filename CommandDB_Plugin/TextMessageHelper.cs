@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Provides members for sending messages to users via text message.

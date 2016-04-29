@@ -30,7 +30,7 @@ using System;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Salted password hashing with PBKDF2-SHA1.

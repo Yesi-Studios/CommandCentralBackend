@@ -1,0 +1,64 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+
+namespace CommandCentral.ClientAccess
+{
+    /// <summary>
+    /// Describes a single API Key.
+    /// </summary>
+    public class APIKey : DataAccess.CachedModel<APIKey>
+    {
+
+        #region Properties
+
+        /// <summary>
+        /// The unique ID of this API Key.  This is also the API Key itself.
+        /// </summary>
+        public virtual string ID { get; set; }
+
+        /// <summary>
+        /// The name of the application to which this API Key was unsigned.
+        /// </summary>
+        public virtual string ApplicationName { get; set; }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Determines if a given api key is valid.
+        /// </summary>
+        /// <param name="apiKey"></param>
+        /// <returns></returns>
+        public static bool IsAPIKeyValid(object apiKey)
+        {
+            return APIKey.GetOne(apiKey) == null;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Provides mapping declarations to the databaes for the API Key.
+        /// </summary>
+        public class APIKeyMap : ClassMap<APIKey>
+        {
+            /// <summary>
+            /// Maps the API Key to the database.
+            /// </summary>
+            public APIKeyMap()
+            {
+                Table("apikeys");
+
+                Id(x => x.ID).GeneratedBy.Guid();
+
+                Map(x => x.ApplicationName).Unique().Length(40);
+            }
+        }
+
+    }
+}

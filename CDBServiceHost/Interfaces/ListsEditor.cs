@@ -8,7 +8,7 @@ namespace CDBServiceHost.Interfaces
 {
     public static class ListsEditor
     {
-        public static void EditList(CommandDB_Plugin.CDBLists.CDBList list)
+        public static void EditList(CommandCentral.CDBLists.CDBList list)
         {
 
             bool keepLooping = true;

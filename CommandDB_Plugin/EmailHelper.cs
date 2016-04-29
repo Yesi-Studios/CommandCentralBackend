@@ -8,7 +8,7 @@ using System.Reflection;
 using System.IO;
 
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Provides methods that help the service interact with users via email.

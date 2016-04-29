@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommandDB_Plugin;
+using CommandCentral;
 
 namespace CDBServiceHost.Interfaces
 {

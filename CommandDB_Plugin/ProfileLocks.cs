@@ -11,7 +11,7 @@ using MySql.Data.Common;
 using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Provides members and methods for taking, releasing, and managing profile locks.  These are used to determine who can update a profile.
@@ -642,9 +642,9 @@ namespace CommandDB_Plugin
                 var modelPermission = UnifiedServiceFramework.Authorization.Permissions.GetModelPermissionsForUser(token, "Person");
 
                 //Get the flattened list of all the custom permissions.
-                List<CustomPermissionTypes> customPerms = UnifiedServiceFramework.Authorization.Permissions.GetUniqueCustomPermissions(clientPermissions).Select(x =>
+                List<SpecialPermissionTypes> customPerms = UnifiedServiceFramework.Authorization.Permissions.GetUniqueCustomPermissions(clientPermissions).Select(x =>
                 {
-                    CustomPermissionTypes customPerm;
+                    SpecialPermissionTypes customPerm;
                     if (!Enum.TryParse(x, out customPerm))
                         throw new Exception(string.Format("An error occurred while trying to parse the custom permission '{0}' into the custom permissions enum.", x));
 
@@ -652,7 +652,7 @@ namespace CommandDB_Plugin
                 }).ToList();
 
                 //Is the client allowed to update users?  If not, they don't need a lock.
-                if (!customPerms.Contains(CustomPermissionTypes.Edit_Users))
+                if (!customPerms.Contains(SpecialPermissionTypes.Edit_Users))
                     throw new ServiceException("You can not take a lock on this user because you can not edit users.", ErrorTypes.LockImpossible);
 
                 //Is the client allowed to update at least one field on a profile?  If not, they don't need a lock.

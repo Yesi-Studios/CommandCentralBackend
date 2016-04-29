@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace UnifiedServiceFramework.Framework
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Provides members that describe an endpoint.  Intended to allow dynamic endpoint invokation.

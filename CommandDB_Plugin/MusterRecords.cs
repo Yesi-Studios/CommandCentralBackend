@@ -11,7 +11,7 @@ using MySql.Data.Common;
 using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Provides members that help interact with muster as well as the muster class itself and a cache.  

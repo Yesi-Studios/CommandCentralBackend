@@ -9,7 +9,7 @@ namespace CDBServiceHost.Interfaces
 {
     public static class DepartmentsEditor
     {
-        public static void EditDepartments(CommandDB_Plugin.Commands.Command command, List<CommandDB_Plugin.Commands.Command.Department> departments)
+        public static void EditDepartments(CommandCentral.Commands.Command command, List<CommandCentral.Commands.Command.Department> departments)
         {
 
             bool keepLooping = true;
@@ -44,9 +44,9 @@ namespace CDBServiceHost.Interfaces
                         {
                             Console.Clear();
 
-                            CommandDB_Plugin.Commands.Command.Department depToDelete = departments[deleteInput];
+                            CommandCentral.Commands.Command.Department depToDelete = departments[deleteInput];
 
-                            int currentInDepartment = CommandDB_Plugin.Persons.CountPersonsInDepartment(command.Name, departments[deleteInput].Name).Result;
+                            int currentInDepartment = CommandCentral.Persons.CountPersonsInDepartment(command.Name, departments[deleteInput].Name).Result;
 
                             if (currentInDepartment == 0)
                             {
@@ -83,10 +83,10 @@ namespace CDBServiceHost.Interfaces
 
                             if (Console.ReadLine().ToLower() == "y")
                             {
-                                CommandDB_Plugin.Commands.Command.Department newDepartment = new CommandDB_Plugin.Commands.Command.Department()
+                                CommandCentral.Commands.Command.Department newDepartment = new CommandCentral.Commands.Command.Department()
                                 {
                                     Description = "",
-                                    Divisions = new List<CommandDB_Plugin.Commands.Command.Department.Division>(),
+                                    Divisions = new List<CommandCentral.Commands.Command.Department.Division>(),
                                     ID = Guid.NewGuid().ToString(),
                                     Name = input
                                 };
@@ -103,7 +103,7 @@ namespace CDBServiceHost.Interfaces
 
         }
 
-        public static void EditDepartment(CommandDB_Plugin.Commands.Command command, CommandDB_Plugin.Commands.Command.Department department)
+        public static void EditDepartment(CommandCentral.Commands.Command command, CommandCentral.Commands.Command.Department department)
         {
 
             bool keepLooping = true;

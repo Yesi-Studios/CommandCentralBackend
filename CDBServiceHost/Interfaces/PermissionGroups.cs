@@ -18,7 +18,7 @@ namespace CDBServiceHost.Interfaces
             Console.WriteLine("Type the last name of the user whose permissions you would like to edit...");
             string input = Console.ReadLine();
 
-            var results = CommandDB_Plugin.Persons.DBSimpleSearch(input, new List<string>()
+            var results = CommandCentral.Persons.DBSimpleSearch(input, new List<string>()
             {
                 "LastName"
             }, new List<string>() 
@@ -60,7 +60,7 @@ namespace CDBServiceHost.Interfaces
                 else
                     if (option.All(char.IsLetter)) //user typed a new name
                     {
-                        results = CommandDB_Plugin.Persons.DBSimpleSearch(input, new List<string>()
+                        results = CommandCentral.Persons.DBSimpleSearch(input, new List<string>()
                         {
                             "LastName"
                         }, new List<string>() 
@@ -99,7 +99,7 @@ namespace CDBServiceHost.Interfaces
                                 Console.WriteLine("The user has the following permission groups...");
                                 Console.WriteLine();
 
-                                List<UnifiedServiceFramework.Authorization.Permissions.PermissionGroup> perms = CommandDB_Plugin.CustomAuthorization.CustomPermissions.GetPermissionGroupsForUser(personID).Result;
+                                List<UnifiedServiceFramework.Authorization.Permissions.PermissionGroup> perms = CommandCentral.CustomAuthorization.CustomPermissions.GetPermissionGroupsForUser(personID).Result;
                                 for (int x = 0; x < perms.Count; x++)
                                 {
                                     Console.WriteLine(string.Format("{0}. {1}", x, perms[x].Name));
@@ -128,7 +128,7 @@ namespace CDBServiceHost.Interfaces
                                                 Console.Clear();
                                                 Console.WriteLine("Updating permissions...");
 
-                                                CommandDB_Plugin.CustomAuthorization.CustomPermissions.SetUserPermissionGroups(personID, 
+                                                CommandCentral.CustomAuthorization.CustomPermissions.SetUserPermissionGroups(personID, 
                                                     UnifiedServiceFramework.Authorization.Permissions.GetAllPermissionGroups()
                                                         .Where(x => activePermissionGroups.Contains(x.Name)).Select(x => x.ID).ToList()).Wait();
 
@@ -259,7 +259,7 @@ namespace CDBServiceHost.Interfaces
                                 Console.Clear();
 
                                 List<string> activePerms = permGroup.CustomPermissions.Select(x => x.ToString()).ToList();
-                                List<string> inactivePerms = Enum.GetNames(typeof(CommandDB_Plugin.CustomPermissionTypes)).Except(activePerms).ToList();
+                                List<string> inactivePerms = Enum.GetNames(typeof(CommandCentral.SpecialPermissionTypes)).Except(activePerms).ToList();
 
                                 Interfaces.GenericInterfaces.EditElementsOfLists(activePerms, inactivePerms, "Active", "Inactive", "Edit Custom Permissions...");
 

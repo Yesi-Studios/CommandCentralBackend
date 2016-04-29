@@ -47,10 +47,10 @@ namespace CDBServiceHost
                 stp.HttpHelpPageEnabled = false;
 
                 //Initialize the command db plugin's custom lists and caches
-                CommandDB_Plugin.CDBLists.DBLoadAll(true).Wait();
-                CommandDB_Plugin.Commands.DBLoadAll(true).Wait();
-                CommandDB_Plugin.MainData.DBLoadAll(true).Wait();
-                CommandDB_Plugin.ChangeEvents.DBLoadAll(true).Wait();
+                CommandCentral.CDBLists.DBLoadAll(true).Wait();
+                CommandCentral.Commands.DBLoadAll(true).Wait();
+                CommandCentral.MainData.DBLoadAll(true).Wait();
+                CommandCentral.ChangeEvents.DBLoadAll(true).Wait();
 
                 Console.WriteLine("Command DB Plugin caches loaded.");
                 Console.WriteLine();
@@ -59,7 +59,7 @@ namespace CDBServiceHost
                 var modelsAndFields = new Dictionary<string, List<string>>();
 
                 //Add the Person model
-                modelsAndFields.Add("Person", typeof(CommandDB_Plugin.Persons.Person).GetProperties().Select(x => x.Name).ToList());
+                modelsAndFields.Add("Person", typeof(CommandCentral.Persons.Person).GetProperties().Select(x => x.Name).ToList());
 
                 //Now call the method
                 UnifiedServiceFramework.Framework.ServiceManager.InitializeService(Console.Out, new List<UnifiedServiceFramework.Communicator.MessagePriority>()
@@ -68,7 +68,7 @@ namespace CDBServiceHost
                     UnifiedServiceFramework.Communicator.MessagePriority.Important,
                     UnifiedServiceFramework.Communicator.MessagePriority.Informational,
                     UnifiedServiceFramework.Communicator.MessagePriority.Warning
-                }, CommandDB_Plugin.Properties.ConnectionString, CommandDB_Plugin.CustomEndpoints.CustomEndpointDescriptions.ToList(), new List<Action>()
+                }, CommandCentral.Properties.ConnectionString, CommandCentral.CustomEndpoints.CustomEndpointDescriptions.ToList(), new List<Action>()
                 {
                     () => UnifiedServiceFramework.Authentication.Sessions.ScrubSessions(),
                     () => UnifiedServiceFramework.Framework.MessageTokens.ScrubMessages()
@@ -135,24 +135,24 @@ namespace CDBServiceHost
                 try
                 {
                     System.Net.NetworkInformation.Ping myPing = new System.Net.NetworkInformation.Ping();
-                    String host = CommandDB_Plugin.EmailHelper.SmtpHost;
+                    String host = CommandCentral.EmailHelper.SmtpHost;
                     byte[] buffer = new byte[32];
                     int timeout = 1000;
                     System.Net.NetworkInformation.PingOptions pingOptions = new System.Net.NetworkInformation.PingOptions();
                     System.Net.NetworkInformation.PingReply reply = myPing.Send(host, timeout, buffer, pingOptions);
                     if ((reply.Status == System.Net.NetworkInformation.IPStatus.Success))
                     {
-                        Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection established", CommandDB_Plugin.EmailHelper.SmtpHost));
+                        Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection established", CommandCentral.EmailHelper.SmtpHost));
                         Console.WriteLine(string.Format("SMTP server connection speed is {0}ms...", reply.RoundtripTime));
                     }
                     else
                     {
-                        Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection failed", CommandDB_Plugin.EmailHelper.SmtpHost));
+                        Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection failed", CommandCentral.EmailHelper.SmtpHost));
                     }
                 }
                 catch
                 {
-                    Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection failed", CommandDB_Plugin.EmailHelper.SmtpHost));
+                    Console.WriteLine(string.Format("Command DB Plugin smtp server ({0}) connection failed", CommandCentral.EmailHelper.SmtpHost));
                 }
 
                 //Give the user the option of cross checking the permissions.
@@ -173,10 +173,10 @@ namespace CDBServiceHost
             try
             {
                 //Release the plugin's resources
-                CommandDB_Plugin.CDBLists.ReleaseCache();
-                CommandDB_Plugin.ChangeEvents.ReleaseCache();
-                CommandDB_Plugin.Commands.ReleaseCache();
-                CommandDB_Plugin.MainData.ReleaseCache();
+                CommandCentral.CDBLists.ReleaseCache();
+                CommandCentral.ChangeEvents.ReleaseCache();
+                CommandCentral.Commands.ReleaseCache();
+                CommandCentral.MainData.ReleaseCache();
 
                 //Now release the framework's resources
                 UnifiedServiceFramework.Framework.ServiceManager.ReleaseService();

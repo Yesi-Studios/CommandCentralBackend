@@ -10,7 +10,7 @@ using System.Data;
 using MySql.Data.MySqlClient;
 using MySql.Data;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Provides a number of methods for determing if a given value matches a format.

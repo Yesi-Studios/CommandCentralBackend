@@ -18,18 +18,18 @@ namespace CDBServiceHost.Interfaces
                 Console.Clear();
 
                 //Load the change events in case they haven't been loaded yet.
-                CommandDB_Plugin.ChangeEvents.DBLoadAll(true).Wait();
+                CommandCentral.ChangeEvents.DBLoadAll(true).Wait();
 
-                Console.WriteLine(string.Format("There are currently {0} change events.", CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Count));
+                Console.WriteLine(string.Format("There are currently {0} change events.", CommandCentral.ChangeEvents.ChangeEventsCache.Count));
                 Console.WriteLine();
                 Console.WriteLine("Type the number of the change event you would like to edit, type the number followed by a minus sign to delete it, enter a new change event name to create a new change event, or enter a blank line to cancel.");
                 Console.WriteLine();
 
                 List<string[]> lines = new List<string[]>();
                 lines.Add(new[] { "#", "Name", "Trigger Fields Count", "Trigger Model", "Event Level", "Req Perms Count" });
-                for (int x = 0; x < CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Count; x++)
+                for (int x = 0; x < CommandCentral.ChangeEvents.ChangeEventsCache.Count; x++)
                 {
-                    CommandDB_Plugin.ChangeEvents.ChangeEvent changeEvent = CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Values.ElementAt(x);
+                    CommandCentral.ChangeEvents.ChangeEvent changeEvent = CommandCentral.ChangeEvents.ChangeEventsCache.Values.ElementAt(x);
 
                     lines.Add(new[] { x.ToString(), changeEvent.Name, changeEvent.TriggerFields.Count.ToString(), changeEvent.TriggerModel, changeEvent.EventLevel.ToString(), changeEvent.RequiredSpecialPermissions.Count.ToString() });
                 }
@@ -46,11 +46,11 @@ namespace CDBServiceHost.Interfaces
                     if (input.Last().Equals('-'))
                     {
                         int deleteInput = -1;
-                        if (Int32.TryParse(input.Substring(0, input.Length - 1), out deleteInput) && deleteInput >= 0 && deleteInput <= CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Count - 1)
+                        if (Int32.TryParse(input.Substring(0, input.Length - 1), out deleteInput) && deleteInput >= 0 && deleteInput <= CommandCentral.ChangeEvents.ChangeEventsCache.Count - 1)
                         {
                             Console.Clear();
 
-                            CommandDB_Plugin.ChangeEvents.ChangeEvent changeEvent = CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Values.ElementAt(deleteInput);
+                            CommandCentral.ChangeEvents.ChangeEvent changeEvent = CommandCentral.ChangeEvents.ChangeEventsCache.Values.ElementAt(deleteInput);
 
                             Console.WriteLine("Are you sure you want to delete the following change event? (y)");
                             Console.WriteLine();
@@ -66,9 +66,9 @@ namespace CDBServiceHost.Interfaces
                         }
                     }
                     else
-                        if (Int32.TryParse(input, out inputOption) && inputOption >= 0 && inputOption <= CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Count - 1)
+                        if (Int32.TryParse(input, out inputOption) && inputOption >= 0 && inputOption <= CommandCentral.ChangeEvents.ChangeEventsCache.Count - 1)
                         {
-                            EditChangeEvent(CommandDB_Plugin.ChangeEvents.ChangeEventsCache.Values.ElementAt(inputOption));
+                            EditChangeEvent(CommandCentral.ChangeEvents.ChangeEventsCache.Values.ElementAt(inputOption));
                         }
                         else //User entered a new name for a department.
                         {
@@ -77,12 +77,12 @@ namespace CDBServiceHost.Interfaces
 
                             if (Console.ReadLine().ToLower() == "y")
                             {
-                                CommandDB_Plugin.ChangeEvents.ChangeEvent newChangeEvent = new CommandDB_Plugin.ChangeEvents.ChangeEvent()
+                                CommandCentral.ChangeEvents.ChangeEvent newChangeEvent = new CommandCentral.ChangeEvents.ChangeEvent()
                                 {
-                                    EventLevel = CommandDB_Plugin.ChangeEvents.ChangeEventLevels.DEFAULT,
+                                    EventLevel = CommandCentral.ChangeEvents.ChangeEventLevels.DEFAULT,
                                     ID = Guid.NewGuid().ToString(),
                                     Name = input,
-                                    RequiredSpecialPermissions = new List<CommandDB_Plugin.CustomPermissionTypes>(),
+                                    RequiredSpecialPermissions = new List<CommandCentral.SpecialPermissionTypes>(),
                                     TriggerFields = new List<string>(),
                                     TriggerModel = ""
                                 };
@@ -94,7 +94,7 @@ namespace CDBServiceHost.Interfaces
             }
         }
 
-        public static void EditChangeEvent(CommandDB_Plugin.ChangeEvents.ChangeEvent changeEvent)
+        public static void EditChangeEvent(CommandCentral.ChangeEvents.ChangeEvent changeEvent)
         {
             bool keepLooping = true;
 
@@ -148,15 +148,15 @@ namespace CDBServiceHost.Interfaces
                                     Console.WriteLine(string.Format("The current event level of this change event is '{0}'.", changeEvent.EventLevel));
                                     Console.WriteLine();
                                     Console.WriteLine("Choose a new event level from the available levels below:");
-                                    List<string> changeEventLevelNames = Enum.GetNames(typeof(CommandDB_Plugin.ChangeEvents.ChangeEventLevels)).ToList();
+                                    List<string> changeEventLevelNames = Enum.GetNames(typeof(CommandCentral.ChangeEvents.ChangeEventLevels)).ToList();
                                     for (int x = 0; x < changeEventLevelNames.Count; x++)
                                     {
                                         Console.WriteLine(string.Format("{0}. {1}", x.ToString(), changeEventLevelNames[x]));
                                     }
                                     string input = Console.ReadLine();
 
-                                    CommandDB_Plugin.ChangeEvents.ChangeEventLevels changeEventLevel;
-                                    if (Enum.TryParse<CommandDB_Plugin.ChangeEvents.ChangeEventLevels>(input, out changeEventLevel))
+                                    CommandCentral.ChangeEvents.ChangeEventLevels changeEventLevel;
+                                    if (Enum.TryParse<CommandCentral.ChangeEvents.ChangeEventLevels>(input, out changeEventLevel))
                                     {
                                         changeEvent.EventLevel = changeEventLevel;
                                         keepLoopingEventLevel = false;
@@ -224,13 +224,13 @@ namespace CDBServiceHost.Interfaces
                         case 5: //Edit requierd permissions
                             {
 
-                                List<string> availablePermissions = Enum.GetNames(typeof(CommandDB_Plugin.CustomPermissionTypes)).ToList();
+                                List<string> availablePermissions = Enum.GetNames(typeof(CommandCentral.SpecialPermissionTypes)).ToList();
                                 List<string> activePermissions = changeEvent.RequiredSpecialPermissions.Select(x => x.ToString()).ToList();
                                 List<string> inactivePermissions = availablePermissions.Except(activePermissions).ToList();
 
                                 GenericInterfaces.EditElementsOfLists(activePermissions, inactivePermissions, "Active Permissions", "Inactive Permissions", "Edit Change Event Permissions");
 
-                                changeEvent.RequiredSpecialPermissions = activePermissions.Select(x => (CommandDB_Plugin.CustomPermissionTypes)Enum.Parse(typeof(CommandDB_Plugin.CustomPermissionTypes), x)).ToList();
+                                changeEvent.RequiredSpecialPermissions = activePermissions.Select(x => (CommandCentral.SpecialPermissionTypes)Enum.Parse(typeof(CommandCentral.SpecialPermissionTypes), x)).ToList();
 
                                 break;
                             }

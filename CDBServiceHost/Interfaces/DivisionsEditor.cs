@@ -9,7 +9,7 @@ namespace CDBServiceHost.Interfaces
 {
     public static class DivisionsEditor
     {
-        public static void EditDivisions(CommandDB_Plugin.Commands.Command command, CommandDB_Plugin.Commands.Command.Department department, List<CommandDB_Plugin.Commands.Command.Department.Division> divisions)
+        public static void EditDivisions(CommandCentral.Commands.Command command, CommandCentral.Commands.Command.Department department, List<CommandCentral.Commands.Command.Department.Division> divisions)
         {
             bool keepLooping = true;
             while (keepLooping)
@@ -43,9 +43,9 @@ namespace CDBServiceHost.Interfaces
                         {
                             Console.Clear();
 
-                            CommandDB_Plugin.Commands.Command.Department.Division divToDelete = divisions[deleteInput];
+                            CommandCentral.Commands.Command.Department.Division divToDelete = divisions[deleteInput];
 
-                            int currentInDivision = CommandDB_Plugin.Persons.CountPersonsInDivision(command.Name, department.Name, divisions[deleteInput].Name).Result;
+                            int currentInDivision = CommandCentral.Persons.CountPersonsInDivision(command.Name, department.Name, divisions[deleteInput].Name).Result;
 
                             if (currentInDivision == 0)
                             {
@@ -82,7 +82,7 @@ namespace CDBServiceHost.Interfaces
 
                             if (Console.ReadLine().ToLower() == "y")
                             {
-                                CommandDB_Plugin.Commands.Command.Department.Division newDivision = new CommandDB_Plugin.Commands.Command.Department.Division()
+                                CommandCentral.Commands.Command.Department.Division newDivision = new CommandCentral.Commands.Command.Department.Division()
                                 {
                                     Description = "",
                                     ID = Guid.NewGuid().ToString(),
@@ -99,7 +99,7 @@ namespace CDBServiceHost.Interfaces
             }
         }
 
-        public static void EditDivision(CommandDB_Plugin.Commands.Command.Department.Division division)
+        public static void EditDivision(CommandCentral.Commands.Command.Department.Division division)
         {
             bool keepLooping = true;
             while (keepLooping)

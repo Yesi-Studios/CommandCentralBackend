@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
 
-namespace CommandDB_Plugin
+namespace CommandCentral
 {
     /// <summary>
     /// Contains's the plugin's custom endpoint descriptions that are supposed to be passed into the framework.
