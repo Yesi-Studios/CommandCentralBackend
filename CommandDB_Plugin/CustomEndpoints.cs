@@ -22,42 +22,7 @@ namespace CommandCentral
         /// </summary>
         public static ConcurrentDictionary<string,  EndpointDescription> CustomEndpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(new List<KeyValuePair<string, EndpointDescription>>()
         {
-            new KeyValuePair<string, EndpointDescription>("Logout", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.Logout,
-                Description = "Logs out the client by invalidating the session in both the cache and by updating it in the database.",
-                RequiresAuthentication = true,
-                AllowArgumentLogging = true,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login." 
-                },
-                AuthorizationNote = "No authorization is done on this endpoint.",
-                ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                IsActive = true
-            }),
-            new KeyValuePair<string, EndpointDescription>("Login", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.Login,
-                Description = "Logs in the user given a proper username/password combination and returns a GUID.  This GUID is the client's authentication token and must be included in all subsequent authentication-required requests.",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = false,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "username - The user's case sensitive username.", 
-                    "password - The user's case sensitive password." 
-                },
-                AuthorizationNote = "No authorization is done on this endpoint.",
-                ExampleOutput = () => 
-                    {
-                        return new { PersonID = Guid.NewGuid().ToString(), AuthenticationToken = Guid.NewGuid().ToString() }.Serialize();
-                    },
-                IsActive = true
-            }),
+            
             new KeyValuePair<string, EndpointDescription>("BeginRegistration", new EndpointDescription() 
             {
                 DataMethodAsync = AccountServices.BeginRegistration,

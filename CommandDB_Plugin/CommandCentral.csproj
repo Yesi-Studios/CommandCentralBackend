@@ -93,7 +93,6 @@
     <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\EndpointDescription.cs" />
-    <Compile Include="ClientAccess\IExposable.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\Session.cs" />
     <Compile Include="CustomEndpoints.cs" />

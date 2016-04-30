@@ -12,7 +12,7 @@ namespace CommandCentral.Entities
     /// <summary>
     /// Describes a single person and all their properties and data access methods.
     /// </summary>
-    public class Person : IExposable
+    public class Person
     {
 
         #region Properties
@@ -257,6 +257,9 @@ namespace CommandCentral.Entities
 
         #region Client Access Methods
 
+        #region Login/Logout
+
+
         /// <summary>
         /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
@@ -295,65 +298,136 @@ namespace CommandCentral.Entities
                 {
                     using (var transaction = session.BeginTransaction())
                     {
-                        //The query itself.
-                        var results = session.QueryOver<Person>()
-                            .Where(x => x.Username == username)
-                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                            .List<Person>();
-
-                        if (results.Count() > 1)
-                            throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
-
-                        if (results.Count() == 0)
-                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
-
-                        //If the password is bad
-                        if (!CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
+                        try
                         {
-                            //If the password doesn't check out we need to send the person who owns this account a failed login email.
-                            EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
+                            //The query itself.
+                            var results = session.QueryOver<Person>()
+                                .Where(x => x.Username == username)
+                                .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                                .List<Person>();
 
-                            if (address == null)
-                                throw new Exception(string.Format("Login failed to the person's account whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
+                            if (results.Count() > 1)
+                                throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
 
-                            //Ok, so we have an email we can use to contact the person!
-                            EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].ID).Wait();
+                            if (results.Count() == 0)
+                                throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
 
-                            //Now that we have alerted the user, we can fail out.
-                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
+                            //If the password is bad
+                            if (!CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
+                            {
+                                //If the password doesn't check out we need to send the person who owns this account a failed login email.
+                                EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
+
+                                if (address == null)
+                                    throw new Exception(string.Format("Login failed to the person's account whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
+
+                                //Ok, so we have an email we can use to contact the person!
+                                EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].ID).Wait();
+
+                                //Now that we have alerted the user, we can fail out.
+                                throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
+                            }
+
+                            //Alright, if we got here, then we have a good password.
+                            //In this case, we need to create a new session for the client and then insert it.
+                            Session ses = new Session
+                            {
+                                IsActive = true,
+                                LastUsedTime = token.CallTime,
+                                LoginTime = token.CallTime,
+                                Permissions = results[0].PermissionGroups,
+                                Person = results[0]
+                            };
+
+                            //Now insert it
+                            session.Save(ses);
+
+                            //Now log the account history event on the person.
+                            results[0].AccountHistory.Add(new AccountHistoryEvent
+                            {
+                                AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                                EventTime = token.CallTime,
+                                Person = results[0]
+                            });
+
+                            //And update the person
+                            session.SaveOrUpdate(results[0]);
+
+                            //Cool now we just need to give the token back to the client along with some other stuff.
+                            token.Result = new { PersonID = results[0].ID, PermissionGroups = results[0].PermissionGroups, AuthenticationToken = ses.ID, FriendlyName = results[0].ToString() };
+
+                            transaction.Commit();
+
                         }
-
-                        //Alright, if we got here, then we have a good password.
-                        //In this case, we need to create a new session for the client and then insert it.
-                        Session ses = new Session
+                        catch
                         {
-                            IsActive = true,
-                            LastUsedTime = token.CallTime,
-                            LoginTime = token.CallTime,
-                            Permissions = results[0].PermissionGroups,
-                            Person = results[0]
-                        };
-
-                        //Now insert it
-                        session.Save(ses);
-
-                        //Now log the account history event on the person.
-                        results[0].AccountHistory.Add(new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = AccountHistoryEventTypes.Login,
-                            EventTime = token.CallTime,
-                            Person = results[0]
-                        });
-
-                        //And update the person
-                        session.SaveOrUpdate(results[0]);
-
-                        //Cool now we just need to give the token back to the client along with some other stuff.
-                        token.Result = new { PersonID = results[0].ID, PermissionGroups = results[0].PermissionGroups, AuthenticationToken = ses.ID, FriendlyName = results[0].ToString() };
-
-                        return token;
+                            transaction.Rollback();
+                            throw;
+                        }
                     }
                 }
+
+                return token;
+
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Logs out the user by invalidating the session/deleted it from the database.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// There are no parameters.  We use the authentication token from the authentication layer to do the logout.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static MessageToken Logout_Client(MessageToken token)
+        {
+            try
+            {
+                //Make sure there is actually a session
+                if (token.Session == null)
+                    throw new ServiceException("You must be logged in to try to logout. No shit?", ErrorTypes.Authentication, HTTPStatusCodes.Unauthorized);
+
+                //Well this is easy.  Just delete the session.  Make sure to update the person first before we remove our reference to it.
+                using (var session = DataAccess.SessionProvider.CreateSession())
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        //Log the event
+                        token.Session.Person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Logout,
+                            EventTime = token.CallTime,
+                            Person = token.Session.Person
+                        });
+
+                        //Now update the person
+                        session.SaveOrUpdate(token.Session.Person);
+
+                        //Okey dokey, now let's delete the session.
+                        session.Delete(token.Session);
+
+                        //Yay!  Now we're done.
+                        token.Result = "Success";
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return token;
+
             }
             catch
             {
@@ -363,14 +437,65 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Registration
+
+
+
+        #endregion
+
+
+        #endregion
+
         /// <summary>
         /// The exposed endpoints
         /// </summary>
-        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
+        public static Dictionary<string, EndpointDescription> EndpointDescriptions
         {
             get
             {
-                throw new NotImplementedException();
+                return new Dictionary<string, EndpointDescription>
+                {
+                    { "Login", new EndpointDescription
+                        {
+                            AllowArgumentLogging = false,
+                            AllowResponseLogging = false,
+                            AuthorizationNote = "None",
+                            DataMethod = Login_Client,
+                            Description = "Logs in the user given a proper username/password combination and returns a GUID.  This GUID is the client's authentication token and must be included in all subsequent authentication-required requests.",
+                            ExampleOutput = () => "TODO",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "username - The user's case sensitive username.",
+                                "password - The user's case sensitive password."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
+                        }
+                    },
+                    { "Logout", new EndpointDescription
+                        {
+                            AllowArgumentLogging = true,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "Client must be logged in.",
+                            DataMethod = Logout_Client,
+                            Description = "Logs out the user by invalidating the session/deleted it from the database.",
+                            ExampleOutput = () => "TODO",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = true
+                        }
+                    }
+
+                };
             }
         }
 

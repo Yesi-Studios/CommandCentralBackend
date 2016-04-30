@@ -17,6 +17,10 @@ namespace CommandCentral.Entities
         /// </summary>
         Login,
         /// <summary>
+        /// A logout event that results in the invalidation of a session.
+        /// </summary>
+        Logout,
+        /// <summary>
         /// A failed login event.
         /// </summary>
         Failed_Login,
