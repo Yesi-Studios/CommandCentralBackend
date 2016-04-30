@@ -98,7 +98,7 @@ namespace CommandCentral.ClientAccess
             try
             {
                 if (!this.Args.ContainsKey(argName))
-                    throw new ServiceException(errorMessage, ErrorTypes.Validation);
+                    throw new ServiceException(errorMessage, ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
 
                 return this.Args[argName];
             }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using CommandCentral.ClientAccess;
+using NHibernate.Criterion;
 
 namespace CommandCentral.Entities
 {
@@ -243,15 +244,44 @@ namespace CommandCentral.Entities
 
         #region Client Access Methods
 
-        public static async Task<MessageToken> Login_Client(MessageToken token)
+        public static MessageToken Login_Client(MessageToken token)
         {
             try
             {
                 //First, we need the username and the password.
-                if (!token.Args.ContainsKey("username"))
+                string username = token.GetArgOrFail("username", "You must send a username!") as string;
+                string password = token.GetArgOrFail("password", "You must send a password!") as string;
+
+                //TODO: validate username and password
+
+                using (var session = DataAccess.SessionProvider.CreateSession())
+                {
+                    using (var transaction = session.BeginTransaction())
+                    {
+                        var results = session.CreateCriteria<Person>()
+                            .SetCacheable(true).SetCacheMode(NHibernate.CacheMode.Normal)
+                            .Add(Restrictions.Eq("Username", username))
+                            .List<Person>();
+
+                        if (results.Count > 1)
+                            throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
+
+                        if (results.Count == 0)
+                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
+
+                        if (CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
+                        {
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                }
 
 
-                return token;
+
+                    return token;
             }
             catch
             {
