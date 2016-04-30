@@ -85,7 +85,7 @@
     <Compile Include="ReferenceList.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />
-    <Compile Include="Changes.cs" />
+    <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\EndpointDescription.cs" />
     <Compile Include="ClientAccess\IExposable.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
@@ -109,11 +109,9 @@
     <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="PasswordHash.cs" />
-    <Compile Include="Persons.cs" />
     <Compile Include="Entities\PhoneNumber.cs" />
     <Compile Include="Entities\PhysicalAddresses.cs" />
-    <Compile Include="ProfileLocks.cs" />
-    <Compile Include="Properties.cs" />
+    <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextMessageHelper.cs" />
     <Compile Include="ValidationMethods.cs" />

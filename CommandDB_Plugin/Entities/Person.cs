@@ -211,7 +211,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The list of change events to which the person is subscribed.
         /// </summary>
-        public List<ChangeEvents.ChangeEvent> SubscribedChangeEvents { get; set; }
+        public List<ChangeEvent> SubscribedChangeEvents { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things liks login, password reset, etc.

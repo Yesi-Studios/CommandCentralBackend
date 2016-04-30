@@ -23,10 +23,10 @@ namespace CommandCentral.DataAccess
         {
             Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database("mydb")
-                                      .Username("username")
-                                      .Password("password")
-                                      .Server("127.0.0.1"))
+                    builder => builder.Database("test_tdb")
+                                      .Username("niocga")
+                                      .Password("niocga")
+                                      .Server("147.51.62.100"))
                     .ShowSql())
                     .Cache(x => x.UseQueryCache()
                                  .ProviderClass<NHibernate.Caches.SysCache.SysCacheProvider>())

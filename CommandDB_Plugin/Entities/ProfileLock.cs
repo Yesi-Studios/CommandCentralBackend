@@ -1,0 +1,63 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+
+namespace CommandCentral.Entities
+{
+    /// <summary>
+    /// Describes a single profile lock.
+    /// </summary>
+    public class ProfileLock
+    {
+
+        #region Properties
+
+        /// <summary>
+        /// The unique GUID assigned to this Profile Lock
+        /// </summary>
+        public string ID { get; set; }
+
+        /// <summary>
+        /// The person who owns this lock.
+        /// </summary>
+        public Person Owner { get; set; }
+
+        /// <summary>
+        /// The Person whose profile is locked.
+        /// </summary>
+        public Person LockedPerson { get; set; }
+
+        /// <summary>
+        /// The time at which this lock was submitted.
+        /// </summary>
+        public DateTime SubmitTime { get; set; }
+
+        #endregion
+
+        /// <summary>
+        /// Maps a profile lock to the database.
+        /// </summary>
+        public class ProfileLockMapping : ClassMap<ProfileLock>
+        {
+            /// <summary>
+            /// Maps a profile lock to the database.
+            /// </summary>
+            public ProfileLockMapping()
+            {
+                Table("profile_locks");
+
+                Id(x => x.ID).GeneratedBy.Guid();
+
+                References(x => x.Owner).Not.Nullable();
+                References(x => x.LockedPerson).Not.Nullable();
+
+                Map(x => x.SubmitTime).Not.Nullable();
+
+                Cache.ReadWrite();
+            }
+        }
+    }
+}
