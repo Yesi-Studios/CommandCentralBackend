@@ -214,9 +214,14 @@ namespace CommandCentral.Entities
         public List<ChangeEvent> SubscribedChangeEvents { get; set; }
 
         /// <summary>
-        /// A list containing account history events, these are events that track things liks login, password reset, etc.
+        /// A list containing account history events, these are events that track things like login, password reset, etc.
         /// </summary>
-        public List<AccountHistoryEvents.AccountHistoryEvent> AccountHistory { get; set; }
+        public List<AccountHistoryEvent> AccountHistory { get; set; }
+
+        /// <summary>
+        /// A list containing all changes that have every occurred to the profile.
+        /// </summary>
+        public List<Change> Changes { get; set; }
 
         #endregion
 
