@@ -18,22 +18,22 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID assigned to this Profile Lock
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The person who owns this lock.
         /// </summary>
-        public Person Owner { get; set; }
+        public virtual Person Owner { get; set; }
 
         /// <summary>
         /// The Person whose profile is locked.
         /// </summary>
-        public Person LockedPerson { get; set; }
+        public virtual Person LockedPerson { get; set; }
 
         /// <summary>
         /// The time at which this lock was submitted.
         /// </summary>
-        public DateTime SubmitTime { get; set; }
+        public virtual DateTime SubmitTime { get; set; }
 
         #endregion
 
