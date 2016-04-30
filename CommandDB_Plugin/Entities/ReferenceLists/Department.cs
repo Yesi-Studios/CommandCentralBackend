@@ -7,27 +7,15 @@ using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 
-namespace CommandCentral.Entities
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single Department and all of its divisions.
     /// </summary>
-    public class Department
+    public class Department : ReferenceListItem<Department>
     {
         #region Properties
 
-        /// <summary>
-        /// The ID of this department.
-        /// </summary>
-        public string ID { get; set; }
-        /// <summary>
-        /// The Name of this department.
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// A short description of this department.
-        /// </summary>
-        public string Description { get; set; }
         /// <summary>
         /// A list of those divisions that belong to this department.
         /// </summary>
@@ -50,10 +38,12 @@ namespace CommandCentral.Entities
 
                 Id(x => x.ID).GeneratedBy.Guid();
 
-                Map(x => x.Name).Not.Nullable().Unique().Length(20);
+                Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
                 HasMany(x => x.Divisions);
+
+                Cache.ReadOnly();
             }
         }
 

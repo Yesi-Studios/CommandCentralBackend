@@ -7,42 +7,32 @@ using FluentNHibernate.Mapping;
 using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
 
-namespace CommandCentral.Entities
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single UIC.
     /// </summary>
-    public class UIC : CachedModel<UIC>
+    public class UIC : ReferenceListItem<UIC>
     {
-        #region Properties
 
         /// <summary>
-        /// The uqniey ID of the UIC.
+        /// Maps a UIC to the database.
         /// </summary>
-        public string ID { get; set; }
-
-        /// <summary>
-        /// The name of the UIC.  Such as 40533
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// A description of this UIC.
-        /// </summary>
-        public string Description { get; set; }
-
-        #endregion
-
         public class UICMapping : ClassMap<UIC>
         {
+            /// <summary>
+            /// Maps a UIC to the database.
+            /// </summary>
             public UICMapping()
             {
                 Table("uics");
 
                 Id(x => x.ID).GeneratedBy.Guid();
 
-                Map(x => x.Name).Not.Nullable().Length(10).Unique();
+                Map(x => x.Value).Not.Nullable().Length(10).Unique();
                 Map(x => x.Description).Nullable().Length(40);
+
+                Cache.ReadOnly();
 
             }
         }

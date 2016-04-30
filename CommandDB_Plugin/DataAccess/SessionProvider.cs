@@ -3,28 +3,53 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NHibernate;
+using NHibernate.Cfg;
+using FluentNHibernate.Cfg;
+using FluentNHibernate.Data;
+using FluentNHibernate.Cfg.Db;
 
 namespace CommandCentral.DataAccess
 {
+    /// <summary>
+    /// Provides singleton managed access to NHibernate sessions.
+    /// </summary>
     public static class SessionProvider
     {
 
-        private static NHibernate.ISessionFactory factory = new NHibernate.Cfg.Configuration().Configure().BuildSessionFactory();
+        private static readonly ISessionFactory _sessionFactory;
+
+        static SessionProvider()
+        {
+            Configuration configuration = Fluently.Configure().Database(
+                MySQLConfiguration.Standard.ConnectionString(
+                    builder => builder.Database("mydb")
+                                      .Username("username")
+                                      .Password("password")
+                                      .Server("127.0.0.1"))
+                    .ShowSql())
+                    .Cache(x => x.UseQueryCache()
+                                 .ProviderClass<NHibernate.Caches.SysCache.SysCacheProvider>())
+                    .Mappings(x => x.FluentMappings.AddFromAssemblyOf<CommandCentral.Entities.Person>())
+                    .BuildConfiguration();
+
+            _sessionFactory = configuration.BuildSessionFactory();                    
+        }
 
         public static NHibernate.ISession CreateSession()
         {
-            return factory.OpenSession();
+            return _sessionFactory.OpenSession();
         }
 
         public static void Release()
         {
-            factory.Close();
-            factory.Dispose();
+            _sessionFactory.Close();
+            _sessionFactory.Dispose();
         }
 
         public static NHibernate.Metadata.IClassMetadata GetEntityMetadata(string entityName)
         {
-            return factory.GetClassMetadata(entityName);
+            return _sessionFactory.GetClassMetadata(entityName);
         }
 
 

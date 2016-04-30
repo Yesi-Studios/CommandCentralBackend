@@ -3,22 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using UnifiedServiceFramework.Framework;
-using AtwoodUtils;
 using FluentNHibernate.Mapping;
 using CommandCentral.DataAccess;
+using CommandCentral.ClientAccess;
 
 namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single billet along with its data access methods and other members.
     /// </summary>
-    public class Billet : CachedModel<Billet>
+    public class Billet : IExposable
     {
 
         #region Properties
@@ -26,47 +20,58 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique ID assigned to this Billet
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The title of this billet.
         /// </summary>
-        public string Title { get; set; }
+        public virtual string Title { get; set; }
 
         /// <summary>
         /// The ID Number of this Billet.  This is also called the Billet ID Number or BIN.
         /// </summary>
-        public string IDNumber { get; set; }
+        public virtual string IDNumber { get; set; }
 
         /// <summary>
         /// The suffix code of this Billet.  This is also called the Billet Suffix Code or BSC.
         /// </summary>
-        public string SuffixCode { get; set; }
+        public virtual string SuffixCode { get; set; }
 
         /// <summary>
         /// A free form text field intended to store notes/remarks about this billet.
         /// </summary>
-        public string Remarks { get; set; }
+        public virtual string Remarks { get; set; }
 
         /// <summary>
         /// The designation assigned to a Billet.  For an enlisted Billet, this is the Rate the Billet is intended for.  For officers, this is their designation.
         /// </summary>
-        public string Designation { get; set; }
+        public virtual string Designation { get; set; }
 
         /// <summary>
         /// The funding line that pays for this particular billet.
         /// </summary>
-        public string Funding { get; set; }
+        public virtual string Funding { get; set; }
 
         /// <summary>
         /// The NEC assigned to this billet.
         /// </summary>
-        public NEC NEC { get; set; }
+        public virtual ReferenceLists.NEC NEC { get; set; }
 
         /// <summary>
         /// The UIC assigned to this billet.
         /// </summary>
-        public UIC UIC { get; set; }
+        public virtual ReferenceLists.UIC UIC { get; set; }
+
+        /// <summary>
+        /// All the endpoints
+        /// </summary>
+        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         #endregion
 

@@ -54,6 +54,9 @@
       <HintPath>..\packages\NHibernate.4.0.4.4000\lib\net40\NHibernate.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NHibernate.Caches.SysCache">
+      <HintPath>J:\Downloads\NHCH-3.2.0.GA-bin\SysCache\NHibernate.Caches.SysCache.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -72,6 +75,12 @@
     <Compile Include="Authorization\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
+    <Compile Include="ClientAccess\ErrorTypes.cs" />
+    <Compile Include="ClientAccess\ReturnContainer.cs" />
+    <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
+    <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
+    <Compile Include="Entities\ReferenceLists\Rate.cs" />
+    <Compile Include="Entities\ReferenceLists\ReferenceList.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="ChangeEvents.cs" />
     <Compile Include="Changes.cs" />
@@ -80,23 +89,26 @@
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\Session.cs" />
     <Compile Include="CustomEndpoints.cs" />
-    <Compile Include="DataAccess\CachedModel.cs" />
     <Compile Include="DataAccess\SessionProvider.cs" />
-    <Compile Include="DataAccess\UncachedModel.cs" />
     <Compile Include="ClientAccess\APIKey.cs" />
-    <Compile Include="Entities\Command.cs" />
-    <Compile Include="Entities\Department.cs" />
-    <Compile Include="Entities\Division.cs" />
+    <Compile Include="Entities\ReferenceLists\Command.cs" />
+    <Compile Include="Entities\ReferenceLists\Department.cs" />
+    <Compile Include="Entities\ReferenceLists\Division.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="EmailHelper.cs" />
-    <Compile Include="Entities\NEC.cs" />
-    <Compile Include="Entities\UIC.cs" />
-    <Compile Include="Entities\VersionInformation.cs" />
-    <Compile Include="MusterRecords.cs" />
+    <Compile Include="Entities\ReferenceLists\NEC.cs" />
     <Compile Include="Entities\NewsItem.cs" />
+    <Compile Include="Entities\ReferenceLists\PhoneNumberType.cs" />
+    <Compile Include="Entities\ReferenceLists\Rank.cs" />
+    <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
+    <Compile Include="Entities\ReferenceLists\Sex.cs" />
+    <Compile Include="Entities\ReferenceLists\Suffix.cs" />
+    <Compile Include="Entities\ReferenceLists\UIC.cs" />
+    <Compile Include="Entities\VersionInformation.cs" />
+    <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="PasswordHash.cs" />
     <Compile Include="Persons.cs" />
-    <Compile Include="PhoneNumbers.cs" />
+    <Compile Include="Entities\PhoneNumber.cs" />
     <Compile Include="Entities\PhysicalAddresses.cs" />
     <Compile Include="ProfileLocks.cs" />
     <Compile Include="Properties.cs" />

@@ -47,9 +47,9 @@ namespace CommandCentral.Entities
         public DateTime? DateOfBirth { get; set; }
 
         /// <summary>
-        /// The person's gender.
+        /// The person's sex.
         /// </summary>
-        public string Gender { get; set; }
+        public ReferenceLists.Sex Sex { get; set; }
 
         /// <summary>
         /// The person's remarks.  This is the primary comments section
@@ -59,56 +59,56 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Stores the person's ethnicity.
         /// </summary>
-        public string Ethnicity { get; set; }
+        public ReferenceLists.Ethnicity Ethnicity { get; set; }
 
         /// <summary>
-        /// The person's reglious preference
+        /// The person's religious preference
         /// </summary>
-        public string ReligiousPreference { get; set; }
+        public ReferenceLists.ReligiousPreference ReligiousPreference { get; set; }
 
         /// <summary>
         /// The person's suffix, sch as IV, Esquire, etc.
         /// </summary>
-        public string Suffix { get; set; }
+        public ReferenceLists.Suffix Suffix { get; set; }
 
         /// <summary>
         /// The person's rank (e5, etc.)
         /// </summary>
-        public string Rank { get; set; }
+        public ReferenceLists.Rank Rank { get; set; }
 
         /// <summary>
         /// The person's rate (CTI2, CTR1)
         /// </summary>
-        public string Rate { get; set; }
+        public ReferenceLists.Rate Rate { get; set; }
 
         /// <summary>
         /// The person's division
         /// </summary>
-        public string Division { get; set; }
+        public ReferenceLists.Division Division { get; set; }
 
         /// <summary>
         /// The person's department
         /// </summary>
-        public string Department { get; set; }
+        public ReferenceLists.Department Department { get; set; }
 
         /// <summary>
         /// The person's command
         /// </summary>
-        public string Command { get; set; }
+        public ReferenceLists.Command Command { get; set; }
 
         #endregion
 
         #region Work Properties
 
         /// <summary>
-        /// The person Billet, defined in Billets.Billet
+        ///The person's billet.
         /// </summary>
-        public Billets.Billet Billet { get; set; }
+        public Billet Billet { get; set; }
 
         /// <summary>
         /// The NECs of the person.
         /// </summary>
-        public List<string> NECs { get; set; }
+        public List<ReferenceLists.NEC> NECs { get; set; }
 
         /// <summary>
         /// The person's supervisor

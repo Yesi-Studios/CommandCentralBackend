@@ -66,14 +66,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CronOperations.cs" />
-    <Compile Include="Framework\ErrorTypes.cs" />
     <Compile Include="Framework\ServiceException.cs" />
     <Compile Include="Framework\Errors.cs" />
     <Compile Include="Framework\Settings.cs" />
     <Compile Include="Framework\ServiceManager.cs" />
     <Compile Include="UnifiedEmailHelper.cs" />
     <Compile Include="Communicator.cs" />
-    <Compile Include="Framework\ReturnContainer.cs" />
     <Compile Include="IUnifiedService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnifiedService.cs" />

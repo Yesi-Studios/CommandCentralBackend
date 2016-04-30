@@ -24,11 +24,11 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         Active,
         /// <summary>
-        /// Inidicates that the message has been handled.
+        /// Indicates that the message has been handled.
         /// </summary>
         Handled,
         /// <summary>
-        /// Indicates the the message failed for some reason.
+        /// Indicates the message failed for some reason.
         /// </summary>
         Failed
     }
@@ -95,7 +95,7 @@ namespace CommandCentral.ClientAccess
             /// </summary>
             public MessageTokenMapping()
             {
-                Table("messagetokens");
+                Table("message_tokens");
 
                 Id(x => x.ID);
 
@@ -112,8 +112,6 @@ namespace CommandCentral.ClientAccess
         }
 
 
-
-    }
 
     }
 }

@@ -16,9 +16,9 @@ using CommandCentral.ClientAccess;
 namespace CommandCentral.Entities
 {
     /// <summary>
-    /// Describes the main data of the application, which reprents dynamically loaded content.
+    /// Describes the main data of the application, which represents dynamically loaded content.
     /// </summary>
-    public class VersionInformation : CachedModel<VersionInformation>, IExposable
+    public class VersionInformation : IExposable
     {
 
         #region Properties
@@ -26,17 +26,17 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The ID of this main data object.
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The current version of the application.
         /// </summary>
-        public string Version { get; set; }
+        public virtual string Version { get; set; }
 
         /// <summary>
         /// The time this main data was made.  
         /// </summary>
-        public DateTime Time { get; set; }
+        public virtual DateTime Time { get; set; }
 
         #endregion
 
@@ -46,11 +46,11 @@ namespace CommandCentral.Entities
         public class VersionInformationMapping : ClassMap<VersionInformation>
         {
             /// <summary>
-            /// Maps a version infroamtion to the database.
+            /// Maps a version information to the database.
             /// </summary>
             public VersionInformationMapping()
             {
-                Table("versioninformations");
+                Table("version_informations");
 
                 Id(x => x.ID).GeneratedBy.Guid();
 

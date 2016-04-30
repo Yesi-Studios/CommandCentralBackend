@@ -26,27 +26,27 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this Email Address
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The person that owns this email address.
         /// </summary>
-        public Person Owner { get; set; }
+        public virtual Person Owner { get; set; }
 
         /// <summary>
         /// The actual email address of this object.
         /// </summary>
-        public string Address { get; set; }
+        public virtual string Address { get; set; }
 
         /// <summary>
         /// Indicates whether or not a person wants to be contacted using this email address.
         /// </summary>
-        public bool IsContactable { get; set; }
+        public virtual bool IsContactable { get; set; }
 
         /// <summary>
         /// Indicates whether or not the client prefers to be contacted using this email address.
         /// </summary>
-        public bool IsPreferred { get; set; }
+        public virtual bool IsPreferred { get; set; }
 
         /// <summary>
         /// Indicates whether or not this email address is a mail.mil email address.  This is a calulated field, built using the Address field.

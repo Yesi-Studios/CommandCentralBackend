@@ -7,27 +7,15 @@ using FluentNHibernate.Mapping;
 using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
 
-namespace CommandCentral.Entities
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.
     /// </summary>
-    public class Command : CachedModel<Command>, IExposable
+    public class Command : ReferenceListItem<Command>, IExposable
     {
         #region Properties
 
-        /// <summary>
-        /// The ID of the command.
-        /// </summary>
-        public string ID { get; set; }
-        /// <summary>
-        /// The command's name.
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// A short description of this command.
-        /// </summary>
-        public string Description { get; set; }
         /// <summary>
         /// The departments of the command
         /// </summary>
@@ -49,10 +37,12 @@ namespace CommandCentral.Entities
 
                 Id(x => x.ID).GeneratedBy.Guid();
 
-                Map(x => x.Name).Not.Nullable().Unique().Length(20);
+                Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
                 HasMany(x => x.Departments);
+
+                Cache.ReadOnly();
             }
         }
 
