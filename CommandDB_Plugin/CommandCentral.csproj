@@ -72,13 +72,14 @@
     <Compile Include="AccountHistoryEvents.cs" />
     <Compile Include="AccountServices.cs" />
     <Compile Include="Authorization\CustomPermissions.cs" />
+    <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="Authorization\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
-    <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
+    <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
     <Compile Include="Entities\ReferenceLists\ReferenceList.cs" />
     <Compile Include="Entities\Billet.cs" />

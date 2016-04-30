@@ -138,12 +138,12 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's duty status
         /// </summary>
-        public string DutyStatus { get; set; }
+        public ReferenceLists.DutyStatus DutyStatus { get; set; }
 
         /// <summary>
         /// The person's UIC
         /// </summary>
-        public string UIC { get; set; }
+        public ReferenceLists.UIC UIC { get; set; }
 
         /// <summary>
         /// The date/time that the person arrived at the command.
@@ -172,17 +172,17 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The email addresses of this person.
         /// </summary>
-        public List<EmailAddresses.EmailAddress> EmailAddresses { get; set; }
+        public List<EmailAddress> EmailAddresses { get; set; }
 
         /// <summary>
         /// The Phone Numbers of this person.
         /// </summary>
-        public List<PhoneNumbers.PhoneNumber> PhoneNumbers { get; set; }
+        public List<PhoneNumber> PhoneNumbers { get; set; }
 
         /// <summary>
         /// The Physical Addresses of this person
         /// </summary>
-        public List<PhysicalAddresses.PhysicalAddress> PhysicalAddresses { get; set; }
+        public List<PhysicalAddress> PhysicalAddresses { get; set; }
 
         /// <summary>
         /// Instructions from the user on what avenues of contact to follow in the case of an emergency.
@@ -206,7 +206,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The list of the person's permissions.
         /// </summary>
-        public List<UnifiedServiceFramework.Authorization.Permissions.PermissionGroup> PermissionGroups { get; set; }
+        public List<> PermissionGroups { get; set; }
 
         /// <summary>
         /// The list of change events to which the person is subscribed.
