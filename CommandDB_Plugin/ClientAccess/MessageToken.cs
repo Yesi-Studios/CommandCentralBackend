@@ -38,7 +38,7 @@ namespace CommandCentral.ClientAccess
     /// <summary>
     /// Describes a message token, including its Access Methods.  Intended to be used to track an interaction with the client.
     /// </summary>
-    public class MessageToken : CachedModel<MessageToken>
+    public class MessageToken
     {
 
         #region Properties
@@ -46,42 +46,42 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique ID assigned to this message interaction
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
         /// </summary>
-        public APIKey APIKey { get; set; }
+        public virtual APIKey APIKey { get; set; }
 
         /// <summary>
         /// The time at which the client called the API.
         /// </summary>
-        public DateTime CallTime { get; set; }
+        public virtual DateTime CallTime { get; set; }
 
         /// <summary>
         /// The Arguments the client sent to the API.
         /// </summary>
-        public Dictionary<string, object> Args { get; set; }
+        public virtual Dictionary<string, object> Args { get; set; }
 
         /// <summary>
         /// The endpoint that was invoked by the client.
         /// </summary>
-        public string Endpoint { get; set; }
+        public virtual string Endpoint { get; set; }
 
         /// <summary>
         /// The current state of the message interaction.
         /// </summary>
-        public MessageStates State { get; set; }
+        public virtual MessageStates State { get; set; }
 
         /// <summary>
         /// The time at which the message was handled.
         /// </summary>
-        public DateTime HandledTime { get; set; }
+        public virtual DateTime HandledTime { get; set; }
 
         /// <summary>
         /// The session that was active when the message began.
         /// </summary>
-        public Session Session { get; set; }
+        public virtual Session Session { get; set; }
 
         #endregion
 
@@ -107,6 +107,8 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.Endpoint).Not.Nullable().Length(40);
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();
+
+                Cache.ReadOnly();
 
             }
         }

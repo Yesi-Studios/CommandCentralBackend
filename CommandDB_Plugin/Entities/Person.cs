@@ -206,7 +206,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The list of the person's permissions.
         /// </summary>
-        public List<> PermissionGroups { get; set; }
+        public List<SpecialPermission> PermissionGroups { get; set; }
 
         /// <summary>
         /// The list of change events to which the person is subscribed.

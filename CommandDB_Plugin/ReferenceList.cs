@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommandCentral.Entities.ReferenceLists
+namespace CommandCentral
 {
     /// <summary>
     /// Provides abstracted access to a reference list such as Ranks or Rates.

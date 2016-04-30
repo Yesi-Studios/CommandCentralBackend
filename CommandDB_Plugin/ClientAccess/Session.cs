@@ -18,44 +18,44 @@ namespace CommandCentral.ClientAccess
     /// <summary>
     /// Describes a single session and provides members for interacting with that session.
     /// </summary>
-    public class Session : CachedModel<Session>
+    public class Session
     {
         #region Properties
 
         /// <summary>
         /// The ID of the session.  This ID should also be used as the authentication token by the client.
         /// </summary>
-        public string ID { get; set; }
+        public virtual string ID { get; set; }
 
         /// <summary>
         /// The time this session was created which is the time the client logged in.
         /// </summary>
-        public DateTime LoginTime { get; set; }
+        public virtual DateTime LoginTime { get; set; }
 
         /// <summary>
         /// The person to whom this session belongs.
         /// </summary>
-        public Entities.Person Person { get; set; }
+        public virtual Entities.Person Person { get; set; }
 
         /// <summary>
         /// The time at which the client logged out, thus invalidating this session.
         /// </summary>
-        public DateTime LogoutTime { get; set; }
+        public virtual DateTime LogoutTime { get; set; }
 
         /// <summary>
         /// Indicates where or not the session is valid.
         /// </summary>
-        public bool IsActive { get; set; }
+        public virtual bool IsActive { get; set; }
 
         /// <summary>
         /// The permissions of the user to whom this session belongs.
         /// </summary>
-        public List<CommandCentral.Authorization.PermissionGroup> Permissions { get; set; }
+        public virtual List<CommandCentral.Authorization.PermissionGroup> Permissions { get; set; }
 
         /// <summary>
         /// The last time this session was used, not counting this current time.
         /// </summary>
-        public DateTime LastUsedTime { get; set; }
+        public virtual DateTime LastUsedTime { get; set; }
 
         #endregion
 
@@ -97,6 +97,8 @@ namespace CommandCentral.ClientAccess
                 References(x => x.Person);
                 HasManyToMany(x => x.Permissions)
                     .Cascade.All().Inverse();
+
+                Cache.ReadOnly();
             }
         }
 

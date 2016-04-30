@@ -73,7 +73,7 @@
     <Compile Include="AccountServices.cs" />
     <Compile Include="Authorization\CustomPermissions.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
-    <Compile Include="Authorization\SpecialPermission.cs" />
+    <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
@@ -81,7 +81,7 @@
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
-    <Compile Include="Entities\ReferenceLists\ReferenceList.cs" />
+    <Compile Include="ReferenceList.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="ChangeEvents.cs" />
     <Compile Include="Changes.cs" />

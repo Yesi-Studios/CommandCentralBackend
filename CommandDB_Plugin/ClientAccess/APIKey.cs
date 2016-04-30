@@ -11,7 +11,7 @@ namespace CommandCentral.ClientAccess
     /// <summary>
     /// Describes a single API Key.
     /// </summary>
-    public class APIKey : DataAccess.CachedModel<APIKey>
+    public class APIKey
     {
 
         #region Properties
@@ -43,7 +43,7 @@ namespace CommandCentral.ClientAccess
         #endregion
 
         /// <summary>
-        /// Provides mapping declarations to the databaes for the API Key.
+        /// Provides mapping declarations to the database for the API Key.
         /// </summary>
         public class APIKeyMap : ClassMap<APIKey>
         {
@@ -52,11 +52,13 @@ namespace CommandCentral.ClientAccess
             /// </summary>
             public APIKeyMap()
             {
-                Table("apikeys");
+                Table("api_keys");
 
                 Id(x => x.ID).GeneratedBy.Guid();
 
                 Map(x => x.ApplicationName).Unique().Length(40);
+
+                Cache.ReadOnly();
             }
         }
 
