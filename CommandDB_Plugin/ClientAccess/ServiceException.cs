@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UnifiedServiceFramework.Framework
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Provides a custom exception meant to be used to differentiate between this and normal CLR exceptions.
@@ -29,29 +29,37 @@ namespace UnifiedServiceFramework.Framework
         }
 
         /// <summary>
+        /// The HTTP Status Code associated with this error.
+        /// </summary>
+        public HTTPStatusCodes HTTPStatusCode { get; set; }
+
+        /// <summary>
         /// Creates a new instance of a ServiceException
         /// </summary>
-        public ServiceException(ErrorTypes errorType)
+        public ServiceException(ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
         {
             this.ErrorType = errorType;
+            this.HTTPStatusCode = httpStatusCode;
         }
 
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message
         /// </summary>
-        public ServiceException(string message, ErrorTypes errorType)
+        public ServiceException(string message, ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
             : base(message)
         {
             this.ErrorType = errorType;
+            this.HTTPStatusCode = httpStatusCode;
         }
 
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message and inner exception.
         /// </summary>
-        public ServiceException(string message, Exception inner, ErrorTypes errorType)
+        public ServiceException(string message, Exception inner, ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
             : base(message, inner)
         {
             this.ErrorType = errorType;
+            this.HTTPStatusCode = httpStatusCode;
         }
     }
 }

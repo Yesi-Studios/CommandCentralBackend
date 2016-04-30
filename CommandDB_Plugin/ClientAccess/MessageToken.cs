@@ -85,6 +85,31 @@ namespace CommandCentral.ClientAccess
 
         #endregion
 
+        #region Helper Methods
+
+        /// <summary>
+        /// Attempts to obtain an argument from the underlying args dictionary and throws an exception with the given error if it can't find it.
+        /// </summary>
+        /// <param name="argName"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
+        public object GetArgOrFail(string argName, string errorMessage)
+        {
+            try
+            {
+                if (!this.Args.ContainsKey(argName))
+                    throw new ServiceException(errorMessage, ErrorTypes.Validation);
+
+                return this.Args[argName];
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a message token to the database.
         /// </summary>

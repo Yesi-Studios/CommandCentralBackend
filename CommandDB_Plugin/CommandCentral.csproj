@@ -39,6 +39,10 @@
       <HintPath>..\packages\FluentNHibernate.2.0.3.0\lib\net40\FluentNHibernate.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="FluentValidation, Version=6.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.6.2.1.0\lib\Net45\FluentValidation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
       <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
       <Private>True</Private>
@@ -76,7 +80,9 @@
     <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
+    <Compile Include="ClientAccess\HTTPStatusCodes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
+    <Compile Include="ClientAccess\ServiceException.cs" />
     <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />

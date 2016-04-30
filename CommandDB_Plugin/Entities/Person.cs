@@ -241,6 +241,26 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Client Access Methods
+
+        public static async Task<MessageToken> Login_Client(MessageToken token)
+        {
+            try
+            {
+                //First, we need the username and the password.
+                if (!token.Args.ContainsKey("username"))
+
+
+                return token;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// The exposed endpoints
         /// </summary>
