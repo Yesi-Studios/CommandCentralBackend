@@ -69,6 +69,13 @@ namespace CommandCentral.ClientAccess
         public virtual string Endpoint { get; set; }
 
         /// <summary>
+        /// Stores the result from the service.  This is not mapped to the database yet.
+        /// <para />
+        /// TODO: map this to the database.
+        /// </summary>
+        public object Result { get; set; }
+
+        /// <summary>
         /// The current state of the message interaction.
         /// </summary>
         public virtual MessageStates State { get; set; }

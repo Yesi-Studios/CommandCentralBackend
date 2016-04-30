@@ -242,8 +242,43 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns a friendly name for this user in the form: CTI2 Atwood, Daniel Kurt Roger
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Format("{0} {1}, {2} {3}", this.Rate, this.LastName, this.FirstName, this.MiddleName);
+        }
+
+        #endregion
+
         #region Client Access Methods
 
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Logs in the user by searching for the user's username and then checking to ensure that the password matches the password given.  
+        /// Passwords are compared using a slow equals to defend against server timing attacks.
+        /// <para />
+        /// If the username or password are not given or not correct, exceptions are thrown.
+        /// <para />
+        /// Additionally, if the password is incorrect then we also send an email to the user informing them that a failed login attempt occurred.
+        /// <para />
+        /// If the username/password combo is good, we create a new session, insert it into the database and add it to the cache.
+        /// <para />
+        /// Finally, we return the session id to be used as the authentication token for further requests along with some other information.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// username : the username of the account that we are trying to log into.
+        /// <para />
+        /// password : the clear text password for the given username.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         public static MessageToken Login_Client(MessageToken token)
         {
             try
@@ -254,34 +289,71 @@ namespace CommandCentral.Entities
 
                 //TODO: validate username and password
 
+                //Alright, now we're going to grab a session and then use it to load all persons where the username is the username we were sent.
+                //We should only get one username back.  
                 using (var session = DataAccess.SessionProvider.CreateSession())
                 {
                     using (var transaction = session.BeginTransaction())
                     {
-                        var results = session.CreateCriteria<Person>()
-                            .SetCacheable(true).SetCacheMode(NHibernate.CacheMode.Normal)
-                            .Add(Restrictions.Eq("Username", username))
+                        //The query itself.
+                        var results = session.QueryOver<Person>()
+                            .Where(x => x.Username == username)
+                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
                             .List<Person>();
 
-                        if (results.Count > 1)
+                        if (results.Count() > 1)
                             throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
 
-                        if (results.Count == 0)
+                        if (results.Count() == 0)
                             throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
 
-                        if (CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
+                        //If the password is bad
+                        if (!CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
                         {
-                        }
-                        else
-                        {
+                            //If the password doesn't check out we need to send the person who owns this account a failed login email.
+                            EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
 
+                            if (address == null)
+                                throw new Exception(string.Format("Login failed to the person's account whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
+
+                            //Ok, so we have an email we can use to contact the person!
+                            EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].ID).Wait();
+
+                            //Now that we have alerted the user, we can fail out.
+                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
                         }
+
+                        //Alright, if we got here, then we have a good password.
+                        //In this case, we need to create a new session for the client and then insert it.
+                        Session ses = new Session
+                        {
+                            IsActive = true,
+                            LastUsedTime = token.CallTime,
+                            LoginTime = token.CallTime,
+                            Permissions = results[0].PermissionGroups,
+                            Person = results[0]
+                        };
+
+                        //Now insert it
+                        session.Save(ses);
+
+                        //Now log the account history event on the person.
+                        results[0].AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                            EventTime = token.CallTime,
+                            Person = results[0]
+                        });
+
+                        //And update the person
+                        session.SaveOrUpdate(results[0]);
+
+                        //Cool now we just need to give the token back to the client along with some other stuff.
+                        token.Result = new { PersonID = results[0].ID, PermissionGroups = results[0].PermissionGroups, AuthenticationToken = ses.ID, FriendlyName = results[0].ToString() };
+
+                        return token;
                     }
                 }
-
-
-
-                    return token;
             }
             catch
             {

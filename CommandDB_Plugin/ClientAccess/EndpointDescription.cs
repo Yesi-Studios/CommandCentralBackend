@@ -8,7 +8,7 @@ using System.Reflection;
 namespace CommandCentral.ClientAccess
 {
     /// <summary>
-    /// Provides members that describe an endpoint.  Intended to allow dynamic endpoint invokation.
+    /// Provides members that describe an endpoint.  Intended to allow dynamic endpoint invocation.
     /// </summary>
     public class EndpointDescription
     {
@@ -30,7 +30,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The data method that this endpoint will use to retrieve its data.  All data methods must take and return a message token.
         /// </summary>
-        public Func<MessageTokens.MessageToken, Task<MessageTokens.MessageToken>> DataMethodAsync { get; set; }
+        public Func<MessageToken, MessageToken> DataMethod { get; set; }
 
         /// <summary>
         /// A description of the endpoint.  This is intended to be used such that clients can request a "manual" type of thing for endpoints.
@@ -53,7 +53,7 @@ namespace CommandCentral.ClientAccess
         public bool IsActive { get; set; }
 
         /// <summary>
-        /// A method that, when run, procudes a string that mimics expected output from the service for this endpoint.
+        /// A method that, when run, produces a string that mimics expected output from the service for this endpoint.
         /// </summary>
         public Func<string> ExampleOutput { get; set; }
 
