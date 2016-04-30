@@ -453,7 +453,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken BeginRegistration(MessageToken token)
+        public static MessageToken BeginRegistration_Client(MessageToken token)
         {
             try
             {
@@ -585,7 +585,7 @@ namespace CommandCentral.Entities
                             AuthorizationNote = "Client must be logged in.",
                             DataMethod = Logout_Client,
                             Description = "Logs out the user by invalidating the session/deleted it from the database.",
-                            ExampleOutput = () => "TODO",
+                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
                             IsActive = true,
                             OptionalParameters = null,
                             RequiredParameters = new List<string>()
@@ -595,6 +595,25 @@ namespace CommandCentral.Entities
                             },
                             RequiredSpecialPermissions = null,
                             RequiresAuthentication = true
+                        }
+                    },
+                    { "BeginRegistration", new EndpointDescription
+                        {
+                            AllowArgumentLogging = true,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "None.",
+                            DataMethod = BeginRegistration_Client,
+                            Description = "Begins the registration process.",
+                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
                         }
                     }
 
