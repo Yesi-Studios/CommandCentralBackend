@@ -359,7 +359,9 @@ namespace CommandCentral.Entities
                         }
                         catch
                         {
-                            transaction.Rollback();
+                            //If an error was thrown before the transaction was committed, roll it back.
+                            if (!transaction.WasCommitted)
+                                transaction.Rollback();
                             throw;
                         }
                     }
@@ -419,7 +421,9 @@ namespace CommandCentral.Entities
                     }
                     catch
                     {
-                        transaction.Rollback();
+                        //If an error was thrown before the transaction was committed, roll it back.
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
                         throw;
                     }
                 }
@@ -459,6 +463,8 @@ namespace CommandCentral.Entities
             {
                 //First we need the client's ssn.  This is the account they want to claim.
                 string ssn = token.GetArgOrFail("ssn", "You must send an SSN.") as string;
+
+                //TODO validate the ssn.
 
                 using (var session = DataAccess.SessionProvider.CreateSession())
                 using (var transaction = session.BeginTransaction())
@@ -500,7 +506,17 @@ namespace CommandCentral.Entities
                             throw new ServiceException("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
                                 "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
 
-                        //Well, looks like we have a DOD email address.  Let's make an account confirmation... thing.
+                        //Let's see if there is already a pending account confirmation.
+                        var pendingAccountConfirmations = session.QueryOver<PendingAccountConfirmation>()
+                            .Where(x => x.Person.ID == results[0].ID)
+                            .List<PendingAccountConfirmation>();
+
+                        //If there are any (should only be one) then we're going to delete all of them.  
+                        //This would happen if the client let one sit too long and it become invalid and then had to call begin registration again.
+                        if (pendingAccountConfirmations.Any())
+                            pendingAccountConfirmations.ToList().ForEach(x => session.Delete(x));
+
+                        //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                         var pendingAccountConfirmation = new PendingAccountConfirmation
                         {
                             Person = results[0],
@@ -531,7 +547,10 @@ namespace CommandCentral.Entities
                     }
                     catch
                     {
-                        transaction.Rollback();
+                        //If an error was thrown before the transaction was committed, roll it back.
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+
                         throw;
                     }
                 }
@@ -540,6 +559,108 @@ namespace CommandCentral.Entities
             }
             catch
             {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Completes the registration process by assigning a username and password to a user's account, thus allowing the user to claim the account.  If the account confirmation id isn't valid,
+        /// <para />
+        /// an error is thrown.  The could happen if begin registration hasn't happened yet.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// username : the username the client wants to assign to the account.
+        /// <para />
+        /// password : the password the client wants to assign to the account.
+        /// <para />
+        /// accountconfirmationid : The unique ID that was sent to the user's email address by the begin registration endpoint.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static MessageToken CompleteRegistration_Client(MessageToken token)
+        {
+            try
+            {
+                string username = token.GetArgOrFail("username", "You must send a username") as string;
+                string password = token.GetArgOrFail("password", "You must send a password") as string;
+                string accountConfirmationID = token.GetArgOrFail("accountconfirmationid", "You must send an account confirmation ID.") as string;
+
+                //TODO validate the above three things.
+
+                //Now we're going to try to find a pending account confirmation for the ID the client gave us.  
+                //If we find one, we're going to look at the time on it and make sure it is still valid.
+                //If it is, then we'll look up the person and make sure the person hasn't already been claimed. (that shouldn't be possible given the order of events but we'll throw an error anyways)
+                //If the client isn't claimed, we'll set the username and password on the profile to what the client wants, switch IsClaimed to true, and delete the pending account confirmation.
+                //Finally, we'll update the profile with an account history event.
+                //Then return. ... fuck, ok, here we go.
+
+                using (var session = DataAccess.SessionProvider.CreateSession())
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationID);
+
+                        //There is no record.
+                        if (pendingAccountConfirmation == null)
+                            throw new ServiceException("For the account confirmation ID that you provided, no account registration process has been started.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
+
+                        //Is the record valid?
+                        if (!pendingAccountConfirmation.IsValid())
+                        {
+                            //If not we need to delete the record and then tell the client to start over.
+                            session.Delete(pendingAccountConfirmation);
+
+                            transaction.Commit();
+
+
+                            throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
+                        }
+
+                        //Ok now that we know the record is valid, let's see if the person is already claimed.
+                        if (pendingAccountConfirmation.Person.IsClaimed)
+                            throw new Exception("During complete registration, a valid pending account registration object was created for an already claimed account.");
+
+                        //Alright, we're ready to update the person then!
+                        pendingAccountConfirmation.Person.Username = username;
+                        pendingAccountConfirmation.Person.PasswordHash = CommandCentral.PasswordHash.CreateHash(password);
+                        pendingAccountConfirmation.Person.IsClaimed = true;
+
+                        //Ok, let's also add an account history saying we completed registration.
+                        pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Registration_Completed,
+                            EventTime = token.CallTime,
+                            Person = pendingAccountConfirmation.Person
+                        });
+
+                        //Cool, so now just update the person object.
+                        session.Update(pendingAccountConfirmation.Person);
+
+                        //Now delete the pending account confirmation
+                        session.Delete(pendingAccountConfirmation);
+
+                        token.Result = "Success";
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        //If an error was thrown before the transaction was committed, roll it back.
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return token;
+            }
+            catch
+            {
+
                 throw;
             }
         }
@@ -611,6 +732,27 @@ namespace CommandCentral.Entities
                             {
                                 "apikey - The unique GUID token assigned to your application for metrics purposes.",
                                 "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
+                        }
+                    },
+                    { "CompleteRegistration", new EndpointDescription
+                        {
+                            AllowArgumentLogging = false,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "None.",
+                            DataMethod = CompleteRegistration_Client,
+                            Description = "Completes the registration process and assigns the username and password to the desired user account.",
+                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "username - The username the client wants to be assigned to the account.",
+                                "password - The password the client wants to be assigned to the account.",
+                                "accountconfirmationid - The unique GUID token that was sent to the user through their DOD email."
                             },
                             RequiredSpecialPermissions = null,
                             RequiresAuthentication = false

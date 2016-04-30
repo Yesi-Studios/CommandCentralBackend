@@ -23,40 +23,6 @@ namespace CommandCentral
         public static ConcurrentDictionary<string,  EndpointDescription> CustomEndpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(new List<KeyValuePair<string, EndpointDescription>>()
         {
             
-            new KeyValuePair<string, EndpointDescription>("BeginRegistration", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.BeginRegistration,
-                Description = "Begins the registration process.",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = false,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception." 
-                },
-                AuthorizationNote = "No authorization is done on this endpoint.",
-                ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                IsActive = true
-            }),
-            new KeyValuePair<string, EndpointDescription>("CompleteRegistration", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.CompleteRegistration_Client,
-                Description = "Completes the registration process and assigns the username and password to the desired user account.",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = false,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "username - The username the client wants to be assigned to the account.", 
-                    "password - The password the client wants to be assigned to the account.", 
-                    "emailconfirmationid - The unique GUID token that was sent to the user through their DOD email." 
-                },
-                AuthorizationNote = "No authorization is done on this endpoint.",
-                ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                IsActive = true
-            }),
             new KeyValuePair<string, EndpointDescription>("InitiatePasswordReset", new EndpointDescription() 
             {
                 DataMethodAsync = AccountServices.InitiatePasswordReset,
