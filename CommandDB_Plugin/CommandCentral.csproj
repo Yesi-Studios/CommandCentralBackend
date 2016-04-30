@@ -83,6 +83,7 @@
     <Compile Include="ClientAccess\HTTPStatusCodes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="ClientAccess\ServiceException.cs" />
+    <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
