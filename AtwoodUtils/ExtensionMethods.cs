@@ -267,27 +267,6 @@ namespace AtwoodUtils
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
         }
 
-        /// <summary>
-        /// Attempts to deserialize a value into a given type and, on failure, returns default(T). Calls TryDeserialize behind the scenes.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="json"></param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public static T DeserializeOrDefault<T>(this string json)
-        {
-            try
-            {
-                T obj;
-                json.TryDeserialize<T>(out obj);
-                return obj;
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
         public static JObject DeserializeToJObject(this string json)
         {
             return Newtonsoft.Json.Linq.JObject.Parse(json);

@@ -30,6 +30,8 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
+
+            return "";
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
             string messageID = Guid.NewGuid().ToString();
             string clientID = "";
@@ -83,6 +85,7 @@ namespace CommandCentral.ClientAccess.Service
                         }
                     }
                 }
+                /*
 
                 //If this message allows logging, then log it.
                 await token.DBInsert(true, desc.AllowArgumentLogging, desc.AllowResponseLogging);
@@ -91,7 +94,7 @@ namespace CommandCentral.ClientAccess.Service
                 Communicator.PostMessageToHost(string.Format("{0} processed @ {1}", messageID, DateTime.Now), Communicator.MessagePriority.Informational);
 
                 //Invoke the endpoint's data method.
-                token = await desc.DataMethodAsync(token);
+                //token = await desc.DataMethodAsync(token);
 
                 //Build what will be our final return string.  We do this prior to updating the message as "handled" in case serializing the return container takes an appreciable about of time so that we don't show a false handled time.
                 string finalResult = new Framework.ReturnContainer()
@@ -109,13 +112,13 @@ namespace CommandCentral.ClientAccess.Service
                 //Tell the host we finished with the message.
                 Communicator.PostMessageToHost(string.Format("{0} handled @ {1}", messageID, DateTime.Now), Communicator.MessagePriority.Informational);
 
-                //Return our result.
-                return finalResult;
+                //Return our result.*/
+                return "";
 
             }
             catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
             {
-                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
+                /*//Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
                 MessageTokens.UpdateOnExpectedError(messageID, e.Message);
 
                 //Tell the client we handled the reqest as a validation error.
@@ -128,11 +131,11 @@ namespace CommandCentral.ClientAccess.Service
                     HasError = true,
                     ErrorType = e.ErrorType,
                     ReturnValue = null
-                }.Serialize();
+                }.Serialize();*/
             }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
-                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
+                /*//Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
                 MessageTokens.UpdateOnFatalError(messageID, e.Message);
 
                 //Log the error in the errors table.
@@ -160,7 +163,7 @@ namespace CommandCentral.ClientAccess.Service
                     HasError = true,
                     ErrorType = ErrorTypes.Fatal,
                     ReturnValue = null
-                }.Serialize();
+                }.Serialize();*/
             }
 
 

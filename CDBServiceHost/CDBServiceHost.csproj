@@ -88,19 +88,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Interfaces\ChangeEvents.cs" />
-    <Compile Include="Interfaces\CommandsEditor.cs" />
-    <Compile Include="Interfaces\DepartmentsEditor.cs" />
-    <Compile Include="Interfaces\DivisionsEditor.cs" />
-    <Compile Include="Interfaces\EndpointsEditor.cs" />
-    <Compile Include="Interfaces\ErrorsEditor.cs" />
-    <Compile Include="Interfaces\GenericInterfaces.cs" />
-    <Compile Include="Interfaces\ListsEditor.cs" />
-    <Compile Include="Interfaces\PermissionGroups.cs" />
-    <Compile Include="Interfaces\TablePermissions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -111,10 +100,6 @@
     <ProjectReference Include="..\AtwoodUtils\AtwoodUtils.csproj">
       <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
       <Name>AtwoodUtils</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CDBServiceLibrary\UnifiedServiceFramework.csproj">
-      <Project>{b640527f-ded5-4939-b7ca-5deeeedc782a}</Project>
-      <Name>UnifiedServiceFramework</Name>
     </ProjectReference>
     <ProjectReference Include="..\CommandDB_Plugin\CommandCentral.csproj">
       <Project>{f2d303ea-4081-4b7b-8bc2-54686d907c94}</Project>

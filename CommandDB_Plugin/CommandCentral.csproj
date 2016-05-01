@@ -78,8 +78,8 @@
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
+    <Compile Include="CronOperations.cs" />
     <Compile Include="Entities\AccountHistoryEvents.cs" />
-    <Compile Include="Authorization\CustomPermissions.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
@@ -87,6 +87,7 @@
     <Compile Include="ClientAccess\HTTPStatusCodes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="ClientAccess\ServiceException.cs" />
+    <Compile Include="Entities\Errors.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
     <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
@@ -101,7 +102,6 @@
     <Compile Include="ClientAccess\EndpointDescription.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
-    <Compile Include="CustomEndpoints.cs" />
     <Compile Include="DataAccess\SessionProvider.cs" />
     <Compile Include="ClientAccess\APIKey.cs" />
     <Compile Include="Entities\ReferenceLists\Command.cs" />
@@ -165,10 +165,6 @@
     <ProjectReference Include="..\AtwoodUtils\AtwoodUtils.csproj">
       <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
       <Name>AtwoodUtils</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CDBServiceLibrary\UnifiedServiceFramework.csproj">
-      <Project>{b640527f-ded5-4939-b7ca-5deeeedc782a}</Project>
-      <Name>UnifiedServiceFramework</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

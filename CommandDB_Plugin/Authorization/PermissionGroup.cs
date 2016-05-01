@@ -32,7 +32,7 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Additional list of permissions.  Intended to describe access to other parts of the application as defined by the consumer.
         /// </summary>
-        public virtual List<SpecialPermission> SpecialPermissions { get; set; }
+        public virtual List<ReferenceLists.SpecialPermission> SpecialPermissions { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.

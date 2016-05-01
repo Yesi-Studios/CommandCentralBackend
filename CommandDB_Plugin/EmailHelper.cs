@@ -146,7 +146,7 @@ namespace CommandCentral
             }
         }
 
-        public static async Task SendAccountUpdatedEmail(string emailAddressTo, string editorID, List<Changes.Change> changes)
+        public static async Task SendAccountUpdatedEmail(string emailAddressTo, string editorID, List<Entities.Change> changes)
         {
             try
             {
@@ -172,7 +172,7 @@ namespace CommandCentral
             }
         }
 
-        public static async Task SendChangeEventOccuredEmail(string emailAddressTo, string editorID, string modelPrimaryID, string eventName, string modelName, List<Changes.Change> changes)
+        public static async Task SendChangeEventOccuredEmail(string emailAddressTo, string editorID, string modelPrimaryID, string eventName, string modelName, List<Entities.Change> changes)
         {
             try
             {
@@ -198,7 +198,7 @@ namespace CommandCentral
             }
         }
 
-        public static async Task SendBilletsUpdatedEmail(string emailAddressTo, string editorID, List<Changes.Change> changes)
+        public static async Task SendBilletsUpdatedEmail(string emailAddressTo, string editorID, List<Entities.Change> changes)
         {
             try
             {
@@ -321,6 +321,53 @@ namespace CommandCentral
             message.CC.Add(_emailSenderAddress);
 
             return message;
+
+        }
+
+        /// <summary>
+        /// Sends an email message to the unified service developers alerting them that a fatal error has occurred.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static async Task SendFatalErrorEmail(ClientAccess.MessageToken token, Exception e)
+        {
+            //The warning disable here is to supress the warning that tells us that using the "ReplyTo" field is obsolete.  
+            //The only other options is to use the ReplyToList and then use the .Add method on it.  This is easier so Yolo.
+            /*#pragma warning disable 612, 618
+            MailMessage message = new MailMessage()
+            {
+                IsBodyHtml = true,
+                From = _unifiedSenderAddress,
+                Sender = _unifiedSenderAddress,
+                ReplyTo = _unifiedSenderAddress,
+                Priority = MailPriority.High,
+                Subject = "IMPORTANT!  Unified Service Crash Error Report"
+            };
+            #pragma warning restore 612, 618
+
+            if (token.Session == null)
+            {
+                message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
+                    "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
+                    token.ID, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
+                    e.Message, (e.InnerException == null) ? "NULL" : e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
+            }
+            else
+            {
+                message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
+                    token.Session.ID, token.Session.LoginTime.ToUniversalTime(), token.Session.PersonID, token.Session.LogoutTime.ToUniversalTime(),
+                    token.Session.IsActive, token.Session.PermissionIDs.Serialize(),
+                    token.ID, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
+                    e.Message, e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
+            }
+
+
+            _developerEmailAddresses.ForEach(x => message.To.Add(x));
+
+            SmtpClient client = new SmtpClient(SmtpHost);
+            client.DeliveryMethod = SmtpDeliveryMethod.Network;
+            await client.SendMailAsync(message);*/
 
         }
 

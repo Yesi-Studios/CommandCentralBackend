@@ -65,9 +65,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CronOperations.cs" />
     <Compile Include="Framework\Errors.cs" />
-    <Compile Include="UnifiedEmailHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
