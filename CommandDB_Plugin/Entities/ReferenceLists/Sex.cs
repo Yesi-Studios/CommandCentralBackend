@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single sex.
     /// </summary>
-    public class Sex : ReferenceListItem<Sex>
+    public class Sex : ReferenceListItemBase<Sex>
     {
         /// <summary>
         /// Maps sex to the database.

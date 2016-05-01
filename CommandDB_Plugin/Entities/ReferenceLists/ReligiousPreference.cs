@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Religious Preference
     /// </summary>
-    public class ReligiousPreference : ReferenceListItem<ReligiousPreference>
+    public class ReligiousPreference : ReferenceListItemBase<ReligiousPreference>
     {
         /// <summary>
         /// Maps a Religious Preference to the database.

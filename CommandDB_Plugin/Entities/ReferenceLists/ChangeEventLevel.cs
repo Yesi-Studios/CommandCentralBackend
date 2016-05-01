@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single ChangeEventLevel.
     /// </summary>
-    public class ChangeEventLevel : ReferenceListItem<ChangeEventLevel>
+    public class ChangeEventLevel : ReferenceListItemBase<ChangeEventLevel>
     {
         /// <summary>
         /// Maps ChangeEventLevel to the database.

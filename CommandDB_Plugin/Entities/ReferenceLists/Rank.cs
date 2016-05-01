@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single rank.
     /// </summary>
-    public class Rank : ReferenceListItem<Rank>
+    public class Rank : ReferenceListItemBase<Rank>
     {
         /// <summary>
         /// Maps a rank to the database.

@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single DutyStatus.
     /// </summary>
-    public class DutyStatus : ReferenceListItem<DutyStatus>
+    public class DutyStatus : ReferenceListItemBase<DutyStatus>
     {
         /// <summary>
         /// Maps a DutyStatus to the database.

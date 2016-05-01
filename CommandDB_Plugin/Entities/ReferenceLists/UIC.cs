@@ -12,7 +12,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single UIC.
     /// </summary>
-    public class UIC : ReferenceListItem<UIC>
+    public class UIC : ReferenceListItemBase<UIC>
     {
 
         /// <summary>

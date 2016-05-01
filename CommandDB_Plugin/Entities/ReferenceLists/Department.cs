@@ -12,7 +12,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Department and all of its divisions.
     /// </summary>
-    public class Department : ReferenceListItem<Department>
+    public class Department : ReferenceListItemBase<Department>
     {
         #region Properties
 

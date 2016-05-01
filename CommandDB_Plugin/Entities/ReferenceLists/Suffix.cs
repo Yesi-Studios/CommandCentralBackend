@@ -11,7 +11,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single suffix
     /// </summary>
-    public class Suffix : ReferenceListItem<Suffix>
+    public class Suffix : ReferenceListItemBase<Suffix>
     {
         /// <summary>
         /// Maps a suffix to the database.

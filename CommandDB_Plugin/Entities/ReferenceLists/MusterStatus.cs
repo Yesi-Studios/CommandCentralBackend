@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single MusterStatus.
     /// </summary>
-    public class MusterStatus : ReferenceListItem<MusterStatus>
+    public class MusterStatus : ReferenceListItemBase<MusterStatus>
     {
         /// <summary>
         /// Maps a MusterStatus to the database.

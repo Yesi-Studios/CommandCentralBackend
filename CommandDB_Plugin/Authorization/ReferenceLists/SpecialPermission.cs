@@ -10,7 +10,7 @@ namespace CommandCentral.Authorization.ReferenceLists
     /// <summary>
     /// Describes a single SpecialPermission
     /// </summary>
-    public class SpecialPermission : ReferenceListItem<SpecialPermission>
+    public class SpecialPermission : ReferenceListItemBase<SpecialPermission>
     {
         /// <summary>
         /// Maps a SpecialPermission to the database.

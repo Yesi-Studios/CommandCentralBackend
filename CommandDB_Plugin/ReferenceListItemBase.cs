@@ -10,7 +10,7 @@ namespace CommandCentral
     /// Provides abstracted access to a reference list such as Ranks or Rates.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class ReferenceListItem<T> where T : class
+    public abstract class ReferenceListItemBase<T> where T : class
     {
         /// <summary>
         /// The ID of this reference item.

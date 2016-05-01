@@ -12,7 +12,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.
     /// </summary>
-    public class Command : ReferenceListItem<Command>, IExposable
+    public class Command : ReferenceListItemBase<Command>, IExposable
     {
         #region Properties
 

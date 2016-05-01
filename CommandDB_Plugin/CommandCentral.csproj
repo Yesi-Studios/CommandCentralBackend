@@ -89,7 +89,7 @@
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
-    <Compile Include="ReferenceList.cs" />
+    <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />

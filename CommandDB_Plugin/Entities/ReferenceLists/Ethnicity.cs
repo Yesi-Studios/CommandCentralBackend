@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single ethnicity
     /// </summary>
-    public class Ethnicity : ReferenceListItem<Ethnicity>
+    public class Ethnicity : ReferenceListItemBase<Ethnicity>
     {
         /// <summary>
         /// Maps an ethnicity to the database.

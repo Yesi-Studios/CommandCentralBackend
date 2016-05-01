@@ -12,7 +12,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Division.
     /// </summary>
-    public class Division : ReferenceListItem<Division>
+    public class Division : ReferenceListItemBase<Division>
     {
         /// <summary>
         /// Maps a division to the database.
