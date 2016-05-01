@@ -7,8 +7,8 @@
     <ProjectGuid>{79396ACA-E67E-44B5-AAC7-2B87073A5CC6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CDBServiceHost</RootNamespace>
-    <AssemblyName>CDBServiceHost</AssemblyName>
+    <RootNamespace>CommandCentralHost</RootNamespace>
+    <AssemblyName>CommandCentralHost</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -101,7 +101,7 @@
       <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
       <Name>AtwoodUtils</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CommandDB_Plugin\CommandCentral.csproj">
+    <ProjectReference Include="..\CommandCentral\CommandCentral.csproj">
       <Project>{f2d303ea-4081-4b7b-8bc2-54686d907c94}</Project>
       <Name>CommandCentral</Name>
     </ProjectReference>

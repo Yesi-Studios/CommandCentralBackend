@@ -16,6 +16,7 @@ namespace CDBServiceHost
             {
                 Console.WriteLine("It's awfully lonely in here now...");
 
+                var session = CommandCentral.DataAccess.SessionProvider.CreateSession();
 
                 Console.ReadKey();
             }
