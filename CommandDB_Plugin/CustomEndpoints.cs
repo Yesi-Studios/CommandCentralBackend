@@ -23,38 +23,6 @@ namespace CommandCentral
         public static ConcurrentDictionary<string,  EndpointDescription> CustomEndpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(new List<KeyValuePair<string, EndpointDescription>>()
         {
             
-            new KeyValuePair<string, EndpointDescription>("InitiatePasswordReset", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.InitiatePasswordReset,
-                Description = "Starts the password reset process by sending the client an email with a link they can click on to reset their password.",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = true,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception.", 
-                    "email - The email address of the account we want to reset.  This must be a DOD email address and be on the same account as the given SSN." 
-                },
-                ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                IsActive = true
-            }),
-            new KeyValuePair<string, EndpointDescription>("FinishPasswordReset", new EndpointDescription() 
-            {
-                DataMethodAsync = AccountServices.FinishPasswordReset,
-                Description = "Finishes the password reset process by setting the password to the received password for the reset password id.",
-                RequiresAuthentication = false,
-                AllowArgumentLogging = false,
-                AllowResponseLogging = true,
-                RequiredParameters = new List<string>() 
-                { 
-                    "apikey - The unique GUID token assigned to your application for metrics purposes.", 
-                    "passwordresetid - The password reset id that was emailed to the client during the start password reset endpoint.", 
-                    "password - The password the client wants the account to have." 
-                },
-                ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                IsActive = true
-            }),
             new KeyValuePair<string, EndpointDescription>("LoadLists", new EndpointDescription() 
             {
                 DataMethodAsync = CDBLists.LoadLists_Client,

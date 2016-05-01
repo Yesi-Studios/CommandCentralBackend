@@ -640,6 +640,8 @@ namespace CommandCentral.Entities
                         //Cool, so now just update the person object.
                         session.Update(pendingAccountConfirmation.Person);
 
+                        //TODO send completion email.
+
                         //Now delete the pending account confirmation
                         session.Delete(pendingAccountConfirmation);
 
@@ -661,6 +663,190 @@ namespace CommandCentral.Entities
             catch
             {
 
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region Password Reset
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// In order to start a password reset, we're going to use the given email address and ssn to load the person's is claimed field.  If is claimed is false, 
+        /// then the account hasn't been claimed yet and you can't reset the password.  
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// email : The email address of the account we want to reset
+        /// ssn : The SSN of the account we want to reset.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static MessageToken BeginPasswordReset_Client(MessageToken token)
+        {
+            try
+            {
+                //First we need the email and the ssn from the client.
+                string emailAddress = token.GetArgOrFail("email", "You must send an email!") as string;
+                string ssn = token.GetArgOrFail("ssn", "You must send a ssn!") as string;
+
+                //TODO validate the ssn and the email address - also ensure that the email address is a DOD email address
+
+                //Now we need to go load the profile that matches this email address/ssn combination.
+                //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
+                //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
+
+                using (var session = DataAccess.SessionProvider.CreateSession())
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var results = session.QueryOver<Person>()
+                            .Where(x => x.SSN == ssn && x.EmailAddresses.Exists(y => y.Address.Equals(emailAddress, StringComparison.CurrentCultureIgnoreCase)))
+                            .List<Person>();
+
+                        if (results.Count > 1)
+                            throw new Exception(string.Format("During begin password reset, the ssn, '{0}', and the email address, '{1}', loaded more than one profile.", ssn, emailAddress));
+
+                        if (results.Count == 0)
+                            throw new ServiceException("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
+
+                        //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
+                        if (!results[0].IsClaimed)
+                            throw new ServiceException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
+
+                        //And now we know it's claimed.  So make the event, log the event and send the email.
+                        results[0].AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Password_Reset_Initiated,
+                            EventTime = token.CallTime,
+                            Person = results[0]
+                        });
+
+                        //Save the event
+                        session.Update(results[0]);
+
+                        //Create the pending password reset thing.
+                        var pendingPasswordReset = new PendingPasswordReset
+                        {
+                            Person = results[0],
+                            Time = token.CallTime
+                        };
+
+                        //Save that.
+                        session.Save(pendingPasswordReset);
+
+                        //And then send the email.
+                        EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.ID, emailAddress).Wait();
+
+                        token.Result = "Success";
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return token;
+
+            } 
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Completes a password reset by updating the password to the given password for the given reset password id.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// passwordResetID : The reset password id that was emailed to the client during the start password reset endpoint.
+        /// password : The password the client wants the account to have.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static MessageToken CompletePasswordReset_Client(MessageToken token)
+        {
+            try
+            {
+                //Get the parameters we need.
+                string passwordResetID = token.GetArgOrFail("passwordresetid", "You must send a password reset ID!") as string;
+                string password = token.GetArgOrFail("password", "You must send a new password!") as string;
+
+                //TODO Validate password and reset password id.
+
+                //Create the hash.
+                string passwordHash = CommandCentral.PasswordHash.CreateHash(password);
+
+                //Ok, we're going to use the password reset ID to load the pending password reset.
+                //If we get one, we'll make sure it's still valid.
+                //If it is, we'll set the password and then send the user an email telling them that the password was reset.
+                //We'll also log the event on the user's profile.
+                using (var session = DataAccess.SessionProvider.CreateSession())
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetID);
+
+                        if (pendingPasswordReset == null)
+                            throw new ServiceException("That password reset ID does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
+
+                        //Is the record still valid?
+                        if (!pendingPasswordReset.IsValid())
+                        {
+                            //If not we need to delete the record and then tell the client to start over.
+                            session.Delete(pendingPasswordReset);
+
+                            //Commit before we leave.
+                            transaction.Commit();
+
+                            throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
+                        }
+
+                        //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
+                        pendingPasswordReset.Person.PasswordHash = passwordHash;
+
+                        pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Password_Reset_Completed,
+                            EventTime = token.CallTime,
+                            Person = pendingPasswordReset.Person
+                        });
+
+                        //Update/save it.
+                        session.Update(pendingPasswordReset);
+
+                        //Finally we need to send an email before we delete the object.
+                        //TODO send that email.
+
+                        session.Delete(pendingPasswordReset);
+
+                        token.Result = "Success";
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return token;
+            }
+            catch
+            {
                 throw;
             }
         }
@@ -753,6 +939,46 @@ namespace CommandCentral.Entities
                                 "username - The username the client wants to be assigned to the account.",
                                 "password - The password the client wants to be assigned to the account.",
                                 "accountconfirmationid - The unique GUID token that was sent to the user through their DOD email."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
+                        }
+                    },
+                    { "BeginPasswordReset", new EndpointDescription
+                        {
+                            AllowArgumentLogging = true,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "None.",
+                            DataMethod = BeginPasswordReset_Client,
+                            Description = "Starts the password reset process by sending the client an email with a link they can click on to reset their password.",
+                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception.",
+                                "email - The email address of the account we want to reset.  This must be a DOD email address and be on the same account as the given SSN."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
+                        }
+                    },
+                    { "CompletePasswordReset", new EndpointDescription
+                        {
+                            AllowArgumentLogging = false,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "None.",
+                            DataMethod = CompletePasswordReset_Client,
+                            Description = "Finishes the password reset process by setting the password to the received password for the reset password id.",
+                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>()
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "passwordresetid - The password reset id that was emailed to the client during the start password reset endpoint.",
+                                "password - The password the client wants the account to have."
                             },
                             RequiredSpecialPermissions = null,
                             RequiresAuthentication = false

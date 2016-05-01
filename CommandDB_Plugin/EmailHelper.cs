@@ -263,7 +263,7 @@ namespace CommandCentral
 
         
 
-        public static async Task SendInitiatePasswordResetEmail(string passwordResetID, string emailAddressTO)
+        public static async Task SendBeginPasswordResetEmail(string passwordResetID, string emailAddressTO)
         {
             try
             {

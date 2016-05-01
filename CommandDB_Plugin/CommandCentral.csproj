@@ -74,7 +74,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AccountHistoryEvents.cs" />
-    <Compile Include="AccountServices.cs" />
     <Compile Include="Authorization\CustomPermissions.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
@@ -84,6 +83,7 @@
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="ClientAccess\ServiceException.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
+    <Compile Include="Entities\PendingPasswordReset.cs" />
     <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
