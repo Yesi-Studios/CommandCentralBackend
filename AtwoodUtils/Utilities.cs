@@ -177,14 +177,7 @@ namespace AtwoodUtils
                 throw;
             }
         }
-
-        public static string GetAPIKeyFromArgs(Dictionary<string, object> args)
-        {
-            if (!args.ContainsKey("apikey"))
-                return null;
-
-            return args["apikey"].ToString();
-        }
+        
 
         /// <summary>
         /// Gets the calling method name.

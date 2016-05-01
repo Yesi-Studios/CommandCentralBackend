@@ -67,13 +67,8 @@
   <ItemGroup>
     <Compile Include="CronOperations.cs" />
     <Compile Include="Framework\Errors.cs" />
-    <Compile Include="Framework\Settings.cs" />
-    <Compile Include="Framework\ServiceManager.cs" />
     <Compile Include="UnifiedEmailHelper.cs" />
-    <Compile Include="Communicator.cs" />
-    <Compile Include="IUnifiedService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UnifiedService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -85,15 +80,6 @@
     <Service Include="{3259AA49-8AA1-44D3-9025-A0B520596A8C}" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FatalError.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Documentation\DocumentationTemplate.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Documentation\AllEndpointsTemplate.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <Content Include="thecodegraveyard.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -102,10 +88,7 @@
       <Name>AtwoodUtils</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Authentication\" />
-    <Folder Include="Authorization\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <VSToolsPath Condition="'$(VSToolsPath)' == '' and '$(VisualStudioVersion)' != '' and '$(VisualStudioVersion)' != '11.0'">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

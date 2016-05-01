@@ -12,7 +12,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.
     /// </summary>
-    public class Command : ReferenceListItemBase<Command>, IExposable
+    public class Command : ReferenceListItemBase<Command>
     {
         #region Properties
 
@@ -44,14 +44,6 @@ namespace CommandCentral.Entities.ReferenceLists
 
                 Cache.ReadOnly();
             }
-        }
-
-        /// <summary>
-        /// The list of endpoints this class exposes.
-        /// </summary>
-        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
-        {
-            get { throw new NotImplementedException(); }
         }
     }
 }

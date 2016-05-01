@@ -2,30 +2,25 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net;
-using System.Runtime.CompilerServices;
+using System.ServiceModel;
+using System.ServiceModel.Web;
 using System.IO;
-using System.Web;
-using System.Data;
-using System.Security.Cryptography;
-using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
+using NHibernate;
 
-namespace UnifiedServiceFramework
+namespace CommandCentral.ClientAccess.Service
 {
     /// <summary>
     /// Describes the service and its implementation of the endpoints.
     /// </summary>
     [ServiceBehavior(UseSynchronizationContext = false, ConcurrencyMode = ConcurrencyMode.Multiple, InstanceContextMode = InstanceContextMode.PerCall)]
-    public class UnifiedService : IUnifiedService
+    public class CommandCentralService : ICommandCentralService
     {
-        
+
+        #region Endpoints
+
 
         /// <summary>
         /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the endpoints.
@@ -37,40 +32,56 @@ namespace UnifiedServiceFramework
         {
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
             string messageID = Guid.NewGuid().ToString();
-            string personID = "";
-            MessageTokens.MessageToken token = new MessageTokens.MessageToken();
+            string clientID = "";
+            MessageToken token = new MessageToken();
 
             //Add the CORS headers to the request.
-            Utilities.AddCORSHeadersToResponse(System.ServiceModel.Web.WebOperationContext.Current);
+            Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
 
-
-            try 
-	        {	   
+            try
+            {
 
                 //Tell the host that we've received a message.
                 Communicator.PostMessageToHost(string.Format("{0} invoked '{1}' @ {2}", messageID, endpoint, DateTime.Now), Communicator.MessagePriority.Informational);
 
                 //Does the endpoint the client tried to invoke exist?
                 EndpointDescription desc;
-                if (!Framework.ServiceManager.EndpointDescriptions.TryGetValue(endpoint, out desc))
-                    throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", endpoint), ErrorTypes.Validation);
+                if (!Endpoints.TryGetValue(endpoint, out desc))
+                    throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", endpoint), ErrorTypes.Validation, HTTPStatusCodes.Not_Found);
 
                 //Is the endpoint active?
                 if (!desc.IsActive)
-                    throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation);
+                    throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation, HTTPStatusCodes.Service_Unavailable);
+
+                //Ok, this is going to be an actual request.  At this point we can ask for communication session from the session factory.
+                var communicationSession = DataAccess.SessionProvider.CreateSession();
 
                 //Process the message token.
-                token = ProcessMessage(data, endpoint, messageID);
+                token = ProcessMessage(data, endpoint, messageID, communicationSession);
 
                 //If this endpoint requires authentication, then get the session
                 if (desc.RequiresAuthentication)
                 {
                     token = AuthenticateMessage(token);
-                    personID = token.Session.PersonID;
+                    clientID = token.AuthenticationSession.Person.ID;
 
                     //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
                     //at least the client tried to use the session.
-                    await Authentication.Sessions.RefreshSession(token.Session.ID, true);
+                    token.AuthenticationSession.LastUsedTime = DateTime.Now;
+                    using (var transaction = token.CommunicationSession.BeginTransaction())
+                    {
+                        try
+                        {
+                            token.CommunicationSession.Update(token.AuthenticationSession);
+
+                            transaction.Commit();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
                 }
 
                 //If this message allows logging, then log it.
@@ -100,10 +111,10 @@ namespace UnifiedServiceFramework
 
                 //Return our result.
                 return finalResult;
-		
-	        }
-	        catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
-	        {
+
+            }
+            catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
+            {
                 //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
                 MessageTokens.UpdateOnExpectedError(messageID, e.Message);
 
@@ -118,7 +129,7 @@ namespace UnifiedServiceFramework
                     ErrorType = e.ErrorType,
                     ReturnValue = null
                 }.Serialize();
-	        }
+            }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
                 //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
@@ -130,7 +141,7 @@ namespace UnifiedServiceFramework
                     ID = Guid.NewGuid().ToString(),
                     InnerException = (e.InnerException == null) ? "" : e.InnerException.Message,
                     IsHandled = false,
-                    LoggedInUserID = personID,
+                    LoggedInUserID = clientID,
                     Message = e.Message,
                     StackTrace = e.StackTrace,
                     Time = DateTime.Now
@@ -152,79 +163,11 @@ namespace UnifiedServiceFramework
                 }.Serialize();
             }
 
-            
+
         }
 
         /// <summary>
-        /// Processes a message token, turning the data stream from the POST data layer into a dictionary.  This method also authenticates the API Key.
-        /// </summary>
-        /// <param name="data">The data stream from the POST data parameter.</param>
-        /// <param name="endpoint">The endpoint that was invoked.</param>
-        /// <param name="messageID">The ID of the message.</param>
-        /// <returns></returns>
-        private static MessageTokens.MessageToken ProcessMessage(Stream data, string endpoint, string messageID)
-        {
-            try
-            {
-                //Convert the stream into the parameters
-                Dictionary<string, object> args = Utilities.ConvertPostDataToDict(data);
-
-                //Get and authenticate the APIkey
-                string apiKey = Utilities.GetAPIKeyFromArgs(args);
-                if (!Authentication.APIKeys.IsAPIKeyValid(apiKey))
-                    throw new ServiceException("The API Key wasn't valid.", ErrorTypes.Validation);
-
-                //Build the message token
-                MessageTokens.MessageToken token = new MessageTokens.MessageToken();
-                token.APIKey = apiKey;
-                token.Args = args;
-                token.CallTime = DateTime.Now;
-                token.Endpoint = endpoint;
-                token.ID = messageID;
-                token.State = MessageTokens.MessageStates.Active;
-
-                return token;
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Authenticates the message by using the authentication token from the args list to retrieve the client's session.  
-        /// <para />
-        /// This method also checks the client's permissions and sets them on the session parameter of the message token for later use.
-        /// <para />
-        /// This method also ensures that the session has not become inactive
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        private static MessageTokens.MessageToken AuthenticateMessage(MessageTokens.MessageToken token)
-        {
-            try
-            {
-                //Get the session for this authentication token.
-                Authentication.Sessions.Session session = Authentication.Sessions.GetSession((string)Utilities.GetAuthTokenFromArgs(token.Args));
-                if (session == null)
-                    throw new ServiceException("No session exists for that authentication token.  Consider logging in.", ErrorTypes.Authentication);
-
-                //If the session is inactive, trigger the delete process and return an error
-                if (Authentication.Sessions.IsSessionInactive(session))
-                    throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication);
-
-                token.Session = session;
-
-                return token;
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Returns documentation for a given endpoint in the form of a webpage.
+        /// Returns documentation for a given endpoint in the form of a web page.
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
@@ -234,9 +177,9 @@ namespace UnifiedServiceFramework
             {
 
                 //Add the CORS headers to this request.
-                Utilities.AddCORSHeadersToResponse(System.ServiceModel.Web.WebOperationContext.Current);
+                Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
 
-                //Set the outgoing type as html
+                //Set the outgoing type as HTML
                 WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
 
                 string result = null;
@@ -249,9 +192,9 @@ namespace UnifiedServiceFramework
                 else
                 {
 
-                    //Alright, before we do anything, try to get the endpoint.  If this endpoint doens't exist, then we can just stop here.
-                    Framework.EndpointDescription endpointDescription;
-                    if (!Framework.ServiceManager.EndpointDescriptions.TryGetValue(endpoint, out endpointDescription))
+                    //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
+                    EndpointDescription endpointDescription;
+                    if (!Endpoints.TryGetValue(endpoint, out endpointDescription))
                     {
                         result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
                     }
@@ -291,7 +234,7 @@ namespace UnifiedServiceFramework
                             authNote, endpointDescription.RequiresAuthentication.ToString(), endpointDescription.AllowArgumentLogging.ToString(), endpointDescription.AllowResponseLogging.ToString(),
                             endpointDescription.IsActive.ToString(), output);
                     }
-                
+
                 }
 
                 byte[] resultBytes = Encoding.UTF8.GetBytes(result);
@@ -300,7 +243,7 @@ namespace UnifiedServiceFramework
             }
             catch
             {
-                
+
                 throw;
             }
         }
@@ -314,9 +257,9 @@ namespace UnifiedServiceFramework
             try
             {
                 //Add the CORS headers to this request.
-                Utilities.AddCORSHeadersToResponse(System.ServiceModel.Web.WebOperationContext.Current);
+                Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
 
-                //Set the outgoing type as html
+                //Set the outgoing type as HTML
                 WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
 
                 System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
@@ -333,7 +276,7 @@ namespace UnifiedServiceFramework
 
                 string endpoints = "";
 
-                UnifiedServiceFramework.Framework.ServiceManager.EndpointDescriptions.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
+                Endpoints.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
                 {
                     endpoints += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
                 });
@@ -347,8 +290,133 @@ namespace UnifiedServiceFramework
             }
         }
 
-    }
+        #endregion
 
-        
-    
+        #region Helper Methods
+
+        /// <summary>
+        /// Processes a message token, turning the data stream from the POST data layer into a dictionary.  This method also authenticates the API Key.
+        /// </summary>
+        /// <param name="data">The data stream from the POST data parameter.</param>
+        /// <param name="endpoint">The endpoint that was invoked.</param>
+        /// <param name="messageID">The ID of the message.</param>
+        /// <param name="communicationSession">The NHibernate session that will be used throughout the lifetime of this request.</param>
+        /// <returns></returns>
+        private static MessageToken ProcessMessage(Stream data, string endpoint, string messageID, ISession communicationSession)
+        {
+            try
+            {
+                //Convert the stream into the parameters
+                Dictionary<string, object> args = Utilities.ConvertPostDataToDict(data);
+
+                //Get and authenticate the APIkey
+                if (!args.ContainsKey("apikey"))
+                    throw new ServiceException("You must send an API Key.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
+                string apiKey = args["apikey"] as string;
+
+                //Try to get the API key.
+                APIKey key;
+                
+                using (var transaction = communicationSession.BeginTransaction())
+                {
+                    try
+                    {
+                        key = communicationSession.Get<APIKey>(apiKey);
+
+                        if (key == null)
+                            throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                //Build the message token and return it.
+                return new MessageToken
+                {
+                    APIKey = key,
+                    Args = args,
+                    CallTime = DateTime.Now,
+                    Endpoint = endpoint,
+                    ID = messageID,
+                    State = MessageStates.Active,
+                    CommunicationSession = communicationSession
+                };
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Authenticates the message by using the authentication token from the args list to retrieve the client's session.  
+        /// <para />
+        /// This method also checks the client's permissions and sets them on the session parameter of the message token for later use.
+        /// <para />
+        /// This method also ensures that the session has not become inactive
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private static MessageToken AuthenticateMessage(MessageToken token)
+        {
+            try
+            {
+                //Get the session for this authentication token.
+                if (!token.Args.ContainsKey("authenticationtoken"))
+                    throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
+                string authenticationToken = token.Args["authenticationtoken"] as string;
+
+                //Alright let's try to get the session.
+                using (var transaction = token.CommunicationSession.BeginTransaction())
+                {
+                    try
+                    {
+                        var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
+
+                        if (authenticationSession == null)
+                            throw new ServiceException("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, HTTPStatusCodes.Bad_Request);
+
+                        //Ok so we got a session, is it valid?
+                        if (authenticationSession.IsExpired())
+                            throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, HTTPStatusCodes.Unauthorized);
+
+                        //Since the session is in fact valid, we can go ahead and tack it onto the token.
+                        token.AuthenticationSession = authenticationSession;
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return token;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region ServiceManagement
+
+        /// <summary>
+        /// The list of all endpoints that are exposed to the client.
+        /// </summary>
+        public static ConcurrentDictionary<string, EndpointDescription> Endpoints = new ConcurrentDictionary<string, EndpointDescription>();
+
+        #endregion
+
+
+    }
 }

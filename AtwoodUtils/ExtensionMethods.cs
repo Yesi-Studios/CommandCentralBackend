@@ -268,45 +268,6 @@ namespace AtwoodUtils
         }
 
         /// <summary>
-        /// Validates a given JSON string against a schema before continuing with deserialization.  Returns false if the json did not match the schema.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="json"></param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public static bool TryDeserialize<T>(this string json, out T obj)
-        {
-            try
-            {
-                obj = default(T);
-                if (string.IsNullOrWhiteSpace(json))
-                    return false;
-
-                if (!Utilities.IsValidJSON(json))
-                {
-                    return false;
-                }
-
-                Newtonsoft.Json.Schema.Generation.JSchemaGenerator gen = new Newtonsoft.Json.Schema.Generation.JSchemaGenerator();
-                Newtonsoft.Json.Schema.JSchema schema = gen.Generate(typeof(T));
-
-                Newtonsoft.Json.Linq.JToken token = Newtonsoft.Json.Linq.JToken.Parse(json);
-                if (token.IsValid(schema))
-                {
-                    obj = Deserialize<T>(json);
-                    return true;
-                }
-
-                return false;
-            }
-            catch
-            {
-                
-                throw;
-            }
-        }
-
-        /// <summary>
         /// Attempts to deserialize a value into a given type and, on failure, returns default(T). Calls TryDeserialize behind the scenes.
         /// </summary>
         /// <typeparam name="T"></typeparam>

@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace UnifiedServiceFramework
+namespace CommandCentral
 {
     /// <summary>
-    /// Provides for allowing the backend WCF service to communite with its host application
+    /// Provides for allowing the backend WCF service to communicate with its host application
     /// </summary>
     public static class Communicator
     {

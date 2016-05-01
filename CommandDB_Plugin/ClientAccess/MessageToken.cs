@@ -10,7 +10,7 @@ using MySql.Data.MySqlClient;
 using MySql.Data.Common;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
+using NHibernate;
 
 namespace CommandCentral.ClientAccess
 {
@@ -88,7 +88,12 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The session that was active when the message began.
         /// </summary>
-        public virtual Session Session { get; set; }
+        public virtual AuthenticationSession AuthenticationSession { get; set; }
+
+        /// <summary>
+        /// The session that should be used throughout the lifetime of the request to interact with the database.
+        /// </summary>
+        public ISession CommunicationSession { get; set; }
 
         #endregion
 
@@ -131,7 +136,7 @@ namespace CommandCentral.ClientAccess
 
                 Id(x => x.ID);
 
-                References(x => x.Session).Nullable();
+                References(x => x.AuthenticationSession).Nullable();
                 References(x => x.APIKey).Not.Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();

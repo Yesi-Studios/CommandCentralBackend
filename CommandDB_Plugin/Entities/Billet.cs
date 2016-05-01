@@ -12,7 +12,7 @@ namespace CommandCentral.Entities
     /// <summary>
     /// Describes a single billet along with its data access methods and other members.
     /// </summary>
-    public class Billet : IExposable
+    public class Billet
     {
 
         #region Properties
@@ -65,7 +65,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// All the endpoints
         /// </summary>
-        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
+        public static Dictionary<string, EndpointDescription> EndpointDescriptions
         {
             get
             {

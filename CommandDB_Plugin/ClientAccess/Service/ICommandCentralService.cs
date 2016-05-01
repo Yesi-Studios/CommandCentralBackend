@@ -1,22 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Text;
 using System.IO;
 
-namespace UnifiedServiceFramework
+namespace CommandCentral.ClientAccess.Service
 {
     /// <summary>
     /// Prototypes the endpoints for the service.
     /// </summary>
     [ServiceContract]
-    public interface IUnifiedService
+    public interface ICommandCentralService
     {
-
         /// <summary>
         /// The endpoint through which all calls reach the service.  
         /// </summary>
@@ -43,6 +41,5 @@ namespace UnifiedServiceFramework
         [OperationContract]
         [WebGet(UriTemplate = "/man", BodyStyle = WebMessageBodyStyle.Bare)]
         Task<Stream> GetAllDocumentation();
-       
     }
 }

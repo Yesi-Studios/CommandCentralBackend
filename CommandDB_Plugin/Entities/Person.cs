@@ -291,79 +291,76 @@ namespace CommandCentral.Entities
 
                 //TODO: validate username and password
 
-                //Alright, now we're going to grab a session and then use it to load all persons where the username is the username we were sent.
+                //Load all persons where the username is the username we were sent.
                 //We should only get one username back.  
-                using (var session = DataAccess.SessionProvider.CreateSession())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
-                    using (var transaction = session.BeginTransaction())
+                    try
                     {
-                        try
+                        //The query itself.
+                        var results = token.CommunicationSession.QueryOver<Person>()
+                            .Where(x => x.Username == username)
+                            .List<Person>();
+
+                        if (results.Count() > 1)
+                            throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
+
+                        if (results.Count() == 0)
+                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
+
+                        //If the password is bad
+                        if (!ClientAccess.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
                         {
-                            //The query itself.
-                            var results = session.QueryOver<Person>()
-                                .Where(x => x.Username == username)
-                                .List<Person>();
+                            //If the password doesn't check out we need to send the person who owns this account a failed login email.
+                            EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
 
-                            if (results.Count() > 1)
-                                throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
+                            if (address == null)
+                                throw new Exception(string.Format("Login failed to the person's account whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
 
-                            if (results.Count() == 0)
-                                throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
+                            //Ok, so we have an email we can use to contact the person!
+                            EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].ID).Wait();
 
-                            //If the password is bad
-                            if (!CommandCentral.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
-                            {
-                                //If the password doesn't check out we need to send the person who owns this account a failed login email.
-                                EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
-
-                                if (address == null)
-                                    throw new Exception(string.Format("Login failed to the person's account whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
-
-                                //Ok, so we have an email we can use to contact the person!
-                                EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].ID).Wait();
-
-                                //Now that we have alerted the user, we can fail out.
-                                throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
-                            }
-
-                            //Alright, if we got here, then we have a good password.
-                            //In this case, we need to create a new session for the client and then insert it.
-                            Session ses = new Session
-                            {
-                                IsActive = true,
-                                LastUsedTime = token.CallTime,
-                                LoginTime = token.CallTime,
-                                Permissions = results[0].PermissionGroups,
-                                Person = results[0]
-                            };
-
-                            //Now insert it
-                            session.Save(ses);
-
-                            //Now log the account history event on the person.
-                            results[0].AccountHistory.Add(new AccountHistoryEvent
-                            {
-                                AccountHistoryEventType = AccountHistoryEventTypes.Login,
-                                EventTime = token.CallTime,
-                                Person = results[0]
-                            });
-
-                            //And update the person
-                            session.SaveOrUpdate(results[0]);
-
-                            //Cool now we just need to give the token back to the client along with some other stuff.
-                            token.Result = new { PersonID = results[0].ID, PermissionGroups = results[0].PermissionGroups, AuthenticationToken = ses.ID, FriendlyName = results[0].ToString() };
-
-                            transaction.Commit();
-
+                            //Now that we have alerted the user, we can fail out.
+                            throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HTTPStatusCodes.Forbiden);
                         }
-                        catch
+
+                        //Alright, if we got here, then we have a good password.
+                        //In this case, we need to create a new session for the client and then insert it.
+                        AuthenticationSession ses = new AuthenticationSession
                         {
-                            //If an error was thrown before the transaction was committed, roll it back.
-                            if (!transaction.WasCommitted)
-                                transaction.Rollback();
-                            throw;
-                        }
+                            IsActive = true,
+                            LastUsedTime = token.CallTime,
+                            LoginTime = token.CallTime,
+                            Permissions = results[0].PermissionGroups,
+                            Person = results[0]
+                        };
+
+                        //Now insert it
+                        token.CommunicationSession.Save(ses);
+
+                        //Now log the account history event on the person.
+                        results[0].AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                            EventTime = token.CallTime,
+                            Person = results[0]
+                        });
+
+                        //And update the person
+                        token.CommunicationSession.SaveOrUpdate(results[0]);
+
+                        //Cool now we just need to give the token back to the client along with some other stuff.
+                        token.Result = new { PersonID = results[0].ID, PermissionGroups = results[0].PermissionGroups, AuthenticationToken = ses.ID, FriendlyName = results[0].ToString() };
+
+                        transaction.Commit();
+
+                    }
+                    catch
+                    {
+                        //If an error was thrown before the transaction was committed, roll it back.
+                        if (!transaction.WasCommitted)
+                            transaction.Rollback();
+                        throw;
                     }
                 }
 
@@ -392,28 +389,27 @@ namespace CommandCentral.Entities
             try
             {
                 //Make sure there is actually a session
-                if (token.Session == null)
+                if (token.AuthenticationSession == null)
                     throw new ServiceException("You must be logged in to try to logout. No shit?", ErrorTypes.Authentication, HTTPStatusCodes.Unauthorized);
 
                 //Well this is easy.  Just delete the session.  Make sure to update the person first before we remove our reference to it.
-                using (var session = DataAccess.SessionProvider.CreateSession())
-                using (var transaction = session.BeginTransaction())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
                     try
                     {
                         //Log the event
-                        token.Session.Person.AccountHistory.Add(new AccountHistoryEvent
+                        token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryEventTypes.Logout,
                             EventTime = token.CallTime,
-                            Person = token.Session.Person
+                            Person = token.AuthenticationSession.Person
                         });
 
                         //Now update the person
-                        session.SaveOrUpdate(token.Session.Person);
+                        token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
 
                         //Okey dokey, now let's delete the session.
-                        session.Delete(token.Session);
+                        token.CommunicationSession.Delete(token.AuthenticationSession);
 
                         //Yay!  Now we're done.
                         token.Result = "Success";
@@ -466,12 +462,11 @@ namespace CommandCentral.Entities
 
                 //TODO validate the ssn.
 
-                using (var session = DataAccess.SessionProvider.CreateSession())
-                using (var transaction = session.BeginTransaction())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
                     try
                     {
-                        var results = session.QueryOver<Person>()
+                        var results = token.CommunicationSession.QueryOver<Person>()
                             .Where(x => x.SSN == ssn)
                             .List<Person>();
 
@@ -489,7 +484,7 @@ namespace CommandCentral.Entities
                             EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDODEmailAddress);
 
                             if (address == null)
-                                throw new Exception(string.Format("Another user tryied to claim the profile whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
+                                throw new Exception(string.Format("Another user tried to claim the profile whose ID is '{0}'; however, we could find no email to send this person a warning.", results[0].ID));
 
                             //Now send that email.
                             EmailHelper.SendBeginRegistrationErrorEmail(address.Address, results[0].ID).Wait();
@@ -507,14 +502,14 @@ namespace CommandCentral.Entities
                                 "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
 
                         //Let's see if there is already a pending account confirmation.
-                        var pendingAccountConfirmations = session.QueryOver<PendingAccountConfirmation>()
+                        var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
                             .Where(x => x.Person.ID == results[0].ID)
                             .List<PendingAccountConfirmation>();
 
                         //If there are any (should only be one) then we're going to delete all of them.  
                         //This would happen if the client let one sit too long and it become invalid and then had to call begin registration again.
                         if (pendingAccountConfirmations.Any())
-                            pendingAccountConfirmations.ToList().ForEach(x => session.Delete(x));
+                            pendingAccountConfirmations.ToList().ForEach(x => token.CommunicationSession.Delete(x));
 
                         //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                         var pendingAccountConfirmation = new PendingAccountConfirmation
@@ -524,7 +519,7 @@ namespace CommandCentral.Entities
                         };
 
                         //And then persist it.
-                        session.Save(pendingAccountConfirmation);
+                        token.CommunicationSession.Save(pendingAccountConfirmation);
 
                         //Now let's make a new account event and then update the person.
                         results[0].AccountHistory.Add(new AccountHistoryEvent
@@ -535,7 +530,7 @@ namespace CommandCentral.Entities
                         });
 
                         //And then persist that by updating the person.
-                        session.Update(results[0]);
+                        token.CommunicationSession.Update(results[0]);
 
                         //Wait!  we're not even done yet.  Let's send the client the registration email now.
                         EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.ID, ssn).Wait();
@@ -597,12 +592,11 @@ namespace CommandCentral.Entities
                 //Finally, we'll update the profile with an account history event.
                 //Then return. ... fuck, ok, here we go.
 
-                using (var session = DataAccess.SessionProvider.CreateSession())
-                using (var transaction = session.BeginTransaction())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
                     try
                     {
-                        var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationID);
+                        var pendingAccountConfirmation = token.CommunicationSession.Get<PendingAccountConfirmation>(accountConfirmationID);
 
                         //There is no record.
                         if (pendingAccountConfirmation == null)
@@ -612,7 +606,7 @@ namespace CommandCentral.Entities
                         if (!pendingAccountConfirmation.IsValid())
                         {
                             //If not we need to delete the record and then tell the client to start over.
-                            session.Delete(pendingAccountConfirmation);
+                            token.CommunicationSession.Delete(pendingAccountConfirmation);
 
                             transaction.Commit();
 
@@ -626,7 +620,7 @@ namespace CommandCentral.Entities
 
                         //Alright, we're ready to update the person then!
                         pendingAccountConfirmation.Person.Username = username;
-                        pendingAccountConfirmation.Person.PasswordHash = CommandCentral.PasswordHash.CreateHash(password);
+                        pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
                         pendingAccountConfirmation.Person.IsClaimed = true;
 
                         //Ok, let's also add an account history saying we completed registration.
@@ -638,12 +632,12 @@ namespace CommandCentral.Entities
                         });
 
                         //Cool, so now just update the person object.
-                        session.Update(pendingAccountConfirmation.Person);
+                        token.CommunicationSession.Update(pendingAccountConfirmation.Person);
 
                         //TODO send completion email.
 
                         //Now delete the pending account confirmation
-                        session.Delete(pendingAccountConfirmation);
+                        token.CommunicationSession.Delete(pendingAccountConfirmation);
 
                         token.Result = "Success";
 
@@ -698,12 +692,11 @@ namespace CommandCentral.Entities
                 //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
                 //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
 
-                using (var session = DataAccess.SessionProvider.CreateSession())
-                using (var transaction = session.BeginTransaction())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
                     try
                     {
-                        var results = session.QueryOver<Person>()
+                        var results = token.CommunicationSession.QueryOver<Person>()
                             .Where(x => x.SSN == ssn && x.EmailAddresses.Exists(y => y.Address.Equals(emailAddress, StringComparison.CurrentCultureIgnoreCase)))
                             .List<Person>();
 
@@ -726,7 +719,7 @@ namespace CommandCentral.Entities
                         });
 
                         //Save the event
-                        session.Update(results[0]);
+                        token.CommunicationSession.Update(results[0]);
 
                         //Create the pending password reset thing.
                         var pendingPasswordReset = new PendingPasswordReset
@@ -736,7 +729,7 @@ namespace CommandCentral.Entities
                         };
 
                         //Save that.
-                        session.Save(pendingPasswordReset);
+                        token.CommunicationSession.Save(pendingPasswordReset);
 
                         //And then send the email.
                         EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.ID, emailAddress).Wait();
@@ -785,18 +778,17 @@ namespace CommandCentral.Entities
                 //TODO Validate password and reset password id.
 
                 //Create the hash.
-                string passwordHash = CommandCentral.PasswordHash.CreateHash(password);
+                string passwordHash = ClientAccess.PasswordHash.CreateHash(password);
 
                 //Ok, we're going to use the password reset ID to load the pending password reset.
                 //If we get one, we'll make sure it's still valid.
                 //If it is, we'll set the password and then send the user an email telling them that the password was reset.
                 //We'll also log the event on the user's profile.
-                using (var session = DataAccess.SessionProvider.CreateSession())
-                using (var transaction = session.BeginTransaction())
+                using (var transaction = token.CommunicationSession.BeginTransaction())
                 {
                     try
                     {
-                        var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetID);
+                        var pendingPasswordReset = token.CommunicationSession.Get<PendingPasswordReset>(passwordResetID);
 
                         if (pendingPasswordReset == null)
                             throw new ServiceException("That password reset ID does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
@@ -805,7 +797,7 @@ namespace CommandCentral.Entities
                         if (!pendingPasswordReset.IsValid())
                         {
                             //If not we need to delete the record and then tell the client to start over.
-                            session.Delete(pendingPasswordReset);
+                            token.CommunicationSession.Delete(pendingPasswordReset);
 
                             //Commit before we leave.
                             transaction.Commit();
@@ -824,12 +816,12 @@ namespace CommandCentral.Entities
                         });
 
                         //Update/save it.
-                        session.Update(pendingPasswordReset);
+                        token.CommunicationSession.Update(pendingPasswordReset);
 
                         //Finally we need to send an email before we delete the object.
                         //TODO send that email.
 
-                        session.Delete(pendingPasswordReset);
+                        token.CommunicationSession.Delete(pendingPasswordReset);
 
                         token.Result = "Success";
 

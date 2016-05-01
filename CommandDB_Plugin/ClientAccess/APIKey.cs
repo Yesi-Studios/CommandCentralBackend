@@ -28,20 +28,6 @@ namespace CommandCentral.ClientAccess
 
         #endregion
 
-        #region Helper Methods
-
-        /// <summary>
-        /// Determines if a given api key is valid.
-        /// </summary>
-        /// <param name="apiKey"></param>
-        /// <returns></returns>
-        public static bool IsAPIKeyValid(object apiKey)
-        {
-            return APIKey.GetOne(apiKey) == null;
-        }
-
-        #endregion
-
         /// <summary>
         /// Provides mapping declarations to the database for the API Key.
         /// </summary>

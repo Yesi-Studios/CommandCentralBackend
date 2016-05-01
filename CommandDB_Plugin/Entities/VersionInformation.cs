@@ -18,7 +18,7 @@ namespace CommandCentral.Entities
     /// <summary>
     /// Describes the main data of the application, which represents dynamically loaded content.
     /// </summary>
-    public class VersionInformation : IExposable
+    public class VersionInformation
     {
 
         #region Properties
@@ -63,7 +63,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Exposed endpoints
         /// </summary>
-        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
+        public static Dictionary<string, EndpointDescription> EndpointDescriptions
         {
             get { throw new NotImplementedException(); }
         }

@@ -16,10 +16,15 @@ using CommandCentral.DataAccess;
 namespace CommandCentral.ClientAccess
 {
     /// <summary>
-    /// Describes a single session and provides members for interacting with that session.
+    /// Describes a single authentication session and provides members for interacting with that session.
     /// </summary>
-    public class Session
+    public class AuthenticationSession
     {
+        /// <summary>
+        /// The max age after which a session will have expired and it will become invalid.
+        /// </summary>
+        public static readonly TimeSpan MaxAge = TimeSpan.FromMinutes(20);
+
         #region Properties
 
         /// <summary>
@@ -64,11 +69,10 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Determines if this session has expired given a max age of inactivity.
         /// </summary>
-        /// <param name="maxSessionAge"></param>
         /// <returns></returns>
-        public bool IsSessionExpired(TimeSpan maxSessionAge)
+        public bool IsExpired()
         {
-            if (DateTime.Now.Subtract(this.LastUsedTime) > maxSessionAge)
+            if (DateTime.Now.Subtract(this.LastUsedTime) > MaxAge)
                 return true;
 
             return false;
@@ -79,14 +83,14 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Maps a session to the database.
         /// </summary>
-        public class SessionMapping : ClassMap<Session>
+        public class SessionMapping : ClassMap<AuthenticationSession>
         {
             /// <summary>
             /// Maps a session to the database.
             /// </summary>
             public SessionMapping()
             {
-                Table("sessions");
+                Table("authentication_sessions");
 
                 Id(x => x.ID).GeneratedBy.Guid();
 

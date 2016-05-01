@@ -66,6 +66,8 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceModel.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -73,7 +75,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AccountHistoryEvents.cs" />
+    <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
+    <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
+    <Compile Include="Communicator.cs" />
+    <Compile Include="Entities\AccountHistoryEvents.cs" />
     <Compile Include="Authorization\CustomPermissions.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
@@ -95,7 +100,7 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\EndpointDescription.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
-    <Compile Include="ClientAccess\Session.cs" />
+    <Compile Include="ClientAccess\AuthenticationSession.cs" />
     <Compile Include="CustomEndpoints.cs" />
     <Compile Include="DataAccess\SessionProvider.cs" />
     <Compile Include="ClientAccess\APIKey.cs" />
@@ -114,13 +119,12 @@
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
-    <Compile Include="PasswordHash.cs" />
+    <Compile Include="ClientAccess\PasswordHash.cs" />
     <Compile Include="Entities\PhoneNumber.cs" />
     <Compile Include="Entities\PhysicalAddresses.cs" />
     <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextMessageHelper.cs" />
-    <Compile Include="ValidationMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">
@@ -182,7 +186,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Documentation\AllEndpointsTemplate.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Documentation\DocumentationTemplate.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\EmailTemplates\FatalError.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

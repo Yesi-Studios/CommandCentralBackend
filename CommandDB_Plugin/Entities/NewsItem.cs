@@ -12,7 +12,7 @@ namespace CommandCentral.Entities
     /// <summary>
     /// Describes a single News Item and its members, including its DB access members.
     /// </summary>
-    public class NewsItem : IExposable
+    public class NewsItem
     {
 
         #region Properties
@@ -47,7 +47,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The endpoints
         /// </summary>
-        Dictionary<string, EndpointDescription> IExposable.EndpointDescriptions
+        public static Dictionary<string, EndpointDescription> EndpointDescriptions
         {
             get
             {
