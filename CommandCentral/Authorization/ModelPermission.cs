@@ -19,27 +19,27 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The unique ID of this model permission.
         /// </summary>
-        public string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The name of the model.
         /// </summary>
-        public string ModelName { get; set; }
+        public virtual string ModelName { get; set; }
 
         /// <summary>
         /// The fields the user can search in in the model.
         /// </summary>
-        public List<string> SearchableFields { get; set; }
+        public virtual List<string> SearchableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to see from the model.
         /// </summary>
-        public List<string> ReturnableFields { get; set; }
+        public virtual List<string> ReturnableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to edit in a model.
         /// </summary>
-        public List<string> EditableFields { get; set; }
+        public virtual List<string> EditableFields { get; set; }
 
         #endregion
 

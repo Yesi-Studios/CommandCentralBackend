@@ -22,7 +22,7 @@ namespace UnifiedServiceFramework.Framework
         /// <summary>
         /// The unique ID assigned to this error
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The message that was raised for this error

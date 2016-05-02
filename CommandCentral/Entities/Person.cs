@@ -20,7 +20,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's unique ID.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         #region Main Properties
 
@@ -111,7 +111,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The NECs of the person.
         /// </summary>
-        public virtual List<ReferenceLists.NEC> NECs { get; set; }
+        public virtual IList<ReferenceLists.NEC> NECs { get; set; }
 
         /// <summary>
         /// The person's supervisor
@@ -175,17 +175,17 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The email addresses of this person.
         /// </summary>
-        public virtual List<EmailAddress> EmailAddresses { get; set; }
+        public virtual IList<EmailAddress> EmailAddresses { get; set; }
 
         /// <summary>
         /// The Phone Numbers of this person.
         /// </summary>
-        public virtual List<PhoneNumber> PhoneNumbers { get; set; }
+        public virtual IList<PhoneNumber> PhoneNumbers { get; set; }
 
         /// <summary>
         /// The Physical Addresses of this person
         /// </summary>
-        public virtual List<PhysicalAddress> PhysicalAddresses { get; set; }
+        public virtual IList<PhysicalAddress> PhysicalAddresses { get; set; }
 
         /// <summary>
         /// Instructions from the user on what avenues of contact to follow in the case of an emergency.
@@ -219,17 +219,17 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The list of the person's permissions.
         /// </summary>
-        public virtual List<Authorization.PermissionGroup> PermissionGroups { get; set; }
+        public virtual IList<Authorization.PermissionGroup> PermissionGroups { get; set; }
 
         /// <summary>
         /// The list of change events to which the person is subscribed.
         /// </summary>
-        public virtual List<ChangeEvent> SubscribedChangeEvents { get; set; }
+        public virtual IList<ChangeEvent> SubscribedChangeEvents { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things like login, password reset, etc.
         /// </summary>
-        public virtual List<AccountHistoryEvent> AccountHistory { get; set; }
+        public virtual IList<AccountHistoryEvent> AccountHistory { get; set; }
 
         /// <summary>
         /// A list containing all changes that have every occurred to the profile.
@@ -697,7 +697,8 @@ namespace CommandCentral.Entities
                     try
                     {
                         var results = token.CommunicationSession.QueryOver<Person>()
-                            .Where(x => x.SSN == ssn && x.EmailAddresses.Exists(y => y.Address.Equals(emailAddress, StringComparison.CurrentCultureIgnoreCase)))
+                            //.Where(x => x.SSN == ssn && x.EmailAddresses.Exists(y => y.Address.Equals(emailAddress, StringComparison.CurrentCultureIgnoreCase)))
+                            //TODO learn freaking NHibernate
                             .List<Person>();
 
                         if (results.Count > 1)
@@ -1022,7 +1023,7 @@ namespace CommandCentral.Entities
                 Map(x => x.DateOfArrival).Not.Nullable();
                 Map(x => x.JobTitle).Nullable().Length(40);
                 Map(x => x.EAOS).Not.Nullable();
-                Map(x => x.DateOfDeparture).Not.Nullable();
+                Map(x => x.DateOfDeparture).Nullable();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150);
                 Map(x => x.ContactRemarks).Nullable().Length(150);
                 Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString());

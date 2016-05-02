@@ -21,7 +21,7 @@ namespace CommandCentral
         /// <summary>
         /// Indicates which messages should be forwarded onto the host, and which messages should be silently assassinated.
         /// </summary>
-        public static List<MessagePriority> listeningPriorities = new List<MessagePriority>();
+        public static List<MessagePriority> ListeningPriorities = new List<MessagePriority>();
 
         /// <summary>
         /// Describes message priorities so that the host can choose what messages it listens to.
@@ -65,7 +65,7 @@ namespace CommandCentral
         public static void InitializeCommunicator(TextWriter textWriter, List<MessagePriority> priorities)
         {
             _writer = textWriter;
-            listeningPriorities = priorities;
+            ListeningPriorities = priorities;
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace CommandCentral
         public static void InitializeCommunicator(TextWriter textWriter)
         {
             _writer = textWriter;
-            listeningPriorities = new List<MessagePriority>() { MessagePriority.Critical, MessagePriority.Important, MessagePriority.Informational, MessagePriority.Warning };
+            ListeningPriorities = new List<MessagePriority>() { MessagePriority.Critical, MessagePriority.Important, MessagePriority.Informational, MessagePriority.Warning };
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace CommandCentral
         /// <param name="priority"></param>
         public static void PostMessageToHost(string message, MessagePriority priority)
         {
-            if (_writer != null && listeningPriorities.Contains(priority) && !IsFrozen)
+            if (_writer != null && ListeningPriorities.Contains(priority) && !IsFrozen)
             {
                 _writer.WriteLine(string.Format("{0} Service Message @ {1}:\n\t{2}", priority.ToString(), DateTime.Now.ToString(), message));
             }

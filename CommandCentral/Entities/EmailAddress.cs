@@ -26,7 +26,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this Email Address
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The person that owns this email address.
@@ -51,7 +51,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Indicates whether or not this email address is a mail.mil email address.  This is a calulated field, built using the Address field.
         /// </summary>
-        public bool IsDODEmailAddress
+        public virtual bool IsDODEmailAddress
         {
             get
             {

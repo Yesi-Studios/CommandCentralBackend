@@ -24,7 +24,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this phone number.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The  person to whom this phone number belongs.
@@ -44,7 +44,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The carrier's SMS email address.
         /// </summary>
-        public string CarrierMailAddress
+        public virtual string CarrierMailAddress
         {
             get
             {

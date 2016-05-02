@@ -19,7 +19,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique ID of this API Key.  This is also the API Key itself.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The name of the application to which this API Key was unsigned.

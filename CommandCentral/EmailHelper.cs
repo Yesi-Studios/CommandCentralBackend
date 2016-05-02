@@ -67,7 +67,7 @@ namespace CommandCentral
         /// <param name="emailAddressTo"></param>
         /// <param name="personID"></param>
         /// <returns></returns>
-        public static async Task SendFailedAccountLoginEmail(string emailAddressTo, string personID)
+        public static async Task SendFailedAccountLoginEmail(string emailAddressTo, Guid personID)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace CommandCentral
         /// <param name="confirmationID"></param>
         /// <param name="ssn"></param>
         /// <returns></returns>
-        public static async Task SendConfirmAccountEmail(string emailAddressTo, string confirmationID, string ssn)
+        public static async Task SendConfirmAccountEmail(string emailAddressTo, Guid confirmationID, string ssn)
         {
             try
             {
@@ -224,7 +224,7 @@ namespace CommandCentral
             }
         }
 
-        public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, string personID)
+        public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, Guid personID)
         {
             try
             {
@@ -263,7 +263,7 @@ namespace CommandCentral
 
         
 
-        public static async Task SendBeginPasswordResetEmail(string passwordResetID, string emailAddressTO)
+        public static async Task SendBeginPasswordResetEmail(Guid passwordResetID, string emailAddressTO)
         {
             try
             {

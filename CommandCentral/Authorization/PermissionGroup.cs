@@ -17,7 +17,7 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The ID of this permission group.  This should not change after original creation.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The name of this permission group.
@@ -59,7 +59,9 @@ namespace CommandCentral.Authorization
 
                 HasManyToMany(x => x.ModelPermissions);
                 HasManyToMany(x => x.SpecialPermissions);
-                HasManyToMany(x => x.SubordinatePermissionGroups);
+                HasManyToMany(x => x.SubordinatePermissionGroups)
+                    .ParentKeyColumn("PermissionGroupID")
+                    .ChildKeyColumn("SubordinatePermissionGroupID");
 
             }
         }

@@ -136,6 +136,16 @@ namespace AtwoodUtils
             return variances;
         }
 
+        public static void WL(this string str)
+        {
+            Console.WriteLine(str);
+        }
+
+        public static string F(this string str, params object[] args)
+        {
+            return String.Format(str, args);
+        }
+
         /// <summary>
         /// Returns the number of elements in an enumerable.
         /// </summary>

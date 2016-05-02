@@ -14,26 +14,34 @@ namespace CommandCentral.DataAccess
     /// <summary>
     /// Provides singleton managed access to NHibernate sessions.
     /// </summary>
-    public static class SessionProvider
+    public static class NHibernateHelper
     {
 
         private static readonly ISessionFactory _sessionFactory;
 
-        static SessionProvider()
+        static NHibernateHelper()
         {
-            Configuration configuration = Fluently.Configure().Database(
+            try
+            {
+                Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test_db")
-                                      .Username("xanneth")
-                                      .Password("douglas0678")
-                                      .Server("localhost"))
+                                        .Username("xanneth")
+                                        .Password("douglas0678")
+                                        .Server("localhost"))
                     .ShowSql())
                     .Cache(x => x.UseQueryCache()
-                                 .ProviderClass<NHibernate.Caches.SysCache.SysCacheProvider>())
-                    .Mappings(x => x.FluentMappings.AddFromAssemblyOf<CommandCentral.Entities.Person>())
+                                    .ProviderClass<NHibernate.Caches.SysCache.SysCacheProvider>())
+                    .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Entities.Person>())
                     .BuildConfiguration();
 
-            _sessionFactory = configuration.BuildSessionFactory();                    
+                _sessionFactory = configuration.BuildSessionFactory();
+            }
+            catch
+            {
+
+                throw;
+            }
         }
 
         public static NHibernate.ISession CreateSession()
@@ -50,6 +58,10 @@ namespace CommandCentral.DataAccess
         public static NHibernate.Metadata.IClassMetadata GetEntityMetadata(string entityName)
         {
             return _sessionFactory.GetClassMetadata(entityName);
+        }
+
+        public static void CreateDatabaseSchema()
+        {
         }
 
 

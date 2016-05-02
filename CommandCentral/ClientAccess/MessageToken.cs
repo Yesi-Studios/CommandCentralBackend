@@ -46,7 +46,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique ID assigned to this message interaction
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
@@ -73,7 +73,7 @@ namespace CommandCentral.ClientAccess
         /// <para />
         /// TODO: map this to the database.
         /// </summary>
-        public object Result { get; set; }
+        public virtual object Result { get; set; }
 
         /// <summary>
         /// The current state of the message interaction.
@@ -93,7 +93,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The session that should be used throughout the lifetime of the request to interact with the database.
         /// </summary>
-        public ISession CommunicationSession { get; set; }
+        public virtual ISession CommunicationSession { get; set; }
 
         #endregion
 
@@ -105,7 +105,7 @@ namespace CommandCentral.ClientAccess
         /// <param name="argName"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public object GetArgOrFail(string argName, string errorMessage)
+        public virtual object GetArgOrFail(string argName, string errorMessage)
         {
             try
             {
@@ -140,7 +140,7 @@ namespace CommandCentral.ClientAccess
                 References(x => x.APIKey).Not.Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();
-                Map(x => x.Args).CustomType<NHibernate.Type.SerializableType>().Not.Nullable();
+                //Map(x => x.Args).CustomType<NHibernate.Type.SerializableType>().Not.Nullable();
                 Map(x => x.Endpoint).Not.Nullable().Length(40);
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();

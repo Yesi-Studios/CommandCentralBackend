@@ -18,7 +18,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID assigned to this Profile Lock
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The person who owns this lock.

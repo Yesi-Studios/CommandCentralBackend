@@ -25,57 +25,57 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this physical address.
         /// </summary>
-        public string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The person who owns this physical address.
         /// </summary>
-        public Person Owner { get; set; }
+        public virtual Person Owner { get; set; }
 
         /// <summary>
         /// The street number.
         /// </summary>
-        public string StreetNumber { get; set; }
+        public virtual string StreetNumber { get; set; }
 
         /// <summary>
         /// The Route...
         /// </summary>
-        public string Route { get; set; }
+        public virtual string Route { get; set; }
 
         /// <summary>
         /// The city.
         /// </summary>
-        public string City { get; set; }
+        public virtual string City { get; set; }
 
         /// <summary>
         /// The state.
         /// </summary>
-        public string State { get; set; }
+        public virtual string State { get; set; }
 
         /// <summary>
         /// The zip code.
         /// </summary>
-        public string ZipCode { get; set; }
+        public virtual string ZipCode { get; set; }
 
         /// <summary>
         /// The country.
         /// </summary>
-        public string Country { get; set; }
+        public virtual string Country { get; set; }
 
         /// <summary>
         /// Indicates whether or not the person lives at this address
         /// </summary>
-        public bool IsHomeAddress { get; set; }
+        public virtual bool IsHomeAddress { get; set; }
 
         /// <summary>
         /// The latitude of this physical address.
         /// </summary>
-        public float? Latitude { get; set; }
+        public virtual float? Latitude { get; set; }
 
         /// <summary>
         /// The longitude of this physical address.
         /// </summary>
-        public float? Longitude { get; set; }
+        public virtual float? Longitude { get; set; }
 
         #endregion
 

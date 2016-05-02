@@ -9,13 +9,12 @@ namespace CommandCentral
     /// <summary>
     /// Provides abstracted access to a reference list such as Ranks or Rates.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class ReferenceListItemBase<T> where T : class
+    public abstract class ReferenceListItemBase
     {
         /// <summary>
         /// The ID of this reference item.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The value of this item.
@@ -26,20 +25,6 @@ namespace CommandCentral
         /// A description of this item.
         /// </summary>
         public virtual string Description { get; set; }
-
-        /// <summary>
-        /// Loads all items from the database, and allows them to be cached.
-        /// </summary>
-        /// <returns></returns>
-        public List<T> LoadAll()
-        {
-            using (var session = DataAccess.SessionProvider.CreateSession())
-            {
-                return session.CreateCriteria<T>()
-                    .SetCacheable(true)
-                    .SetCacheMode(NHibernate.CacheMode.Normal)
-                    .List<T>().ToList();
-            }
-        }
+        
     }
 }

@@ -57,7 +57,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this account history event.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The person on whose account this event occurred.

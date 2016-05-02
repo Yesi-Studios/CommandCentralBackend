@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single phone number type.
     /// </summary>
-    public class PhoneNumberType : ReferenceListItemBase<PhoneNumberType>
+    public class PhoneNumberType : ReferenceListItemBase
     {
 
         /// <summary>

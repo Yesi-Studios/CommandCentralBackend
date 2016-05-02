@@ -20,7 +20,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique ID assigned to this Billet
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The title of this billet.

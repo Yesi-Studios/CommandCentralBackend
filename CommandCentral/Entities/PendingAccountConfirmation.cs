@@ -23,7 +23,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique ID of this account confirmation event.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The person to which it belongs.
@@ -43,7 +43,7 @@ namespace CommandCentral.Entities
         /// returns a boolean indicating whether or not this account confirmation is still valid or if it has aged off.
         /// </summary>
         /// <returns></returns>
-        public bool IsValid()
+        public virtual bool IsValid()
         {
             return DateTime.Now.Subtract(this.Time) > MaxAge;
         }

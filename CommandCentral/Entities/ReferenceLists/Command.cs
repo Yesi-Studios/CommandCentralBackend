@@ -12,14 +12,14 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.
     /// </summary>
-    public class Command : ReferenceListItemBase<Command>
+    public class Command : ReferenceListItemBase
     {
         #region Properties
 
         /// <summary>
         /// The departments of the command
         /// </summary>
-        public List<Department> Departments { get; set; }
+        public virtual List<Department> Departments { get; set; }
 
         #endregion
 

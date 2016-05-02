@@ -20,47 +20,47 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The ID of this change.
         /// </summary>
-        public string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The client who initiated this change.
         /// </summary>
-        public Person Editor { get; set; }
+        public virtual Person Editor { get; set; }
 
         /// <summary>
         /// The name of the object/entity that was changed.
         /// </summary>
-        public string ObjectName { get; set; }
+        public virtual string ObjectName { get; set; }
 
         /// <summary>
         /// The ID of the object that was changed.
         /// </summary>
-        public string ObjectID { get; set; }
+        public virtual string ObjectID { get; set; }
 
         /// <summary>
         /// The property that was edited.
         /// </summary>
-        public string PropertyName { get; set; }
+        public virtual string PropertyName { get; set; }
 
         /// <summary>
         /// The old value of the property.
         /// </summary>
-        public string OldValue { get; set; }
+        public virtual string OldValue { get; set; }
 
         /// <summary>
         /// The new value of the property.
         /// </summary>
-        public string NewValue { get; set; }
+        public virtual string NewValue { get; set; }
 
         /// <summary>
         /// The time this change was made.
         /// </summary>
-        public DateTime Time { get; set; }
+        public virtual DateTime Time { get; set; }
 
         /// <summary>
         /// A free text field describing this change.
         /// </summary>
-        public string Remarks { get; set; }
+        public virtual string Remarks { get; set; }
 
         #endregion
 

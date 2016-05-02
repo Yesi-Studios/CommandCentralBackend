@@ -20,7 +20,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The ID of the news item.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The client that created the news item.

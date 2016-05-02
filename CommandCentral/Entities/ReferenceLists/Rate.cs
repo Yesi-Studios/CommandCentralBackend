@@ -10,7 +10,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Rate.
     /// </summary>
-    public class Rate : ReferenceListItemBase<Rate>
+    public class Rate : ReferenceListItemBase
     {
         /// <summary>
         /// Maps a Rate to the database.

@@ -30,7 +30,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The ID of the session.  This ID should also be used as the authentication token by the client.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The time this session was created which is the time the client logged in.
@@ -55,7 +55,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The permissions of the user to whom this session belongs.
         /// </summary>
-        public virtual List<CommandCentral.Authorization.PermissionGroup> Permissions { get; set; }
+        public virtual IList<CommandCentral.Authorization.PermissionGroup> Permissions { get; set; }
 
         /// <summary>
         /// The last time this session was used, not counting this current time.
@@ -70,7 +70,7 @@ namespace CommandCentral.ClientAccess
         /// Determines if this session has expired given a max age of inactivity.
         /// </summary>
         /// <returns></returns>
-        public bool IsExpired()
+        public virtual bool IsExpired()
         {
             if (DateTime.Now.Subtract(this.LastUsedTime) > MaxAge)
                 return true;

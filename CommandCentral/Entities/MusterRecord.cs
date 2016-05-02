@@ -24,7 +24,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Unique GUID of this muster record
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// Musterer - I hate that word

@@ -26,7 +26,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The ID of this main data object.
         /// </summary>
-        public virtual string ID { get; set; }
+        public virtual Guid ID { get; set; }
 
         /// <summary>
         /// The current version of the application.

@@ -11,7 +11,7 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single NEC.
     /// </summary>
-    public class NEC : ReferenceListItemBase<NEC>
+    public class NEC : ReferenceListItemBase
     {
         /// <summary>
         /// Maps an NEC to the database.

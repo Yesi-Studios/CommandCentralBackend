@@ -33,8 +33,8 @@ namespace CommandCentral.ClientAccess.Service
 
             return "";
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
-            string messageID = Guid.NewGuid().ToString();
-            string clientID = "";
+            Guid messageID = Guid.NewGuid();
+            Guid clientID;
             MessageToken token = new MessageToken();
 
             //Add the CORS headers to the request.
@@ -56,7 +56,7 @@ namespace CommandCentral.ClientAccess.Service
                     throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation, HTTPStatusCodes.Service_Unavailable);
 
                 //Ok, this is going to be an actual request.  At this point we can ask for communication session from the session factory.
-                var communicationSession = DataAccess.SessionProvider.CreateSession();
+                var communicationSession = DataAccess.NHibernateHelper.CreateSession();
 
                 //Process the message token.
                 token = ProcessMessage(data, endpoint, messageID, communicationSession);
@@ -305,7 +305,7 @@ namespace CommandCentral.ClientAccess.Service
         /// <param name="messageID">The ID of the message.</param>
         /// <param name="communicationSession">The NHibernate session that will be used throughout the lifetime of this request.</param>
         /// <returns></returns>
-        private static MessageToken ProcessMessage(Stream data, string endpoint, string messageID, ISession communicationSession)
+        private static MessageToken ProcessMessage(Stream data, string endpoint, Guid messageID, ISession communicationSession)
         {
             try
             {
