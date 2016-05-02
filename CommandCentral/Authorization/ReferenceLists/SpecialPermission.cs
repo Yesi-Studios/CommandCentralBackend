@@ -29,7 +29,7 @@ namespace CommandCentral.Authorization.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(15);
                 Map(x => x.Description).Nullable().Length(40);
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
             }
         }
     }

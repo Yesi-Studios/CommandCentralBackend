@@ -157,7 +157,7 @@ namespace CommandCentralHost
         /// </summary>
         public static void StopService()
         {
-            if (_host == null)
+            if (_host != null)
             {
                 if (_host.State == CommunicationState.Closed)
                 {

@@ -44,7 +44,7 @@ namespace CommandCentral.ClientAccess
 
                 Map(x => x.ApplicationName).Unique().Length(40);
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
             }
         }
 

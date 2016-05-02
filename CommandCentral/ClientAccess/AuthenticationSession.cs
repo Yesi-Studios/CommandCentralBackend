@@ -102,7 +102,7 @@ namespace CommandCentral.ClientAccess
                 HasManyToMany(x => x.Permissions)
                     .Cascade.All().Inverse();
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
             }
         }
 

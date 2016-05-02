@@ -145,7 +145,7 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
 
             }
         }

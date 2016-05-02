@@ -42,7 +42,7 @@ namespace CommandCentral.Entities.ReferenceLists
 
                 HasMany(x => x.Departments);
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
             }
         }
     }

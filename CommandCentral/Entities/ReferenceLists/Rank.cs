@@ -29,7 +29,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(10);
                 Map(x => x.Description).Nullable().Length(40);
 
-                Cache.ReadOnly();
+                Cache.ReadWrite();
             }
         }
 
