@@ -22,7 +22,7 @@ namespace CommandCentralHost
             {
                 OptionText = "Release Service",
                 Method = ServiceManager.ReleaseService,
-                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State == CommunicationState.Closed
+                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State != CommunicationState.Opened
             },
             new DialogueOption
             {
@@ -44,6 +44,24 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
+                OptionText = "Freeze Communicator",
+                Method = () => CommandCentral.Communicator.Freeze(),
+                DisplayCriteria = () => CommandCentral.Communicator.IsCommunicatorInitialized && !CommandCentral.Communicator.IsFrozen
+            },
+            new DialogueOption
+            {
+                OptionText = "Unfreeze Communicator",
+                Method = () => CommandCentral.Communicator.Unfreeze(),
+                DisplayCriteria = () => CommandCentral.Communicator.IsCommunicatorInitialized && CommandCentral.Communicator.IsFrozen
+            },
+            new DialogueOption
+            {
+                OptionText = "Create Schema",
+                Method = SchemaEditor.CreateSchema,
+                DisplayCriteria = () => ServiceManager.Host == null
+            },
+            new DialogueOption
+            {
                 OptionText = "Edit Reference Lists",
                 Method = ReferenceListEditor.EditAllReferenceLists,
                 DisplayCriteria = () => true
@@ -51,12 +69,18 @@ namespace CommandCentralHost
             new DialogueOption
             {
                 OptionText = "Edit API Keys",
-                Method = ReferenceListEditor.EditAllReferenceLists,
+                Method = ApiKeysEditor.EditAPIKeys,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Edit Commands",
+                Method = CommandsEditor.EditCommands,
                 DisplayCriteria = () => true
             }
         };
 
-
+        [STAThread]
         private static void Main()
         {
             try
@@ -80,7 +104,7 @@ namespace CommandCentralHost
                         var displayOptions = dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
                         for (int x = 0; x < displayOptions.Count; x++)
                         {
-                            "{0}. {1}".F(x, displayOptions[x].OptionText).WriteLine();
+                            "{0}. {1}".FormatS(x, displayOptions[x].OptionText).WriteLine();
                         }
 
                         //Get the client's option and then check to make sure it's an integer and that integer is within range.
@@ -109,7 +133,7 @@ namespace CommandCentralHost
                     catch (Exception e)
                     {
                         Console.Clear();
-                        "A fatal error occurred in the host application.  Grab your pitchforks!  Find Atwood and RAAAAGE!\n\t{0}".F(e.Message).WriteLine();
+                        "A fatal error occurred in the host application.  Grab your pitchforks!  Find Atwood and RAAAAGE!\n\t{0}".FormatS(e.Message).WriteLine();
                         "".WriteLine();
                         "Press any key to continue...".WriteLine();
                         Console.ReadKey();
@@ -118,7 +142,7 @@ namespace CommandCentralHost
             }
             catch (Exception e)
             {
-                "Something terrible has happened that has caused the application to completely fail :(\n\t{0}".F(e.Message).WriteLine();
+                "Something terrible has happened that has caused the application to completely fail :(\n\t{0}".FormatS(e.Message).WriteLine();
                 "The application will not show down.  Press any key to continue...".WriteLine();
                 Console.ReadKey();
             }

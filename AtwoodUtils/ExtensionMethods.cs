@@ -48,7 +48,7 @@ namespace AtwoodUtils
             Console.WriteLine(str);
         }
 
-        public static string F(this string str, params object[] args)
+        public static string FormatS(this string str, params object[] args)
         {
             return string.Format(str, args);
         }

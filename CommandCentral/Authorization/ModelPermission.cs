@@ -17,6 +17,9 @@ namespace CommandCentral.Authorization
         /// </summary>
         protected virtual Guid Id { get; set; }
 
+        //A unique name that identifes this model permission.
+        protected virtual string Name { get; set; }
+
         /// <summary>
         /// The name of the model.
         /// </summary>
@@ -53,6 +56,7 @@ namespace CommandCentral.Authorization
 
                 Id(x => x.Id).GeneratedBy.Guid();
 
+                Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.ModelName).Not.Nullable().Length(20);
                 HasMany(x => x.SearchableFields)
                     .KeyColumn("ModelPermissionID")

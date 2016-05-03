@@ -14,7 +14,7 @@ namespace AtwoodUtils
             var maxValues = new int[numElements];
             for (int x = 0; x < numElements; x++)
             {
-                maxValues[x] = lines.Max(y => y[x].Length) + padding;
+                maxValues[x] = lines.Max(y => (y[x] ?? "").Length) + padding;
             }
 
             StringBuilder sb = new StringBuilder();
@@ -30,7 +30,7 @@ namespace AtwoodUtils
                 for (int x = 0; x < line.Length; x++)
                 {
                     var value = line[x];
-                    sb.Append(value.PadRight(maxValues[x]));
+                    sb.Append((value ?? "").PadRight(maxValues[x]));
                 }
             }
             return sb.ToString();

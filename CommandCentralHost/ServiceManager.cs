@@ -60,7 +60,7 @@ namespace CommandCentralHost
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(port))
                 {
-                    "It appears the port '{0}' is already in use.  Would you like to try again (y) or would you like to cancel service start up (any other key)?".F(port).WriteLine();
+                    "It appears the port '{0}' is already in use.  Would you like to try again (y) or would you like to cancel service start up (any other key)?".FormatS(port).WriteLine();
                     var line = Console.ReadLine();
                     if (line != null && line.ToLower() != "y")
                         keepLooping = false;
@@ -78,13 +78,13 @@ namespace CommandCentralHost
 
                 //Cool, that's done.  Let's also register with the communicator.
                 Communicator.InitializeCommunicator(Console.Out);
-                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".F(string.Join(",", Communicator.ListeningPriorities.Select(x => x.ToString()))).WriteLine();
+                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningPriorities.Select(x => x.ToString()))).WriteLine();
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;
 
                 //Tell the client we're done.
-                "Service initialized.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
+                "Service initialized.  Base address is '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
 
                 keepLooping = false;
             }
@@ -110,7 +110,7 @@ namespace CommandCentralHost
         {
             if (_host != null)
             {
-                if (_host.State != CommunicationState.Closed)
+                if (_host.State == CommunicationState.Opened)
                 {
                     "The host is currently active and listening.  Please stop the service first.".WriteLine();
                 }
@@ -136,11 +136,11 @@ namespace CommandCentralHost
             if (_host != null)
             {
                 if (_host.State == CommunicationState.Opened)
-                    "The host is already open and listening on port, '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
+                    "The host is already open and listening on port, '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
                 else
                 {
                     _host.Open();
-                    "Service opened.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
+                    "Service opened.  Base address is '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
                 }
             }
             else

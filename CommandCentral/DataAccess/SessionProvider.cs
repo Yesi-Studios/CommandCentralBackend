@@ -1,4 +1,5 @@
-﻿using CommandCentral.Entities;
+﻿using System;
+using CommandCentral.Entities;
 using FluentNHibernate.Cfg;
 using FluentNHibernate.Cfg.Db;
 using NHibernate;
@@ -16,12 +17,14 @@ namespace CommandCentral.DataAccess
 
         private static readonly ISessionFactory sessionFactory;
 
+        private static readonly NHibernate.Tool.hbm2ddl.SchemaExport schema;
+
         /// <summary>
         /// Static initializer sets up the NHibernate configuration and scans the assembly for all class maps.
         /// </summary>
         static NHibernateHelper()
         {
-            Configuration configuration = Fluently.Configure().Database(
+            /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test_db")
                         .Username("xanneth")
@@ -31,7 +34,22 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                .BuildConfiguration();*/
+
+            Configuration configuration = Fluently.Configure().Database(
+                MySQLConfiguration.Standard.ConnectionString(
+                    builder => builder.Database("test")
+                        .Username("niocga")
+                        .Password("niocga")
+                        .Server("gord14ec204"))
+                    .ShowSql())
+                .Cache(x => x.UseQueryCache()
+                    .ProviderClass<SysCacheProvider>())
+                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();
+
+            //We're going to save the schema in case the host wants to use it later.
+            schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);
 
             sessionFactory = configuration.BuildSessionFactory();
         }
@@ -62,6 +80,19 @@ namespace CommandCentral.DataAccess
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
             return sessionFactory.GetClassMetadata(entityName);
+        }
+
+        /// <summary>
+        /// Executes the create schema script against the database, optionally dropping the current schema first.
+        /// </summary>
+        public static void CreateSchema(bool dropFirst)
+        {
+            System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;
+            
+            if (dropFirst)
+                schema.Drop(writer, true);
+
+            schema.Create(writer, true);
         }
         
 

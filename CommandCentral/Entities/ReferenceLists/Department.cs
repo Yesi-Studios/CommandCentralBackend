@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities.ReferenceLists
@@ -6,14 +7,29 @@ namespace CommandCentral.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Department and all of its divisions.
     /// </summary>
-    public class Department : ReferenceListItemBase
+    public class Department
     {
         #region Properties
 
         /// <summary>
+        /// The Department's unique ID
+        /// </summary>
+        public virtual Guid Id { get; set; }
+
+        /// <summary>
+        /// The value of this department.  Eg. C40
+        /// </summary>
+        public virtual string Value { get; set; }
+
+        /// <summary>
+        /// A short description of this department.
+        /// </summary>
+        public virtual string Description { get; set; }
+
+        /// <summary>
         /// A list of those divisions that belong to this department.
         /// </summary>
-        public virtual List<Division> Divisions { get; set; }
+        public virtual IList<Division> Divisions { get; set; }
 
 
         #endregion
@@ -35,7 +51,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
-                HasMany(x => x.Divisions);
+                HasMany(x => x.Divisions).Cascade.All();
 
                 Cache.ReadWrite();
             }

@@ -23,6 +23,11 @@ namespace CommandCentral.Authorization
         public virtual string Name { get; set; }
 
         /// <summary>
+        /// A short description of this permission group.
+        /// </summary>
+        public virtual string Description { get; set; }
+
+        /// <summary>
         /// The list of sub-permissions that describe what rights this permission group grants to what model.
         /// </summary>
         public virtual List<ModelPermission> ModelPermissions { get; set; }
@@ -54,6 +59,7 @@ namespace CommandCentral.Authorization
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
+                Map(x => x.Description).Nullable().Length(50);
 
                 HasManyToMany(x => x.ModelPermissions);
                 HasManyToMany(x => x.SpecialPermissions);

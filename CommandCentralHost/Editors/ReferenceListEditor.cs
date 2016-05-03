@@ -94,7 +94,7 @@ namespace CommandCentralHost.Editors
             {
                 Console.Clear();
 
-                "Editing reference list of type '{0}'.".F(type.Name).WriteLine();
+                "Editing reference list of type '{0}'.".FormatS(type.Name).WriteLine();
                 "Simply type a new value to add, type a number to edit the corresponding list, the number followed by a '-' to delete the item, or an empty line to return.".WriteLine();
                 "".WriteLine();
 
@@ -112,11 +112,11 @@ namespace CommandCentralHost.Editors
 
                 if (string.IsNullOrWhiteSpace(input))
                     keepLooping = false;
-                else if (input.Last() == '-' && input.Length > 1 && int.TryParse(input.Substring(0, input.Length - 1), out option) && option >= 0 && option <= values.Count && values.Any())
+                else if (input.Last() == '-' && input.Length > 1 && int.TryParse(input.Substring(0, input.Length - 1), out option) && option >= 0 && option <= values.Count - 1 && values.Any())
                 {
                     session.Delete(values[option]);
                 }
-                else if (int.TryParse(input, out option) && option >= 0 && option <= values.Count && values.Any())
+                else if (int.TryParse(input, out option) && option >= 0 && option <= values.Count - 1 && values.Any())
                 {
                     //Client wants to edit an item.
                     EditReferenceItem(values[option], session);
@@ -146,10 +146,10 @@ namespace CommandCentralHost.Editors
             {
                 Console.Clear();
 
-                "Editing Reference List '{0}' Item.".F(item.GetType().Name).WriteLine();
+                "Editing Reference List '{0}' Item.".FormatS(item.GetType().Name).WriteLine();
                 "".WriteLine();
-                "Value:\n\t{0}".F(item.Value).WriteLine();
-                "Description:\n\t{0}".F(item.Description).WriteLine();
+                "Value:\n\t{0}".FormatS(item.Value).WriteLine();
+                "Description:\n\t{0}".FormatS(item.Description).WriteLine();
                 "".WriteLine();
 
                 "1. Edit Value".WriteLine();

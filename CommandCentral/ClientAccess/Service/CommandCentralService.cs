@@ -397,7 +397,5 @@ namespace CommandCentral.ClientAccess.Service
 
         #endregion
 
-
-
     }
 }

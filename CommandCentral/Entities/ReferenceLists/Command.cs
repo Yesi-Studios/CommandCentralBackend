@@ -1,19 +1,35 @@
-﻿using System.Collections.Generic;
-using FluentNHibernate.Mapping;
+﻿using FluentNHibernate.Mapping;
+using System;
+using System.Collections.Generic;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.
     /// </summary>
-    public class Command : ReferenceListItemBase
+    public class Command
     {
         #region Properties
 
         /// <summary>
+        /// The Command's unique ID
+        /// </summary>
+        public virtual Guid Id { get; set; }
+
+        /// <summary>
+        /// The value of this command.  Eg. NIOC GA
+        /// </summary>
+        public virtual string Value { get; set; }
+
+        /// <summary>
+        /// A short description of this command.
+        /// </summary>
+        public virtual string Description { get; set; }
+
+        /// <summary>
         /// The departments of the command
         /// </summary>
-        public virtual List<Department> Departments { get; set; }
+        public virtual IList<Department> Departments { get; set; }
 
         #endregion
 
@@ -34,7 +50,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
-                HasMany(x => x.Departments);
+                HasMany(x => x.Departments).Cascade.All();
 
                 Cache.ReadWrite();
             }

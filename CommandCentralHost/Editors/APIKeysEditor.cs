@@ -38,24 +38,25 @@ namespace CommandCentralHost.Editors
                             lines.Add(new[] { x.ToString(), apiKeys[x].Id.ToString(), apiKeys[x].ApplicationName });
                         DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
 
+                        int option;
                         string input = Console.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(input))
                             keepLooping = false;
+                        else if (input.Last() == '-' && input.Length > 1 && int.TryParse(input.Substring(0, input.Length - 1), out option) && option >= 0 && option <= apiKeys.Count -1 && apiKeys.Any())
+                        {
+                            session.Delete(apiKeys[option]);
+                        }
+                        else if (int.TryParse(input, out option) && option >= 0 && option <= apiKeys.Count - 1 && apiKeys.Any())
+                        {
+                            //Client wants to edit an item.
+                            EditAPIKey(apiKeys[option], session);
+                        }
                         else
                         {
-                            int option;
-                            if (int.TryParse(input, out option) && option >= 0 && option <= apiKeys.Count - 1)
-                            {
-
-                            }
-                            else
-                            {
-                                
-                            }
+                            var item = new ApiKey { ApplicationName = input };
+                            session.Save(item);
                         }
-
-
 
                     }
                     transaction.Commit();
@@ -66,6 +67,59 @@ namespace CommandCentralHost.Editors
                     throw;
                 }
 
+            }
+        }
+
+        private static void EditAPIKey(ApiKey key, ISession session)
+        {
+            bool keepLooping = true;
+
+            while (keepLooping)
+            {
+                Console.Clear();
+
+                "Editing API Key for application '{0}'".FormatS(key.ApplicationName).WriteLine();
+                "".WriteLine();
+
+                "Application Name:\n\t{0}".FormatS(key.ApplicationName).WriteLine();
+                "".WriteLine();
+                "API Key:\n\t{0}".FormatS(key.ApplicationName).WriteLine();
+                "".WriteLine();
+
+                "1. Edit Applicaion Name".WriteLine();
+                "2. Copy API Key to clipboard".WriteLine();
+                "3. Return".WriteLine();
+
+                int option;
+                if (int.TryParse(Console.ReadLine(), out option))
+                {
+                    switch (option)
+                    {
+                        case 1:
+                            {
+                                Console.Clear();
+
+                                "Enter a new application name...".WriteLine();
+                                key.ApplicationName = Console.ReadLine();
+                                break;
+                            }
+                        case 2:
+                            {
+                                System.Windows.Forms.Clipboard.SetText(key.Id.ToString());
+                                break;
+                            }
+                        case 3:
+                            {
+                                keepLooping = false;
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("In the api key editor switch.");
+                            }
+
+                    }
+                }
             }
         }
     }

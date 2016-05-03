@@ -14,7 +14,7 @@ namespace CommandCentral
         /// </summary>
         public static bool IsFrozen;
 
-        private static TextWriter _writer;
+        internal static TextWriter TextWriter;
         /// <summary>
         /// Indicates which messages should be forwarded onto the host, and which messages should be silently assassinated.
         /// </summary>
@@ -46,7 +46,13 @@ namespace CommandCentral
         /// <summary>
         /// Gets a value indicating if the Communicator has been initialized.
         /// </summary>
-        public static bool IsCommunicatorInitialized => _writer != null;
+        public static bool IsCommunicatorInitialized
+        {
+            get
+            {
+                return TextWriter != null;
+            }
+        }
 
         /// <summary>
         /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  The priorities indicate to which messages the caller would like to listen.
@@ -55,7 +61,7 @@ namespace CommandCentral
         /// <param name="priorities"></param>
         public static void InitializeCommunicator(TextWriter textWriter, List<MessagePriority> priorities)
         {
-            _writer = textWriter;
+            TextWriter = textWriter;
             ListeningPriorities = priorities;
         }
 
@@ -65,7 +71,7 @@ namespace CommandCentral
         /// <param name="textWriter"></param>
         public static void InitializeCommunicator(TextWriter textWriter)
         {
-            _writer = textWriter;
+            TextWriter = textWriter;
             ListeningPriorities = new List<MessagePriority> { MessagePriority.Critical, MessagePriority.Important, MessagePriority.Informational, MessagePriority.Warning };
         }
 
@@ -76,9 +82,9 @@ namespace CommandCentral
         /// <param name="priority"></param>
         public static void PostMessageToHost(string message, MessagePriority priority)
         {
-            if (_writer != null && ListeningPriorities.Contains(priority) && !IsFrozen)
+            if (TextWriter != null && ListeningPriorities.Contains(priority) && !IsFrozen)
             {
-                _writer.WriteLine("{0} Service Message @ {1}:\n\t{2}", priority, DateTime.Now, message);
+                TextWriter.WriteLine("{0} Service Message @ {1}:\n\t{2}", priority, DateTime.Now, message);
             }
         }
 
@@ -103,8 +109,8 @@ namespace CommandCentral
         /// </summary>
         public static void ReleaseCommunicator()
         {
-            _writer.Dispose();
-            _writer = null;
+            TextWriter.Dispose();
+            TextWriter = null;
         }
 
     }

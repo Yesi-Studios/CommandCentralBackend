@@ -90,6 +90,12 @@
   <ItemGroup>
     <Compile Include="DialogueOption.cs" />
     <Compile Include="Editors\APIKeysEditor.cs" />
+    <Compile Include="Editors\CommandsEditor.cs" />
+    <Compile Include="Editors\DepartmentsEditor.cs" />
+    <Compile Include="Editors\DivisionsEditor.cs" />
+    <Compile Include="Editors\ListEditor.cs" />
+    <Compile Include="Editors\PermissionsEditor.cs" />
+    <Compile Include="Editors\SchemaEditor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Editors\ReferenceListEditor.cs" />
