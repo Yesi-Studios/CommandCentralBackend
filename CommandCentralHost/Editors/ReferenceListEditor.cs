@@ -1,14 +1,14 @@
 ﻿using System;
-using AtwoodUtils;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using AtwoodUtils;
 using CommandCentral;
 using CommandCentral.DataAccess;
 using NHibernate;
 
-namespace CommandCentralHost
+namespace CommandCentralHost.Editors
 {
     /// <summary>
     /// Contains the method that enable us to edit the reference lists.

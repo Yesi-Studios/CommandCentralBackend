@@ -3,6 +3,7 @@ using AtwoodUtils;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using CommandCentralHost.Editors;
 
 namespace CommandCentralHost
 {
@@ -44,6 +45,12 @@ namespace CommandCentralHost
             new DialogueOption
             {
                 OptionText = "Edit Reference Lists",
+                Method = ReferenceListEditor.EditAllReferenceLists,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Edit API Keys",
                 Method = ReferenceListEditor.EditAllReferenceLists,
                 DisplayCriteria = () => true
             }

@@ -24,6 +24,27 @@ namespace CommandCentral.ClientAccess.Service
 
         #region Endpoints
 
+        #region ServiceManagement
+
+        /// <summary>
+        /// The list of all endpoints that are exposed to the client.
+        /// </summary>
+        public static readonly ConcurrentDictionary<string, EndpointDescription> Endpoints = new ConcurrentDictionary<string, EndpointDescription>();
+
+        /// <summary>
+        /// Static constructor that builds the endpoints.  This is how we register new endpoints.
+        /// </summary>
+        static CommandCentralService()
+        {
+            Entities.Person.EndpointDescriptions.ToList().ForEach(x => Endpoints.AddOrUpdate(x.Key, x.Value,
+                (key, value) =>
+                {
+                    throw new Exception();
+                }));
+        }
+
+        #endregion
+
 
         /// <summary>
         /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the endpoints.
@@ -31,7 +52,7 @@ namespace CommandCentral.ClientAccess.Service
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
+        public string InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
 
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
@@ -74,7 +95,7 @@ namespace CommandCentral.ClientAccess.Service
                     {
                         try
                         {
-                            token.CommunicationSession.Update(token.AuthenticationSession);
+                            token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession);
 
                             transaction.Commit();
                         }
@@ -85,85 +106,73 @@ namespace CommandCentral.ClientAccess.Service
                         }
                     }
                 }
-                
 
-                //If this message allows logging, then log it.
-                await token.DBInsert(true, desc.AllowArgumentLogging, desc.AllowResponseLogging);
+                //Now that we're done building the token, let's also save/update that.
+                using (var transaction = token.CommunicationSession.BeginTransaction())
+                {
+                    try
+                    {
+                        token.CommunicationSession.SaveOrUpdate(token);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
 
                 //Tell the host we've finished processing the message.
-                Communicator.PostMessageToHost(string.Format("{0} processed @ {1}", messageID, DateTime.Now), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(string.Format("{0} processed @ {1}", token.Id, DateTime.Now), Communicator.MessagePriority.Informational);
 
                 //Invoke the endpoint's data method.
-                //token = await desc.DataMethodAsync(token);
+                token = desc.DataMethod(token);
 
                 //Build what will be our final return string.  We do this prior to updating the message as "handled" in case serializing the return container takes an appreciable about of time so that we don't show a false handled time.
-                string finalResult = new Framework.ReturnContainer
+                string finalResult = new ReturnContainer
                 {
-                    ErrorMessage = null,
+                    ErrorMessages = new List<string>(),
                     HasError = false,
-                    ReturnValue = token.Result
+                    ReturnValue = token.Result,
+                    ErrorType = ErrorTypes.Null,
+                    StatusCode = HttpStatusCodes.Ok
                 }.Serialize();
 
                 //Update the token in the database, indicating that we have successfully handled it.
                 token.HandledTime = DateTime.Now;
-                token.State = MessageTokens.MessageStates.Handled;
-                await token.DBUpdate(true, desc.AllowArgumentLogging, desc.AllowResponseLogging);
+                token.State = MessageStates.Handled;
+
+                //Update the token.
+                using (var transaction = token.CommunicationSession.BeginTransaction())
+                {
+                    try
+                    {
+                        token.CommunicationSession.SaveOrUpdate(token);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
 
                 //Tell the host we finished with the message.
-                Communicator.PostMessageToHost(string.Format("{0} handled @ {1}", messageID, DateTime.Now), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(string.Format("{0} handled @ {1}", token.Id, DateTime.Now), Communicator.MessagePriority.Informational);
 
                 //Return our result.
-                return "";
+                return finalResult;
 
             }
             catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
             {
-                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
-                MessageTokens.UpdateOnExpectedError(messageID, e.Message);
-
-                //Tell the client we handled the reqest as a validation error.
-                Communicator.PostMessageToHost(string.Format("{0} handled (validation error) @ {1} - '{2}'", messageID, DateTime.Now, e.Message), Communicator.MessagePriority.Warning);
-
-                //Whatever the error was, put it in a return container and return that.
-                return new Framework.ReturnContainer
-                {
-                    ErrorMessage = e.Message,
-                    HasError = true,
-                    ErrorType = e.ErrorType,
-                    ReturnValue = null
-                }.Serialize();
+                return "Fuck";
             }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
-                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
-                MessageTokens.UpdateOnFatalError(messageID, e.Message);
-
-                //Log the error in the errors table.
-                new Errors.Error
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    InnerException = (e.InnerException == null) ? "" : e.InnerException.Message,
-                    IsHandled = false,
-                    LoggedInUserID = clientID,
-                    Message = e.Message,
-                    StackTrace = e.StackTrace,
-                    Time = DateTime.Now
-                }.DBInsert().Wait();
-
-                //Tell the client we failed a request.
-                Communicator.PostMessageToHost(string.Format("{0} failed @ {1} - '{2}'", messageID, DateTime.Now, e.Message), Communicator.MessagePriority.Critical);
-
-                //Send an error email, informing everyone that we failed a request.
-                UnifiedEmailHelper.SendFatalErrorEmail(token, e).Wait();
-
-                //Return an error message to the client.  The details of the message were sent to the developers, but the details don't need to be sent to the client.
-                return new Framework.ReturnContainer
-                {
-                    ErrorMessage = "Well... this is awkward.  The CommandDB suffered a serious, fatal error.  We are extremely sorry about this.  \n\n\tAn email, text message, and smoke signals have been sent to the developers with the details of this error.  \n\n\tYou'll most likely be contacted shortly if we need further information about this crash such as what you were doing in the application and the order in which you did it.  Any help you can provide us will be appreciated.",
-                    HasError = true,
-                    ErrorType = ErrorTypes.Fatal,
-                    ReturnValue = null
-                }.Serialize();
+                return "Fuck";
             }
 
 
@@ -388,14 +397,6 @@ namespace CommandCentral.ClientAccess.Service
 
         #endregion
 
-        #region ServiceManagement
-
-        /// <summary>
-        /// The list of all endpoints that are exposed to the client.
-        /// </summary>
-        public static ConcurrentDictionary<string, EndpointDescription> Endpoints = new ConcurrentDictionary<string, EndpointDescription>();
-
-        #endregion
 
 
     }

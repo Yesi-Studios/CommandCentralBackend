@@ -19,7 +19,7 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         [OperationContract]
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
-        Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint);
+        string InvokeGenericEndpointAsync(Stream data, string endpoint);
 
         /// <summary>
         /// Returns documentation for a given endpoint.
