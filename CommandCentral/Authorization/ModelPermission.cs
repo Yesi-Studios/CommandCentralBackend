@@ -42,6 +42,19 @@ namespace CommandCentral.Authorization
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns Name.
+        /// </summary>
+        /// <returns></returns>
+        public virtual new string ToString()
+        {
+            return Name;
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps the model permission to the database.
         /// </summary>

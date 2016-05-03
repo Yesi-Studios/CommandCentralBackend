@@ -33,6 +33,19 @@ namespace CommandCentral.Entities.ReferenceLists
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns the value (name) of this command.
+        /// </summary>
+        /// <returns></returns>
+        public virtual new string ToString()
+        {
+            return Value;
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a command to the database.
         /// </summary>

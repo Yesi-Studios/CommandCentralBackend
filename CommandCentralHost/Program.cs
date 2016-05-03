@@ -77,6 +77,12 @@ namespace CommandCentralHost
                 OptionText = "Edit Commands",
                 Method = CommandsEditor.EditCommands,
                 DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Edit Permissions",
+                Method = PermissionsEditor.PermissionEditorEntry,
+                DisplayCriteria = () => true
             }
         };
 

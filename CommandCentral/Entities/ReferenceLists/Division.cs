@@ -29,6 +29,18 @@ namespace CommandCentral.Entities.ReferenceLists
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns the value (name) of this division.
+        /// </summary>
+        /// <returns></returns>
+        public virtual new string ToString()
+        {
+            return Value;
+        }
+
+        #endregion
 
         /// <summary>
         /// Maps a division to the database.

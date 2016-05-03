@@ -30,17 +30,41 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The list of sub-permissions that describe what rights this permission group grants to what model.
         /// </summary>
-        public virtual List<ModelPermission> ModelPermissions { get; set; }
+        public virtual IList<ModelPermission> ModelPermissions { get; set; }
 
         /// <summary>
         /// Additional list of permissions.  Intended to describe access to other parts of the application as defined by the consumer.
         /// </summary>
-        public virtual List<SpecialPermission> SpecialPermissions { get; set; }
+        public virtual IList<SpecialPermission> SpecialPermissions { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
         /// </summary>
-        public virtual List<PermissionGroup> SubordinatePermissionGroups { get; set; }
+        public virtual IList<PermissionGroup> SubordinatePermissionGroups { get; set; }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Returns Name.
+        /// </summary>
+        /// <returns></returns>
+        public virtual new string ToString()
+        {
+            return Name;
+        }
+
+        #endregion
+
+        #region ctors
+
+        public PermissionGroup()
+        {
+            ModelPermissions = new List<ModelPermission>();
+            SpecialPermissions = new List<SpecialPermission>();
+            SubordinatePermissionGroups = new List<PermissionGroup>();
+        }
 
         #endregion
 

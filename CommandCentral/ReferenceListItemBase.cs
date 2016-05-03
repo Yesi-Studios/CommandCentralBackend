@@ -21,6 +21,15 @@ namespace CommandCentral
         /// A description of this item.
         /// </summary>
         public virtual string Description { get; set; }
+
+        /// <summary>
+        /// Returns the Value.
+        /// </summary>
+        /// <returns></returns>
+        public virtual new string ToString()
+        {
+            return Value;
+        }
         
     }
 }
