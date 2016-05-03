@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentNHibernate.Mapping;
+﻿using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Authorization.ReferenceLists
 {
@@ -24,7 +19,7 @@ namespace CommandCentral.Authorization.ReferenceLists
             {
                 Table("special_permissions");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(15);
                 Map(x => x.Description).Nullable().Length(40);

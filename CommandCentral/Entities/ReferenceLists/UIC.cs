@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
-using CommandCentral.ClientAccess;
+﻿using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -27,7 +20,7 @@ namespace CommandCentral.Entities.ReferenceLists
             {
                 Table("uics");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Length(10).Unique();
                 Map(x => x.Description).Nullable().Length(40);

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -23,27 +19,27 @@ namespace CommandCentral.Entities
         /// <summary>
         /// A failed login event.
         /// </summary>
-        Failed_Login,
+        FailedLogin,
         /// <summary>
         /// The password of an account was reset.
         /// </summary>
-        Password_Reset,
+        PasswordReset,
         /// <summary>
         /// The registration process was successfully begun.
         /// </summary>
-        Registration_Started,
+        RegistrationStarted,
         /// <summary>
         /// The registration process was completed.
         /// </summary>
-        Registration_Completed,
+        RegistrationCompleted,
         /// <summary>
         /// The password reset process was started.
         /// </summary>
-        Password_Reset_Initiated,
+        PasswordResetInitiated,
         /// <summary>
         /// The password of a person account was reset.
         /// </summary>
-        Password_Reset_Completed
+        PasswordResetCompleted
     }
 
     /// <summary>
@@ -57,7 +53,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this account history event.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The person on whose account this event occurred.
@@ -88,7 +84,7 @@ namespace CommandCentral.Entities
             {
                 Table("account_history_events");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.EventTime).Not.Nullable();
                 Map(x => x.AccountHistoryEventType).Not.Nullable().Length(20);

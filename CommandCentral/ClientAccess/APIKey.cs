@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.ClientAccess
@@ -11,15 +6,15 @@ namespace CommandCentral.ClientAccess
     /// <summary>
     /// Describes a single API Key.
     /// </summary>
-    public class APIKey
+    public class ApiKey
     {
 
         #region Properties
 
         /// <summary>
-        /// The unique ID of this API Key.  This is also the API Key itself.
+        /// The unique Id of this API Key.  This is also the API Key itself.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The name of the application to which this API Key was unsigned.
@@ -31,16 +26,16 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Provides mapping declarations to the database for the API Key.
         /// </summary>
-        public class APIKeyMap : ClassMap<APIKey>
+        public class ApiKeyMap : ClassMap<ApiKey>
         {
             /// <summary>
             /// Maps the API Key to the database.
             /// </summary>
-            public APIKeyMap()
+            public ApiKeyMap()
             {
                 Table("api_keys");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.ApplicationName).Unique().Length(40);
 

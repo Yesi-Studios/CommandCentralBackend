@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using CommandCentral.Authorization.ReferenceLists;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Authorization
@@ -15,9 +13,9 @@ namespace CommandCentral.Authorization
         #region Properties
 
         /// <summary>
-        /// The ID of this permission group.  This should not change after original creation.
+        /// The Id of this permission group.  This should not change after original creation.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The name of this permission group.
@@ -32,7 +30,7 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Additional list of permissions.  Intended to describe access to other parts of the application as defined by the consumer.
         /// </summary>
-        public virtual List<ReferenceLists.SpecialPermission> SpecialPermissions { get; set; }
+        public virtual List<SpecialPermission> SpecialPermissions { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
@@ -53,7 +51,7 @@ namespace CommandCentral.Authorization
             {
                 Table("permission_groups");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
 

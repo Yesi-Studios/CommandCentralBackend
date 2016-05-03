@@ -1,17 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using UnifiedServiceFramework.Framework;
-using AtwoodUtils;
+using CommandCentral.Authorization;
+using CommandCentral.Entities;
 using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 
 namespace CommandCentral.ClientAccess
 {
@@ -28,9 +19,9 @@ namespace CommandCentral.ClientAccess
         #region Properties
 
         /// <summary>
-        /// The ID of the session.  This ID should also be used as the authentication token by the client.
+        /// The Id of the session.  This Id should also be used as the authentication token by the client.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The time this session was created which is the time the client logged in.
@@ -40,7 +31,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The person to whom this session belongs.
         /// </summary>
-        public virtual Entities.Person Person { get; set; }
+        public virtual Person Person { get; set; }
 
         /// <summary>
         /// The time at which the client logged out, thus invalidating this session.
@@ -55,7 +46,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The permissions of the user to whom this session belongs.
         /// </summary>
-        public virtual IList<CommandCentral.Authorization.PermissionGroup> Permissions { get; set; }
+        public virtual IList<PermissionGroup> Permissions { get; set; }
 
         /// <summary>
         /// The last time this session was used, not counting this current time.
@@ -72,7 +63,7 @@ namespace CommandCentral.ClientAccess
         /// <returns></returns>
         public virtual bool IsExpired()
         {
-            if (DateTime.Now.Subtract(this.LastUsedTime) > MaxAge)
+            if (DateTime.Now.Subtract(LastUsedTime) > MaxAge)
                 return true;
 
             return false;
@@ -92,7 +83,7 @@ namespace CommandCentral.ClientAccess
             {
                 Table("authentication_sessions");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.LoginTime).Not.Nullable();
                 Map(x => x.LogoutTime).Nullable();

@@ -1,13 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using AtwoodUtils;
+using CommandCentral.DataAccess;
 using NHibernate;
 
 namespace CommandCentral.ClientAccess.Service
@@ -31,41 +34,38 @@ namespace CommandCentral.ClientAccess.Service
         public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
 
-            return "";
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
-            Guid messageID = Guid.NewGuid();
-            Guid clientID;
-            MessageToken token = new MessageToken();
+            Guid messageId = Guid.NewGuid();
+            MessageToken token;
 
             //Add the CORS headers to the request.
-            Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
+            Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
 
             try
             {
 
                 //Tell the host that we've received a message.
-                Communicator.PostMessageToHost(string.Format("{0} invoked '{1}' @ {2}", messageID, endpoint, DateTime.Now), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(string.Format("{0} invoked '{1}' @ {2}", messageId, endpoint, DateTime.Now), Communicator.MessagePriority.Informational);
 
                 //Does the endpoint the client tried to invoke exist?
                 EndpointDescription desc;
                 if (!Endpoints.TryGetValue(endpoint, out desc))
-                    throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", endpoint), ErrorTypes.Validation, HTTPStatusCodes.Not_Found);
+                    throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", endpoint), ErrorTypes.Validation, HttpStatusCodes.NotFound);
 
                 //Is the endpoint active?
                 if (!desc.IsActive)
-                    throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation, HTTPStatusCodes.Service_Unavailable);
+                    throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation, HttpStatusCodes.ServiceUnavailable);
 
                 //Ok, this is going to be an actual request.  At this point we can ask for communication session from the session factory.
-                var communicationSession = DataAccess.NHibernateHelper.CreateSession();
+                var communicationSession = NHibernateHelper.CreateSession();
 
                 //Process the message token.
-                token = ProcessMessage(data, endpoint, messageID, communicationSession);
+                token = ProcessMessage(data, endpoint, messageId, communicationSession);
 
                 //If this endpoint requires authentication, then get the session
                 if (desc.RequiresAuthentication)
                 {
                     token = AuthenticateMessage(token);
-                    clientID = token.AuthenticationSession.Person.ID;
 
                     //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
                     //at least the client tried to use the session.
@@ -85,7 +85,7 @@ namespace CommandCentral.ClientAccess.Service
                         }
                     }
                 }
-                /*
+                
 
                 //If this message allows logging, then log it.
                 await token.DBInsert(true, desc.AllowArgumentLogging, desc.AllowResponseLogging);
@@ -97,7 +97,7 @@ namespace CommandCentral.ClientAccess.Service
                 //token = await desc.DataMethodAsync(token);
 
                 //Build what will be our final return string.  We do this prior to updating the message as "handled" in case serializing the return container takes an appreciable about of time so that we don't show a false handled time.
-                string finalResult = new Framework.ReturnContainer()
+                string finalResult = new Framework.ReturnContainer
                 {
                     ErrorMessage = null,
                     HasError = false,
@@ -112,36 +112,36 @@ namespace CommandCentral.ClientAccess.Service
                 //Tell the host we finished with the message.
                 Communicator.PostMessageToHost(string.Format("{0} handled @ {1}", messageID, DateTime.Now), Communicator.MessagePriority.Informational);
 
-                //Return our result.*/
+                //Return our result.
                 return "";
 
             }
             catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
             {
-                /*//Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
+                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
                 MessageTokens.UpdateOnExpectedError(messageID, e.Message);
 
                 //Tell the client we handled the reqest as a validation error.
                 Communicator.PostMessageToHost(string.Format("{0} handled (validation error) @ {1} - '{2}'", messageID, DateTime.Now, e.Message), Communicator.MessagePriority.Warning);
 
                 //Whatever the error was, put it in a return container and return that.
-                return new Framework.ReturnContainer()
+                return new Framework.ReturnContainer
                 {
                     ErrorMessage = e.Message,
                     HasError = true,
                     ErrorType = e.ErrorType,
                     ReturnValue = null
-                }.Serialize();*/
+                }.Serialize();
             }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
-                /*//Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
+                //Update the message as an error.  If the message didn't get to the point that it was inserted into the database then it just won't update anything.
                 MessageTokens.UpdateOnFatalError(messageID, e.Message);
 
                 //Log the error in the errors table.
-                new Errors.Error()
+                new Errors.Error
                 {
-                    ID = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid().ToString(),
                     InnerException = (e.InnerException == null) ? "" : e.InnerException.Message,
                     IsHandled = false,
                     LoggedInUserID = clientID,
@@ -157,13 +157,13 @@ namespace CommandCentral.ClientAccess.Service
                 UnifiedEmailHelper.SendFatalErrorEmail(token, e).Wait();
 
                 //Return an error message to the client.  The details of the message were sent to the developers, but the details don't need to be sent to the client.
-                return new Framework.ReturnContainer()
+                return new Framework.ReturnContainer
                 {
                     ErrorMessage = "Well... this is awkward.  The CommandDB suffered a serious, fatal error.  We are extremely sorry about this.  \n\n\tAn email, text message, and smoke signals have been sent to the developers with the details of this error.  \n\n\tYou'll most likely be contacted shortly if we need further information about this crash such as what you were doing in the application and the order in which you did it.  Any help you can provide us will be appreciated.",
                     HasError = true,
                     ErrorType = ErrorTypes.Fatal,
                     ReturnValue = null
-                }.Serialize();*/
+                }.Serialize();
             }
 
 
@@ -176,79 +176,73 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         public async Task<Stream> GetDocumentationForEndpoint(string endpoint)
         {
-            try
+            //Add the CORS headers to this request.
+            Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
+
+            //Set the outgoing type as HTML
+            Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
+            WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
+
+            string result;
+
+            //Is endpoint not null or empty?
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                result = "The endpoint name can not be null or empty.";
+            }
+            else
             {
 
-                //Add the CORS headers to this request.
-                Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
-
-                //Set the outgoing type as HTML
-                WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
-
-                string result = null;
-
-                //Is endpoint not null or empty?
-                if (string.IsNullOrWhiteSpace(endpoint))
+                //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
+                EndpointDescription endpointDescription;
+                if (!Endpoints.TryGetValue(endpoint, out endpointDescription))
                 {
-                    result = "The endpoint name can not be null or empty.";
+                    result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
                 }
                 else
                 {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    string templateName = "UnifiedServiceFramework.Resources.Documentation.DocumentationTemplate.html";
 
-                    //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
-                    EndpointDescription endpointDescription;
-                    if (!Endpoints.TryGetValue(endpoint, out endpointDescription))
+                    string templatePage;
+                    using (Stream stream = assembly.GetManifestResourceStream(templateName))
                     {
-                        result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
-                    }
-                    else
-                    {
-                        System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                        string templateName = "UnifiedServiceFramework.Resources.Documentation.DocumentationTemplate.html";
-
-                        string templatePage = null;
-                        using (Stream stream = assembly.GetManifestResourceStream(templateName))
+                        Debug.Assert(stream != null, "stream != null");
                         using (StreamReader reader = new StreamReader(stream))
                         {
                             templatePage = await reader.ReadToEndAsync();
                         }
-
-                        string requiredParamaters = "None";
-                        if (endpointDescription.RequiredParameters != null && endpointDescription.RequiredParameters.Any())
-                            requiredParamaters = string.Join(Environment.NewLine, endpointDescription.RequiredParameters.Select(x => string.Format("{0} <br />", x)));
-
-                        string optionalParameters = "None";
-                        if (endpointDescription.OptionalParameters != null && endpointDescription.OptionalParameters.Any())
-                            optionalParameters = string.Join(Environment.NewLine, endpointDescription.OptionalParameters.Select(x => string.Format("{0} <br />", x)));
-
-                        string requiredSpecialPerms = "None";
-                        if (endpointDescription.RequiredSpecialPermissions != null && endpointDescription.RequiredSpecialPermissions.Any())
-                            requiredSpecialPerms = string.Join(",", endpointDescription.RequiredSpecialPermissions);
-
-                        string authNote = "None";
-                        if (!string.IsNullOrWhiteSpace(endpointDescription.AuthorizationNote))
-                            authNote = endpointDescription.AuthorizationNote;
-
-                        string output = "Ask Atwood to write this";
-                        if (endpointDescription.ExampleOutput != null)
-                            output = endpointDescription.ExampleOutput();
-
-                        result = string.Format(templatePage, endpoint, endpointDescription.Description, requiredSpecialPerms, requiredParamaters, optionalParameters,
-                            authNote, endpointDescription.RequiresAuthentication.ToString(), endpointDescription.AllowArgumentLogging.ToString(), endpointDescription.AllowResponseLogging.ToString(),
-                            endpointDescription.IsActive.ToString(), output);
                     }
 
+                    string requiredParamaters = "None";
+                    if (endpointDescription.RequiredParameters != null && endpointDescription.RequiredParameters.Any())
+                        requiredParamaters = string.Join(Environment.NewLine, endpointDescription.RequiredParameters.Select(x => string.Format("{0} <br />", x)));
+
+                    string optionalParameters = "None";
+                    if (endpointDescription.OptionalParameters != null && endpointDescription.OptionalParameters.Any())
+                        optionalParameters = string.Join(Environment.NewLine, endpointDescription.OptionalParameters.Select(x => string.Format("{0} <br />", x)));
+
+                    string requiredSpecialPerms = "None";
+                    if (endpointDescription.RequiredSpecialPermissions != null && endpointDescription.RequiredSpecialPermissions.Any())
+                        requiredSpecialPerms = string.Join(",", endpointDescription.RequiredSpecialPermissions);
+
+                    string authNote = "None";
+                    if (!string.IsNullOrWhiteSpace(endpointDescription.AuthorizationNote))
+                        authNote = endpointDescription.AuthorizationNote;
+
+                    string output = "Ask Atwood to write this";
+                    if (endpointDescription.ExampleOutput != null)
+                        output = endpointDescription.ExampleOutput();
+
+                    result = string.Format(templatePage, endpoint, endpointDescription.Description, requiredSpecialPerms, requiredParamaters, optionalParameters,
+                        authNote, endpointDescription.RequiresAuthentication, endpointDescription.AllowArgumentLogging, endpointDescription.AllowResponseLogging,
+                        endpointDescription.IsActive, output);
                 }
 
-                byte[] resultBytes = Encoding.UTF8.GetBytes(result);
-                return new MemoryStream(resultBytes);
-
             }
-            catch
-            {
 
-                throw;
-            }
+            byte[] resultBytes = Encoding.UTF8.GetBytes(result);
+            return new MemoryStream(resultBytes);
         }
 
         /// <summary>
@@ -257,40 +251,37 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         public async Task<Stream> GetAllDocumentation()
         {
-            try
+            //Add the CORS headers to this request.
+            Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
+
+            //Set the outgoing type as HTML
+            Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
+            WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string templateName = "UnifiedServiceFramework.Resources.Documentation.AllEndpointsTemplate.html";
+
+            string templatePage;
+            using (Stream stream = assembly.GetManifestResourceStream(templateName))
             {
-                //Add the CORS headers to this request.
-                Utilities.AddCORSHeadersToResponse(WebOperationContext.Current);
-
-                //Set the outgoing type as HTML
-                WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
-
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                string templateName = "UnifiedServiceFramework.Resources.Documentation.AllEndpointsTemplate.html";
-
-                string templatePage = null;
-                using (Stream stream = assembly.GetManifestResourceStream(templateName))
+                Debug.Assert(stream != null, "stream != null");
                 using (StreamReader reader = new StreamReader(stream))
                 {
                     templatePage = await reader.ReadToEndAsync();
                 }
-
-                string endpointTemplate = @"<li class='list-group-item'><a href='./man/{0}'>{0}</a></li>";
-
-                string endpoints = "";
-
-                Endpoints.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
-                {
-                    endpoints += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
-                });
-
-                byte[] resultBytes = Encoding.UTF8.GetBytes(string.Format(templatePage, endpoints));
-                return new MemoryStream(resultBytes);
             }
-            catch
+
+            string endpointTemplate = @"<li class='list-group-item'><a href='./man/{0}'>{0}</a></li>";
+
+            string endpoints = "";
+
+            Endpoints.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
             {
-                throw;
-            }
+                endpoints += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
+            });
+
+            byte[] resultBytes = Encoding.UTF8.GetBytes(string.Format(templatePage, endpoints));
+            return new MemoryStream(resultBytes);
         }
 
         #endregion
@@ -302,58 +293,51 @@ namespace CommandCentral.ClientAccess.Service
         /// </summary>
         /// <param name="data">The data stream from the POST data parameter.</param>
         /// <param name="endpoint">The endpoint that was invoked.</param>
-        /// <param name="messageID">The ID of the message.</param>
+        /// <param name="messageId">The Id of the message.</param>
         /// <param name="communicationSession">The NHibernate session that will be used throughout the lifetime of this request.</param>
         /// <returns></returns>
-        private static MessageToken ProcessMessage(Stream data, string endpoint, Guid messageID, ISession communicationSession)
+        private static MessageToken ProcessMessage(Stream data, string endpoint, Guid messageId, ISession communicationSession)
         {
-            try
-            {
-                //Convert the stream into the parameters
-                Dictionary<string, object> args = Utilities.ConvertPostDataToDict(data);
+            //Convert the stream into the parameters
+            Dictionary<string, object> args = Utilities.ConvertPostDataToDict(data);
 
-                //Get and authenticate the APIkey
-                if (!args.ContainsKey("apikey"))
-                    throw new ServiceException("You must send an API Key.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
-                string apiKey = args["apikey"] as string;
+            //Get and authenticate the APIkey
+            if (!args.ContainsKey("apikey"))
+                throw new ServiceException("You must send an API Key.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+            string apiKey = args["apikey"] as string;
 
-                //Try to get the API key.
-                APIKey key;
+            //Try to get the API key.
+            ApiKey key;
                 
-                using (var transaction = communicationSession.BeginTransaction())
-                {
-                    try
-                    {
-                        key = communicationSession.Get<APIKey>(apiKey);
-
-                        if (key == null)
-                            throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, HTTPStatusCodes.Forbiden);
-
-                        transaction.Commit();
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-
-                //Build the message token and return it.
-                return new MessageToken
-                {
-                    APIKey = key,
-                    Args = args,
-                    CallTime = DateTime.Now,
-                    Endpoint = endpoint,
-                    ID = messageID,
-                    State = MessageStates.Active,
-                    CommunicationSession = communicationSession
-                };
-            }
-            catch
+            using (var transaction = communicationSession.BeginTransaction())
             {
-                throw;
+                try
+                {
+                    key = communicationSession.Get<ApiKey>(apiKey);
+
+                    if (key == null)
+                        throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
+
+            //Build the message token and return it.
+            return new MessageToken
+            {
+                ApiKey = key,
+                Args = args,
+                CallTime = DateTime.Now,
+                Endpoint = endpoint,
+                Id = messageId,
+                State = MessageStates.Active,
+                CommunicationSession = communicationSession
+            };
         }
 
         /// <summary>
@@ -367,46 +351,39 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         private static MessageToken AuthenticateMessage(MessageToken token)
         {
-            try
-            {
-                //Get the session for this authentication token.
-                if (!token.Args.ContainsKey("authenticationtoken"))
-                    throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
-                string authenticationToken = token.Args["authenticationtoken"] as string;
+            //Get the session for this authentication token.
+            if (!token.Args.ContainsKey("authenticationtoken"))
+                throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+            string authenticationToken = token.Args["authenticationtoken"] as string;
 
-                //Alright let's try to get the session.
-                using (var transaction = token.CommunicationSession.BeginTransaction())
+            //Alright let's try to get the session.
+            using (var transaction = token.CommunicationSession.BeginTransaction())
+            {
+                try
                 {
-                    try
-                    {
-                        var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
+                    var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
 
-                        if (authenticationSession == null)
-                            throw new ServiceException("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, HTTPStatusCodes.Bad_Request);
+                    if (authenticationSession == null)
+                        throw new ServiceException("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, HttpStatusCodes.BadRequest);
 
-                        //Ok so we got a session, is it valid?
-                        if (authenticationSession.IsExpired())
-                            throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, HTTPStatusCodes.Unauthorized);
+                    //Ok so we got a session, is it valid?
+                    if (authenticationSession.IsExpired())
+                        throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, HttpStatusCodes.Unauthorized);
 
-                        //Since the session is in fact valid, we can go ahead and tack it onto the token.
-                        token.AuthenticationSession = authenticationSession;
+                    //Since the session is in fact valid, we can go ahead and tack it onto the token.
+                    token.AuthenticationSession = authenticationSession;
 
-                        transaction.Commit();
-                    }
-                    catch
-                    {
-                        if (!transaction.WasCommitted)
-                            transaction.Rollback();
-                        throw;
-                    }
+                    transaction.Commit();
                 }
+                catch
+                {
+                    if (!transaction.WasCommitted)
+                        transaction.Rollback();
+                    throw;
+                }
+            }
 
-                return token;
-            }
-            catch
-            {
-                throw;
-            }
+            return token;
         }
 
         #endregion

@@ -1,15 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using UnifiedServiceFramework.Framework;
-using AtwoodUtils;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -24,7 +13,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Unique GUID of this muster record
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// Musterer - I hate that word
@@ -85,7 +74,7 @@ namespace CommandCentral.Entities
             {
                 Table("muster_records");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Musterer).Not.Nullable();
                 References(x => x.Musteree).Not.Nullable();

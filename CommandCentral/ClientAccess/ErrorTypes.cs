@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CommandCentral.ClientAccess
+﻿namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// A list of error types.
@@ -38,6 +32,6 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Indicates that no error occurred or an error has not yet been set.
         /// </summary>
-        NULL
+        Null
     }
 }

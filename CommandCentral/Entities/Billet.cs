@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
+using CommandCentral.Entities.ReferenceLists;
+using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
 {
@@ -18,9 +15,9 @@ namespace CommandCentral.Entities
         #region Properties
 
         /// <summary>
-        /// The unique ID assigned to this Billet
+        /// The unique Id assigned to this Billet
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The title of this billet.
@@ -28,9 +25,9 @@ namespace CommandCentral.Entities
         public virtual string Title { get; set; }
 
         /// <summary>
-        /// The ID Number of this Billet.  This is also called the Billet ID Number or BIN.
+        /// The Id Number of this Billet.  This is also called the Billet Id Number or BIN.
         /// </summary>
-        public virtual string IDNumber { get; set; }
+        public virtual string IdNumber { get; set; }
 
         /// <summary>
         /// The suffix code of this Billet.  This is also called the Billet Suffix Code or BSC.
@@ -55,12 +52,12 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The NEC assigned to this billet.
         /// </summary>
-        public virtual ReferenceLists.NEC NEC { get; set; }
+        public virtual NEC NEC { get; set; }
 
         /// <summary>
         /// The UIC assigned to this billet.
         /// </summary>
-        public virtual ReferenceLists.UIC UIC { get; set; }
+        public virtual UIC UIC { get; set; }
 
         /// <summary>
         /// All the endpoints
@@ -87,10 +84,10 @@ namespace CommandCentral.Entities
             {
                 Table("billets");
 
-                Id(x => x.ID);
+                Id(x => x.Id);
 
                 Map(x => x.Title).Length(40).Not.Nullable();
-                Map(x => x.IDNumber).Length(10).Not.Nullable().Unique();
+                Map(x => x.IdNumber).Length(10).Not.Nullable().Unique();
                 Map(x => x.SuffixCode).Length(10).Not.Nullable().Unique();
                 Map(x => x.Remarks).Length(100).Nullable();
                 Map(x => x.Designation).Length(10).Not.Nullable().Unique();

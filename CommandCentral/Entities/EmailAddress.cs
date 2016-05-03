@@ -1,17 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using UnifiedServiceFramework.Framework;
 using AtwoodUtils;
+using System.Linq;
 using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 
 namespace CommandCentral.Entities
 {
@@ -26,7 +16,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this Email Address
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The person that owns this email address.
@@ -49,13 +39,13 @@ namespace CommandCentral.Entities
         public virtual bool IsPreferred { get; set; }
 
         /// <summary>
-        /// Indicates whether or not this email address is a mail.mil email address.  This is a calulated field, built using the Address field.
+        /// Indicates whether or not this email address is a mail.mil email address.  This is a calculated field, built using the Address field.
         /// </summary>
-        public virtual bool IsDODEmailAddress
+        public virtual bool IsDodEmailAddress
         {
             get
             {
-                var elements = this.Address.Split(new[] { "@" }, StringSplitOptions.RemoveEmptyEntries);
+                var elements = Address.Split(new[] { "@" }, StringSplitOptions.RemoveEmptyEntries);
                 if (!elements.Any())
                     return false;
 
@@ -77,7 +67,7 @@ namespace CommandCentral.Entities
             {
                 Table("emailaddresses");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner).Not.Nullable();
                 Map(x => x.Address).Not.Nullable().Unique();

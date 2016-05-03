@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Mail;
 using System.Reflection;
-using System.IO;
+using System.Threading.Tasks;
+using CommandCentral.ClientAccess;
 
 
 namespace CommandCentral
@@ -18,12 +18,12 @@ namespace CommandCentral
         /// <summary>
         /// The address to be used by all emails as their sender address.
         /// </summary>
-        private static readonly MailAddress _emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
 
         /// <summary>
         /// The address that should be used as the "reply to" address on all mail messages.
         /// </summary>
-        private static readonly MailAddress _replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
 
         /// <summary>
         /// The SMTP server to use to send our emails.
@@ -33,25 +33,22 @@ namespace CommandCentral
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
         /// </summary>
-        private static readonly string _completeRegistrationPageLocation = @"147.51.62.19/CC/#/finishregistration/";
+        private static readonly string completeRegistrationPageLocation = @"147.51.62.19/CC/#/finishregistration/";
 
         /// <summary>
         /// The template URI for where the reset password page can be found.
         /// </summary>
-        private static readonly string _passwordResetPageLocation = @"file:///E:/CommandDB Frontend/ResetPassword.html?ResetPasswordID=";
+        private static readonly string passwordResetPageLocation = @"file:///E:/CommandDB Frontend/ResetPassword.html?ResetPasswordID=";
 
         /// <summary>
         /// The required "host" portion of an email address for an email address to be considered a DOD email address.
         /// </summary>
         public static string RequiredDODEmailHost
         {
-            get
-            {
-                return "mail.mil";
-            }
+            get { return "mail.mil"; }
         }
 
-        private static readonly List<string> _developerEmailAddresses = new List<string>() 
+        private static readonly List<string> developerEmailAddresses = new List<string>
         { 
             "daniel.k.atwood.mil@mail.mil", 
             "sundevilgoalie13@gmail.com",
@@ -65,25 +62,16 @@ namespace CommandCentral
         /// Uses the FailedAccountLogin.html template.
         /// </summary>
         /// <param name="emailAddressTo"></param>
-        /// <param name="personID"></param>
+        /// <param name="personId"></param>
         /// <returns></returns>
-        public static async Task SendFailedAccountLoginEmail(string emailAddressTo, Guid personID)
+        public static async Task SendFailedAccountLoginEmail(string emailAddressTo, Guid personId)
         {
-            try
-            {
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTo);
-                message.Subject = "Failed Account Login";
-                message.Body = string.Format(await LoadEmailResource("FailedAccountLogin.html"), DateTime.Now, personID);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-            }
-            catch (Exception)
-            {
-                
-                throw;
-            }
+            MailMessage message = BuildStandardMessage();
+            message.To.Add(emailAddressTo);
+            message.Subject = "Failed Account Login";
+            message.Body = string.Format(await LoadEmailResource("FailedAccountLogin.html"), DateTime.Now, personId);
+            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
+            await client.SendMailAsync(message);
         }
 
         /// <summary>
@@ -92,233 +80,110 @@ namespace CommandCentral
         /// Uses the ConfirmAccount.html email template.
         /// </summary>
         /// <param name="emailAddressTo"></param>
-        /// <param name="confirmationID"></param>
+        /// <param name="confirmationId"></param>
         /// <param name="ssn"></param>
         /// <returns></returns>
-        public static async Task SendConfirmAccountEmail(string emailAddressTo, Guid confirmationID, string ssn)
+        public static async Task SendConfirmAccountEmail(string emailAddressTo, Guid confirmationId, string ssn)
         {
-            try
-            {
-
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTo);
-                message.Subject = "Confirm Email Address";
-                message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, _completeRegistrationPageLocation + confirmationID, ssn.Substring((ssn.Length - 1) - 4));
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
+            MailMessage message = BuildStandardMessage();
+            message.To.Add(emailAddressTo);
+            message.Subject = "Confirm Email Address";
+            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, completeRegistrationPageLocation + confirmationId, ssn.Substring((ssn.Length - 1) - 4));
+            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
+            await client.SendMailAsync(message);
+        }
+        
+        /// <summary>
+        /// Sends an email to a client informing the client that an error occurred during registration.
+        /// </summary>
+        /// <param name="emailAddressTo"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, Guid personId)
+        {
+            MailMessage message = new MailMessage();
+            developerEmailAddresses.ForEach(x => message.To.Add(x));
+            message.To.Add(emailAddressTo);
+            message.Subject = "IMPORTANT! Registration - Important Security Error";
+            message.From = emailSenderAddress;
+            message.Body = string.Format(await LoadEmailResource("BeginRegistrationError.html"), DateTime.Now, personId);
+            SmtpClient client = new SmtpClient(SmtpHost);
+            await client.SendMailAsync(message);
         }
 
         /// <summary>
-        /// Sends an email to the given list of recipients informing them that the muster has rolled over.
-        /// <para />
-        /// Uses the FinalMusterReport.html email template.
+        /// Sends a generic error.
         /// </summary>
-        /// <param name="emailAddressTo"></param>
-        /// <param name="confirmationID"></param>
-        /// <param name="ssn"></param>
+        /// <param name="errorMessage"></param>
+        /// <param name="subject"></param>
         /// <returns></returns>
-        public static async Task SendFinalMusterReportEmail(List<string> emailAddressesTo, DateTime musterDay, int total, int totalMustered, int officers, int officersMustered, 
-            int enlisted, int enlistedMustered, int don, int donMustered, int reservists, int reservistsMustered, int contractors, int contractorsMustered,
-            int pep, int pepMustered, int td, int present, int aa, int tad, int leave, int terminalLeave, int deployed, int siq, int ua, int other, int unaccounted, string unaccountedString)
-        {
-            try
-            {
-                MailMessage message = BuildStandardMessage();
-                message.Subject = string.Format("Final Muster Report - {0}", musterDay.ToShortDateString());
-                message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, musterDay.ToShortDateString(), total, totalMustered, officers, officersMustered,
-                    enlisted, enlistedMustered, don, donMustered, reservists, reservistsMustered, contractors, contractorsMustered, pep, pepMustered,
-                    td, present, aa, tad, leave, terminalLeave, deployed, siq, ua, other, unaccounted, unaccountedString);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                emailAddressesTo.ForEach(x => message.To.Add(x));
-                await client.SendMailAsync(message);
-                
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static async Task SendAccountUpdatedEmail(string emailAddressTo, string editorID, List<Entities.Change> changes)
-        {
-            try
-            {
-                //Build the body of the email
-                string body = "";
-                changes.ForEach(x =>
-                    {
-                        body += x.ToString() + Environment.NewLine + "<br />";
-                    });
-
-
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTo);
-                message.Subject = "Your Account Has Been Updated!";
-                message.Body = string.Format(await LoadEmailResource("AccountUpdated.html"), editorID, DateTime.Now, body);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static async Task SendChangeEventOccuredEmail(string emailAddressTo, string editorID, string modelPrimaryID, string eventName, string modelName, List<Entities.Change> changes)
-        {
-            try
-            {
-                //Build the body of the email
-                string body = "";
-                changes.ForEach(x =>
-                {
-                    body += x.ToString() + Environment.NewLine + "<br />";
-                });
-
-
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTo);
-                message.Subject = "Your Account Has Been Updated!";
-                message.Body = string.Format(await LoadEmailResource("ChangeEventOccured.html"), editorID, eventName, modelName, modelPrimaryID, DateTime.Now, body);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static async Task SendBilletsUpdatedEmail(string emailAddressTo, string editorID, List<Entities.Change> changes)
-        {
-            try
-            {
-                //Build the body of the email
-                string body = "";
-                changes.ForEach(x =>
-                {
-                    body += x.ToString() + Environment.NewLine + "<br />";
-                });
-
-
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTo);
-                message.Subject = "Billets have been updated!";
-                message.Body = string.Format(await LoadEmailResource("BilletsUpdated.html"), editorID, DateTime.Now, body);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, Guid personID)
-        {
-            try
-            {
-                MailMessage message = new MailMessage();
-                _developerEmailAddresses.ForEach(x => message.To.Add(x));
-                message.To.Add(emailAddressTo);
-                message.Subject = "IMPORTANT! Registration - Important Security Error";
-                message.From = _emailSenderAddress;
-                message.Body = string.Format(await LoadEmailResource("BeginRegistrationError.html"), DateTime.Now, personID);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
         public static async Task SendGenericErrorEmail(string errorMessage, string subject)
         {
-            try
-            {
-                MailMessage message = new MailMessage();
-                _developerEmailAddresses.ForEach(x => message.To.Add(x));
-                message.Subject = subject;
-                message.From = _emailSenderAddress;
-                message.Body = string.Format(await LoadEmailResource("GenericError.html"), DateTime.Now, errorMessage);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                await client.SendMailAsync(message);
-            }
-            catch
-            {
-                throw;
-            }
+            MailMessage message = new MailMessage();
+            developerEmailAddresses.ForEach(x => message.To.Add(x));
+            message.Subject = subject;
+            message.From = emailSenderAddress;
+            message.Body = string.Format(await LoadEmailResource("GenericError.html"), DateTime.Now, errorMessage);
+            SmtpClient client = new SmtpClient(SmtpHost);
+            await client.SendMailAsync(message);
         }
 
-        
-
-        public static async Task SendBeginPasswordResetEmail(Guid passwordResetID, string emailAddressTO)
+        /// <summary>
+        /// Sends an email informing a client that a password reset request has begun.
+        /// </summary>
+        /// <param name="passwordResetId"></param>
+        /// <param name="emailAddressTo"></param>
+        /// <returns></returns>
+        public static async Task SendBeginPasswordResetEmail(Guid passwordResetId, string emailAddressTo)
         {
-            try
-            {
-                MailMessage message = BuildStandardMessage();
-                message.To.Add(emailAddressTO);
-                message.Subject = "CommandDB Password Reset";
-                message.Body = string.Format(await LoadEmailResource("InitiatePasswordReset.html"), DateTime.Now, _passwordResetPageLocation + passwordResetID, emailAddressTO);
-                SmtpClient client = new SmtpClient(SmtpHost);
-                client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                await client.SendMailAsync(message);
-
-
-            }
-            catch
-            {
-                throw;
-            }
+            MailMessage message = BuildStandardMessage();
+            message.To.Add(emailAddressTo);
+            message.Subject = "CommandDB Password Reset";
+            message.Body = string.Format(await LoadEmailResource("InitiatePasswordReset.html"), DateTime.Now, passwordResetPageLocation + passwordResetId, emailAddressTo);
+            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
+            await client.SendMailAsync(message);
         }
 
+        /// <summary>
+        /// Load an email template.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
         private static async Task<string> LoadEmailResource(string fileName)
         {
-            try
-            {
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                string resourceName = string.Format("CommandDB_Plugin.Resources.EmailTemplates.{0}", fileName);
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string resourceName = string.Format("CommandCentral.Resources.EmailTemplates.{0}", fileName);
 
-                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                Debug.Assert(stream != null, "stream != null");
                 using (StreamReader reader = new StreamReader(stream))
                 {
                     return await reader.ReadToEndAsync();
                 }
-
-            }
-            catch
-            {
-                throw;
             }
         }
 
+        /// <summary>
+        /// Builds the basic parts of a message and prepares it to be sent.
+        /// </summary>
+        /// <returns></returns>
         private static MailMessage BuildStandardMessage()
         {
-            //The warning disable here is to supress the warning that tells us that using the "ReplyTo" field is obsolete.  
+            //The warning disable here is to suppress the warning that tells us that using the "ReplyTo" field is obsolete.  
             //The only other options is to use the ReplyToList and then use the .Add method on it.  This is easier so Yolo.
             #pragma warning disable 612, 618
-            MailMessage message = new MailMessage()
+            MailMessage message = new MailMessage
             {
                 IsBodyHtml = true,
-                From = _emailSenderAddress,
-                Sender = _emailSenderAddress,
-                ReplyTo = _replyToAddress,
+                From = emailSenderAddress,
+                Sender = emailSenderAddress,
+                ReplyTo = replyToAddress,
                 Priority = MailPriority.High
             };
             #pragma warning restore 612, 618
 
-            message.CC.Add(_emailSenderAddress);
+            message.CC.Add(emailSenderAddress);
 
             return message;
 
@@ -330,7 +195,7 @@ namespace CommandCentral
         /// <param name="token"></param>
         /// <param name="e"></param>
         /// <returns></returns>
-        public static async Task SendFatalErrorEmail(ClientAccess.MessageToken token, Exception e)
+        public static void SendFatalErrorEmail(MessageToken token, Exception e)
         {
             //The warning disable here is to supress the warning that tells us that using the "ReplyTo" field is obsolete.  
             //The only other options is to use the ReplyToList and then use the .Add method on it.  This is easier so Yolo.
@@ -350,15 +215,15 @@ namespace CommandCentral
             {
                 message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
                     "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
-                    token.ID, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
+                    token.Id, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
                     e.Message, (e.InnerException == null) ? "NULL" : e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
             }
             else
             {
                 message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
-                    token.Session.ID, token.Session.LoginTime.ToUniversalTime(), token.Session.PersonID, token.Session.LogoutTime.ToUniversalTime(),
+                    token.Session.Id, token.Session.LoginTime.ToUniversalTime(), token.Session.PersonID, token.Session.LogoutTime.ToUniversalTime(),
                     token.Session.IsActive, token.Session.PermissionIDs.Serialize(),
-                    token.ID, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
+                    token.Id, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
                     e.Message, e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
             }
 

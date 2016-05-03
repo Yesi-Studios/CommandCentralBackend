@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AtwoodUtils;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -18,9 +13,9 @@ namespace CommandCentral.Entities
         #region Properties
 
         /// <summary>
-        /// The ID of this change.
+        /// The Id of this change.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The client who initiated this change.
@@ -33,9 +28,9 @@ namespace CommandCentral.Entities
         public virtual string ObjectName { get; set; }
 
         /// <summary>
-        /// The ID of the object that was changed.
+        /// The Id of the object that was changed.
         /// </summary>
-        public virtual string ObjectID { get; set; }
+        public virtual string ObjectId { get; set; }
 
         /// <summary>
         /// The property that was edited.
@@ -76,12 +71,12 @@ namespace CommandCentral.Entities
             {
                 Table("changes");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Editor);
 
                 Map(x => x.ObjectName).Not.Nullable().Length(20);
-                Map(x => x.ObjectID).Not.Nullable().Length(45);
+                Map(x => x.ObjectId).Not.Nullable().Length(45);
                 Map(x => x.PropertyName).Not.Nullable().Length(20);
                 Map(x => x.OldValue).Not.Nullable().Length(100);
                 Map(x => x.NewValue).Not.Nullable().Length(100);

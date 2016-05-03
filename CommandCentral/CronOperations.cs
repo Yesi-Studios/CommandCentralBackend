@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -17,28 +16,21 @@ namespace CommandCentral
         private static ConcurrentBag<Action> _cronOperationsCache = new ConcurrentBag<Action>();
 
         /// <summary>
-        /// Gets the actions assigned ot the cron operations cache.
+        /// Gets the actions assigned to the cron operations cache.
         /// </summary>
         public static List<Action> CronOperationActions
         {
-            get
-            {
-                return _cronOperationsCache.ToList();
-
-            }
+            get { return _cronOperationsCache.ToList(); }
         }
 
-        private static Timer _timer = new Timer(TimeSpan.FromMinutes(15).TotalMilliseconds); //Interval is in milliseconds
+        private static readonly Timer timer = new Timer(TimeSpan.FromMinutes(15).TotalMilliseconds); //Interval is in milliseconds
 
         /// <summary>
         /// Gets a TimeSpan object which represents the cron operations's timer's interval.
         /// </summary>
         public static TimeSpan Interval
         {
-            get
-            {
-                return TimeSpan.FromMilliseconds(_timer.Interval);
-            }
+            get { return TimeSpan.FromMilliseconds(timer.Interval); }
         }
 
         /// <summary>
@@ -46,10 +38,7 @@ namespace CommandCentral
         /// </summary>
         public static bool IsActive
         {
-            get
-            {
-                return _timer.Enabled;
-            }
+            get { return timer.Enabled; }
         }
 
         /// <summary>
@@ -58,14 +47,7 @@ namespace CommandCentral
         /// <param name="cronOperation"></param>
         public static void RegisterCronOperation(Action cronOperation)
         {
-            try
-            {
-                _cronOperationsCache.Add(cronOperation);
-            }
-            catch
-            {
-                throw;
-            }
+            _cronOperationsCache.Add(cronOperation);
         }
 
         /// <summary>
@@ -74,16 +56,9 @@ namespace CommandCentral
         /// <param name="interval"></param>
         public static void StartCronOperations(double interval)
         {
-            try
-            {
-                _timer.Interval = interval;
-                _timer.Elapsed += timer_Elapsed;
-                _timer.Start();
-            }
-            catch
-            {
-                throw;
-            }
+            timer.Interval = interval;
+            timer.Elapsed += timer_Elapsed;
+            timer.Start();
         }
         
         /// <summary>
@@ -91,15 +66,8 @@ namespace CommandCentral
         /// </summary>
         public static void StartCronOperations()
         {
-            try
-            {
-                _timer.Elapsed += timer_Elapsed;
-                _timer.Start();
-            }
-            catch
-            {
-                throw;
-            }
+            timer.Elapsed += timer_Elapsed;
+            timer.Start();
         }
 
         /// <summary>
@@ -109,16 +77,9 @@ namespace CommandCentral
         /// </summary>
         public static void StopAndRelease()
         {
-            try
-            {
-                _timer.Stop();
-                _cronOperationsCache = new ConcurrentBag<Action>();
-                _timer.Elapsed -= timer_Elapsed;
-            }
-            catch
-            {
-                throw;
-            }
+            timer.Stop();
+            _cronOperationsCache = new ConcurrentBag<Action>();
+            timer.Elapsed -= timer_Elapsed;
         }
 
         /// <summary>
@@ -128,28 +89,14 @@ namespace CommandCentral
         /// </summary>
         public static void Stop()
         {
-            try
-            {
-                _timer.Stop();
-                _timer.Elapsed -= timer_Elapsed;
-            }
-            catch
-            {
-                throw;
-            }
+            timer.Stop();
+            timer.Elapsed -= timer_Elapsed;
         }
 
         private static void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            try
-            {
-                Communicator.PostMessageToHost(string.Format("Starting {0} cron operations in parallel with no callback...", _cronOperationsCache.Count), Communicator.MessagePriority.Informational);
-                Parallel.ForEach(_cronOperationsCache.ToList(), (action) => action());
-            }
-            catch
-            {
-                throw;
-            }
+            Communicator.PostMessageToHost(string.Format("Starting {0} cron operations in parallel with no callback...", _cronOperationsCache.Count), Communicator.MessagePriority.Informational);
+            Parallel.ForEach(_cronOperationsCache.ToList(), action => action());
         }
 
     }

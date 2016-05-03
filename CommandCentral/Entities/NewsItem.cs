@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
+using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
 {
@@ -18,9 +14,9 @@ namespace CommandCentral.Entities
         #region Properties
 
         /// <summary>
-        /// The ID of the news item.
+        /// The Id of the news item.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The client that created the news item.
@@ -67,7 +63,7 @@ namespace CommandCentral.Entities
             {
                 Table("news_items");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Creator);
 

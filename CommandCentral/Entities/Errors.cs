@@ -1,16 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using AtwoodUtils;
 
-namespace UnifiedServiceFramework.Framework
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single error.
@@ -20,9 +10,9 @@ namespace UnifiedServiceFramework.Framework
         #region Properties
 
         /// <summary>
-        /// The unique ID assigned to this error
+        /// The unique Id assigned to this error
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The message that was raised for this error
@@ -40,9 +30,9 @@ namespace UnifiedServiceFramework.Framework
         public virtual string InnerException { get; set; }
 
         /// <summary>
-        /// The ID of the session's user when this error occurred.
+        /// The Id of the session's user when this error occurred.
         /// </summary>
-        public virtual string LoggedInUserID { get; set; }
+        public virtual string LoggedInUserId { get; set; }
 
         /// <summary>
         /// The Date/Time this error occurred.

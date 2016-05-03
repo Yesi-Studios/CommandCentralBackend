@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CommandCentral
 {
@@ -12,9 +8,9 @@ namespace CommandCentral
     public abstract class ReferenceListItemBase
     {
         /// <summary>
-        /// The ID of this reference item.
+        /// The Id of this reference item.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The value of this item.

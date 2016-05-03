@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.ServiceModel;
-using System.ServiceModel.Web;
-using System.ServiceModel.Description;
-using System.Threading;
-using System.ServiceModel.Activation;
 using AtwoodUtils;
+using System.Linq;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using System.ServiceModel.Web;
+using CommandCentral;
+using CommandCentral.ClientAccess.Service;
 
 namespace CommandCentralHost
 {
@@ -36,7 +33,6 @@ namespace CommandCentralHost
         /// <summary>
         /// Initializes the service host.
         /// </summary>
-        /// <param name="port"></param>
         /// <returns></returns>
         public static void InitializeService()
         {
@@ -45,7 +41,7 @@ namespace CommandCentralHost
             while (keepLooping)
             {
                 //First the client needs to tell us on what port we're working.
-                "On what port would you like to host the service?  Enter a blank line for port 1113...".WL();
+                "On what port would you like to host the service?  Enter a blank line for port 1113...".WriteLine();
 
                 int port;
                 string input = Console.ReadLine();
@@ -53,9 +49,9 @@ namespace CommandCentralHost
                 if (string.IsNullOrWhiteSpace(input))
                     port = 1113;
                 else
-                    if (!Int32.TryParse(input, out port))
+                    if (!int.TryParse(input, out port))
                     {
-                        "That was not a valid port.  Press any key to try again...".WL();
+                        "That was not a valid port.  Press any key to try again...".WriteLine();
                         Console.ReadKey();
                         Console.Clear();
                         continue;
@@ -64,8 +60,9 @@ namespace CommandCentralHost
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(port))
                 {
-                    "It appears the port '{0}' is already in use.  Would you like to try again (y) or would you like to cancel service start up (any other key)?".F(port).WL();
-                    if (Console.ReadLine().ToLower() != "y")
+                    "It appears the port '{0}' is already in use.  Would you like to try again (y) or would you like to cancel service start up (any other key)?".F(port).WriteLine();
+                    var line = Console.ReadLine();
+                    if (line != null && line.ToLower() != "y")
                         keepLooping = false;
                     else
                         Console.Clear();
@@ -74,20 +71,20 @@ namespace CommandCentralHost
                 }
 
                 //Ok, so now we have a valid port.  Let's set up the service.
-                _host = new WebServiceHost(typeof(CommandCentral.ClientAccess.Service.CommandCentralService), new Uri("http://localhost:" + port));
-                ServiceEndpoint ep = _host.AddServiceEndpoint(typeof(CommandCentral.ClientAccess.Service.ICommandCentralService), new WebHttpBinding(), "");
+                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + port));
+                _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding(), "");
                 ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
                 stp.HttpHelpPageEnabled = false;
 
                 //Cool, that's done.  Let's also register with the communicator.
-                CommandCentral.Communicator.InitializeCommunicator(Console.Out);
-                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".F(String.Join(",", CommandCentral.Communicator.ListeningPriorities.Select(x => x.ToString()))).WL();
+                Communicator.InitializeCommunicator(Console.Out);
+                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".F(string.Join(",", Communicator.ListeningPriorities.Select(x => x.ToString()))).WriteLine();
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;
 
                 //Tell the client we're done.
-                "Service initialized.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WL();
+                "Service initialized.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
 
                 keepLooping = false;
             }
@@ -100,7 +97,7 @@ namespace CommandCentralHost
         /// <param name="e"></param>
         private static void _host_Faulted(object sender, EventArgs e)
         {
-            "The host has entered the faulted state.  Service re-initialization will now be started.  Press any key to continue...".WL();
+            "The host has entered the faulted state.  Service re-initialization will now be started.  Press any key to continue...".WriteLine();
             Console.ReadKey();
             _host = null;
             InitializeService();
@@ -115,18 +112,18 @@ namespace CommandCentralHost
             {
                 if (_host.State != CommunicationState.Closed)
                 {
-                    "The host is currently active and listening.  Please stop the service first.".WL();
+                    "The host is currently active and listening.  Please stop the service first.".WriteLine();
                 }
                 else
                 {
                     _host = null;
-                    CommandCentral.Communicator.ReleaseCommunicator();
-                    "The host has been released along with any used memory.".WL();
+                    Communicator.ReleaseCommunicator();
+                    "The host has been released along with any used memory.".WriteLine();
                 }
             }
             else
             {
-                "The host has not yet been initialized and therefore can not be released.".WL();
+                "The host has not yet been initialized and therefore can not be released.".WriteLine();
             }
         }
 
@@ -139,16 +136,16 @@ namespace CommandCentralHost
             if (_host != null)
             {
                 if (_host.State == CommunicationState.Opened)
-                    "The host is already open and listening on port, '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WL();
+                    "The host is already open and listening on port, '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
                 else
                 {
                     _host.Open();
-                    "Service opened.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WL();
+                    "Service opened.  Base address is '{0}'.".F(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
                 }
             }
             else
             {
-                "The host has not yet been initialized. Please consider doing that first.".WL();
+                "The host has not yet been initialized. Please consider doing that first.".WriteLine();
             }
         }
 
@@ -161,17 +158,17 @@ namespace CommandCentralHost
             {
                 if (_host.State == CommunicationState.Closed)
                 {
-                    "The host has already been closed.".WL();
+                    "The host has already been closed.".WriteLine();
                 }
                 else
                 {
                     _host.Close();
-                    "Host has been closed.".WL();
+                    "Host has been closed.".WriteLine();
                 }
             }
             else
             {
-                "You can't stop the host because it hasn't even been initialized yet!".WL();
+                "You can't stop the host because it hasn't even been initialized yet!".WriteLine();
             }
         }
     }

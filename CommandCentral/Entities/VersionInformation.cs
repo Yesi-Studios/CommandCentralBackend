@@ -1,17 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using AtwoodUtils;
-using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 using CommandCentral.ClientAccess;
+using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
 {
@@ -24,9 +14,9 @@ namespace CommandCentral.Entities
         #region Properties
 
         /// <summary>
-        /// The ID of this main data object.
+        /// The Id of this main data object.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The current version of the application.
@@ -52,7 +42,7 @@ namespace CommandCentral.Entities
             {
                 Table("version_informations");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Version).Not.Nullable().Unique().Length(10);
                 Map(x => x.Time).Not.Nullable();

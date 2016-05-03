@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -21,9 +17,9 @@ namespace CommandCentral.Entities
         #region Properties
 
         /// <summary>
-        /// The unique ID of this account confirmation event.
+        /// The unique Id of this account confirmation event.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The person to which it belongs.
@@ -45,7 +41,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(this.Time) > MaxAge;
+            return DateTime.Now.Subtract(Time) > MaxAge;
         }
 
         #endregion
@@ -62,7 +58,7 @@ namespace CommandCentral.Entities
             {
                 Table("pending_account_confirmations");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Person).Not.Nullable().Unique();
 

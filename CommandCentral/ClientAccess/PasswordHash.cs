@@ -27,7 +27,6 @@
  */
 
 using System;
-using System.Text;
 using System.Security.Cryptography;
 
 namespace CommandCentral.ClientAccess
@@ -41,13 +40,13 @@ namespace CommandCentral.ClientAccess
     public class PasswordHash
     {
         // The following constants may be changed without breaking existing hashes.
-        private const int SALT_BYTE_SIZE = 24;
-        private const int HASH_BYTE_SIZE = 24;
-        private const int PBKDF2_ITERATIONS = 1000;
+        private const int SaltByteSize = 24;
+        private const int HashByteSize = 24;
+        private const int Pbkdf2Iterations = 1000;
 
-        private const int ITERATION_INDEX = 0;
-        private const int SALT_INDEX = 1;
-        private const int PBKDF2_INDEX = 2;
+        private const int IterationIndex = 0;
+        private const int SaltIndex = 1;
+        private const int Pbkdf2Index = 2;
 
         /// <summary>
         /// Creates a salted PBKDF2 hash of the password.
@@ -58,12 +57,12 @@ namespace CommandCentral.ClientAccess
         {
             // Generate a random salt
             RNGCryptoServiceProvider csprng = new RNGCryptoServiceProvider();
-            byte[] salt = new byte[SALT_BYTE_SIZE];
+            byte[] salt = new byte[SaltByteSize];
             csprng.GetBytes(salt);
 
             // Hash the password and encode the parameters
-            byte[] hash = PBKDF2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
-            return PBKDF2_ITERATIONS + ":" +
+            byte[] hash = Pbkdf2(password, salt, Pbkdf2Iterations, HashByteSize);
+            return Pbkdf2Iterations + ":" +
                 Convert.ToBase64String(salt) + ":" +
                 Convert.ToBase64String(hash);
         }
@@ -79,11 +78,11 @@ namespace CommandCentral.ClientAccess
             // Extract the parameters from the hash
             char[] delimiter = { ':' };
             string[] split = correctHash.Split(delimiter);
-            int iterations = Int32.Parse(split[ITERATION_INDEX]);
-            byte[] salt = Convert.FromBase64String(split[SALT_INDEX]);
-            byte[] hash = Convert.FromBase64String(split[PBKDF2_INDEX]);
+            int iterations = int.Parse(split[IterationIndex]);
+            byte[] salt = Convert.FromBase64String(split[SaltIndex]);
+            byte[] hash = Convert.FromBase64String(split[Pbkdf2Index]);
 
-            byte[] testHash = PBKDF2(password, salt, iterations, hash.Length);
+            byte[] testHash = Pbkdf2(password, salt, iterations, hash.Length);
             return SlowEquals(hash, testHash);
         }
 
@@ -111,10 +110,9 @@ namespace CommandCentral.ClientAccess
         /// <param name="iterations">The PBKDF2 iteration count.</param>
         /// <param name="outputBytes">The length of the hash to generate, in bytes.</param>
         /// <returns>A hash of the password.</returns>
-        private static byte[] PBKDF2(string password, byte[] salt, int iterations, int outputBytes)
+        private static byte[] Pbkdf2(string password, byte[] salt, int iterations, int outputBytes)
         {
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt);
-            pbkdf2.IterationCount = iterations;
+            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt) { IterationCount = iterations };
             return pbkdf2.GetBytes(outputBytes);
         }
     }

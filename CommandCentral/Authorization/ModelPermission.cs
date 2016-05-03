@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
 
 namespace CommandCentral.Authorization
 {
@@ -17,29 +13,29 @@ namespace CommandCentral.Authorization
         #region Properties
 
         /// <summary>
-        /// The unique ID of this model permission.
+        /// The unique Id of this model permission.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        protected virtual Guid Id { get; set; }
 
         /// <summary>
         /// The name of the model.
         /// </summary>
-        public virtual string ModelName { get; set; }
+        protected virtual string ModelName { get; set; }
 
         /// <summary>
         /// The fields the user can search in in the model.
         /// </summary>
-        public virtual List<string> SearchableFields { get; set; }
+        protected virtual List<string> SearchableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to see from the model.
         /// </summary>
-        public virtual List<string> ReturnableFields { get; set; }
+        protected virtual List<string> ReturnableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to edit in a model.
         /// </summary>
-        public virtual List<string> EditableFields { get; set; }
+        protected virtual List<string> EditableFields { get; set; }
 
         #endregion
 
@@ -55,7 +51,7 @@ namespace CommandCentral.Authorization
             {
                 Table("modelpermissions");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.ModelName).Not.Nullable().Length(20);
                 HasMany(x => x.SearchableFields)

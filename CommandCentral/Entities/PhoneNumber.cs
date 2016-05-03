@@ -1,15 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using UnifiedServiceFramework.Framework;
-using AtwoodUtils;
+using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -24,7 +14,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this phone number.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The  person to whom this phone number belongs.
@@ -48,10 +38,10 @@ namespace CommandCentral.Entities
         {
             get
             {
-                if (this.Carrier == null)
+                if (Carrier == null)
                     return null;
-                else
-                    return TextMessageHelper.PhoneCarrierMailDomainMappings[this.Carrier];
+                
+                return TextMessageHelper.PhoneCarrierMailDomainMappings[Carrier];
             }
         }
 
@@ -68,7 +58,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The type of this phone. eg. Cell, Home, Work
         /// </summary>
-        public virtual ReferenceLists.PhoneNumberType PhoneType { get; set; }
+        public virtual PhoneNumberType PhoneType { get; set; }
 
         #endregion
 
@@ -84,7 +74,7 @@ namespace CommandCentral.Entities
             {
                 Table("phone_numbers");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner);
                 References(x => x.PhoneType);

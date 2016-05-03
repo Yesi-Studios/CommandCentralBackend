@@ -1,16 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
 using FluentNHibernate.Mapping;
-using CommandCentral.DataAccess;
-using CommandCentral.ClientAccess;
 
 namespace CommandCentral.Entities
 {
@@ -25,7 +14,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID of this physical address.
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The person who owns this physical address.
@@ -91,7 +80,7 @@ namespace CommandCentral.Entities
             {
                 Table("physicaladdresses");
 
-                Id(x => x.ID);
+                Id(x => x.Id);
 
                 References(x => x.Owner).Not.Nullable();
 

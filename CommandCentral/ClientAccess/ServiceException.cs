@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CommandCentral.ClientAccess
 {
@@ -12,7 +8,7 @@ namespace CommandCentral.ClientAccess
     public class ServiceException : Exception
     {
 
-        private ErrorTypes _errorType = ErrorTypes.NULL;
+        private ErrorTypes _errorType = ErrorTypes.Null;
         /// <summary>
         /// Indicates what type of error is contained in this exception.
         /// </summary>
@@ -31,35 +27,35 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The HTTP Status Code associated with this error.
         /// </summary>
-        public HTTPStatusCodes HTTPStatusCode { get; set; }
+        public HttpStatusCodes HttpStatusCode { get; set; }
 
         /// <summary>
         /// Creates a new instance of a ServiceException
         /// </summary>
-        public ServiceException(ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
+        public ServiceException(ErrorTypes errorType, HttpStatusCodes httpStatusCode)
         {
-            this.ErrorType = errorType;
-            this.HTTPStatusCode = httpStatusCode;
+            ErrorType = errorType;
+            HttpStatusCode = httpStatusCode;
         }
 
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message
         /// </summary>
-        public ServiceException(string message, ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
+        public ServiceException(string message, ErrorTypes errorType, HttpStatusCodes httpStatusCode)
             : base(message)
         {
-            this.ErrorType = errorType;
-            this.HTTPStatusCode = httpStatusCode;
+            ErrorType = errorType;
+            HttpStatusCode = httpStatusCode;
         }
 
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message and inner exception.
         /// </summary>
-        public ServiceException(string message, Exception inner, ErrorTypes errorType, HTTPStatusCodes httpStatusCode)
+        public ServiceException(string message, Exception inner, ErrorTypes errorType, HttpStatusCodes httpStatusCode)
             : base(message, inner)
         {
-            this.ErrorType = errorType;
-            this.HTTPStatusCode = httpStatusCode;
+            ErrorType = errorType;
+            HttpStatusCode = httpStatusCode;
         }
     }
 }

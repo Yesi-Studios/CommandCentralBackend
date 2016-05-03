@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -18,7 +14,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The unique GUID assigned to this Profile Lock
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The person who owns this lock.
@@ -49,7 +45,7 @@ namespace CommandCentral.Entities
             {
                 Table("profile_locks");
 
-                Id(x => x.ID).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner).Not.Nullable();
                 References(x => x.LockedPerson).Not.Nullable();

@@ -1,14 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Collections.Concurrent;
-using System.Reflection;
-using MySql.Data.MySqlClient;
-using MySql.Data.Common;
-using AtwoodUtils;
 using FluentNHibernate.Mapping;
 using NHibernate;
 
@@ -44,14 +35,14 @@ namespace CommandCentral.ClientAccess
         #region Properties
 
         /// <summary>
-        /// The unique ID assigned to this message interaction
+        /// The unique Id assigned to this message interaction
         /// </summary>
-        public virtual Guid ID { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
         /// </summary>
-        public virtual APIKey APIKey { get; set; }
+        public virtual ApiKey ApiKey { get; set; }
 
         /// <summary>
         /// The time at which the client called the API.
@@ -107,17 +98,10 @@ namespace CommandCentral.ClientAccess
         /// <returns></returns>
         public virtual object GetArgOrFail(string argName, string errorMessage)
         {
-            try
-            {
-                if (!this.Args.ContainsKey(argName))
-                    throw new ServiceException(errorMessage, ErrorTypes.Validation, HTTPStatusCodes.Bad_Request);
+            if (!Args.ContainsKey(argName))
+                throw new ServiceException(errorMessage, ErrorTypes.Validation, HttpStatusCodes.BadRequest);
 
-                return this.Args[argName];
-            }
-            catch
-            {
-                throw;
-            }
+            return Args[argName];
         }
 
         #endregion
@@ -134,10 +118,10 @@ namespace CommandCentral.ClientAccess
             {
                 Table("message_tokens");
 
-                Id(x => x.ID);
+                Id(x => x.Id);
 
                 References(x => x.AuthenticationSession).Nullable();
-                References(x => x.APIKey).Not.Nullable();
+                References(x => x.ApiKey).Not.Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();
                 //Map(x => x.Args).CustomType<NHibernate.Type.SerializableType>().Not.Nullable();

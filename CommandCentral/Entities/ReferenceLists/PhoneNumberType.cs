@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentNHibernate.Mapping;
+﻿using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -25,7 +20,7 @@ namespace CommandCentral.Entities.ReferenceLists
             {
                 Table("phone_number_types");
 
-                Id(x => x.ID);
+                Id(x => x.Id);
 
                 Map(x => x.Value).Length(50).Not.Nullable().Unique();
                 Map(x => x.Description).Length(50).Nullable();
