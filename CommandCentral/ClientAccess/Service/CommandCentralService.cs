@@ -83,6 +83,9 @@ namespace CommandCentral.ClientAccess.Service
                     //Create the Nhibernate communication session that will be carried thorughout this request.
                     token.CommunicationSession = DataAccess.NHibernateHelper.CreateSession();
 
+                    //Now that we have a comm session, before we do anything else, let's save our token.
+                    token.CommunicationSession.Save(token, token.Id);
+
                     //Get the IP address of the host that called us.
                     token.HostAddress = (OperationContext.Current.IncomingMessageProperties
                         [System.ServiceModel.Channels.RemoteEndpointMessageProperty.Name] as System.ServiceModel.Channels.RemoteEndpointMessageProperty).Address;

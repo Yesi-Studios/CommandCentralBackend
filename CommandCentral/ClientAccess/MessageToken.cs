@@ -144,14 +144,14 @@ namespace CommandCentral.ClientAccess
                 Id(x => x.Id);
 
                 References(x => x.AuthenticationSession).Nullable().Cascade.All();
-                References(x => x.ApiKey).Not.Nullable();
+                References(x => x.ApiKey).Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();
                 //Map(x => x.Args).CustomType<NHibernate.Type.SerializableType>().Not.Nullable();
                 Map(x => x.Endpoint).Not.Nullable().Length(40);
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();
-                Map(x => x.HostAddress).Not.Nullable().Length(30);
+                Map(x => x.HostAddress).Nullable().Length(30);
 
                 Cache.ReadWrite();
 

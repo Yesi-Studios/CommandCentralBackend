@@ -152,10 +152,7 @@ namespace CommandCentralHost
                         }
                         else
                         {
-                            //The input was bad :(
                             Console.Clear();
-                            "That input was not valid. Press any key to try again...".WriteLine();
-                            Console.ReadKey();
                         }
                     }
                     catch (Exception e)
