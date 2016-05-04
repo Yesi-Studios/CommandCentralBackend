@@ -11,11 +11,29 @@ namespace CommandCentral.ClientAccess
     public enum MessageStates
     {
         /// <summary>
-        /// Indicates that the message is currently being handled.
+        /// Indicates that a request has been received and has not begun processing.  
+        /// <para />
+        /// Requests in this state have not undergone validation of any type and assumptions regarding their contained data should not be made.
         /// </summary>
-        Active,
+        Received,
         /// <summary>
-        /// Indicates that the message has been handled.
+        /// Indicates a message has been processed successfully prior to authentication or method invocation.
+        /// </summary>
+        Processed,
+        /// <summary>
+        /// Inidicates a message has been successfully authenticated prior to method invocation but after message processing.
+        /// </summary>
+        Authenticated,
+        /// <summary>
+        /// Indicates that the message has completed invoking its endpoint's data handler.  The final actions are final logging and response release.
+        /// </summary>
+        Invoked,
+        /// <summary>
+        /// Indicates that the message has been processed, possible authenticated, and has passed its data handler.
+        /// <para />
+        /// Additionally, the request has completed final logging and is only waiting to release the response.
+        /// <para />
+        /// At this point the message is complete and the response need only be sent back to the client.
         /// </summary>
         Handled,
         /// <summary>
@@ -86,6 +104,11 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         public virtual ISession CommunicationSession { get; set; }
 
+        /// <summary>
+        /// The IP address of the host that called the service.
+        /// </summary>
+        public virtual string HostAddress { get; set; } 
+
         #endregion
 
         #region Helper Methods
@@ -99,7 +122,7 @@ namespace CommandCentral.ClientAccess
         public virtual object GetArgOrFail(string argName, string errorMessage)
         {
             if (!Args.ContainsKey(argName))
-                throw new ServiceException(errorMessage, ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+                throw new ServiceException(errorMessage, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
             return Args[argName];
         }
@@ -120,7 +143,7 @@ namespace CommandCentral.ClientAccess
 
                 Id(x => x.Id);
 
-                References(x => x.AuthenticationSession).Nullable();
+                References(x => x.AuthenticationSession).Nullable().Cascade.All();
                 References(x => x.ApiKey).Not.Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();
@@ -128,6 +151,7 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.Endpoint).Not.Nullable().Length(40);
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();
+                Map(x => x.HostAddress).Not.Nullable().Length(30);
 
                 Cache.ReadWrite();
 

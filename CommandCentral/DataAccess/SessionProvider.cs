@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CommandCentral.Entities;
 using FluentNHibernate.Cfg;
 using FluentNHibernate.Cfg.Db;
@@ -41,8 +42,7 @@ namespace CommandCentral.DataAccess
                     builder => builder.Database("test")
                         .Username("niocga")
                         .Password("niocga")
-                        .Server("gord14ec204"))
-                    .ShowSql())
+                        .Server("gord14ec204")))
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
@@ -80,6 +80,15 @@ namespace CommandCentral.DataAccess
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
             return sessionFactory.GetClassMetadata(entityName);
+        }
+
+        /// <summary>
+        /// Gets all entities' metadata.
+        /// </summary>
+        /// <returns></returns>
+        public static IDictionary<string, IClassMetadata> GetAllEntityMetadata()
+        {
+            return sessionFactory.GetAllClassMetadata();
         }
 
         /// <summary>

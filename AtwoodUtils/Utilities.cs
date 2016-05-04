@@ -149,6 +149,10 @@ namespace AtwoodUtils
             return name;
         }
 
+        /// <summary>
+        /// Adds the CORS headers to the outgoing response to enable cross domain requests.
+        /// </summary>
+        /// <param name="current"></param>
         public static void AddCorsHeadersToResponse(WebOperationContext current)
         {
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");

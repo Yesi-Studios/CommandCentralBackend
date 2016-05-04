@@ -26,12 +26,18 @@ namespace AtwoodUtils
                 {
                     sb.AppendLine();
                 }
-                isFirst = false;
+                
                 for (int x = 0; x < line.Length; x++)
                 {
                     var value = line[x];
                     sb.Append((value ?? "").PadRight(maxValues[x]));
                 }
+
+                if (isFirst)
+                    sb.AppendLine();
+
+                isFirst = false;
+
             }
             return sb.ToString();
 

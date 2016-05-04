@@ -27,12 +27,12 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The HTTP Status Code associated with this error.
         /// </summary>
-        public HttpStatusCodes HttpStatusCode { get; set; }
+        public System.Net.HttpStatusCode HttpStatusCode { get; set; }
 
         /// <summary>
         /// Creates a new instance of a ServiceException
         /// </summary>
-        public ServiceException(ErrorTypes errorType, HttpStatusCodes httpStatusCode)
+        public ServiceException(ErrorTypes errorType, System.Net.HttpStatusCode httpStatusCode)
         {
             ErrorType = errorType;
             HttpStatusCode = httpStatusCode;
@@ -41,7 +41,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message
         /// </summary>
-        public ServiceException(string message, ErrorTypes errorType, HttpStatusCodes httpStatusCode)
+        public ServiceException(string message, ErrorTypes errorType, System.Net.HttpStatusCode httpStatusCode)
             : base(message)
         {
             ErrorType = errorType;
@@ -51,7 +51,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Creates a new instance of a ServiceException with the given message and inner exception.
         /// </summary>
-        public ServiceException(string message, Exception inner, ErrorTypes errorType, HttpStatusCodes httpStatusCode)
+        public ServiceException(string message, Exception inner, ErrorTypes errorType, System.Net.HttpStatusCode httpStatusCode)
             : base(message, inner)
         {
             ErrorType = errorType;

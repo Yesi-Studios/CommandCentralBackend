@@ -303,7 +303,7 @@ namespace CommandCentral.Entities
                         throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
 
                     if (!results.Any())
-                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
 
                     //If the password is bad
                     if (!ClientAccess.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
@@ -318,7 +318,7 @@ namespace CommandCentral.Entities
                         EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].Id).Wait();
 
                         //Now that we have alerted the user, we can fail out.
-                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                     }
 
                     //Alright, if we got here, then we have a good password.
@@ -379,7 +379,7 @@ namespace CommandCentral.Entities
         {
             //Make sure there is actually a session
             if (token.AuthenticationSession == null)
-                throw new ServiceException("You must be logged in to try to logout. No shit?", ErrorTypes.Authentication, HttpStatusCodes.Unauthorized);
+                throw new ServiceException("You must be logged in to try to logout. No shit?", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
 
             //Well this is easy.  Just delete the session.  Make sure to update the person first before we remove our reference to it.
             using (var transaction = token.CommunicationSession.BeginTransaction())
@@ -455,7 +455,7 @@ namespace CommandCentral.Entities
                         throw new Exception(string.Format("During begin registration, the ssn, '{0}', loaded more than one profile.", ssn));
 
                     if (results.Count == 0)
-                        throw new ServiceException("That ssn belongs to no profile.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+                        throw new ServiceException("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Ok, so we have a single profile.  Let's see if it's already been claimed.
                     if (results[0].IsClaimed)
@@ -472,15 +472,15 @@ namespace CommandCentral.Entities
 
                         //Now fail out.  We're done here.
                         throw new ServiceException("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                                   "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", 
-                            ErrorTypes.Authorization, HttpStatusCodes.Forbiden);
+                                                   "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.",
+                            ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                     }
 
                     //Ok so the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
                     var dodEmailAddress = results[0].EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
                     if (dodEmailAddress == null)
                         throw new ServiceException("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
-                                                   "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+                                                   "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //Let's see if there is already a pending account confirmation.
                     var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
@@ -574,7 +574,7 @@ namespace CommandCentral.Entities
 
                     //There is no record.
                     if (pendingAccountConfirmation == null)
-                        throw new ServiceException("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+                        throw new ServiceException("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Is the record valid?
                     if (!pendingAccountConfirmation.IsValid())
@@ -585,7 +585,7 @@ namespace CommandCentral.Entities
                         transaction.Commit();
 
 
-                        throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                     }
 
                     //Ok now that we know the record is valid, let's see if the person is already claimed.
@@ -671,11 +671,11 @@ namespace CommandCentral.Entities
                         throw new Exception(string.Format("During begin password reset, the ssn, '{0}', and the email address, '{1}', loaded more than one profile.", ssn, emailAddress));
 
                     if (results.Count == 0)
-                        throw new ServiceException("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+                        throw new ServiceException("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
                     if (!results[0].IsClaimed)
-                        throw new ServiceException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //And now we know it's claimed.  So make the event, log the event and send the email.
                     results[0].AccountHistory.Add(new AccountHistoryEvent
@@ -750,7 +750,7 @@ namespace CommandCentral.Entities
                     var pendingPasswordReset = token.CommunicationSession.Get<PendingPasswordReset>(passwordResetId);
 
                     if (pendingPasswordReset == null)
-                        throw new ServiceException("That password reset Id does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("That password reset Id does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //Is the record still valid?
                     if (!pendingPasswordReset.IsValid())
@@ -761,7 +761,7 @@ namespace CommandCentral.Entities
                         //Commit before we leave.
                         transaction.Commit();
 
-                        throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
+                        throw new ServiceException("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                     }
 
                     //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.

@@ -15,30 +15,30 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The unique Id of this model permission.
         /// </summary>
-        protected virtual Guid Id { get; set; }
+        public virtual Guid Id { get; set; }
 
         //A unique name that identifes this model permission.
-        protected virtual string Name { get; set; }
+        public virtual string Name { get; set; }
 
         /// <summary>
         /// The name of the model.
         /// </summary>
-        protected virtual string ModelName { get; set; }
+        public virtual string ModelName { get; set; }
 
         /// <summary>
         /// The fields the user can search in in the model.
         /// </summary>
-        protected virtual List<string> SearchableFields { get; set; }
+        public virtual IList<string> SearchableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to see from the model.
         /// </summary>
-        protected virtual List<string> ReturnableFields { get; set; }
+        public virtual IList<string> ReturnableFields { get; set; }
 
         /// <summary>
         /// The fields a user is allowed to edit in a model.
         /// </summary>
-        protected virtual List<string> EditableFields { get; set; }
+        public virtual IList<string> EditableFields { get; set; }
 
         #endregion
 
@@ -51,6 +51,20 @@ namespace CommandCentral.Authorization
         public virtual new string ToString()
         {
             return Name;
+        }
+
+        #endregion
+
+        #region ctors
+
+        /// <summary>
+        /// Initializes the lists to new lists.
+        /// </summary>
+        public ModelPermission()
+        {
+            ReturnableFields = new List<string>();
+            EditableFields = new List<string>();
+            SearchableFields = new List<string>();
         }
 
         #endregion
@@ -70,7 +84,7 @@ namespace CommandCentral.Authorization
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
-                Map(x => x.ModelName).Not.Nullable().Length(20);
+                Map(x => x.ModelName).Not.Nullable().Length(100);
                 HasMany(x => x.SearchableFields)
                     .KeyColumn("ModelPermissionID")
                     .Table("modelpermissionsearchablefields")

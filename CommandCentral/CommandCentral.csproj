@@ -81,7 +81,6 @@
     <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
-    <Compile Include="ClientAccess\HTTPStatusCodes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="ClientAccess\ServiceException.cs" />
     <Compile Include="Entities\Errors.cs" />

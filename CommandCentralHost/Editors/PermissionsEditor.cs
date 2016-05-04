@@ -38,7 +38,7 @@ namespace CommandCentralHost.Editors
                             }
                         case 2:
                             {
-                                //EditModelPermissions();
+                                EditModelPermissions();
                                 break;
                             }
                         case 3:
@@ -68,11 +68,11 @@ namespace CommandCentralHost.Editors
                     {
 
                         Console.Clear();
-                        "Welcome to the permissions editor.".WriteLine();
-                        "Enter the number of a a permission to edit, the number followed by '-' to delete it, a new permission name to create a new one, or a blank line to cancel.".WriteLine();
+                        "Welcome to the permission groups editor.".WriteLine();
+                        "Enter the number of a permission group to edit, the number followed by '-' to delete it, a new permission group name to create a new one, or a blank line to cancel.".WriteLine();
                         "".WriteLine();
 
-                        //Let's go get all the API Keys.
+                        //Let's go get all the permission groups.
                         IList<PermissionGroup> permissionGroups = session.CreateCriteria<PermissionGroup>().List<PermissionGroup>();
 
                         //And then print them out.
@@ -187,7 +187,215 @@ namespace CommandCentralHost.Editors
                             }
                         default:
                             {
-                                throw new NotImplementedException("In the permission editor switch.");
+                                throw new NotImplementedException("In the permission group editor switch.");
+                            }
+
+                    }
+                }
+            }
+        }
+
+        private static void EditModelPermissions()
+        {
+            bool keepLooping = true;
+
+            using (var session = NHibernateHelper.CreateSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    while (keepLooping)
+                    {
+
+                        Console.Clear();
+                        "Welcome to the model permissions editor.".WriteLine();
+                        "Enter the number of a model permission to edit, the number followed by '-' to delete it, a new model permission name to create a new one, or a blank line to cancel.".WriteLine();
+                        "".WriteLine();
+
+                        //Now let's get all the model permissions
+                        IList<ModelPermission> modelPermissions = session.CreateCriteria<ModelPermission>().List<ModelPermission>();
+
+                        //And then print them out.
+                        List<string[]> lines = new List<string[]> { new[] { "#", "Name", "Model Name", "# Return Fields", "# Edit Fields", "# Search Fields" } };
+                        for (int x = 0; x < modelPermissions.Count; x++)
+                        {
+                            //We need to go get the total return fields for this model name.
+                            int totalProperties = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermissions[x].ModelName).PropertyNames.Count();
+
+                            lines.Add(new[] { x.ToString(), modelPermissions[x].Name, modelPermissions[x].ModelName, 
+                                "{0}/{1}".FormatS(modelPermissions[x].ReturnableFields.Count, totalProperties),
+                                "{0}/{1}".FormatS(modelPermissions[x].EditableFields.Count, totalProperties),
+                                "{0}/{1}".FormatS(modelPermissions[x].SearchableFields.Count, totalProperties)});
+                        }
+                        DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
+
+                        int option;
+                        string input = Console.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(input))
+                            keepLooping = false;
+                        else if (input.Last() == '-' && input.Length > 1 && int.TryParse(input.Substring(0, input.Length - 1), out option) && option >= 0 && option <= modelPermissions.Count - 1 && modelPermissions.Any())
+                        {
+                            session.Delete(modelPermissions[option]);
+                        }
+                        else if (int.TryParse(input, out option) && option >= 0 && option <= modelPermissions.Count - 1 && modelPermissions.Any())
+                        {
+                            //Client wants to edit an item.
+                            EditModelPermission(modelPermissions[option], session);
+                        }
+                        else
+                        {
+                            var item = new ModelPermission { Name = input };
+
+                            "New name will be '{0}'".FormatS(item.Name).WriteLine();
+                            "".WriteLine();
+                            "Now choose a model from the list below...".WriteLine();
+                            "".WriteLine();
+
+                            //Gets a list of key/value pair where the key is the entity name and the value is the IClassMetadata.
+                            var allEntitityMetadata = CommandCentral.DataAccess.NHibernateHelper.GetAllEntityMetadata().ToList();
+
+                            for (int x = 0; x < allEntitityMetadata.Count; x++)
+                                "{0}. {1}".FormatS(x, allEntitityMetadata[x].Key).WriteLine();
+
+                            int modelNameOption;
+                            if (int.TryParse(Console.ReadLine(), out modelNameOption) && option >= 0 && option < allEntitityMetadata.Count)
+                            {
+                                item.ModelName = allEntitityMetadata[modelNameOption].Key;
+                            }
+                            
+                            session.Save(item);
+                        }
+
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        private static void EditModelPermission(ModelPermission modelPermission, ISession session)
+        {
+            bool keepLooping = true;
+
+            while (keepLooping)
+            {
+
+                Console.Clear();
+
+                "Editing model permission '{0}'...".FormatS(modelPermission.Name).WriteLine();
+                "".WriteLine();
+                "Model Name:\n\t{0}".FormatS(modelPermission.ModelName).WriteLine();
+                "".WriteLine();
+
+                "1. Edit Name".WriteLine();
+                "2. Edit Model Name".WriteLine();
+                "3. View/Edit Return Fields".WriteLine();
+                "4. View/Edit Edit Fields".WriteLine();
+                "5. View/Edit Search Fields".WriteLine();
+                "6. Return".WriteLine();
+
+                int option;
+                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 6)
+                {
+                    switch (option)
+                    {
+                        case 1:
+                            {
+                                Console.Clear();
+
+                                "Enter a new model permission name...".WriteLine();
+                                modelPermission.Name = Console.ReadLine();
+                                break;
+                            }
+                        case 2:
+                            {
+                                Console.Clear();
+
+                                "Choose a model from the list below...".WriteLine();
+                                "".WriteLine();
+
+                                //Gets a list of key/value pair where the key is the entity name and the value is the IClassMetadata.
+                                var allEntitityMetadata = CommandCentral.DataAccess.NHibernateHelper.GetAllEntityMetadata().ToList();
+
+                                for (int x = 0; x < allEntitityMetadata.Count; x++)
+                                    "{0}. {1}".FormatS(x, allEntitityMetadata[x].Key).WriteLine();
+
+                                int modelNameOption;
+                                if (int.TryParse(Console.ReadLine(), out modelNameOption) && option >= 0 && option < allEntitityMetadata.Count)
+                                {
+                                    modelPermission.ModelName = allEntitityMetadata[modelNameOption].Key;
+
+                                    //Because the model name has been changed, we're going to reset the fields.  If the user just set it back to what it was before then fuck them.
+                                    modelPermission.ReturnableFields.Clear();
+                                    modelPermission.EditableFields.Clear();
+                                    modelPermission.SearchableFields.Clear();
+                                }
+
+                                break;
+                            }
+                        case 3:
+                            {
+                                Console.Clear();
+                                if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
+                                {
+                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+
+                                    ListEditor.EditList(modelPermission.ReturnableFields, allFields, "Returnable Fields Editor");
+                                }
+                                else
+                                {
+                                    "You must first set the model name!".WriteLine();
+                                }
+
+                                break;
+                            }
+                        case 4:
+                            {
+                                Console.Clear();
+                                if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
+                                {
+                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+
+                                    ListEditor.EditList(modelPermission.EditableFields, allFields, "Editable Fields Editor");
+                                }
+                                else
+                                {
+                                    "You must first set the model name!".WriteLine();
+                                }
+
+                                break;
+                            }
+                        case 5:
+                            {
+                                Console.Clear();
+                                if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
+                                {
+                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+
+                                    ListEditor.EditList(modelPermission.SearchableFields, allFields, "Searchable Fields Editor");
+                                }
+                                else
+                                {
+                                    "You must first set the model name!".WriteLine();
+                                }
+
+                                break;
+                            }
+                        case 6:
+                            {
+                                keepLooping = false;
+
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("In the model permission editor switch.");
                             }
 
                     }

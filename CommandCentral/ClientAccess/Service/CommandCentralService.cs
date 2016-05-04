@@ -56,78 +56,131 @@ namespace CommandCentral.ClientAccess.Service
         {
 
             //We set these variables outside the try loop so that we can use them in the catch block if needed.
-            Guid messageId = Guid.NewGuid();
-            MessageToken token;
+            MessageToken token = new MessageToken 
+            { 
+                Id = Guid.NewGuid(), 
+                CallTime = DateTime.Now, 
+                Endpoint = endpoint, 
+                State = MessageStates.Received
+            };
 
-            //Add the CORS headers to the request.
+            //Tell the client we have a request.
+            Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(), token.CallTime.ToString()), Communicator.MessagePriority.Informational);
+
+            //Add the CORS headers to the request to allowe the cross domain stuff.
             Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
 
             try
             {
 
-                //Tell the host that we've received a message.
-                Communicator.PostMessageToHost(string.Format("{0} invoked '{1}' @ {2}", messageId, endpoint, DateTime.Now), Communicator.MessagePriority.Informational);
+                //We'll need this outside the coming try/catch block.
+                EndpointDescription description;
 
-                //Does the endpoint the client tried to invoke exist?
-                EndpointDescription desc;
-                if (!Endpoints.TryGetValue(endpoint, out desc))
-                    throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", endpoint), ErrorTypes.Validation, HttpStatusCodes.NotFound);
-
-                //Is the endpoint active?
-                if (!desc.IsActive)
-                    throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", endpoint), ErrorTypes.Validation, HttpStatusCodes.ServiceUnavailable);
-
-                //Ok, this is going to be an actual request.  At this point we can ask for communication session from the session factory.
-                var communicationSession = NHibernateHelper.CreateSession();
-
-                //Process the message token.
-                token = ProcessMessage(data, endpoint, messageId, communicationSession);
-
-                //If this endpoint requires authentication, then get the session
-                if (desc.RequiresAuthentication)
+                //Now we're going to initialize any other parts of the token that could potentially crash. 
+                //We're going to do this inside another try block so that the error can be properly handed back to the client while still posting shit to the client.
+                try
                 {
-                    token = AuthenticateMessage(token);
+                    //Create the Nhibernate communication session that will be carried thorughout this request.
+                    token.CommunicationSession = DataAccess.NHibernateHelper.CreateSession();
 
-                    //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
-                    //at least the client tried to use the session.
-                    token.AuthenticationSession.LastUsedTime = DateTime.Now;
-                    using (var transaction = token.CommunicationSession.BeginTransaction())
-                    {
-                        try
-                        {
-                            token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession);
+                    //Get the IP address of the host that called us.
+                    token.HostAddress = (OperationContext.Current.IncomingMessageProperties
+                        [System.ServiceModel.Channels.RemoteEndpointMessageProperty.Name] as System.ServiceModel.Channels.RemoteEndpointMessageProperty).Address;
 
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
+                    //Get the args from the stream.
+                    token.Args = Utilities.ConvertPostDataToDict(data);
+
+                    //Get and validate the API Key.
+                    Guid apiKey;
+                    if (!Guid.TryParse(token.GetArgOrFail("apikey", "You must send an apikey") as string, out apiKey))
+                        throw new ServiceException("The API key was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+                    token.ApiKey = token.CommunicationSession.Get<ApiKey>(apiKey);
+
+                    if (token.ApiKey == null)
+                        throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+
+                    //Validate the endpoint and get the endpoint's description.
+                    if (!Endpoints.TryGetValue(token.Endpoint, out description))
+                        throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", token.Endpoint), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+
+                    //Is the endpoint active?
+                    if (!description.IsActive)
+                        throw new ServiceException(string.Format("The endpoint '{0}' has been disabled.  Please yell at Atwood for more information.", token.Endpoint), ErrorTypes.Validation, System.Net.HttpStatusCode.ServiceUnavailable);
+
+                    token.State = MessageStates.Processed;
+
+                    //And then print them out.
+                    Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
+                        token.CallTime.ToString(),
+                        DateTime.Now.Subtract(token.CallTime).ToString(),
+                        token.HostAddress,
+                        token.ApiKey.ApplicationName), Communicator.MessagePriority.Informational);
+
+                }
+                catch (Exception e)
+                {
+                    Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at validation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
+                    token.State = MessageStates.Failed;
+                    throw e;
                 }
 
-                //Now that we're done building the token, let's also save/update that.
-                using (var transaction = token.CommunicationSession.BeginTransaction())
+                
+
+                //Ok, now we know that the request is valid let's see if we need ot authenticate it.
+                if (description.RequiresAuthentication)
                 {
+                    //We're going to do this authentication in its own try/catch so that we can show a nicer error message.
                     try
                     {
-                        token.CommunicationSession.SaveOrUpdate(token);
+                        token = AuthenticateMessage(token);
 
-                        transaction.Commit();
+                        //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
+                        //at least the client tried to use the session.
+                        token.AuthenticationSession.LastUsedTime = DateTime.Now;
+                        token.State = MessageStates.Authenticated;
+
+                        //And then print them out.
+                        Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
+                            token.CallTime.ToString(),
+                            DateTime.Now.Subtract(token.CallTime).ToString(),
+                            token.HostAddress,
+                            token.ApiKey.ApplicationName,
+                            token.AuthenticationSession.Id), Communicator.MessagePriority.Informational);
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        transaction.Rollback();
-                        throw;
+                        Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at authentication.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
+                        token.State = MessageStates.Failed;
+                        throw e;
                     }
+
                 }
 
-                //Tell the host we've finished processing the message.
-                Communicator.PostMessageToHost(string.Format("{0} processed @ {1}", token.Id, DateTime.Now), Communicator.MessagePriority.Informational);
+                try
+                {
+                    //Invoke the data method to which the endpoint points.
+                    token = description.DataMethod(token);
+                    token.State = MessageStates.Invoked;
 
-                //Invoke the endpoint's data method.
-                token = desc.DataMethod(token);
+                    //And then print them out.
+                    Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
+                        token.CallTime.ToString(),
+                        DateTime.Now.Subtract(token.CallTime).ToString(),
+                        token.HostAddress,
+                        token.ApiKey.ApplicationName,
+                        token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString()), Communicator.MessagePriority.Informational);
+                }
+                catch (Exception e)
+                {
+                    Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at invocation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
+                    token.State = MessageStates.Failed;
+                    throw e;
+                }
+
+                //At this point we have the data we need.  Now let's pass do our final logging.
+                //TODO do logging
+
 
                 //Build what will be our final return string.  We do this prior to updating the message as "handled" in case serializing the return container takes an appreciable about of time so that we don't show a false handled time.
                 string finalResult = new ReturnContainer
@@ -136,31 +189,24 @@ namespace CommandCentral.ClientAccess.Service
                     HasError = false,
                     ReturnValue = token.Result,
                     ErrorType = ErrorTypes.Null,
-                    StatusCode = HttpStatusCodes.Ok
+                    StatusCode = System.Net.HttpStatusCode.OK
                 }.Serialize();
+
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.OK;
+
+                //Now that the final logging is done and the message has been built for the client, let's release it.
+
+
+                
 
                 //Update the token in the database, indicating that we have successfully handled it.
                 token.HandledTime = DateTime.Now;
                 token.State = MessageStates.Handled;
 
-                //Update the token.
-                using (var transaction = token.CommunicationSession.BeginTransaction())
-                {
-                    try
-                    {
-                        token.CommunicationSession.SaveOrUpdate(token);
-
-                        transaction.Commit();
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-
                 //Tell the host we finished with the message.
-                Communicator.PostMessageToHost(string.Format("{0} handled @ {1}", token.Id, DateTime.Now), Communicator.MessagePriority.Informational);
+                List<string[]> elements = new List<string[]> { new[] { "ID", "App Name", "Host", "Call Time", "Processing Time", "Endpoint", "State", "Session ID" } };
+                elements.Add(new[] { token.Id.ToString(), token.ApiKey.ApplicationName, token.HostAddress, token.CallTime.ToString(), DateTime.Now.Subtract(token.CallTime).ToString(), token.Endpoint, token.State.ToString(), token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString() });
+                Communicator.PostMessageToHost(DisplayUtilities.PadElementsInLines(elements, 3), Communicator.MessagePriority.Informational);
 
                 //Return our result.
                 return finalResult;
@@ -168,11 +214,33 @@ namespace CommandCentral.ClientAccess.Service
             }
             catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
             {
-                return "Fuck";
+                string finalResult = new ReturnContainer
+                {
+                    ErrorMessages = e.Message.CreateList(),
+                    ErrorType = e.ErrorType,
+                    HasError = true,
+                    ReturnValue = null,
+                    StatusCode = e.HttpStatusCode
+                }.Serialize();
+
+                WebOperationContext.Current.OutgoingResponse.StatusCode = e.HttpStatusCode;
+
+                return finalResult;
             }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
-                return "Fuck";
+                string finalResult = new ReturnContainer
+                {
+                    ErrorMessages = e.Message.CreateList(),
+                    ErrorType = ErrorTypes.Fatal,
+                    HasError = true,
+                    ReturnValue = null,
+                    StatusCode = System.Net.HttpStatusCode.InternalServerError
+                }.Serialize();
+
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
+                return finalResult;
             }
 
 
@@ -298,58 +366,6 @@ namespace CommandCentral.ClientAccess.Service
         #region Helper Methods
 
         /// <summary>
-        /// Processes a message token, turning the data stream from the POST data layer into a dictionary.  This method also authenticates the API Key.
-        /// </summary>
-        /// <param name="data">The data stream from the POST data parameter.</param>
-        /// <param name="endpoint">The endpoint that was invoked.</param>
-        /// <param name="messageId">The Id of the message.</param>
-        /// <param name="communicationSession">The NHibernate session that will be used throughout the lifetime of this request.</param>
-        /// <returns></returns>
-        private static MessageToken ProcessMessage(Stream data, string endpoint, Guid messageId, ISession communicationSession)
-        {
-            //Convert the stream into the parameters
-            Dictionary<string, object> args = Utilities.ConvertPostDataToDict(data);
-
-            //Get and authenticate the APIkey
-            if (!args.ContainsKey("apikey"))
-                throw new ServiceException("You must send an API Key.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
-            string apiKey = args["apikey"] as string;
-
-            //Try to get the API key.
-            ApiKey key;
-                
-            using (var transaction = communicationSession.BeginTransaction())
-            {
-                try
-                {
-                    key = communicationSession.Get<ApiKey>(apiKey);
-
-                    if (key == null)
-                        throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, HttpStatusCodes.Forbiden);
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-
-            //Build the message token and return it.
-            return new MessageToken
-            {
-                ApiKey = key,
-                Args = args,
-                CallTime = DateTime.Now,
-                Endpoint = endpoint,
-                Id = messageId,
-                State = MessageStates.Active,
-                CommunicationSession = communicationSession
-            };
-        }
-
-        /// <summary>
         /// Authenticates the message by using the authentication token from the args list to retrieve the client's session.  
         /// <para />
         /// This method also checks the client's permissions and sets them on the session parameter of the message token for later use.
@@ -362,35 +378,21 @@ namespace CommandCentral.ClientAccess.Service
         {
             //Get the session for this authentication token.
             if (!token.Args.ContainsKey("authenticationtoken"))
-                throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, HttpStatusCodes.BadRequest);
+                throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
             string authenticationToken = token.Args["authenticationtoken"] as string;
 
             //Alright let's try to get the session.
-            using (var transaction = token.CommunicationSession.BeginTransaction())
-            {
-                try
-                {
-                    var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
+            var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
 
-                    if (authenticationSession == null)
-                        throw new ServiceException("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, HttpStatusCodes.BadRequest);
+            if (authenticationSession == null)
+                throw new ServiceException("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, System.Net.HttpStatusCode.BadRequest);
 
-                    //Ok so we got a session, is it valid?
-                    if (authenticationSession.IsExpired())
-                        throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, HttpStatusCodes.Unauthorized);
+            //Ok so we got a session, is it valid?
+            if (authenticationSession.IsExpired())
+                throw new ServiceException("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
 
-                    //Since the session is in fact valid, we can go ahead and tack it onto the token.
-                    token.AuthenticationSession = authenticationSession;
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    if (!transaction.WasCommitted)
-                        transaction.Rollback();
-                    throw;
-                }
-            }
+            //Since the session is in fact valid, we can go ahead and tack it onto the token.
+            token.AuthenticationSession = authenticationSession;
 
             return token;
         }

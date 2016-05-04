@@ -85,6 +85,7 @@ namespace CommandCentral
             if (TextWriter != null && ListeningPriorities.Contains(priority) && !IsFrozen)
             {
                 TextWriter.WriteLine("{0} Service Message @ {1}:\n\t{2}", priority, DateTime.Now, message);
+                TextWriter.WriteLine();
             }
         }
 

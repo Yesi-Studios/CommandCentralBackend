@@ -39,7 +39,7 @@ namespace CommandCentral.ClientAccess
         /// The HTTP status code that indicates how the request was handled.
         /// </summary>
         [DataMember]
-        public HttpStatusCodes StatusCode { get; set; }
+        public System.Net.HttpStatusCode StatusCode { get; set; }
 
 
     }

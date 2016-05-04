@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using CommandCentralHost.Editors;
+using System.Runtime.InteropServices;
 
 namespace CommandCentralHost
 {
@@ -62,35 +63,56 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
-                OptionText = "Edit Reference Lists",
+                OptionText = "Manage Reference Lists",
                 Method = ReferenceListEditor.EditAllReferenceLists,
                 DisplayCriteria = () => true
             },
             new DialogueOption
             {
-                OptionText = "Edit API Keys",
+                OptionText = "Manage API Keys",
                 Method = ApiKeysEditor.EditAPIKeys,
                 DisplayCriteria = () => true
             },
             new DialogueOption
             {
-                OptionText = "Edit Commands",
+                OptionText = "Manage Commands",
                 Method = CommandsEditor.EditCommands,
                 DisplayCriteria = () => true
             },
             new DialogueOption
             {
-                OptionText = "Edit Permissions",
+                OptionText = "Manage Permissions",
                 Method = PermissionsEditor.PermissionEditorEntry,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "View Entity Metadata",
+                Method = MetadataViewer.ViewAllEntityMetadata,
                 DisplayCriteria = () => true
             }
         };
+
+        const int SWP_NOSIZE = 0x0001;
+
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        private static IntPtr MyConsole = GetConsoleWindow();
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
+        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
 
         [STAThread]
         private static void Main()
         {
             try
             {
+                Console.WindowWidth = 200;
+                Console.WindowHeight = Console.LargestWindowHeight;
+                SetWindowPos(MyConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
+
                 Console.ForegroundColor = ConsoleColor.Green;
 
                 bool keepLooping = true;
