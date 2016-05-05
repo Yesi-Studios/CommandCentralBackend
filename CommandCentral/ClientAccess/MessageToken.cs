@@ -89,7 +89,7 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         public virtual Dictionary<string, object> Args { get; set; }
 
-        private virtual string _rawJSON = null;
+        private string _rawJSON = null;
         /// <summary>
         /// The raw JSON as it was received from the client, prior to any processing.  This value should not be used for any processing as the value is truncated to no more than 9000 characters.
         /// </summary>
@@ -116,7 +116,7 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         public virtual object Result { get; set; }
 
-        private virtual string _resultJSON = null;
+        private string _resultJSON = null;
         /// <summary>
         /// Represents the Result object as json.  It is equivelent to Result.Serialize(). This value should not be used for any processing as the value is truncated to no more than 9000 characters.
         /// </summary>
