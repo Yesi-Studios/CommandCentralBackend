@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.ServiceModel.Web;
 using System.Text;
@@ -62,6 +63,23 @@ namespace AtwoodUtils
             if (baseType == null) return false;
 
             return IsAssignableToGenericType(baseType, genericType);
+        }
+
+        /// <summary>
+        /// Gets all types that have a attribute, T.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
+        static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly) where T : Attribute
+        {
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(T), true).Length > 0)
+                {
+                    yield return type;
+                }
+            }
         }
 
         /// <summary>

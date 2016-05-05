@@ -16,9 +16,9 @@ namespace CommandCentral.DataAccess
     public static class NHibernateHelper
     {
 
-        private static readonly ISessionFactory sessionFactory;
+        private static readonly ISessionFactory _sessionFactory;
 
-        private static readonly NHibernate.Tool.hbm2ddl.SchemaExport schema;
+        private static readonly NHibernate.Tool.hbm2ddl.SchemaExport _schema;
 
         /// <summary>
         /// Static initializer sets up the NHibernate configuration and scans the assembly for all class maps.
@@ -49,9 +49,9 @@ namespace CommandCentral.DataAccess
                 .BuildConfiguration();*/
 
             //We're going to save the schema in case the host wants to use it later.
-            schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);
+            _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);
 
-            sessionFactory = configuration.BuildSessionFactory();
+            _sessionFactory = configuration.BuildSessionFactory();
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static ISession CreateSession()
         {
-            return sessionFactory.OpenSession();
+            return _sessionFactory.OpenSession();
         }
 
         /// <summary>
@@ -68,8 +68,8 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void Release()
         {
-            sessionFactory.Close();
-            sessionFactory.Dispose();
+            _sessionFactory.Close();
+            _sessionFactory.Dispose();
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
-            return sessionFactory.GetClassMetadata(entityName);
+            return _sessionFactory.GetClassMetadata(entityName);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IDictionary<string, IClassMetadata> GetAllEntityMetadata()
         {
-            return sessionFactory.GetAllClassMetadata();
+            return _sessionFactory.GetAllClassMetadata();
         }
 
         /// <summary>
@@ -99,9 +99,9 @@ namespace CommandCentral.DataAccess
             System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;
             
             if (dropFirst)
-                schema.Drop(writer, true);
+                _schema.Drop(writer, true);
 
-            schema.Create(writer, true);
+            _schema.Create(writer, true);
         }
         
 

@@ -72,6 +72,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClientAccess\EndpointsAttribute.cs" />
+    <Compile Include="ClientAccess\HasEndpointsAttribute.cs" />
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
