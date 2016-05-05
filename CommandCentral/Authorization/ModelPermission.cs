@@ -17,7 +17,9 @@ namespace CommandCentral.Authorization
         /// </summary>
         public virtual Guid Id { get; set; }
 
-        //A unique name that identifes this model permission.
+        /// <summary>
+        /// A unique name that identifies this model permission.
+        /// </summary>
         public virtual string Name { get; set; }
 
         /// <summary>
@@ -48,7 +50,7 @@ namespace CommandCentral.Authorization
         /// Returns Name.
         /// </summary>
         /// <returns></returns>
-        public virtual new string ToString()
+        public new virtual string ToString()
         {
             return Name;
         }

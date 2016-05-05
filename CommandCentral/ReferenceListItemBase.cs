@@ -26,7 +26,7 @@ namespace CommandCentral
         /// Returns the Value.
         /// </summary>
         /// <returns></returns>
-        public virtual new string ToString()
+        public new virtual string ToString()
         {
             return Value;
         }

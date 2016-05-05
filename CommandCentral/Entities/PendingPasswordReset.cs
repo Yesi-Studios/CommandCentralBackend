@@ -12,7 +12,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The max age after which a password reset will have expired and it will become invalid.
         /// </summary>
-        public static readonly TimeSpan MaxAge = TimeSpan.FromDays(1);
+        private static readonly TimeSpan _maxAge = TimeSpan.FromDays(1);
 
         #region Properties
 
@@ -41,7 +41,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(Time) > MaxAge;
+            return DateTime.Now.Subtract(Time) > _maxAge;
         }
 
         #endregion

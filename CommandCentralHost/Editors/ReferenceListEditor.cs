@@ -83,7 +83,7 @@ namespace CommandCentralHost.Editors
         /// </summary>
         /// <param name="type"></param>
         /// <param name="session"></param>
-        public static void EditReferenceList(Type type, ISession session)
+        private static void EditReferenceList(Type type, ISession session)
         {
             if (!type.IsSubclassOf(typeof(ReferenceListItemBase)))
                 throw new Exception("wtf is this");
@@ -119,7 +119,7 @@ namespace CommandCentralHost.Editors
                 else if (int.TryParse(input, out option) && option >= 0 && option <= values.Count - 1 && values.Any())
                 {
                     //Client wants to edit an item.
-                    EditReferenceItem(values[option], session);
+                    EditReferenceItem(values[option]);
                 }
                 else
                 {
@@ -137,8 +137,8 @@ namespace CommandCentralHost.Editors
         /// Edits the value/Description of a single reference item.
         /// </summary>
         /// <param name="item"></param>
-        /// <param name="session"></param>
-        public static void EditReferenceItem(ReferenceListItemBase item, ISession session)
+        /// 
+        private static void EditReferenceItem(ReferenceListItemBase item)
         {
             bool keepLooping = true;
 

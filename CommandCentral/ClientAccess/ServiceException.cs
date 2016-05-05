@@ -18,7 +18,7 @@ namespace CommandCentral.ClientAccess
             {
                 return _errorType;
             }
-            set
+            private set
             {
                 _errorType = value;
             }
@@ -27,7 +27,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The HTTP Status Code associated with this error.
         /// </summary>
-        public System.Net.HttpStatusCode HttpStatusCode { get; set; }
+        public System.Net.HttpStatusCode HttpStatusCode { get; private set; }
 
         /// <summary>
         /// Creates a new instance of a ServiceException

@@ -40,7 +40,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// Returns the value (name) of this department.
         /// </summary>
         /// <returns></returns>
-        public virtual new string ToString()
+        public new virtual string ToString()
         {
             return Value;
         }

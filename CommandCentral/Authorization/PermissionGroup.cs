@@ -50,7 +50,7 @@ namespace CommandCentral.Authorization
         /// Returns Name.
         /// </summary>
         /// <returns></returns>
-        public virtual new string ToString()
+        public new virtual string ToString()
         {
             return Name;
         }
@@ -59,6 +59,9 @@ namespace CommandCentral.Authorization
 
         #region ctors
 
+        /// <summary>
+        /// Creates a new permission group and sets the lists to empty lists.
+        /// </summary>
         public PermissionGroup()
         {
             ModelPermissions = new List<ModelPermission>();

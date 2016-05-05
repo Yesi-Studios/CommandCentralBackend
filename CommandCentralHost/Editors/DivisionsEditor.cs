@@ -1,9 +1,6 @@
-﻿using CommandCentral.DataAccess;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.Entities.ReferenceLists;
 using NHibernate;
@@ -43,7 +40,7 @@ namespace CommandCentralHost.Editors
                 else if (int.TryParse(input, out option) && option >= 0 && option <= department.Divisions.Count - 1 && department.Divisions.Any())
                 {
                     //Client wants to edit an item.
-                    EditDivision(department.Divisions[option], session);
+                    EditDivision(department.Divisions[option]);
                 }
                 else
                 {
@@ -62,7 +59,7 @@ namespace CommandCentralHost.Editors
             }
         }
 
-        private static void EditDivision(Division division, ISession session)
+        private static void EditDivision(Division division)
         {
             bool keepLooping = true;
 

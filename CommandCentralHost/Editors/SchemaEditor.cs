@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AtwoodUtils;
 
 namespace CommandCentralHost.Editors
@@ -22,9 +18,7 @@ namespace CommandCentralHost.Editors
 
             "Would you like to drop the current schema first? (y) (Note: creating the schema where tables already exist will cause unknown behavior.)".WriteLine();
 
-            bool dropFirst = false;
-            if (Console.ReadLine().ToLower() == "y")
-                dropFirst = true;
+            bool dropFirst = Console.ReadLine().ToLower() == "y";
 
             "Are you sure you want to run the schema generation script? (y)".WriteLine();
 

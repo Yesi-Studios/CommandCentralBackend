@@ -5,6 +5,7 @@ using CommandCentral.Authorization;
 using CommandCentral.ClientAccess;
 using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
+using NHibernate.Transform;
 
 namespace CommandCentral.Entities
 {
@@ -280,7 +281,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken Login_Client(MessageToken token)
+        private static MessageToken Login_Client(MessageToken token)
         {
             //First, we need the username and the password.
             string username = token.GetArgOrFail("username", "You must send a username!") as string;
@@ -294,28 +295,27 @@ namespace CommandCentral.Entities
             {
                 try
                 {
-                    //The query itself.
-                    var results = token.CommunicationSession.QueryOver<Person>()
+                    //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                    //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
+                    var person = token.CommunicationSession.QueryOver<Person>()
                         .Where(x => x.Username == username)
-                        .List<Person>();
+                        .SingleOrDefault<Person>();
 
-                    if (results.Count > 1)
-                        throw new Exception(string.Format("More that one result was returned for the username, '{0}'.", username));
-
-                    if (!results.Any())
+                    //If no result came back, then it'll be null
+                    if (person == null)
                         throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
 
                     //If the password is bad
-                    if (!ClientAccess.PasswordHash.ValidatePassword(password, results[0].PasswordHash))
+                    if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
                     {
                         //If the password doesn't check out we need to send the person who owns this account a failed login email.
-                        EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
                         if (address == null)
-                            throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", results[0].Id));
+                            throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                         //Ok, so we have an email we can use to contact the person!
-                        EmailHelper.SendFailedAccountLoginEmail(address.Address, results[0].Id).Wait();
+                        EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
 
                         //Now that we have alerted the user, we can fail out.
                         throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
@@ -328,26 +328,26 @@ namespace CommandCentral.Entities
                         IsActive = true,
                         LastUsedTime = token.CallTime,
                         LoginTime = token.CallTime,
-                        Permissions = results[0].PermissionGroups,
-                        Person = results[0]
+                        Permissions = person.PermissionGroups,
+                        Person = person
                     };
 
                     //Now insert it
                     token.CommunicationSession.Save(ses);
 
                     //Now log the account history event on the person.
-                    results[0].AccountHistory.Add(new AccountHistoryEvent
+                    person.AccountHistory.Add(new AccountHistoryEvent
                     {
                         AccountHistoryEventType = AccountHistoryEventTypes.Login,
                         EventTime = token.CallTime,
-                        Person = results[0]
+                        Person = person
                     });
 
                     //And update the person
-                    token.CommunicationSession.SaveOrUpdate(results[0]);
+                    token.CommunicationSession.SaveOrUpdate(person);
 
                     //Cool now we just need to give the token back to the client along with some other stuff.
-                    token.Result = new { PersonID = results[0].Id, results[0].PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = results[0].ToString() };
+                    token.Result = new { PersonID = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() };
 
                     transaction.Commit();
 
@@ -375,7 +375,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken Logout_Client(MessageToken token)
+        private static MessageToken Logout_Client(MessageToken token)
         {
             //Make sure there is actually a session
             if (token.AuthenticationSession == null)
@@ -436,7 +436,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken BeginRegistration_Client(MessageToken token)
+        private static MessageToken BeginRegistration_Client(MessageToken token)
         {
             //First we need the client's ssn.  This is the account they want to claim.
             string ssn = token.GetArgOrFail("ssn", "You must send an SSN.") as string;
@@ -447,28 +447,28 @@ namespace CommandCentral.Entities
             {
                 try
                 {
-                    var results = token.CommunicationSession.QueryOver<Person>()
+                    //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                    //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
+                    var person = token.CommunicationSession.QueryOver<Person>()
                         .Where(x => x.SSN == ssn)
-                        .List<Person>();
+                        .SingleOrDefault<Person>();
 
-                    if (results.Count > 1)
-                        throw new Exception(string.Format("During begin registration, the ssn, '{0}', loaded more than one profile.", ssn));
-
-                    if (results.Count == 0)
+                    //If no result came back, this will be null
+                    if (person == null)
                         throw new ServiceException("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Ok, so we have a single profile.  Let's see if it's already been claimed.
-                    if (results[0].IsClaimed)
+                    if (person.IsClaimed)
                     {
                         //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
                         //To do that, we need an email for this user.
-                        EmailAddress address = results[0].EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
                         if (address == null)
-                            throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", results[0].Id));
+                            throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                         //Now send that email.
-                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, results[0].Id).Wait();
+                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
 
                         //Now fail out.  We're done here.
                         throw new ServiceException("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
@@ -477,14 +477,14 @@ namespace CommandCentral.Entities
                     }
 
                     //Ok so the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
-                    var dodEmailAddress = results[0].EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
+                    var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
                     if (dodEmailAddress == null)
                         throw new ServiceException("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
                                                    "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //Let's see if there is already a pending account confirmation.
                     var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
-                        .Where(x => x.Person.Id == results[0].Id)
+                        .Where(x => x.Person.Id == person.Id)
                         .List<PendingAccountConfirmation>();
 
                     //If there are any (should only be one) then we're going to delete all of them.  
@@ -495,7 +495,7 @@ namespace CommandCentral.Entities
                     //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                     var pendingAccountConfirmation = new PendingAccountConfirmation
                     {
-                        Person = results[0],
+                        Person = person,
                         Time = token.CallTime
                     };
 
@@ -503,15 +503,15 @@ namespace CommandCentral.Entities
                     token.CommunicationSession.Save(pendingAccountConfirmation);
 
                     //Now let's make a new account event and then update the person.
-                    results[0].AccountHistory.Add(new AccountHistoryEvent
+                    person.AccountHistory.Add(new AccountHistoryEvent
                     {
                         AccountHistoryEventType = AccountHistoryEventTypes.RegistrationStarted,
                         EventTime = token.CallTime,
-                        Person = results[0]
+                        Person = person
                     });
 
                     //And then persist that by updating the person.
-                    token.CommunicationSession.Update(results[0]);
+                    token.CommunicationSession.Update(person);
 
                     //Wait!  we're not even done yet.  Let's send the client the registration email now.
                     EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
@@ -551,7 +551,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken CompleteRegistration_Client(MessageToken token)
+        private static MessageToken CompleteRegistration_Client(MessageToken token)
         {
             string username = token.GetArgOrFail("username", "You must send a username") as string;
             string password = token.GetArgOrFail("password", "You must send a password") as string;
@@ -646,7 +646,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken BeginPasswordReset_Client(MessageToken token)
+        private static MessageToken BeginPasswordReset_Client(MessageToken token)
         {
             //First we need the email and the ssn from the client.
             string emailAddress = token.GetArgOrFail("email", "You must send an email!") as string;
@@ -662,36 +662,38 @@ namespace CommandCentral.Entities
             {
                 try
                 {
-                    var results = token.CommunicationSession.QueryOver<Person>()
-                        //.Where(x => x.SSN == ssn && x.EmailAddresses.Exists(y => y.Address.Equals(emailAddress, StringComparison.CurrentCultureIgnoreCase)))
-                        //TODO learn freaking NHibernate
-                        .List<Person>();
+                    //Find the user who has the given email address and has the given ssn.
+                    var person = token.CommunicationSession.QueryOver<Person>()
+                        .Where(x => x.SSN == ssn)
+                        .Fetch(x => x.EmailAddresses).Eager
+                        .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
+                        .Where(x => x.Address == emailAddress)
+                        .TransformUsing(Transformers.DistinctRootEntity)
+                        .SingleOrDefault<Person>();
 
-                    if (results.Count > 1)
-                        throw new Exception(string.Format("During begin password reset, the ssn, '{0}', and the email address, '{1}', loaded more than one profile.", ssn, emailAddress));
-
-                    if (results.Count == 0)
+                    //If the person is null then it's because we got none back.
+                    if (person == null)
                         throw new ServiceException("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
-                    if (!results[0].IsClaimed)
+                    if (!person.IsClaimed)
                         throw new ServiceException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //And now we know it's claimed.  So make the event, log the event and send the email.
-                    results[0].AccountHistory.Add(new AccountHistoryEvent
+                    person.AccountHistory.Add(new AccountHistoryEvent
                     {
                         AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
                         EventTime = token.CallTime,
-                        Person = results[0]
+                        Person = person
                     });
 
                     //Save the event
-                    token.CommunicationSession.Update(results[0]);
+                    token.CommunicationSession.Update(person);
 
                     //Create the pending password reset thing.
                     var pendingPasswordReset = new PendingPasswordReset
                     {
-                        Person = results[0],
+                        Person = person,
                         Time = token.CallTime
                     };
 
@@ -728,7 +730,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static MessageToken CompletePasswordReset_Client(MessageToken token)
+        private static MessageToken CompletePasswordReset_Client(MessageToken token)
         {
             //Get the parameters we need.
             string passwordResetId = token.GetArgOrFail("passwordresetid", "You must send a password reset Id!") as string;
@@ -799,6 +801,60 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Get/Load/Select/Search
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// personid - The ID of the person to load.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private static MessageToken LoadOne_Client(MessageToken token)
+        {
+            //First we need to know what user the client wants.  That'll be the person id.
+            Guid personId;
+            if (!Guid.TryParse(token.GetArgOrFail("personid", "You must send a person ID.") as string, out personId))
+                throw new ServiceException("The person ID you sent was in the wrong form.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+            //Now let's load the person and then set any fields the client isn't allowed to see to null.
+            var person = token.CommunicationSession.Get<Person>(personId);
+
+            
+            //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
+            if (person != null && personId != token.AuthenticationSession.Person.Id)
+            {
+                //Now we need to evict this copy of the person from the session so that our changes to it don't reflect in the database.  That would be awkward.
+                token.CommunicationSession.Evict(person);
+
+                //Ok, now we need to set all the fields to null the client can't return.  First let's see what fields the client can return.
+                //This is going to go through all model permissions that target a Person, and get all the returnable fields.
+                var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
+
+                var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
+                //Now for every property not in the above list, let's set the property to null.
+                var allPropertyNames = personMetadata.PropertyNames;
+
+                //Set the nulls if they're null.
+                foreach (var propertyName in allPropertyNames)
+                {
+                    if (!returnableFields.Contains(propertyName))
+                        personMetadata.SetPropertyValue(person, propertyName, null, NHibernate.EntityMode.Poco);
+                }
+            }
+
+            //Return the person if we've edited it or not.  Remember that this person has been evicted from the session.
+            token.Result = person;
+
+            return token;
+        }
+
+        #endregion
 
         #endregion
 
@@ -929,6 +985,26 @@ namespace CommandCentral.Entities
                             RequiredSpecialPermissions = null,
                             RequiresAuthentication = false
                         }
+                    },
+                    { "LoadOne", new EndpointDescription
+                        {
+                            AllowArgumentLogging = true,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "Those fields the client can't return will be set to null.",
+                            DataMethod = LoadOne_Client,
+                            Description = "Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.",
+                            ExampleOutput = () => "An entire person object containing the entire record minus those fields the client was not allowed to return.  These fields are set to null.",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                                "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                                "personid - The ID of the person to load."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = true
+                        }
                     }
 
                 };
@@ -949,49 +1025,51 @@ namespace CommandCentral.Entities
 
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Sex).Not.Nullable();
-                References(x => x.Ethnicity).Not.Nullable();
-                References(x => x.ReligiousPreference).Not.Nullable();
-                References(x => x.Suffix).Not.Nullable();
-                References(x => x.Rank).Not.Nullable();
-                References(x => x.Rate).Not.Nullable();
-                References(x => x.Division).Not.Nullable();
-                References(x => x.Department).Not.Nullable();
-                References(x => x.Command).Not.Nullable();
-                References(x => x.Billet).Not.Nullable();
-                References(x => x.DutyStatus).Not.Nullable();
-                References(x => x.UIC).Not.Nullable();
+                References(x => x.Sex).Not.Nullable().LazyLoad();
+                References(x => x.Ethnicity).Not.Nullable().LazyLoad();
+                References(x => x.ReligiousPreference).Not.Nullable().LazyLoad();
+                References(x => x.Suffix).Not.Nullable().LazyLoad();
+                References(x => x.Rank).Not.Nullable().LazyLoad();
+                References(x => x.Rate).Not.Nullable().LazyLoad();
+                References(x => x.Division).Not.Nullable().LazyLoad();
+                References(x => x.Department).Not.Nullable().LazyLoad();
+                References(x => x.Command).Not.Nullable().LazyLoad();
+                References(x => x.Billet).Not.Nullable().LazyLoad();
+                References(x => x.DutyStatus).Not.Nullable().LazyLoad();
+                References(x => x.UIC).Not.Nullable().LazyLoad();
 
                 Map(x => x.LastName).Not.Nullable().Length(40);
-                Map(x => x.FirstName).Not.Nullable().Length(40);
-                Map(x => x.MiddleName).Nullable().Length(40);
-                Map(x => x.SSN).Not.Nullable().Length(40).Unique();
-                Map(x => x.DateOfBirth).Not.Nullable();
-                Map(x => x.Remarks).Nullable().Length(150);
-                Map(x => x.Supervisor).Nullable().Length(40);
-                Map(x => x.WorkCenter).Nullable().Length(40);
-                Map(x => x.WorkRoom).Nullable().Length(40);
-                Map(x => x.Shift).Nullable().Length(40);
-                Map(x => x.WorkRemarks).Nullable().Length(150);
-                Map(x => x.DateOfArrival).Not.Nullable();
-                Map(x => x.JobTitle).Nullable().Length(40);
-                Map(x => x.EAOS).Not.Nullable();
-                Map(x => x.DateOfDeparture).Nullable();
-                Map(x => x.EmergencyContactInstructions).Nullable().Length(150);
-                Map(x => x.ContactRemarks).Nullable().Length(150);
-                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString());
-                Map(x => x.Username).Nullable().Length(40).Unique();
-                Map(x => x.PasswordHash).Nullable().Length(100);
+                Map(x => x.FirstName).Not.Nullable().Length(40).LazyLoad();
+                Map(x => x.MiddleName).Nullable().Length(40).LazyLoad();
+                Map(x => x.SSN).Not.Nullable().Length(40).Unique().LazyLoad();
+                Map(x => x.DateOfBirth).Not.Nullable().LazyLoad();
+                Map(x => x.Remarks).Nullable().Length(150).LazyLoad();
+                Map(x => x.Supervisor).Nullable().Length(40).LazyLoad();
+                Map(x => x.WorkCenter).Nullable().Length(40).LazyLoad();
+                Map(x => x.WorkRoom).Nullable().Length(40).LazyLoad();
+                Map(x => x.Shift).Nullable().Length(40).LazyLoad();
+                Map(x => x.WorkRemarks).Nullable().Length(150).LazyLoad();
+                Map(x => x.DateOfArrival).Not.Nullable().LazyLoad();
+                Map(x => x.JobTitle).Nullable().Length(40).LazyLoad();
+                Map(x => x.EAOS).Not.Nullable().LazyLoad();
+                Map(x => x.DateOfDeparture).Nullable().LazyLoad();
+                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).LazyLoad();
+                Map(x => x.ContactRemarks).Nullable().Length(150).LazyLoad();
+                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).LazyLoad();
+                Map(x => x.Username).Nullable().Length(40).Unique().LazyLoad();
+                Map(x => x.PasswordHash).Nullable().Length(100).LazyLoad();
 
-                HasManyToMany(x => x.NECs);
-                HasManyToMany(x => x.PermissionGroups);
-                HasManyToMany(x => x.SubscribedChangeEvents);
+                HasManyToMany(x => x.NECs).LazyLoad();
+                HasManyToMany(x => x.PermissionGroups).LazyLoad();
+                HasManyToMany(x => x.SubscribedChangeEvents).LazyLoad();
 
-                HasMany(x => x.AccountHistory);
-                HasMany(x => x.Changes);
-                HasMany(x => x.EmailAddresses);
-                HasMany(x => x.PhoneNumbers);
-                HasMany(x => x.PhysicalAddresses);
+                HasMany(x => x.AccountHistory).LazyLoad();
+                HasMany(x => x.Changes).LazyLoad();
+                HasMany(x => x.EmailAddresses).LazyLoad();
+                HasMany(x => x.PhoneNumbers).LazyLoad();
+                HasMany(x => x.PhysicalAddresses).LazyLoad();
+
+                LazyLoad();
             }
         }
 

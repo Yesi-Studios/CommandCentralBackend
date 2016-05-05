@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AtwoodUtils;
 
 namespace CommandCentralHost.Editors
@@ -17,7 +15,7 @@ namespace CommandCentralHost.Editors
             {
                 Console.Clear();
 
-                "Welcome to the all entitiy metadata viewer!".WriteLine();
+                "Welcome to the all entity metadata viewer!".WriteLine();
                 "".WriteLine();
                 "Choose an entity below or enter an empty line to return.".WriteLine();
 

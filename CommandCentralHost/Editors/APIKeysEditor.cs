@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.ClientAccess;
 using CommandCentral.DataAccess;
-using NHibernate;
 
 namespace CommandCentralHost.Editors
 {
-    internal class ApiKeysEditor
+    internal static class ApiKeysEditor
     {
         internal static void EditAPIKeys()
         {
@@ -50,7 +47,7 @@ namespace CommandCentralHost.Editors
                         else if (int.TryParse(input, out option) && option >= 0 && option <= apiKeys.Count - 1 && apiKeys.Any())
                         {
                             //Client wants to edit an item.
-                            EditAPIKey(apiKeys[option], session);
+                            EditAPIKey(apiKeys[option]);
                         }
                         else
                         {
@@ -70,7 +67,7 @@ namespace CommandCentralHost.Editors
             }
         }
 
-        private static void EditAPIKey(ApiKey key, ISession session)
+        private static void EditAPIKey(ApiKey key)
         {
             bool keepLooping = true;
 

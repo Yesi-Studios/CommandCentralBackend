@@ -3,8 +3,6 @@ using CommandCentral.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AtwoodUtils;
 using NHibernate;
 
@@ -55,7 +53,7 @@ namespace CommandCentralHost.Editors
             }
         }
 
-        internal static void EditPermissionGroups()
+        private static void EditPermissionGroups()
         {
             bool keepLooping = true;
 
@@ -173,7 +171,7 @@ namespace CommandCentralHost.Editors
                             }
                         case 5:
                             {
-                                var allPermissionGroups = session.QueryOver<CommandCentral.Authorization.PermissionGroup>().List().ToList();
+                                var allPermissionGroups = session.QueryOver<PermissionGroup>().List().ToList();
 
                                 ListEditor.EditList(group.SubordinatePermissionGroups, allPermissionGroups, "Subordinate Permission Groups Editor");
 
@@ -220,7 +218,7 @@ namespace CommandCentralHost.Editors
                         for (int x = 0; x < modelPermissions.Count; x++)
                         {
                             //We need to go get the total return fields for this model name.
-                            int totalProperties = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermissions[x].ModelName).PropertyNames.Count();
+                            int totalProperties = NHibernateHelper.GetEntityMetadata(modelPermissions[x].ModelName).PropertyNames.Length;
 
                             lines.Add(new[] { x.ToString(), modelPermissions[x].Name, modelPermissions[x].ModelName, 
                                 "{0}/{1}".FormatS(modelPermissions[x].ReturnableFields.Count, totalProperties),
@@ -241,7 +239,7 @@ namespace CommandCentralHost.Editors
                         else if (int.TryParse(input, out option) && option >= 0 && option <= modelPermissions.Count - 1 && modelPermissions.Any())
                         {
                             //Client wants to edit an item.
-                            EditModelPermission(modelPermissions[option], session);
+                            EditModelPermission(modelPermissions[option]);
                         }
                         else
                         {
@@ -253,7 +251,7 @@ namespace CommandCentralHost.Editors
                             "".WriteLine();
 
                             //Gets a list of key/value pair where the key is the entity name and the value is the IClassMetadata.
-                            var allEntitityMetadata = CommandCentral.DataAccess.NHibernateHelper.GetAllEntityMetadata().ToList();
+                            var allEntitityMetadata = NHibernateHelper.GetAllEntityMetadata().ToList();
 
                             for (int x = 0; x < allEntitityMetadata.Count; x++)
                                 "{0}. {1}".FormatS(x, allEntitityMetadata[x].Key).WriteLine();
@@ -279,7 +277,7 @@ namespace CommandCentralHost.Editors
             }
         }
 
-        private static void EditModelPermission(ModelPermission modelPermission, ISession session)
+        private static void EditModelPermission(ModelPermission modelPermission)
         {
             bool keepLooping = true;
 
@@ -321,7 +319,7 @@ namespace CommandCentralHost.Editors
                                 "".WriteLine();
 
                                 //Gets a list of key/value pair where the key is the entity name and the value is the IClassMetadata.
-                                var allEntitityMetadata = CommandCentral.DataAccess.NHibernateHelper.GetAllEntityMetadata().ToList();
+                                var allEntitityMetadata = NHibernateHelper.GetAllEntityMetadata().ToList();
 
                                 for (int x = 0; x < allEntitityMetadata.Count; x++)
                                     "{0}. {1}".FormatS(x, allEntitityMetadata[x].Key).WriteLine();
@@ -344,7 +342,7 @@ namespace CommandCentralHost.Editors
                                 Console.Clear();
                                 if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
                                 {
-                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+                                    var allFields = NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
 
                                     ListEditor.EditList(modelPermission.ReturnableFields, allFields, "Returnable Fields Editor");
                                 }
@@ -360,7 +358,7 @@ namespace CommandCentralHost.Editors
                                 Console.Clear();
                                 if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
                                 {
-                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+                                    var allFields = NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
 
                                     ListEditor.EditList(modelPermission.EditableFields, allFields, "Editable Fields Editor");
                                 }
@@ -376,7 +374,7 @@ namespace CommandCentralHost.Editors
                                 Console.Clear();
                                 if (!string.IsNullOrWhiteSpace(modelPermission.ModelName))
                                 {
-                                    var allFields = CommandCentral.DataAccess.NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
+                                    var allFields = NHibernateHelper.GetEntityMetadata(modelPermission.ModelName).PropertyNames.ToList();
 
                                     ListEditor.EditList(modelPermission.SearchableFields, allFields, "Searchable Fields Editor");
                                 }

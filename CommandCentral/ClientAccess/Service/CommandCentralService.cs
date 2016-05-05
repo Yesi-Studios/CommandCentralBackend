@@ -2,16 +2,17 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.DataAccess;
-using NHibernate;
 
 namespace CommandCentral.ClientAccess.Service
 {
@@ -27,16 +28,16 @@ namespace CommandCentral.ClientAccess.Service
         #region ServiceManagement
 
         /// <summary>
-        /// The list of all endpoints that are exposed to the client.
+        /// The list of all _endpointDescriptions that are exposed to the client.
         /// </summary>
-        public static readonly ConcurrentDictionary<string, EndpointDescription> Endpoints = new ConcurrentDictionary<string, EndpointDescription>();
+        private static readonly ConcurrentDictionary<string, EndpointDescription> _endpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>();
 
         /// <summary>
-        /// Static constructor that builds the endpoints.  This is how we register new endpoints.
+        /// Static constructor that builds the _endpointDescriptions.  This is how we register new _endpointDescriptions.
         /// </summary>
         static CommandCentralService()
         {
-            Entities.Person.EndpointDescriptions.ToList().ForEach(x => Endpoints.AddOrUpdate(x.Key, x.Value,
+            Entities.Person.EndpointDescriptions.ToList().ForEach(x => _endpointDescriptions.AddOrUpdate(x.Key, x.Value,
                 (key, value) =>
                 {
                     throw new Exception();
@@ -47,7 +48,7 @@ namespace CommandCentral.ClientAccess.Service
 
 
         /// <summary>
-        /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the endpoints.
+        /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the _endpointDescriptions.
         /// </summary>
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
@@ -65,9 +66,9 @@ namespace CommandCentral.ClientAccess.Service
             };
 
             //Tell the client we have a request.
-            Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(), token.CallTime.ToString()), Communicator.MessagePriority.Informational);
+            Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(), token.CallTime.ToString(CultureInfo.InvariantCulture)), Communicator.MessagePriority.Informational);
 
-            //Add the CORS headers to the request to allowe the cross domain stuff.
+            //Add the CORS headers to the request to allow the cross domain stuff.
             Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
 
             try
@@ -80,15 +81,14 @@ namespace CommandCentral.ClientAccess.Service
                 //We're going to do this inside another try block so that the error can be properly handed back to the client while still posting shit to the client.
                 try
                 {
-                    //Create the Nhibernate communication session that will be carried thorughout this request.
-                    token.CommunicationSession = DataAccess.NHibernateHelper.CreateSession();
+                    //Create the NHibernate communication session that will be carried throughout this request.
+                    token.CommunicationSession = NHibernateHelper.CreateSession();
 
                     //Now that we have a comm session, before we do anything else, let's save our token.
                     token.CommunicationSession.Save(token, token.Id);
 
                     //Get the IP address of the host that called us.
-                    token.HostAddress = (OperationContext.Current.IncomingMessageProperties
-                        [System.ServiceModel.Channels.RemoteEndpointMessageProperty.Name] as System.ServiceModel.Channels.RemoteEndpointMessageProperty).Address;
+                    token.HostAddress = ((RemoteEndpointMessageProperty) OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;
 
                     //Get the args from the stream.
                     token.Args = Utilities.ConvertPostDataToDict(data);
@@ -104,7 +104,7 @@ namespace CommandCentral.ClientAccess.Service
                         throw new ServiceException("That API Key is invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
                     //Validate the endpoint and get the endpoint's description.
-                    if (!Endpoints.TryGetValue(token.Endpoint, out description))
+                    if (!_endpointDescriptions.TryGetValue(token.Endpoint, out description))
                         throw new ServiceException(string.Format("The endpoint '{0}' is not valid.  If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", token.Endpoint), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
 
                     //Is the endpoint active?
@@ -115,7 +115,7 @@ namespace CommandCentral.ClientAccess.Service
 
                     //And then print them out.
                     Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
-                        token.CallTime.ToString(),
+                        token.CallTime.ToString(CultureInfo.InvariantCulture),
                         DateTime.Now.Subtract(token.CallTime).ToString(),
                         token.HostAddress,
                         token.ApiKey.ApplicationName), Communicator.MessagePriority.Informational);
@@ -125,12 +125,12 @@ namespace CommandCentral.ClientAccess.Service
                 {
                     Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at validation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
                     token.State = MessageStates.Failed;
-                    throw e;
+                    throw;
                 }
 
                 
 
-                //Ok, now we know that the request is valid let's see if we need ot authenticate it.
+                //Ok, now we know that the request is valid let's see if we need to authenticate it.
                 if (description.RequiresAuthentication)
                 {
                     //We're going to do this authentication in its own try/catch so that we can show a nicer error message.
@@ -145,7 +145,7 @@ namespace CommandCentral.ClientAccess.Service
 
                         //And then print them out.
                         Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
-                            token.CallTime.ToString(),
+                            token.CallTime.ToString(CultureInfo.InvariantCulture),
                             DateTime.Now.Subtract(token.CallTime).ToString(),
                             token.HostAddress,
                             token.ApiKey.ApplicationName,
@@ -155,7 +155,7 @@ namespace CommandCentral.ClientAccess.Service
                     {
                         Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at authentication.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
                         token.State = MessageStates.Failed;
-                        throw e;
+                        throw;
                     }
 
                 }
@@ -168,7 +168,7 @@ namespace CommandCentral.ClientAccess.Service
 
                     //And then print them out.
                     Communicator.PostMessageToHost("{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}".FormatS(token.Id.ToString(), token.Endpoint, token.State.ToString(),
-                        token.CallTime.ToString(),
+                        token.CallTime.ToString(CultureInfo.InvariantCulture),
                         DateTime.Now.Subtract(token.CallTime).ToString(),
                         token.HostAddress,
                         token.ApiKey.ApplicationName,
@@ -178,7 +178,7 @@ namespace CommandCentral.ClientAccess.Service
                 {
                     Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at invocation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
                     token.State = MessageStates.Failed;
-                    throw e;
+                    throw;
                 }
 
                 //At this point we have the data we need.  Now let's pass do our final logging.
@@ -195,6 +195,7 @@ namespace CommandCentral.ClientAccess.Service
                     StatusCode = System.Net.HttpStatusCode.OK
                 }.Serialize();
 
+                Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
                 WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.OK;
 
                 //Now that the final logging is done and the message has been built for the client, let's release it.
@@ -207,8 +208,17 @@ namespace CommandCentral.ClientAccess.Service
                 token.State = MessageStates.Handled;
 
                 //Tell the host we finished with the message.
-                List<string[]> elements = new List<string[]> { new[] { "ID", "App Name", "Host", "Call Time", "Processing Time", "Endpoint", "State", "Session ID" } };
-                elements.Add(new[] { token.Id.ToString(), token.ApiKey.ApplicationName, token.HostAddress, token.CallTime.ToString(), DateTime.Now.Subtract(token.CallTime).ToString(), token.Endpoint, token.State.ToString(), token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString() });
+                List<string[]> elements = new List<string[]>
+                {
+                    new[] {"ID", "App Name", "Host", "Call Time", "Processing Time", "Endpoint", "State", "Session ID"},
+                    new[]
+                    {
+                        token.Id.ToString(), token.ApiKey.ApplicationName, token.HostAddress,
+                        token.CallTime.ToString(CultureInfo.InvariantCulture),
+                        DateTime.Now.Subtract(token.CallTime).ToString(), token.Endpoint, token.State.ToString(),
+                        token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString()
+                    }
+                };
                 Communicator.PostMessageToHost(DisplayUtilities.PadElementsInLines(elements, 3), Communicator.MessagePriority.Informational);
 
                 //Return our result.
@@ -226,6 +236,7 @@ namespace CommandCentral.ClientAccess.Service
                     StatusCode = e.HttpStatusCode
                 }.Serialize();
 
+                Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
                 WebOperationContext.Current.OutgoingResponse.StatusCode = e.HttpStatusCode;
 
                 return finalResult;
@@ -241,6 +252,7 @@ namespace CommandCentral.ClientAccess.Service
                     StatusCode = System.Net.HttpStatusCode.InternalServerError
                 }.Serialize();
 
+                Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
                 WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
 
                 return finalResult;
@@ -275,7 +287,7 @@ namespace CommandCentral.ClientAccess.Service
 
                 //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
                 EndpointDescription endpointDescription;
-                if (!Endpoints.TryGetValue(endpoint, out endpointDescription))
+                if (!_endpointDescriptions.TryGetValue(endpoint, out endpointDescription))
                 {
                     result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
                 }
@@ -326,7 +338,7 @@ namespace CommandCentral.ClientAccess.Service
         }
 
         /// <summary>
-        /// Returns documentation for all endpoints.
+        /// Returns documentation for all _endpointDescriptions.
         /// </summary>
         /// <returns></returns>
         public async Task<Stream> GetAllDocumentation()
@@ -353,14 +365,14 @@ namespace CommandCentral.ClientAccess.Service
 
             string endpointTemplate = @"<li class='list-group-item'><a href='./man/{0}'>{0}</a></li>";
 
-            string endpoints = "";
+            string endpointBuild = "";
 
-            Endpoints.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
+            _endpointDescriptions.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
             {
-                endpoints += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
+                endpointBuild += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
             });
 
-            byte[] resultBytes = Encoding.UTF8.GetBytes(string.Format(templatePage, endpoints));
+            byte[] resultBytes = Encoding.UTF8.GetBytes(string.Format(templatePage, endpointBuild));
             return new MemoryStream(resultBytes);
         }
 

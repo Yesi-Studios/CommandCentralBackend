@@ -8,10 +8,13 @@ using System.Runtime.InteropServices;
 
 namespace CommandCentralHost
 {
+    /// <summary>
+    /// Main Class
+    /// </summary>
     class Program
     {
 
-        private static readonly List<DialogueOption> dialogueOptions = new List<DialogueOption>
+        private static readonly List<DialogueOption> _dialogueOptions = new List<DialogueOption>
         {
             new DialogueOption
             {
@@ -93,16 +96,16 @@ namespace CommandCentralHost
             }
         };
 
-        const int SWP_NOSIZE = 0x0001;
+        private const int SWP_NOSIZE = 0x0001;
 
 
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetConsoleWindow();
 
-        private static IntPtr MyConsole = GetConsoleWindow();
+        private static readonly IntPtr _myConsole = GetConsoleWindow();
 
         [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
+        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
 
         [STAThread]
         private static void Main()
@@ -111,7 +114,7 @@ namespace CommandCentralHost
             {
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
-                SetWindowPos(MyConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
+                SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
 
                 Console.ForegroundColor = ConsoleColor.Green;
 
@@ -129,7 +132,7 @@ namespace CommandCentralHost
                         "Welcome to Command Central's Backend Host Application!".WriteLine();
                         "".WriteLine();
                         //Determine which options to show the client.
-                        var displayOptions = dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
+                        var displayOptions = _dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
                         for (int x = 0; x < displayOptions.Count; x++)
                         {
                             "{0}. {1}".FormatS(x, displayOptions[x].OptionText).WriteLine();
