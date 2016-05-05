@@ -57,7 +57,7 @@ namespace AtwoodUtils
 
         public static T Deserialize<T>(this string json)
         {
-            return string.IsNullOrWhiteSpace(json) ? default(T) : JsonConvert.DeserializeObject<T>(json);
+            return (string.IsNullOrWhiteSpace(json) || !Utilities.IsValidJson(json)) ? default(T) : JsonConvert.DeserializeObject<T>(json);
         }
 
         public static JObject DeserializeToJObject(this string json)

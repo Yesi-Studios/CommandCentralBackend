@@ -6,6 +6,8 @@ using System.Net.Mail;
 using System.Reflection;
 using System.Threading.Tasks;
 using CommandCentral.ClientAccess;
+using AtwoodUtils;
+
 
 
 namespace CommandCentral
@@ -18,12 +20,12 @@ namespace CommandCentral
         /// <summary>
         /// The address to be used by all emails as their sender address.
         /// </summary>
-        private static readonly MailAddress emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress _emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
 
         /// <summary>
         /// The address that should be used as the "reply to" address on all mail messages.
         /// </summary>
-        private static readonly MailAddress replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress _replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
 
         /// <summary>
         /// The SMTP server to use to send our emails.
@@ -33,12 +35,12 @@ namespace CommandCentral
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
         /// </summary>
-        private static readonly string completeRegistrationPageLocation = @"147.51.62.19/CC/#/finishregistration/";
+        private static readonly string _completeRegistrationPageLocation = @"147.51.62.19/CC/#/finishregistration/";
 
         /// <summary>
         /// The template URI for where the reset password page can be found.
         /// </summary>
-        private static readonly string passwordResetPageLocation = @"file:///E:/CommandDB Frontend/ResetPassword.html?ResetPasswordID=";
+        private static readonly string _passwordResetPageLocation = @"file:///E:/CommandDB Frontend/ResetPassword.html?ResetPasswordID=";
 
         /// <summary>
         /// The required "host" portion of an email address for an email address to be considered a DOD email address.
@@ -48,7 +50,7 @@ namespace CommandCentral
             get { return "mail.mil"; }
         }
 
-        private static readonly List<string> developerEmailAddresses = new List<string>
+        private static readonly List<string> _developerEmailAddresses = new List<string>
         { 
             "daniel.k.atwood.mil@mail.mil", 
             "sundevilgoalie13@gmail.com",
@@ -88,7 +90,7 @@ namespace CommandCentral
             MailMessage message = BuildStandardMessage();
             message.To.Add(emailAddressTo);
             message.Subject = "Confirm Email Address";
-            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, completeRegistrationPageLocation + confirmationId, ssn.Substring((ssn.Length - 1) - 4));
+            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, _completeRegistrationPageLocation + confirmationId, ssn.Substring((ssn.Length - 1) - 4));
             SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
             await client.SendMailAsync(message);
         }
@@ -102,10 +104,10 @@ namespace CommandCentral
         public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, Guid personId)
         {
             MailMessage message = new MailMessage();
-            developerEmailAddresses.ForEach(x => message.To.Add(x));
+            _developerEmailAddresses.ForEach(x => message.To.Add(x));
             message.To.Add(emailAddressTo);
             message.Subject = "IMPORTANT! Registration - Important Security Error";
-            message.From = emailSenderAddress;
+            message.From = _emailSenderAddress;
             message.Body = string.Format(await LoadEmailResource("BeginRegistrationError.html"), DateTime.Now, personId);
             SmtpClient client = new SmtpClient(SmtpHost);
             await client.SendMailAsync(message);
@@ -120,9 +122,9 @@ namespace CommandCentral
         public static async Task SendGenericErrorEmail(string errorMessage, string subject)
         {
             MailMessage message = new MailMessage();
-            developerEmailAddresses.ForEach(x => message.To.Add(x));
+            _developerEmailAddresses.ForEach(x => message.To.Add(x));
             message.Subject = subject;
-            message.From = emailSenderAddress;
+            message.From = _emailSenderAddress;
             message.Body = string.Format(await LoadEmailResource("GenericError.html"), DateTime.Now, errorMessage);
             SmtpClient client = new SmtpClient(SmtpHost);
             await client.SendMailAsync(message);
@@ -139,7 +141,7 @@ namespace CommandCentral
             MailMessage message = BuildStandardMessage();
             message.To.Add(emailAddressTo);
             message.Subject = "CommandDB Password Reset";
-            message.Body = string.Format(await LoadEmailResource("InitiatePasswordReset.html"), DateTime.Now, passwordResetPageLocation + passwordResetId, emailAddressTo);
+            message.Body = string.Format(await LoadEmailResource("InitiatePasswordReset.html"), DateTime.Now, _passwordResetPageLocation + passwordResetId, emailAddressTo);
             SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
             await client.SendMailAsync(message);
         }
@@ -176,14 +178,14 @@ namespace CommandCentral
             MailMessage message = new MailMessage
             {
                 IsBodyHtml = true,
-                From = emailSenderAddress,
-                Sender = emailSenderAddress,
-                ReplyTo = replyToAddress,
+                From = _emailSenderAddress,
+                Sender = _emailSenderAddress,
+                ReplyTo = _replyToAddress,
                 Priority = MailPriority.High
             };
             #pragma warning restore 612, 618
 
-            message.CC.Add(emailSenderAddress);
+            message.CC.Add(_emailSenderAddress);
 
             return message;
 
@@ -197,34 +199,63 @@ namespace CommandCentral
         /// <returns></returns>
         public static void SendFatalErrorEmail(MessageToken token, Exception e)
         {
-            //The warning disable here is to supress the warning that tells us that using the "ReplyTo" field is obsolete.  
-            //The only other options is to use the ReplyToList and then use the .Add method on it.  This is easier so Yolo.
-            /*#pragma warning disable 612, 618
-            MailMessage message = new MailMessage()
-            {
-                IsBodyHtml = true,
-                From = _unifiedSenderAddress,
-                Sender = _unifiedSenderAddress,
-                ReplyTo = _unifiedSenderAddress,
-                Priority = MailPriority.High,
-                Subject = "IMPORTANT!  Unified Service Crash Error Report"
-            };
-            #pragma warning restore 612, 618
+            var message = BuildStandardMessage();
 
-            if (token.Session == null)
+            message.Subject = "CC Backend Fatal Error Report";
+
+            if (token.AuthenticationSession == null)
             {
-                message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
-                    "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
-                    token.Id, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
-                    e.Message, (e.InnerException == null) ? "NULL" : e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
+                message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
+                    DateTime.Now.ToUniversalTime(),
+                    "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
+                    token.Id, 
+                    token.ApiKey.Id,
+                    token.ApiKey.ApplicationName,
+                    token.CallTime.ToUniversalTime(),
+                    token.RawJSON, 
+                    token.Endpoint, 
+                    token.ResultJSON, 
+                    token.State.ToString(), 
+                    token.HandledTime.ToUniversalTime(),
+                    token.HostAddress,
+                    e.Message,
+                    (e.InnerException == null) ? "NULL" : e.InnerException.Message,
+                    e.StackTrace,
+                    e.Source,
+                    e.TargetSite);
             }
             else
             {
-                message.Body = string.Format(await LoadEmailResource("FatalError.html"), DateTime.Now.ToUniversalTime(),
-                    token.Session.Id, token.Session.LoginTime.ToUniversalTime(), token.Session.PersonID, token.Session.LogoutTime.ToUniversalTime(),
-                    token.Session.IsActive, token.Session.PermissionIDs.Serialize(),
-                    token.Id, token.APIKey, token.CallTime.ToUniversalTime(), token.Args.Serialize(), token.Endpoint, token.Result.Serialize(), token.State.ToString(), token.HandledTime.ToUniversalTime(),
-                    e.Message, e.InnerException.Message, e.StackTrace, e.Source, e.TargetSite);
+                string permissionGroupIds = "";
+                foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
+                {
+                    permissionGroupIds += group.Id + "|"; 
+                }
+
+                message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
+                    DateTime.Now.ToUniversalTime(),
+                    token.AuthenticationSession.Id,
+                    token.AuthenticationSession.LoginTime.ToUniversalTime(),
+                    token.AuthenticationSession.Person.Id,
+                    token.AuthenticationSession.LogoutTime.ToUniversalTime(),
+                    token.AuthenticationSession.IsActive,
+                    permissionGroupIds,
+                    token.AuthenticationSession.LastUsedTime.ToUniversalTime(),
+                    token.Id,
+                    token.ApiKey.Id,
+                    token.ApiKey.ApplicationName,
+                    token.CallTime.ToUniversalTime(),
+                    token.RawJSON,
+                    token.Endpoint,
+                    token.ResultJSON,
+                    token.State,
+                    token.HandledTime.ToUniversalTime(),
+                    token.HostAddress,
+                    e.Message,
+                    (e.InnerException == null) ? "NULL" : e.InnerException.Message,
+                    e.StackTrace,
+                    e.Source,
+                    e.TargetSite);
             }
 
 
@@ -232,8 +263,7 @@ namespace CommandCentral
 
             SmtpClient client = new SmtpClient(SmtpHost);
             client.DeliveryMethod = SmtpDeliveryMethod.Network;
-            await client.SendMailAsync(message);*/
-
+            client.Send(message);
         }
 
     }

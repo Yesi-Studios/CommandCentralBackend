@@ -83,27 +83,14 @@ namespace AtwoodUtils
         }
 
         /// <summary>
-        /// Converts a stream into a dictionary of string/object pairs where that string is the key and the key is not case sensitive.
+        /// Reads all text from a stream.
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static Dictionary<string, object> ConvertPostDataToDict(Stream data)
+        public static string ConvertStreamToString(Stream data)
         {
-            Dictionary<string, object> args = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             using (StreamReader reader = new StreamReader(data))
-            {
-                string json = reader.ReadToEnd();
-
-                if (string.IsNullOrEmpty(json))
-                    return new Dictionary<string, object>();
-
-                JsonConvert.DeserializeObject<Dictionary<string, object>>(json).AsEnumerable().ToList().ForEach(x =>
-                {
-                    args.Add(x.Key.ToLower(), x.Value);
-                });
-
-            }
-            return args;
+                return reader.ReadToEnd();
         }
 
         /// <summary>

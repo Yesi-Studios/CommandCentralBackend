@@ -90,8 +90,13 @@ namespace CommandCentral.ClientAccess.Service
                     //Get the IP address of the host that called us.
                     token.HostAddress = ((RemoteEndpointMessageProperty) OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;
 
-                    //Get the args from the stream.
-                    token.Args = Utilities.ConvertPostDataToDict(data);
+                    //Here we keep the raw json in a separate variable before handing it to the token.
+                    //This is because the token's property is not suitable for doing data processing because it truncates data to meet database logging requirements.
+                    string rawJson = Utilities.ConvertStreamToString(data);
+                    token.RawJSON = rawJson;
+
+                    //Attempt to convert the raw json into a dictionary.
+                    token.Args = rawJson.Deserialize<Dictionary<string, object>>();
 
                     //Get and validate the API Key.
                     Guid apiKey;
@@ -121,10 +126,9 @@ namespace CommandCentral.ClientAccess.Service
                         token.ApiKey.ApplicationName), Communicator.MessagePriority.Informational);
 
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at validation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
-                    token.State = MessageStates.Failed;
+                    token.State = MessageStates.FailedAtProcessing;
                     throw;
                 }
 
@@ -153,8 +157,7 @@ namespace CommandCentral.ClientAccess.Service
                     }
                     catch (Exception e)
                     {
-                        Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at authentication.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
-                        token.State = MessageStates.Failed;
+                        token.State = MessageStates.FailedAtAuthentication;
                         throw;
                     }
 
@@ -174,59 +177,64 @@ namespace CommandCentral.ClientAccess.Service
                         token.ApiKey.ApplicationName,
                         token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString()), Communicator.MessagePriority.Informational);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Communicator.PostMessageToHost("An incoming request to invoke the endpoint, '{0}', failed at invocation.  Please see the log for more information.\n\tMessage ID: {1}\n\tError Message: {2}".FormatS(token.Endpoint, token.Id, e.Message), Communicator.MessagePriority.Informational);
-                    token.State = MessageStates.Failed;
+                    token.State = MessageStates.FailedAtInvocation;
                     throw;
                 }
 
-                //At this point we have the data we need.  Now let's pass do our final logging.
-                //TODO do logging
-
-
-                //Build what will be our final return string.  We do this prior to updating the message as "handled" in case serializing the return container takes an appreciable about of time so that we don't show a false handled time.
-                string finalResult = new ReturnContainer
+                //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
+                try
                 {
-                    ErrorMessages = new List<string>(),
-                    HasError = false,
-                    ReturnValue = token.Result,
-                    ErrorType = ErrorTypes.Null,
-                    StatusCode = System.Net.HttpStatusCode.OK
-                }.Serialize();
-
-                Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
-                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.OK;
-
-                //Now that the final logging is done and the message has been built for the client, let's release it.
-
-
-                
-
-                //Update the token in the database, indicating that we have successfully handled it.
-                token.HandledTime = DateTime.Now;
-                token.State = MessageStates.Handled;
-
-                //Tell the host we finished with the message.
-                List<string[]> elements = new List<string[]>
-                {
-                    new[] {"ID", "App Name", "Host", "Call Time", "Processing Time", "Endpoint", "State", "Session ID"},
-                    new[]
+                    //Build what will be our final return string.  To do this we just serialize the response.
+                    string finalResult = new ReturnContainer
                     {
-                        token.Id.ToString(), token.ApiKey.ApplicationName, token.HostAddress,
-                        token.CallTime.ToString(CultureInfo.InvariantCulture),
-                        DateTime.Now.Subtract(token.CallTime).ToString(), token.Endpoint, token.State.ToString(),
-                        token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString()
-                    }
-                };
-                Communicator.PostMessageToHost(DisplayUtilities.PadElementsInLines(elements, 3), Communicator.MessagePriority.Informational);
+                        ErrorMessages = new List<string>(),
+                        HasError = false,
+                        ReturnValue = token.Result,
+                        ErrorType = ErrorTypes.Null,
+                        StatusCode = System.Net.HttpStatusCode.OK
+                    }.Serialize();
 
-                //Return our result.
-                return finalResult;
+                    Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
+                    WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.OK;
 
+                    //We can't use the result JSON directly because it is limited to 9000 characters.
+                    token.ResultJSON = finalResult;
+
+                    //Update the token in the database, indicating that we have successfully handled it.
+                    token.HandledTime = DateTime.Now;
+                    token.State = MessageStates.Handled;
+
+                    //The stage is set.  Insert the token before we tell the host its been handled.
+                    token.CommunicationSession.SaveOrUpdate(token);
+
+                    //Tell the host we finished with the message.
+                    List<string[]> elements = new List<string[]>
+                    {
+                        new[] {"ID", "App Name", "Host", "Call Time", "Processing Time", "Endpoint", "State", "Session ID"},
+                        new[]
+                        {
+                            token.Id.ToString(), token.ApiKey.ApplicationName, token.HostAddress,
+                            token.CallTime.ToString(CultureInfo.InvariantCulture),
+                            DateTime.Now.Subtract(token.CallTime).ToString(), token.Endpoint, token.State.ToString(),
+                            token.AuthenticationSession == null ? "null" : token.AuthenticationSession.Id.ToString()
+                        }
+                    };
+                    Communicator.PostMessageToHost(DisplayUtilities.PadElementsInLines(elements, 3), Communicator.MessagePriority.Informational);
+
+                    //release our JSON result.
+                    return finalResult;
+                }
+                catch (Exception)
+                {
+                    token.State = MessageStates.FailedAtFinalHandling;
+                    throw;
+                }
             }
             catch (ServiceException e) //If this exception is received, then it was an expected exception that we explicitly threw.  These kinds of exceptions are ok, and are used as validation errors, authorization errors, or authentication errors that caused the message not to be processable. (yes it's a word, fuck you)
             {
+                //Build what we're going to send to the client.
                 string finalResult = new ReturnContainer
                 {
                     ErrorMessages = e.Message.CreateList(),
@@ -236,24 +244,48 @@ namespace CommandCentral.ClientAccess.Service
                     StatusCode = e.HttpStatusCode
                 }.Serialize();
 
+                //Set status code to whatever the error message gave us.
                 Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
                 WebOperationContext.Current.OutgoingResponse.StatusCode = e.HttpStatusCode;
+
+                //Update the token.
+                token.ResultJSON = finalResult;
+
+                //Update/Save the token before we leave or tell the client we're leaving.
+                token.CommunicationSession.SaveOrUpdate(token);
+
+                Communicator.PostMessageToHost("ERROR: An incoming request to invoke the endpoint, '{0}', failed.  Please see the log for more information.\n\tMessage ID: {1}\n\tFailure Location: {2}\n\tError Message: {3}".FormatS(token.Endpoint, token.Id, token.State.ToString(), e.Message), Communicator.MessagePriority.Informational);
 
                 return finalResult;
             }
             catch (Exception e) //Any other exception is really bad.  It means something was thrown by the service or the CLR itself.  Catch this exception and alert the developers.
             {
+                token.State = MessageStates.FatalError;
+
+                //Build what we're going to send to the client.
                 string finalResult = new ReturnContainer
                 {
-                    ErrorMessages = e.Message.CreateList(),
+                    ErrorMessages = "Well... this is awkward.  Command Central suffered a serious, fatal error.  We are extremely sorry about this.  \n\n\tAn email, text message, and smoke signals have been sent to the developers with the details of this error.  \n\n\tYou'll most likely be contacted shortly if we need further information about this crash such as what you were doing in the application and the order in which you did it.  Any help you can provide us will be appreciated.".CreateList(),
                     ErrorType = ErrorTypes.Fatal,
                     HasError = true,
                     ReturnValue = null,
                     StatusCode = System.Net.HttpStatusCode.InternalServerError
                 }.Serialize();
 
+                //Set status code to whatever the error message gave us.
                 Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
                 WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
+                //Update the token.
+                token.ResultJSON = finalResult;
+
+                //Send the developers the email informing them of a fatal error.
+                EmailHelper.SendFatalErrorEmail(token, e);
+
+                //Update/Save the token before we leave or tell the client we're leaving.
+                token.CommunicationSession.SaveOrUpdate(token);
+
+                Communicator.PostMessageToHost("FATAL ERROR: An incoming request to invoke the endpoint, '{0}', failed.  Please see the log for more information.\n\tMessage ID: {1}\n\tFailure Location: {2}\n\tError Message: {3}".FormatS(token.Endpoint, token.Id, token.State.ToString(), e.Message), Communicator.MessagePriority.Informational);
 
                 return finalResult;
             }
