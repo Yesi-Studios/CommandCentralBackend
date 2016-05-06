@@ -53,6 +53,11 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         public virtual DateTime LastUsedTime { get; set; }
 
+        /// <summary>
+        /// Shows all message tokens that are assigned to this authentication session.
+        /// </summary>
+        public virtual IList<MessageToken> MessageTokens { get; set; }
+
         #endregion
 
         #region Helper Methods
@@ -92,6 +97,8 @@ namespace CommandCentral.ClientAccess
                 References(x => x.Person);
                 HasManyToMany(x => x.Permissions)
                     .Cascade.All().Inverse();
+
+                HasMany(x => x.MessageTokens).Inverse().Cascade.All();
 
                 Cache.ReadWrite();
             }

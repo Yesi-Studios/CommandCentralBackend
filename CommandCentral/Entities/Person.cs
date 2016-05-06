@@ -250,7 +250,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("{0} {1}, {2} {3}", Rate, LastName, FirstName, MiddleName);
+            return string.Format("{0} {1}, {2} {3}", Rate == null ? "" : Rate.Value, LastName, FirstName, MiddleName);
         }
 
         #endregion
@@ -399,6 +399,9 @@ namespace CommandCentral.Entities
 
                     //Okey dokey, now let's delete the session.
                     token.CommunicationSession.Delete(token.AuthenticationSession);
+
+                    //Remove the authentication session from the token because it has been deleted.
+                    token.AuthenticationSession = null;
 
                     //Yay!  Now we're done.
                     token.Result = "Success";

@@ -191,7 +191,7 @@ namespace CommandCentral.ClientAccess
 
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.AuthenticationSession).Nullable().Cascade.All();
+                References(x => x.AuthenticationSession).Column("AuthenticationSessionId").Nullable();
                 References(x => x.ApiKey).Nullable();
 
                 Map(x => x.CallTime).Not.Nullable();

@@ -432,10 +432,10 @@ namespace CommandCentral.ClientAccess.Service
         /// <returns></returns>
         private static MessageToken AuthenticateMessage(MessageToken token)
         {
-            //Get the session for this authentication token.
-            if (!token.Args.ContainsKey("authenticationtoken"))
-                throw new ServiceException("You must send an authentication token.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            string authenticationToken = token.Args["authenticationtoken"] as string;
+            //Get the authentication token.
+            Guid authenticationToken;
+            if (!Guid.TryParse(token.GetArgOrFail("authenticationtoken", "You must send an authentication token - this endpoint requires authentication.") as string, out authenticationToken))
+                throw new ServiceException("The authentication token you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
 
             //Alright let's try to get the session.
             var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
