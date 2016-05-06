@@ -328,7 +328,7 @@ namespace CommandCentral.Entities
                         IsActive = true,
                         LastUsedTime = token.CallTime,
                         LoginTime = token.CallTime,
-                        Permissions = person.PermissionGroups,
+                        Permissions = new List<PermissionGroup>(person.PermissionGroups), //We can't just assign it, we need to copy it.  This is so that we don't have shared references to the same collection.
                         Person = person
                     };
 
