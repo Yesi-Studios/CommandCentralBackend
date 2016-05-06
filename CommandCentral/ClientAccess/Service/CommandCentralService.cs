@@ -42,6 +42,18 @@ namespace CommandCentral.ClientAccess.Service
                 {
                     throw new Exception();
                 }));
+
+            ReferenceListItemBase.EndpointDescriptions.ToList().ForEach(x => _endpointDescriptions.AddOrUpdate(x.Key, x.Value,
+                (key, value) =>
+                {
+                    throw new Exception();
+                }));
+
+            Entities.ReferenceLists.Command.EndpointDescriptions.ToList().ForEach(x => _endpointDescriptions.AddOrUpdate(x.Key, x.Value,
+                (key, value) =>
+                {
+                    throw new Exception();
+                }));
         }
 
         #endregion
@@ -94,6 +106,9 @@ namespace CommandCentral.ClientAccess.Service
 
                     //Attempt to convert the raw json into a dictionary.
                     token.Args = rawJson.Deserialize<Dictionary<string, object>>();
+
+                    if (token.Args == null)
+                        throw new ServiceException("Your request body was in the wrong form.  It must be in a list of key/value pairs, or a dictionary.  Keys must be strings and values can be any object.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
                     //Get and validate the API Key.
                     Guid apiKey;

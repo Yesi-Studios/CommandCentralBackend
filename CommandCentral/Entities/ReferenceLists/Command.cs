@@ -1,4 +1,6 @@
-﻿using FluentNHibernate.Mapping;
+﻿using CommandCentral.ClientAccess;
+using System.Linq;
+using FluentNHibernate.Mapping;
 using System;
 using System.Collections.Generic;
 
@@ -43,6 +45,64 @@ namespace CommandCentral.Entities.ReferenceLists
         {
             return Value;
         }
+
+        #endregion
+
+        #region Client Access
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Returns all commands, group by the command name.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// None
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private static MessageToken LoadCommands_Client(MessageToken token)
+        {
+            //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+            token.Result = token.CommunicationSession.QueryOver<Command>().List<Command>().GroupBy(x => x.Value).Select(x =>
+            {
+                return new KeyValuePair<string, List<Command>>(x.Key, x.ToList());
+            }).ToDictionary(x => x.Key, x => x.Value);
+
+            return token;
+        }
+
+        /// <summary>
+        /// The exposed endpoints
+        /// </summary>
+        public static Dictionary<string, EndpointDescription> EndpointDescriptions
+        {
+            get
+            {
+                return new Dictionary<string, EndpointDescription>
+                {
+                    { "LoadCommands", new EndpointDescription
+                        {
+                            AllowArgumentLogging = true,
+                            AllowResponseLogging = true,
+                            AuthorizationNote = "None",
+                            DataMethod = LoadCommands_Client,
+                            Description = "Returns all commands, group by the command name.",
+                            ExampleOutput = () => "TODO",
+                            IsActive = true,
+                            OptionalParameters = null,
+                            RequiredParameters = new List<string>
+                            {
+                                "apikey - The unique GUID token assigned to your application for metrics purposes."
+                            },
+                            RequiredSpecialPermissions = null,
+                            RequiresAuthentication = false
+                        }
+                    }
+                };
+            }
+        }
+        
 
         #endregion
 
