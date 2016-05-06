@@ -41,7 +41,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(Time) > _maxAge;
+            return DateTime.Now.Subtract(Time) < _maxAge;
         }
 
         #endregion

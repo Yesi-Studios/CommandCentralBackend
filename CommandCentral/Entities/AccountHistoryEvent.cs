@@ -87,7 +87,7 @@ namespace CommandCentral.Entities
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.EventTime).Not.Nullable();
-                Map(x => x.AccountHistoryEventType).Not.Nullable().Length(20);
+                Map(x => x.AccountHistoryEventType).Not.Nullable().Length(50);
 
                 References(x => x.Person).Not.Nullable();
             }
