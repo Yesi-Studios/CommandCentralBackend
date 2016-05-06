@@ -54,6 +54,12 @@ namespace CommandCentral.ClientAccess.Service
                 {
                     throw new Exception();
                 }));
+
+            Entities.VersionInformation.EndpointDescriptions.ToList().ForEach(x => _endpointDescriptions.AddOrUpdate(x.Key, x.Value,
+                (key, value) =>
+                {
+                    throw new Exception();
+                }));
         }
 
         #endregion
