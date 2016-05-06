@@ -20,12 +20,12 @@ namespace CommandCentral
         /// <summary>
         /// The address to be used by all emails as their sender address.
         /// </summary>
-        private static readonly MailAddress _emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress _emailSenderAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
 
         /// <summary>
         /// The address that should be used as the "reply to" address on all mail messages.
         /// </summary>
-        private static readonly MailAddress _replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "NIOC GA Command DB Communications");
+        private static readonly MailAddress _replyToAddress = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
 
         /// <summary>
         /// The SMTP server to use to send our emails.
