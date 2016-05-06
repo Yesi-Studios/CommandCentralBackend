@@ -84,9 +84,6 @@ namespace CommandCentral.ClientAccess.Service
                     //Create the NHibernate communication session that will be carried throughout this request.
                     token.CommunicationSession = NHibernateHelper.CreateSession();
 
-                    //Now that we have a comm session, before we do anything else, let's save our token.
-                    token.CommunicationSession.Save(token, token.Id);
-
                     //Get the IP address of the host that called us.
                     token.HostAddress = ((RemoteEndpointMessageProperty) OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;
 
@@ -209,6 +206,10 @@ namespace CommandCentral.ClientAccess.Service
                     //The stage is set.  Insert the token before we tell the host its been handled.
                     token.CommunicationSession.SaveOrUpdate(token);
 
+                    //Clear our the comm session
+                    token.CommunicationSession.Flush();
+                    token.CommunicationSession.Dispose();
+
                     //Tell the host we finished with the message.
                     List<string[]> elements = new List<string[]>
                     {
@@ -254,6 +255,10 @@ namespace CommandCentral.ClientAccess.Service
                 //Update/Save the token before we leave or tell the client we're leaving.
                 token.CommunicationSession.SaveOrUpdate(token);
 
+                //Clear our the comm session
+                token.CommunicationSession.Flush();
+                token.CommunicationSession.Dispose();
+
                 Communicator.PostMessageToHost("ERROR: An incoming request to invoke the endpoint, '{0}', failed.  Please see the log for more information.\n\tMessage ID: {1}\n\tFailure Location: {2}\n\tError Message: {3}".FormatS(token.Endpoint, token.Id, token.State.ToString(), e.Message), Communicator.MessagePriority.Informational);
 
                 return finalResult;
@@ -284,6 +289,10 @@ namespace CommandCentral.ClientAccess.Service
 
                 //Update/Save the token before we leave or tell the client we're leaving.
                 token.CommunicationSession.SaveOrUpdate(token);
+
+                //Clear our the comm session
+                token.CommunicationSession.Flush();
+                token.CommunicationSession.Dispose();
 
                 Communicator.PostMessageToHost("FATAL ERROR: An incoming request to invoke the endpoint, '{0}', failed.  Please see the log for more information.\n\tMessage ID: {1}\n\tFailure Location: {2}\n\tError Message: {3}".FormatS(token.Endpoint, token.Id, token.State.ToString(), e.Message), Communicator.MessagePriority.Informational);
 

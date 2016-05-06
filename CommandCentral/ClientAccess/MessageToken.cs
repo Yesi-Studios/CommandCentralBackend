@@ -189,7 +189,7 @@ namespace CommandCentral.ClientAccess
             {
                 Table("message_tokens");
 
-                Id(x => x.Id);
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.AuthenticationSession).Nullable().Cascade.All();
                 References(x => x.ApiKey).Nullable();
@@ -199,8 +199,8 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.HandledTime).Nullable();
                 Map(x => x.HostAddress).Nullable().Length(30);
-                Map(x => x.RawJSON).Not.Nullable().Length(10000);
-                Map(x => x.ResultJSON).Not.Nullable().Length(10000);
+                Map(x => x.RawJSON).Nullable().Length(10000);
+                Map(x => x.ResultJSON).Nullable().Length(10000);
 
                 Cache.ReadWrite();
 

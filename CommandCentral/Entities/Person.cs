@@ -234,7 +234,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// A list containing all changes that have every occurred to the profile.
         /// </summary>
-        public virtual List<Change> Changes { get; set; }
+        public virtual IList<Change> Changes { get; set; }
 
 
 
@@ -1025,16 +1025,16 @@ namespace CommandCentral.Entities
 
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Sex).Not.Nullable().LazyLoad();
-                References(x => x.Ethnicity).Not.Nullable().LazyLoad();
-                References(x => x.ReligiousPreference).Not.Nullable().LazyLoad();
-                References(x => x.Suffix).Not.Nullable().LazyLoad();
+                References(x => x.Sex).Nullable().LazyLoad();
+                References(x => x.Ethnicity).Nullable().LazyLoad();
+                References(x => x.ReligiousPreference).Nullable().LazyLoad();
+                References(x => x.Suffix).Nullable().LazyLoad();
                 References(x => x.Rank).Not.Nullable().LazyLoad();
                 References(x => x.Rate).Not.Nullable().LazyLoad();
                 References(x => x.Division).Not.Nullable().LazyLoad();
                 References(x => x.Department).Not.Nullable().LazyLoad();
                 References(x => x.Command).Not.Nullable().LazyLoad();
-                References(x => x.Billet).Not.Nullable().LazyLoad();
+                References(x => x.Billet).Nullable().LazyLoad();
                 References(x => x.DutyStatus).Not.Nullable().LazyLoad();
                 References(x => x.UIC).Not.Nullable().LazyLoad();
 
@@ -1063,11 +1063,11 @@ namespace CommandCentral.Entities
                 HasManyToMany(x => x.PermissionGroups).LazyLoad();
                 HasManyToMany(x => x.SubscribedChangeEvents).LazyLoad();
 
-                HasMany(x => x.AccountHistory).LazyLoad();
-                HasMany(x => x.Changes).LazyLoad();
-                HasMany(x => x.EmailAddresses).LazyLoad();
-                HasMany(x => x.PhoneNumbers).LazyLoad();
-                HasMany(x => x.PhysicalAddresses).LazyLoad();
+                HasMany(x => x.AccountHistory).LazyLoad().Cascade.All();
+                HasMany(x => x.Changes).LazyLoad().Cascade.All();
+                HasMany(x => x.EmailAddresses).LazyLoad().Cascade.All();
+                HasMany(x => x.PhoneNumbers).LazyLoad().Cascade.All();
+                HasMany(x => x.PhysicalAddresses).LazyLoad().Cascade.All();
 
                 LazyLoad();
             }
