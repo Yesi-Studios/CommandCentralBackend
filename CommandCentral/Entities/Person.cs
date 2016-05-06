@@ -555,7 +555,9 @@ namespace CommandCentral.Entities
         {
             string username = token.GetArgOrFail("username", "You must send a username") as string;
             string password = token.GetArgOrFail("password", "You must send a password") as string;
-            string accountConfirmationId = token.GetArgOrFail("accountconfirmationid", "You must send an account confirmation Id.") as string;
+            Guid accountConfirmationId;
+            if (!Guid.TryParse(token.GetArgOrFail("accountconfirmationid", "You must send an account confirmation Id.") as string, out accountConfirmationId))
+                throw new ServiceException("The account confirmation ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
             //TODO validate the above three things.
 

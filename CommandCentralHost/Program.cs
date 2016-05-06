@@ -112,6 +112,7 @@ namespace CommandCentralHost
         {
             try
             {
+
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
                 SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);

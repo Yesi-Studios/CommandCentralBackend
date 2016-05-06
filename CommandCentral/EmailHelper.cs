@@ -90,7 +90,7 @@ namespace CommandCentral
             MailMessage message = BuildStandardMessage();
             message.To.Add(emailAddressTo);
             message.Subject = "Confirm Email Address";
-            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, _completeRegistrationPageLocation + confirmationId, ssn.Substring((ssn.Length - 1) - 4));
+            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, _completeRegistrationPageLocation + confirmationId, ssn.Substring(ssn.Length - 4));
             SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
             await client.SendMailAsync(message);
         }
