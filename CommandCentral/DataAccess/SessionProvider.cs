@@ -37,12 +37,23 @@ namespace CommandCentral.DataAccess
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();*/
 
-            Configuration configuration = Fluently.Configure().Database(
+            /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test")
                         .Username("niocga")
                         .Password("niocga")
                         .Server("gord14ec204")))
+                .Cache(x => x.UseQueryCache()
+                    .ProviderClass<SysCacheProvider>())
+                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                .BuildConfiguration();*/
+
+            Configuration configuration = Fluently.Configure().Database(
+                MySQLConfiguration.Standard.ConnectionString(
+                    builder => builder.Database("test")
+                        .Username("admin")
+                        .Password("password")
+                        .Server("localhost")))
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())

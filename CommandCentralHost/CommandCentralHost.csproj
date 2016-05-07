@@ -101,6 +101,7 @@
     <Compile Include="Editors\PermissionsEditor.cs" />
     <Compile Include="Editors\PersonsEditor.cs" />
     <Compile Include="Editors\SchemaEditor.cs" />
+    <Compile Include="Editors\VersionEditor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Editors\ReferenceListEditor.cs" />
