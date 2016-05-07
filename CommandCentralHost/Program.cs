@@ -96,11 +96,18 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
+                OptionText = "Manage Endpoints",
+                Method = EndpointEditor.EditEndpoints,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
                 OptionText = "View Entity Metadata",
                 Method = MetadataViewer.ViewAllEntityMetadata,
                 DisplayCriteria = () => true
             }
             
+
         };
 
         private const int SWP_NOSIZE = 0x0001;

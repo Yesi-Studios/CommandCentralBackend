@@ -33,6 +33,14 @@ namespace CommandCentral.ClientAccess.Service
         private static readonly ConcurrentDictionary<string, EndpointDescription> _endpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>();
 
         /// <summary>
+        /// Gets the exposed endpoints.
+        /// </summary>
+        public static ConcurrentDictionary<string, EndpointDescription> EndpointDescriptions
+        {
+            get { return _endpointDescriptions; }
+        }
+
+        /// <summary>
         /// Static constructor that builds the _endpointDescriptions.  This is how we register new _endpointDescriptions.
         /// </summary>
         static CommandCentralService()
@@ -356,7 +364,7 @@ namespace CommandCentral.ClientAccess.Service
                 else
                 {
                     Assembly assembly = Assembly.GetExecutingAssembly();
-                    string templateName = "UnifiedServiceFramework.Resources.Documentation.DocumentationTemplate.html";
+                    string templateName = "CommandCentral.Resources.Documentation.DocumentationTemplate.html";
 
                     string templatePage;
                     using (Stream stream = assembly.GetManifestResourceStream(templateName))
@@ -413,7 +421,7 @@ namespace CommandCentral.ClientAccess.Service
             WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
 
             Assembly assembly = Assembly.GetExecutingAssembly();
-            string templateName = "UnifiedServiceFramework.Resources.Documentation.AllEndpointsTemplate.html";
+            string templateName = "CommandCentral.Resources.Documentation.AllEndpointsTemplate.html";
 
             string templatePage;
             using (Stream stream = assembly.GetManifestResourceStream(templateName))

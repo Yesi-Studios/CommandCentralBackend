@@ -96,6 +96,7 @@
     <Compile Include="Editors\CommandsEditor.cs" />
     <Compile Include="Editors\DepartmentsEditor.cs" />
     <Compile Include="Editors\DivisionsEditor.cs" />
+    <Compile Include="Editors\EndpointEditor.cs" />
     <Compile Include="Editors\ListEditor.cs" />
     <Compile Include="Editors\MetadataViewer.cs" />
     <Compile Include="Editors\PermissionsEditor.cs" />
