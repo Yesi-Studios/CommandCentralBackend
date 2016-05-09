@@ -25,7 +25,7 @@ namespace CommandCentral.DataAccess
         /// </summary>
         static NHibernateHelper()
         {
-            Configuration configuration = Fluently.Configure().Database(
+            /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test_db")
                         .Username("xanneth")
@@ -35,9 +35,9 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
+                .BuildConfiguration();*/
 
-            /*Configuration configuration = Fluently.Configure().Database(
+            Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test")
                         .Username("niocga")
@@ -46,7 +46,7 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
+                .BuildConfiguration();
 
             /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(

@@ -30,7 +30,8 @@ namespace CommandCentral
         /// <summary>
         /// The SMTP server to use to send our emails.
         /// </summary>
-        public static readonly string SmtpHost = "localhost";
+        //public static readonly string SmtpHost = "localhost";
+        public static readonly string SmtpHost = "smtp.gordon.army.mil";
 
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
@@ -212,9 +213,9 @@ namespace CommandCentral
                     token.APIKey.Id,
                     token.APIKey.ApplicationName,
                     token.CallTime.ToUniversalTime(),
-                    token.RawJSON, 
+                    "TODO", //token.RawJSON, TODO
                     token.Endpoint, 
-                    token.ResultJSON, 
+                    "TODO", // token.ResultJSON, TODO
                     token.State.ToString(), 
                     token.HandledTime.ToUniversalTime(),
                     token.HostAddress,
@@ -245,9 +246,9 @@ namespace CommandCentral
                     token.APIKey.Id,
                     token.APIKey.ApplicationName,
                     token.CallTime.ToUniversalTime(),
-                    token.RawJSON,
+                    "TODO", //token.RawJSON, TODO
                     token.Endpoint,
-                    token.ResultJSON,
+                    "TODO", // token.ResultJSON, TODO
                     token.State,
                     token.HandledTime.ToUniversalTime(),
                     token.HostAddress,

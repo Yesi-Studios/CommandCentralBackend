@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using NHibernate;
 using AtwoodUtils;
+using FluentNHibernate.Mapping;
 
 namespace CommandCentral.ClientAccess
 {
@@ -73,7 +74,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique Id assigned to this message interaction
         /// </summary>
-        public virtual Guid Id { get; private set; }
+        public virtual Guid Id { get; protected set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
@@ -83,7 +84,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The time at which the client called the API.
         /// </summary>
-        public virtual DateTime CallTime { get; private set; }
+        public virtual DateTime CallTime { get; protected set; }
 
         /// <summary>
         /// The Arguments the client sent to the API.  This is the RawJSON transformed into a dictionary.  This is not mapped to the database.
@@ -93,7 +94,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The body of the request prior to processing.
         /// </summary>
-        public virtual string RawRequestBody { get; private set; }
+        public virtual string RawRequestBody { get; protected set; }
 
         /// <summary>
         /// The endpoint that was called by the client.
@@ -108,7 +109,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Any error messages that occur during the request are pushed to this property.
         /// </summary>
-        public virtual IList<string> ErrorMessages { get; private set; }
+        public virtual IList<string> ErrorMessages { get; protected set; }
 
         /// <summary>
         /// Indicates if any error messages are contained in the error message collection.
@@ -124,17 +125,28 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Describes the error state, if any, that this message token is in.
         /// </summary>
-        public virtual ErrorTypes ErrorType { get; private set; }
+        public virtual ErrorTypes ErrorType { get; protected set; }
 
         /// <summary>
         /// The status code that describes the message token's state.
         /// </summary>
-        public virtual System.Net.HttpStatusCode StatusCode { get; private set; }
+        public virtual System.Net.HttpStatusCode StatusCode { get; protected set; }
 
         /// <summary>
         /// The resultant object.
         /// </summary>
-        public virtual object Result { get; private set; }
+        public virtual object Result { get; protected set; }
+
+        /// <summary>
+        /// Gets raw response body of this request.  This is simple a property accessor to this.ConstructResponse() for logging purposes.
+        /// </summary>
+        public virtual string RawResponseBody
+        {
+            get
+            {
+                return ConstructResponse();
+            }
+        }
 
         /// <summary>
         /// The current state of the message interaction.
@@ -200,6 +212,7 @@ namespace CommandCentral.ClientAccess
             State = MessageStates.Received;
             //Initialize the status code to OK.  If the error message is ever set, then that'll change.
             StatusCode = System.Net.HttpStatusCode.OK;
+            ErrorType = ErrorTypes.Null;
         }
 
         #endregion
@@ -290,6 +303,41 @@ namespace CommandCentral.ClientAccess
         }
 
         #endregion
+
+        public class MessageTokenMapping : ClassMap<MessageToken>
+        {
+            public MessageTokenMapping()
+            {
+                Table("message_tokens");
+
+                Id(x => x.Id).GeneratedBy.Assigned();
+
+                References(x => x.APIKey);
+                References(x => x.AuthenticationSession);
+
+                Map(x => x.CallTime);
+                Map(x => x.RawRequestBody).Length(10000);
+                Map(x => x.CalledEndpoint);
+                Map(x => x.HasError).Access.ReadOnly();
+                Map(x => x.ErrorType);
+                Map(x => x.StatusCode);
+                Map(x => x.State);
+                Map(x => x.HandledTime);
+                Map(x => x.HostAddress);
+                Map(x => x.RawResponseBody).Length(10000).Access.ReadOnly();
+
+                Component(x => x.Endpoint, endpoint =>
+                    {
+                        endpoint.Map(x => x.Name).Nullable().Column("ResolvedEndpointName");
+                    });
+
+                HasMany(x => x.ErrorMessages)
+                    .Table("message_token_error_messages")
+                    .KeyColumn("MessageTokenId")
+                    .Element("ErrorMessage");
+
+            }
+        }
 
     }
 }

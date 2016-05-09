@@ -62,11 +62,10 @@ namespace CommandCentral.ClientAccess.Service
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public string InvokeGenericEndpointAsync(Stream data, string endpoint)
+        public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
-
             //Create the new message token for this request.
-            MessageToken token = new MessageToken();
+            MessageToken token = new MessageToken() { CalledEndpoint = endpoint };
 
             //Tell the client we have a request.
             Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
