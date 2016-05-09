@@ -5,6 +5,7 @@ using CommandCentral.Authorization;
 using CommandCentral.ClientAccess;
 using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
+using FluentValidation;
 using NHibernate.Transform;
 
 namespace CommandCentral.Entities
@@ -281,34 +282,39 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static MessageToken Login_Client(MessageToken token)
+        private static void Login_Client(MessageToken token)
         {
-            //First, we need the username and the password.
-            string username = token.GetArgOrFail("username", "You must send a username!") as string;
-            string password = token.GetArgOrFail("password", "You must send a password!") as string;
 
-            //TODO: validate username and password
+            //Let's see if the parameters are here.
+            if (!token.Args.ContainsKey("username"))
+                token.AddErrorMessage("You didn't send a 'username' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
-            //Load all persons where the username is the username we were sent.
-            //We should only get one username back.  
-            using (var transaction = token.CommunicationSession.BeginTransaction())
+            if (!token.Args.ContainsKey("password"))
+                token.AddErrorMessage("You didn't send a 'password' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+            if (!token.HasError)
             {
-                try
+                string username = token.Args["username"] as string;
+                string password = token.Args["password"] as string;
+
+                //Validate the username and the password
+                //TODO that validation
+
+                //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
+                var person = token.CommunicationSession.QueryOver<Person>()
+                    .Where(x => x.Username == username)
+                    .SingleOrDefault<Person>();
+
+                if (person == null)
                 {
-                    //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
-                    //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
-                    var person = token.CommunicationSession.QueryOver<Person>()
-                        .Where(x => x.Username == username)
-                        .SingleOrDefault<Person>();
-
-                    //If no result came back, then it'll be null
-                    if (person == null)
-                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-
-                    //If the password is bad
+                    token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                }
+                else
+                {
                     if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
                     {
-                        //If the password doesn't check out we need to send the person who owns this account a failed login email.
+                        //A login to the client's account failed.  We need to send an email.
                         EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
                         if (address == null)
@@ -317,51 +323,39 @@ namespace CommandCentral.Entities
                         //Ok, so we have an email we can use to contact the person!
                         EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
 
-                        //Now that we have alerted the user, we can fail out.
-                        throw new ServiceException("Either the username or password was incorrect.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                        token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+
                     }
-
-                    //Alright, if we got here, then we have a good password.
-                    //In this case, we need to create a new session for the client and then insert it.
-                    AuthenticationSession ses = new AuthenticationSession
+                    else
                     {
-                        IsActive = true,
-                        LastUsedTime = token.CallTime,
-                        LoginTime = token.CallTime,
-                        Permissions = new List<PermissionGroup>(person.PermissionGroups), //We can't just assign it, we need to copy it.  This is so that we don't have shared references to the same collection.
-                        Person = person
-                    };
+                        //Cool then we can make a new authentication session.
+                        AuthenticationSession ses = new AuthenticationSession
+                        {
+                            IsActive = true,
+                            LastUsedTime = token.CallTime,
+                            LoginTime = token.CallTime,
+                            Permissions = new List<PermissionGroup>(person.PermissionGroups), //We can't just assign it, we need to copy it.  This is so that we don't have shared references to the same collection.
+                            Person = person
+                        };
 
-                    //Now insert it
-                    token.CommunicationSession.Save(ses);
+                        //Now insert it
+                        token.CommunicationSession.Save(ses);
 
-                    //Now log the account history event on the person.
-                    person.AccountHistory.Add(new AccountHistoryEvent
-                    {
-                        AccountHistoryEventType = AccountHistoryEventTypes.Login,
-                        EventTime = token.CallTime,
-                        Person = person
-                    });
+                        //Now log the account history event on the person.
+                        person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                            EventTime = token.CallTime,
+                            Person = person
+                        });
 
-                    //And update the person
-                    token.CommunicationSession.SaveOrUpdate(person);
+                        //And update the person
+                        token.CommunicationSession.SaveOrUpdate(person);
 
-                    //Cool now we just need to give the token back to the client along with some other stuff.
-                    token.Result = new { PersonID = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() };
-
-                    transaction.Commit();
-
-                }
-                catch
-                {
-                    //If an error was thrown before the transaction was committed, roll it back.
-                    if (!transaction.WasCommitted)
-                        transaction.Rollback();
-                    throw;
+                        token.SetResult(new { PersonID = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                    }
                 }
             }
-
-            return token;
         }
 
         /// <summary>
@@ -375,48 +369,35 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static MessageToken Logout_Client(MessageToken token)
+        private static void Logout_Client(MessageToken token)
         {
-            //Make sure there is actually a session
+
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-                throw new ServiceException("You must be logged in to try to logout. No shit?", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-
-            //Well this is easy.  Just delete the session.  Make sure to update the person first before we remove our reference to it.
-            using (var transaction = token.CommunicationSession.BeginTransaction())
             {
-                try
-                {
-                    //Log the event
-                    token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
-                    {
-                        AccountHistoryEventType = AccountHistoryEventTypes.Logout,
-                        EventTime = token.CallTime,
-                        Person = token.AuthenticationSession.Person
-                    });
-
-                    //Now update the person
-                    token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
-
-                    //Okey dokey, now let's delete the session.
-                    token.CommunicationSession.Delete(token.AuthenticationSession);
-
-                    //Remove the authentication session from the token because it has been deleted.
-                    token.AuthenticationSession = null;
-
-                    //Yay!  Now we're done.
-                    token.Result = "Success";
-                    transaction.Commit();
-                }
-                catch
-                {
-                    //If an error was thrown before the transaction was committed, roll it back.
-                    if (!transaction.WasCommitted)
-                        transaction.Rollback();
-                    throw;
-                }
+                token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
             }
+            else
+            {
+                //Log the event
+                token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
+                {
+                    AccountHistoryEventType = AccountHistoryEventTypes.Logout,
+                    EventTime = token.CallTime,
+                    Person = token.AuthenticationSession.Person
+                });
 
-            return token;
+                //Now update the person
+                token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
+
+                //Okey dokey, now let's delete the session.
+                token.CommunicationSession.Delete(token.AuthenticationSession);
+
+                //Remove the authentication session from the token because it has been deleted.
+                token.AuthenticationSession = null;
+
+                token.SetResult("Success");
+            }
         }
 
         #endregion
@@ -819,7 +800,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static MessageToken LoadOne_Client(MessageToken token)
+        private static MessageToken LoadPerson_Client(MessageToken token)
         {
             //First we need to know what user the client wants.  That'll be the person id.
             Guid personId;
@@ -866,49 +847,60 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The exposed endpoints
         /// </summary>
-        public static Dictionary<string, EndpointDescription> EndpointDescriptions
+        public static List<EndpointDescription> EndpointDescriptions
         {
             get
             {
-                return new Dictionary<string, EndpointDescription>
+                return new List<EndpointDescription>
                 {
-                    { "Login", new EndpointDescription
+                    new EndpointDescription
+                    {
+                        Name = "Login",
+                        AllowArgumentLogging = false,
+                        AllowResponseLogging = false,
+                        AuthorizationNote = "None",
+                        DataMethod = Login_Client,
+                        Description = "Logs in the user given a proper username/password combination and returns a GUID.  This GUID is the client's authentication token and must be included in all subsequent authentication-required requests.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
                         {
-                            AllowArgumentLogging = false,
-                            AllowResponseLogging = false,
-                            AuthorizationNote = "None",
-                            DataMethod = Login_Client,
-                            Description = "Logs in the user given a proper username/password combination and returns a GUID.  This GUID is the client's authentication token and must be included in all subsequent authentication-required requests.",
-                            ExampleOutput = () => "TODO",
-                            IsActive = true,
-                            OptionalParameters = null,
-                            RequiredParameters = new List<string>
-                            {
-                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                                "username - The user's case sensitive username.",
-                                "password - The user's case sensitive password."
-                            },
-                            RequiredSpecialPermissions = null,
-                            RequiresAuthentication = false
-                        }
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "username - The user's case sensitive username.",
+                            "password - The user's case sensitive password."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = false
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "Logout",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "Client must be logged in.",
+                        DataMethod = Logout_Client,
+                        Description = "Logs out the user by invalidating the session/deleted it from the database.",
+                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    }
+                };
+
+                /*return new Dictionary<string, EndpointDescription>
+                {
+                    { "Login", 
                     },
                     { "Logout", new EndpointDescription
                         {
-                            AllowArgumentLogging = true,
-                            AllowResponseLogging = true,
-                            AuthorizationNote = "Client must be logged in.",
-                            DataMethod = Logout_Client,
-                            Description = "Logs out the user by invalidating the session/deleted it from the database.",
-                            ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                            IsActive = true,
-                            OptionalParameters = null,
-                            RequiredParameters = new List<string>
-                            {
-                                "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                                "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
-                            },
-                            RequiredSpecialPermissions = null,
-                            RequiresAuthentication = true
+                            
                         }
                     },
                     { "BeginRegistration", new EndpointDescription
@@ -991,12 +983,12 @@ namespace CommandCentral.Entities
                             RequiresAuthentication = false
                         }
                     },
-                    { "LoadOne", new EndpointDescription
+                    { "LoadPerson", new EndpointDescription
                         {
                             AllowArgumentLogging = true,
                             AllowResponseLogging = true,
                             AuthorizationNote = "Those fields the client can't return will be set to null.",
-                            DataMethod = LoadOne_Client,
+                            DataMethod = LoadPerson_Client,
                             Description = "Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.",
                             ExampleOutput = () => "An entire person object containing the entire record minus those fields the client was not allowed to return.  These fields are set to null.",
                             IsActive = true,
@@ -1010,9 +1002,8 @@ namespace CommandCentral.Entities
                             RequiredSpecialPermissions = null,
                             RequiresAuthentication = true
                         }
-                    }
+                    }*/
 
-                };
             }
         }
 
@@ -1078,5 +1069,11 @@ namespace CommandCentral.Entities
             }
         }
 
+        public class PersonValidator : AbstractValidator<Person>
+        {
+
+        }
+
     }
+
 }

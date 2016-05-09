@@ -72,6 +72,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClientAccess\LoggableMessageToken.cs" />
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
@@ -82,7 +83,6 @@
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
-    <Compile Include="ClientAccess\ServiceException.cs" />
     <Compile Include="Entities\Errors.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
@@ -121,6 +121,7 @@
     <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextMessageHelper.cs" />
+    <Compile Include="Variance.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">

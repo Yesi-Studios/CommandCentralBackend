@@ -27,7 +27,7 @@ namespace CommandCentralHost.Editors
                         "".WriteLine();
 
                         //Let's go get all the API Keys.
-                        IList<ApiKey> apiKeys = session.CreateCriteria<ApiKey>().List<ApiKey>();
+                        IList<APIKey> apiKeys = session.CreateCriteria<APIKey>().List<APIKey>();
 
                         //And then print them out.
                         List<string[]> lines = new List<string[]> { new[] { "#", "ID", "Application Name" } };
@@ -51,7 +51,7 @@ namespace CommandCentralHost.Editors
                         }
                         else
                         {
-                            var item = new ApiKey { ApplicationName = input };
+                            var item = new APIKey { ApplicationName = input };
                             session.Save(item);
                         }
 
@@ -67,7 +67,7 @@ namespace CommandCentralHost.Editors
             }
         }
 
-        private static void EditAPIKey(ApiKey key)
+        private static void EditAPIKey(APIKey key)
         {
             bool keepLooping = true;
 

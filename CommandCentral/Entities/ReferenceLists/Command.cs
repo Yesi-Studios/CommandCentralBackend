@@ -61,43 +61,41 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static MessageToken LoadCommands_Client(MessageToken token)
+        private static void LoadCommands_Client(MessageToken token)
         {
             //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-            token.Result = token.CommunicationSession.QueryOver<Command>().List<Command>().GroupBy(x => x.Value).Select(x =>
+            token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>().GroupBy(x => x.Value).Select(x =>
             {
                 return new KeyValuePair<string, List<Command>>(x.Key, x.ToList());
-            }).ToDictionary(x => x.Key, x => x.Value);
-
-            return token;
+            }).ToDictionary(x => x.Key, x => x.Value));
         }
 
         /// <summary>
         /// The exposed endpoints
         /// </summary>
-        public static Dictionary<string, EndpointDescription> EndpointDescriptions
+        public static List<EndpointDescription> EndpointDescriptions
         {
             get
             {
-                return new Dictionary<string, EndpointDescription>
+                return new List<EndpointDescription>
                 {
-                    { "LoadCommands", new EndpointDescription
+                    new EndpointDescription
+                    {
+                        Name = "LoadCommands",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadCommands_Client,
+                        Description = "Returns all commands, group by the command name.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
                         {
-                            AllowArgumentLogging = true,
-                            AllowResponseLogging = true,
-                            AuthorizationNote = "None",
-                            DataMethod = LoadCommands_Client,
-                            Description = "Returns all commands, group by the command name.",
-                            ExampleOutput = () => "TODO",
-                            IsActive = true,
-                            OptionalParameters = null,
-                            RequiredParameters = new List<string>
-                            {
-                                "apikey - The unique GUID token assigned to your application for metrics purposes."
-                            },
-                            RequiredSpecialPermissions = null,
-                            RequiresAuthentication = false
-                        }
+                            "apikey - The unique GUID token assigned to your application for metrics purposes."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = false
                     }
                 };
             }

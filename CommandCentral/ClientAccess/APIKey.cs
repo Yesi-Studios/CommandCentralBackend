@@ -6,7 +6,7 @@ namespace CommandCentral.ClientAccess
     /// <summary>
     /// Describes a single API Key.
     /// </summary>
-    public class ApiKey
+    public class APIKey
     {
 
         #region Properties
@@ -26,7 +26,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Provides mapping declarations to the database for the API Key.
         /// </summary>
-        public class ApiKeyMap : ClassMap<ApiKey>
+        public class ApiKeyMap : ClassMap<APIKey>
         {
             /// <summary>
             /// Maps the API Key to the database.

@@ -9,6 +9,11 @@ namespace CommandCentral.ClientAccess
     public class EndpointDescription
     {
         /// <summary>
+        /// The name of the endpoint.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
         /// Indicates whether or not an endpoint should require authentication.  All endpoints that require a session must have this set to true.
         /// </summary>
         public bool RequiresAuthentication { get; set; }
@@ -26,7 +31,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The data method that this endpoint will use to retrieve its data.  All data methods must take and return a message token.
         /// </summary>
-        public Func<MessageToken, MessageToken> DataMethod { get; set; }
+        public Action<MessageToken> DataMethod { get; set; }
 
         /// <summary>
         /// A description of the endpoint.  This is intended to be used such that clients can request a "manual" type of thing for endpoints.

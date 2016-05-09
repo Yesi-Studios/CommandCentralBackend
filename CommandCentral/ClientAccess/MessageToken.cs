@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
-using FluentNHibernate.Mapping;
+using System.Globalization;
 using NHibernate;
 using AtwoodUtils;
 
@@ -72,65 +73,68 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique Id assigned to this message interaction
         /// </summary>
-        public virtual Guid Id { get; set; }
+        public virtual Guid Id { get; private set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
         /// </summary>
-        public virtual ApiKey ApiKey { get; set; }
+        public virtual APIKey APIKey { get; set; }
 
         /// <summary>
         /// The time at which the client called the API.
         /// </summary>
-        public virtual DateTime CallTime { get; set; }
+        public virtual DateTime CallTime { get; private set; }
 
         /// <summary>
         /// The Arguments the client sent to the API.  This is the RawJSON transformed into a dictionary.  This is not mapped to the database.
         /// </summary>
         public virtual Dictionary<string, object> Args { get; set; }
 
-        private string _rawJSON = null;
         /// <summary>
-        /// The raw JSON as it was received from the client, prior to any processing.  This value should not be used for any processing as the value is truncated to no more than 9000 characters.
+        /// The body of the request prior to processing.
         /// </summary>
-        public virtual string RawJSON
-        {
-            get
-            {
-                return _rawJSON;
-            }
-            set
-            {
-                _rawJSON = value.Truncate(9000);
-            }
-        }
+        public virtual string RawRequestBody { get; private set; }
+
+        /// <summary>
+        /// The endpoint that was called by the client.
+        /// </summary>
+        public virtual string CalledEndpoint { get; set; }
 
         /// <summary>
         /// The endpoint that was invoked by the client.
         /// </summary>
-        public virtual string Endpoint { get; set; }
+        public virtual EndpointDescription Endpoint { get; set; }
 
         /// <summary>
-        /// Stores the result from the service.  This is not mapped to the database.  Its representation, ResultJSON is stored.
-        /// <para />
+        /// Any error messages that occur during the request are pushed to this property.
         /// </summary>
-        public virtual object Result { get; set; }
+        public virtual IList<string> ErrorMessages { get; private set; }
 
-        private string _resultJSON = null;
         /// <summary>
-        /// Represents the Result object as json.  It is equivelent to Result.Serialize(). This value should not be used for any processing as the value is truncated to no more than 9000 characters.
+        /// Indicates if any error messages are contained in the error message collection.
+        /// <para/>
+        /// If this value is true, the result can not be set.
         /// </summary>
-        public virtual string ResultJSON
+        public virtual bool HasError
         {
-            get
-            {
-                return _resultJSON;
-            }
-            set
-            {
-                _resultJSON = value.Truncate(9000);
-            }
+            get { return ErrorMessages.Any(); }
+                 
         }
+
+        /// <summary>
+        /// Describes the error state, if any, that this message token is in.
+        /// </summary>
+        public virtual ErrorTypes ErrorType { get; private set; }
+
+        /// <summary>
+        /// The status code that describes the message token's state.
+        /// </summary>
+        public virtual System.Net.HttpStatusCode StatusCode { get; private set; }
+
+        /// <summary>
+        /// The resultant object.
+        /// </summary>
+        public virtual object Result { get; private set; }
 
         /// <summary>
         /// The current state of the message interaction.
@@ -138,7 +142,7 @@ namespace CommandCentral.ClientAccess
         public virtual MessageStates State { get; set; }
 
         /// <summary>
-        /// The time at which the message was handled.
+        /// The time at which the message was handled, either successfully or otherwise, and the response was sent to the client.
         /// </summary>
         public virtual DateTime HandledTime { get; set; }
 
@@ -155,59 +159,137 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The IP address of the host that called the service.
         /// </summary>
-        public virtual string HostAddress { get; set; } 
+        public virtual string HostAddress { get; set; }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Casts to a string.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}\n\t\tError Code: {8}\n\t\t Status Code: {9}\n\t\tMessages: {10}"
+                .FormatS(Id, 
+                Endpoint == null ? CalledEndpoint : Endpoint.Name, 
+                State, 
+                CallTime.ToString(CultureInfo.InvariantCulture), 
+                DateTime.Now.Subtract(CallTime).ToString(), 
+                HostAddress, 
+                APIKey == null ? "null" : APIKey.ApplicationName, 
+                AuthenticationSession == null ? "null" : AuthenticationSession.Id.ToString(),
+                ErrorType,
+                StatusCode,
+                string.Join("|", ErrorMessages));
+        }
+
+        #endregion
+
+        #region ctor
+
+        /// <summary>
+        /// Creates a new message token and creates a new Id for it and sets the call time to DateTime.Now while setting the error messages to a blank message.
+        /// </summary>
+        public MessageToken()
+        {
+            Id = Guid.NewGuid();
+            CallTime = DateTime.Now;
+            ErrorMessages = new List<string>();
+            State = MessageStates.Received;
+            //Initialize the status code to OK.  If the error message is ever set, then that'll change.
+            StatusCode = System.Net.HttpStatusCode.OK;
+        }
 
         #endregion
 
         #region Helper Methods
 
         /// <summary>
-        /// Attempts to obtain an argument from the underlying args dictionary and throws an exception with the given error if it can't find it.
+        /// Sets the request body and optionally attempts to convert the request body into the args dictionary.  If this conversion fails, the error message will be added to the token.
         /// </summary>
-        /// <param name="argName"></param>
-        /// <param name="errorMessage"></param>
-        /// <returns></returns>
-        public virtual object GetArgOrFail(string argName, string errorMessage)
+        /// <param name="body" />
+        /// <param name="convert" />
+        public virtual void SetRequestBody(string body, bool convert)
         {
-            if (!Args.ContainsKey(argName))
-                throw new ServiceException(errorMessage, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+            RawRequestBody = body;
 
-            return Args[argName];
+            if (convert)
+            {
+                try
+                {
+                    Args = RawRequestBody.Deserialize<Dictionary<string, object>>();
+                }
+                catch
+                {
+                    AddErrorMessage("There was an error while attempting to parse your request body.  This request body should be JSON in the form of a dictionary.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Adds an error message to the error messages collection and sets the error type and the status code.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="error"></param>
+        /// <param name="status"></param>
+        public virtual void AddErrorMessage(string message, ErrorTypes error, System.Net.HttpStatusCode status)
+        {
+            if (Result != null)
+                throw new Exception("You can not set a error message on a message token that has already been assigned a return value.  You get one or the other.");
+
+            ErrorMessages.Add(message);
+            this.ErrorType = error;
+            this.StatusCode = status;
+        }
+
+        /// <summary>
+        /// Adds multiple error messages to the error messages collection and sets the error type and the status code.
+        /// </summary>
+        /// <param name="messages"></param>
+        /// <param name="error"></param>
+        /// <param name="status"></param>
+        public virtual void AddErrorMessages(IEnumerable<string> messages, ErrorTypes error, System.Net.HttpStatusCode status)
+        {
+            if (Result != null)
+                throw new Exception("You can not set a error message on a message token that has already been assigned a return value.  You get one or the other.");
+
+            messages.ToList().ForEach(x => ErrorMessages.Add(x));
+            this.ErrorType = error;
+            this.StatusCode = status;
+        }
+
+        /// <summary>
+        /// Sets the result for this message token.  An exception will be thrown if you attempt to set the result on a message that has errors.
+        /// </summary>
+        /// <param name="result"></param>
+        public virtual void SetResult(object result)
+        {
+            if (HasError)
+                throw new Exception("You can not set the result on a message that has errors.");
+
+            Result = result;
+        }
+
+        /// <summary>
+        /// Returns the JSON string of a return container than contains the response that should be sent back to the client for this object.
+        /// </summary>
+        /// <returns></returns>
+        public virtual string ConstructResponse()
+        {
+            return new ReturnContainer
+            {
+                ErrorMessages = ErrorMessages.ToList(),
+                ErrorType = ErrorType,
+                HasError = HasError,
+                ReturnValue = Result,
+                StatusCode = StatusCode
+            }.Serialize();
         }
 
         #endregion
-
-        /// <summary>
-        /// Maps a message token to the database.
-        /// </summary>
-        public class MessageTokenMapping : ClassMap<MessageToken>
-        {
-            /// <summary>
-            /// Maps a message token to the database. 
-            /// </summary>
-            public MessageTokenMapping()
-            {
-                Table("message_tokens");
-
-                Id(x => x.Id).GeneratedBy.Assigned();
-
-                References(x => x.AuthenticationSession).Column("AuthenticationSessionId").Nullable();
-                References(x => x.ApiKey).Nullable();
-
-                Map(x => x.CallTime).Not.Nullable();
-                Map(x => x.Endpoint).Not.Nullable().Length(40);
-                Map(x => x.State).Not.Nullable();
-                Map(x => x.HandledTime).Nullable();
-                Map(x => x.HostAddress).Nullable().Length(30);
-                Map(x => x.RawJSON).Nullable().Length(10000);
-                Map(x => x.ResultJSON).Nullable().Length(10000);
-
-                Cache.ReadWrite();
-
-            }
-        }
-
-
 
     }
 }
