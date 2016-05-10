@@ -17,13 +17,13 @@ namespace CommandCentral
         /// </summary>
         public string PropertyName { get; set; }
         /// <summary>
-        /// The value of the property from val1.
+        /// The value of the property from the old object.
         /// </summary>
-        public object val_obj1 { get; set; }
+        public object OldValue { get; set; }
         /// <summary>
-        /// The value of the property from val2.
+        /// The value of the property from the new object.
         /// </summary>
-        public object val_obj2 { get; set; }
+        public object NewValue { get; set; }
     }
 
     /// <summary>
@@ -35,19 +35,19 @@ namespace CommandCentral
         /// Compares two objects and returns a list of variances.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="obj1"></param>
-        /// <param name="obj2"></param>
+        /// <param name="oldObject"></param>
+        /// <param name="newObject"></param>
         /// <returns></returns>
-        public static IEnumerable<Variance> DetailedCompare<T>(this T obj1, T obj2)
+        public static IEnumerable<Variance> DetailedCompare<T>(this T oldObject, T newObject)
         {
-            PropertyInfo[] pi = obj1.GetType().GetProperties();
+            PropertyInfo[] pi = oldObject.GetType().GetProperties();
             foreach (PropertyInfo p in pi)
             {
                 Variance v = new Variance();
                 v.PropertyName = p.Name;
-                v.val_obj1 = p.GetValue(obj1);
-                v.val_obj2 = p.GetValue(obj2);
-                if (!Equals(v.val_obj1, v.val_obj2))
+                v.OldValue = p.GetValue(oldObject);
+                v.NewValue = p.GetValue(newObject);
+                if (!Equals(v.OldValue, v.NewValue))
                     yield return v;
             }
         }

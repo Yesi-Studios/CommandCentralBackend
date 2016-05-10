@@ -108,7 +108,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Creates a news item given a title and paragraphs.
+        /// Creates a news item given a title and paragraphs.  Returns the new Id of the news item.
         /// <para />
         /// Options: 
         /// <para />
@@ -157,7 +157,8 @@ namespace CommandCentral.Entities
                         //Ok, it's a good news item.  Let's... stick it in.
                         token.CommunicationSession.SaveOrUpdate(newsItem);
 
-                        token.SetResult("Success");
+                        //Send the Id back to the client.
+                        token.SetResult(newsItem.Id);
                     }
                     else
                     {
@@ -325,6 +326,86 @@ namespace CommandCentral.Entities
                             "newsitemid - The Id of the news item we want to load."
                         },
                         RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "LoadNewsItems",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadNewsItems_Client,
+                        Description = "Loads all news items.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "DeleteNewsItem",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "Must have the Manage News Permission.",
+                        DataMethod = DeleteNewsItem_Client,
+                        Description = "Deletes the requested news item.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "newsitemid - The Id of the news item you want to delete."
+                        },
+                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "UpdateNewsItem",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "Must have the Manage News Permission.  Additionally, changes to any property besides the Title or the Paragraphs are not allowed.",
+                        DataMethod = DeleteNewsItem_Client,
+                        Description = "Updates the requested news item in the database.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "newsitem - A properly formatted news item.  This should represent the state of the object as you wish it to be."
+                        },
+                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "CreateNewsItem",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "Must have the Manage News Permission.",
+                        DataMethod = CreateNewsItem_Client,
+                        Description = "Creates a news item and returns the item's assigned Id.  The Id, Creator, and CreationTime will be set for you.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "title - The new title of the news item.",
+                            "paragraphs - a JSON array of strings representing the paragraphs in the news item."
+                        },
+                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
                         RequiresAuthentication = true
                     }
                 };
