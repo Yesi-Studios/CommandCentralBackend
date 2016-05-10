@@ -28,29 +28,23 @@ namespace CommandCentral.ClientAccess.Service
         #region ServiceManagement
 
         /// <summary>
-        /// The list of all _endpointDescriptions that are exposed to the client.
-        /// </summary>
-        private static readonly ConcurrentDictionary<string, EndpointDescription> _endpointDescriptions;
-
-        /// <summary>
         /// Gets the exposed endpoints.
         /// </summary>
-        public static ConcurrentDictionary<string, EndpointDescription> EndpointDescriptions
-        {
-            get { return _endpointDescriptions; }
-        }
+        public static ConcurrentDictionary<string, EndpointDescription> EndpointDescriptions { get; private set; }
 
         /// <summary>
         /// Static constructor that builds the _endpointDescriptions.  This is how we register new _endpointDescriptions.
         /// </summary>
         static CommandCentralService()
         {
-            _endpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(
+            EndpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(
                 Entities.NewsItem.EndpointDescriptions
                 .Concat(Entities.Person.EndpointDescriptions)
                 .Concat(Entities.ReferenceLists.Command.EndpointDescriptions)
                 .Concat(ReferenceListItemBase.EndpointDescriptions)
-                .Concat(Entities.VersionInformation.EndpointDescriptions).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase));
+                .Concat(Entities.VersionInformation.EndpointDescriptions)
+                .Concat(Entities.Change.EndpointDescriptions)
+                .Concat(Authorization.PermissionGroup.EndpointDescriptions).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase));
         }
 
         #endregion
@@ -77,7 +71,7 @@ namespace CommandCentral.ClientAccess.Service
             {
                 //Get the endpoint
                 EndpointDescription description;
-                if (!_endpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                if (!EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                 {
                     token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -233,7 +227,7 @@ namespace CommandCentral.ClientAccess.Service
 
                 //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
                 EndpointDescription endpointDescription;
-                if (!_endpointDescriptions.TryGetValue(endpoint, out endpointDescription))
+                if (!EndpointDescriptions.TryGetValue(endpoint, out endpointDescription))
                 {
                     result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
                 }
@@ -313,7 +307,7 @@ namespace CommandCentral.ClientAccess.Service
 
             string endpointBuild = "";
 
-            _endpointDescriptions.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
+            EndpointDescriptions.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
             {
                 endpointBuild += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
             });
