@@ -44,7 +44,8 @@ namespace CommandCentral.ClientAccess.Service
                 .Concat(ReferenceListItemBase.EndpointDescriptions)
                 .Concat(Entities.VersionInformation.EndpointDescriptions)
                 .Concat(Entities.Change.EndpointDescriptions)
-                .Concat(Authorization.PermissionGroup.EndpointDescriptions).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase));
+                .Concat(Authorization.PermissionGroup.EndpointDescriptions)
+                .Concat(Entities.ProfileLock.EndpointDescriptions).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase));
         }
 
         #endregion

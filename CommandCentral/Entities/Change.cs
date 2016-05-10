@@ -261,12 +261,6 @@ namespace CommandCentral.Entities
 
                 Map(x => x.ObjectName).Not.Nullable().Length(20);
                 Map(x => x.ObjectId).Not.Nullable().Length(45);
-                Component(x => x.Variance, variance =>
-                    {
-                        variance.Map(x => x.PropertyName).Nullable();
-                        variance.Map(x => x.OldValue).Nullable();
-                        variance.Map(x => x.NewValue).Nullable();
-                    });
                 Map(x => x.Time).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
 

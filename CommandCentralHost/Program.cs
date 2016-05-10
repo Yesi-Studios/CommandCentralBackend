@@ -124,6 +124,10 @@ namespace CommandCentralHost
         [STAThread]
         private static void Main()
         {
+            /*PersonsEditor.CreateAtwood();
+            return;*/
+
+
             try
             {
 

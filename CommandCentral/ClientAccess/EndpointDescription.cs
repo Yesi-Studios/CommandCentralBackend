@@ -29,7 +29,7 @@ namespace CommandCentral.ClientAccess
         public bool AllowResponseLogging { get; set; }
 
         /// <summary>
-        /// The data method that this endpoint will use to retrieve its data.  All data methods must take and return a message token.
+        /// The data method that this endpoint will use to retrieve its data.  All data methods must take a message token.
         /// </summary>
         public Action<MessageToken> DataMethod { get; set; }
 
