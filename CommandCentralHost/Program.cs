@@ -5,6 +5,8 @@ using System.Linq;
 using System.ServiceModel;
 using CommandCentralHost.Editors;
 using System.Runtime.InteropServices;
+using CommandCentral.Entities;
+using NHibernate.Criterion;
 
 namespace CommandCentralHost
 {
@@ -124,10 +126,6 @@ namespace CommandCentralHost
         [STAThread]
         private static void Main()
         {
-            /*PersonsEditor.CreateAtwood();
-            return;*/
-
-
             try
             {
 
@@ -146,6 +144,7 @@ namespace CommandCentralHost
                 {
                     try
                     {
+
                         Console.Clear();
 
                         "Welcome to Command Central's Backend Host Application!".WriteLine();
