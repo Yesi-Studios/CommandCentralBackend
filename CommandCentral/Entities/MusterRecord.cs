@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -59,6 +61,78 @@ namespace CommandCentral.Entities
         /// The date and time the person was mustered at.
         /// </summary>
         public virtual DateTime MusterTime { get; set; }
+
+        #endregion
+
+        #region Client Access
+
+        /// <summary>
+        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Loads a muster record for a given id and returns null if none exists.
+        /// <para />
+        /// Options: 
+        /// <para />
+        /// newsitemid - the Id of the news item we want to delete.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private static void LoadMusterRecord_Client(MessageToken token)
+        {
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("musterrecordid"))
+            {
+                token.AddErrorMessage("You must send a muster record id.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid musterRecordId;
+            if (!Guid.TryParse(token.Args["musterrecordid"] as string, out musterRecordId))
+            {
+                token.AddErrorMessage("Your muster record id was not legitsky.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            token.SetResult(token.CommunicationSession.Get<MusterRecord>(musterRecordId));
+        }
+
+        /// <summary>
+        /// The endpoints
+        /// </summary>
+        public static List<EndpointDescription> EndpointDescriptions
+        {
+            get
+            {
+                return new List<EndpointDescription>
+                {
+                    new EndpointDescription
+                    {
+                        Name = "LoadMusterRecord",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadMusterRecord_Client,
+                        Description = "Loads a muster record for a given id and returns null if none exists.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "musterrecordid - The Id of the muster record we want to load."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    }
+                };
+            }
+        }
 
         #endregion
 
