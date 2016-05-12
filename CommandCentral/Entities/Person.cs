@@ -803,7 +803,10 @@ namespace CommandCentral.Entities
             }
 
             //Now let's load the person and then set any fields the client isn't allowed to see to null.
+            //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
+            NHibernate.NHibernateUtil.Initialize(person);
+            person = token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person) as Person;
 
             
             //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
@@ -832,6 +835,9 @@ namespace CommandCentral.Entities
                         personMetadata.SetPropertyValue(person, propertyName, null, NHibernate.EntityMode.Poco);
                 }
             }
+
+            token.SetResult(person
+                );
         }
 
         #endregion
