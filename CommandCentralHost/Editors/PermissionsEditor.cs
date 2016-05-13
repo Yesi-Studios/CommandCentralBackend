@@ -130,10 +130,11 @@ namespace CommandCentralHost.Editors
                 "3. View/Edit Model Permissions".WriteLine();
                 "4. View/Edit Special Permissions".WriteLine();
                 "5. View/Edit Subordinate Permission Groups".WriteLine();
-                "6. Return".WriteLine();
+                "6. View/Edit Permission Level".WriteLine();
+                "7. Return".WriteLine();
 
                 int option;
-                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 6)
+                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 7)
                 {
                     switch (option)
                     {
@@ -178,6 +179,24 @@ namespace CommandCentralHost.Editors
                                 break;
                             }
                         case 6:
+                            {
+                                Console.Clear();
+                                "The current permission level is, '{0}'. Choose a new one from below.".FormatS(group.PermissionLevel).WriteLine();
+                                "".WriteLine();
+                                
+                                var names = Enum.GetNames(typeof(PermissionLevels));
+                                for (int x = 0; x < names.Length; x++)
+                                    "{0}. {1}".FormatS(x, names[x]).WriteLine();
+
+                                int levelOption = -1;
+                                if (int.TryParse(Console.ReadLine(), out levelOption) && levelOption >= 0 && levelOption < names.Length)
+                                {
+                                    group.PermissionLevel = (PermissionLevels)Enum.Parse(typeof(PermissionLevels), names[levelOption]);
+                                }
+
+                                break;
+                            }
+                        case 7:
                             {
                                 keepLooping = false;
 
