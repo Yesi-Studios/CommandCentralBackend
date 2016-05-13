@@ -308,8 +308,6 @@ namespace CommandCentral.ClientAccess
         {
             public MessageTokenMapping()
             {
-                Table("message_tokens");
-
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.APIKey);
@@ -332,7 +330,6 @@ namespace CommandCentral.ClientAccess
                     });
 
                 HasMany(x => x.ErrorMessages)
-                    .Table("message_token_error_messages")
                     .KeyColumn("MessageTokenId")
                     .Element("ErrorMessage");
 

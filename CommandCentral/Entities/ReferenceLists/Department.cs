@@ -57,8 +57,6 @@ namespace CommandCentral.Entities.ReferenceLists
             /// </summary>
             public DepartmentMapping()
             {
-                Table("departments");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);

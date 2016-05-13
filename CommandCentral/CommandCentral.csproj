@@ -72,13 +72,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\PermissionLevelsEnum.cs" />
+    <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="CronOperations.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
-    <Compile Include="Authorization\ReferenceLists\SpecialPermission.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />

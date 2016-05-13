@@ -44,11 +44,6 @@ namespace CommandCentral.ClientAccess
         public virtual bool IsActive { get; set; }
 
         /// <summary>
-        /// The permissions of the user to whom this session belongs.
-        /// </summary>
-        public virtual IList<PermissionGroup> Permissions { get; set; }
-
-        /// <summary>
         /// The last time this session was used, not counting this current time.
         /// </summary>
         public virtual DateTime LastUsedTime { get; set; }
@@ -86,8 +81,6 @@ namespace CommandCentral.ClientAccess
             /// </summary>
             public SessionMapping()
             {
-                Table("authentication_sessions");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.LoginTime).Not.Nullable();
@@ -95,9 +88,6 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.IsActive).Not.Nullable();
                 Map(x => x.LastUsedTime);
                 References(x => x.Person);
-                HasManyToMany(x => x.Permissions)
-                    .Cascade.All().Inverse();
-
                 HasMany(x => x.MessageTokens).Inverse().Cascade.All();
 
                 Cache.ReadWrite();

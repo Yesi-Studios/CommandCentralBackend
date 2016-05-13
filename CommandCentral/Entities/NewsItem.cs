@@ -189,7 +189,7 @@ namespace CommandCentral.Entities
             }
             else
             {
-                if (!token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.SpecialPermissions).ToList().Exists(x => x.Value == "Manage News"))
+                if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
                 {
                     token.AddErrorMessage("You are not authorized to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 }
@@ -262,7 +262,7 @@ namespace CommandCentral.Entities
             }
             else
             {
-                if (!token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.SpecialPermissions).ToList().Exists(x => x.Value == "Manage News"))
+                if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
                 {
                     token.AddErrorMessage("You are not authorized to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 }
@@ -426,15 +426,12 @@ namespace CommandCentral.Entities
             /// </summary>
             public NewsItemMapping()
             {
-                Table("news_items");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Creator);
 
                 Map(x => x.Title).Not.Nullable().Length(50);
                 HasMany(x => x.Paragraphs)
-                    .Table("news_item_paragraphs")
                     .KeyColumn("NewsItemID")
                     .Element("Paragraph");
                 Map(x => x.CreationTime).Not.Nullable();

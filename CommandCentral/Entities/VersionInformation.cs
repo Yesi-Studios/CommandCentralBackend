@@ -41,8 +41,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public VersionInformationMapping()
             {
-                Table("version_informations");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Version).Not.Nullable().Unique().Length(10);

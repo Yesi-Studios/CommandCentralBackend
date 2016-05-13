@@ -33,8 +33,6 @@ namespace CommandCentral.ClientAccess
             /// </summary>
             public ApiKeyMap()
             {
-                Table("api_keys");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.ApplicationName).Unique().Length(40);

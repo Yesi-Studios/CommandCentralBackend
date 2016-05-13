@@ -18,8 +18,6 @@ namespace CommandCentral.Entities.ReferenceLists
             /// </summary>
             public PhoneNumberTypeMapping()
             {
-                Table("phone_number_types");
-
                 Id(x => x.Id);
 
                 Map(x => x.Value).Length(50).Not.Nullable().Unique();

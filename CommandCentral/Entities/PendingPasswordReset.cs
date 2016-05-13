@@ -56,8 +56,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public PendingPasswordResetMapping()
             {
-                Table("pending_password_resets");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Person).Not.Nullable().Unique();

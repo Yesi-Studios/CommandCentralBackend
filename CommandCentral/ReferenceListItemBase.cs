@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using CommandCentral.ClientAccess;
+using AtwoodUtils;
 
 namespace CommandCentral
 {
@@ -11,6 +12,9 @@ namespace CommandCentral
     /// </summary>
     public abstract class ReferenceListItemBase
     {
+
+        #region Properties
+
         /// <summary>
         /// The Id of this reference item.
         /// </summary>
@@ -26,6 +30,10 @@ namespace CommandCentral
         /// </summary>
         public virtual string Description { get; set; }
 
+        #endregion
+
+        #region Overrides
+
         /// <summary>
         /// Returns the Value.
         /// </summary>
@@ -34,6 +42,29 @@ namespace CommandCentral
         {
             return Value;
         }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Attempts to get a list item of the given type with a given value.  
+        /// <para/>
+        /// This is the preferred method for getting lists by value as it'll help us catch errors in lists that we assume to be preset, but are not.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        public static T GetListItemWithValue<T>(string value, NHibernate.ISession session) where T : ReferenceListItemBase
+        {
+            T item = session.QueryOver<T>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(value).SingleOrDefault();
+            if (item == null)
+                throw new Exception("An attempt to get the value, '{1}', from the list of type, '{0}', failed because the value could not be found.".FormatS(typeof(T).Name, value));
+            return item;
+        }
+
+        #endregion
 
         #region Client Access Methods
 

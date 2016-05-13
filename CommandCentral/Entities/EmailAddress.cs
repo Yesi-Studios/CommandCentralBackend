@@ -65,8 +65,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public EmailAddressMapping()
             {
-                Table("emailaddresses");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner).Not.Nullable();

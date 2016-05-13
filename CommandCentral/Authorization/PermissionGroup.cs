@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using CommandCentral.Authorization.ReferenceLists;
 using FluentNHibernate.Mapping;
 using System.Linq;
 using CommandCentral.ClientAccess;
+using AtwoodUtils;
 
 namespace CommandCentral.Authorization
 {
@@ -37,7 +37,12 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Additional list of permissions.  Intended to describe access to other parts of the application as defined by the consumer.
         /// </summary>
-        public virtual IList<SpecialPermission> SpecialPermissions { get; set; }
+        public virtual IList<SpecialPermissions> SpecialPermissions { get; set; }
+
+        /// <summary>
+        /// The level of this permission.  For example, a department level permission allows the user to exercise the permissions granted by this permission group when dealing with members in his/her same department.
+        /// </summary>
+        public virtual PermissionLevels PermissionLevel { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
@@ -67,7 +72,7 @@ namespace CommandCentral.Authorization
         public PermissionGroup()
         {
             ModelPermissions = new List<ModelPermission>();
-            SpecialPermissions = new List<SpecialPermission>();
+            SpecialPermissions = new List<SpecialPermissions>();
             SubordinatePermissionGroups = new List<PermissionGroup>();
         }
 
@@ -192,15 +197,17 @@ namespace CommandCentral.Authorization
             /// </summary>
             public PermissionGroupMapping()
             {
-                Table("permission_groups");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
+                Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
+
+                HasMany(x => x.SpecialPermissions)
+                    .KeyColumn("PermissionGroupId")
+                    .Element("SpecialPermission");
 
                 HasManyToMany(x => x.ModelPermissions);
-                HasManyToMany(x => x.SpecialPermissions);
                 HasManyToMany(x => x.SubordinatePermissionGroups)
                     .ParentKeyColumn("PermissionGroupID")
                     .ChildKeyColumn("SubordinatePermissionGroupID");

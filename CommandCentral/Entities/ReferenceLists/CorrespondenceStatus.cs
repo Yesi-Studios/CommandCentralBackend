@@ -13,8 +13,6 @@ namespace CommandCentral.Entities.ReferenceLists
         {
             public CorrespondenceStatusMapping()
             {
-                Table("correspondence_statuses");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Length(50).Unique();

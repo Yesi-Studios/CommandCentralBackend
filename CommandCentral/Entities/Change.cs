@@ -253,8 +253,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public ChangeMapping()
             {
-                Table("changes");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Editor).Not.Nullable();

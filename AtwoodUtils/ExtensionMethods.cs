@@ -38,6 +38,21 @@ namespace AtwoodUtils
             return string.Format(str, args);
         }
 
+        public static bool InclusiveBetween(this IComparable a, IComparable b, IComparable c)
+        {
+            return a.CompareTo(b) >= 0 && a.CompareTo(c) <= 0;
+        }
+
+        public static bool ExclusiveBetween(this IComparable a, IComparable b, IComparable c)
+        {
+            return a.CompareTo(b) > 0 && a.CompareTo(c) < 0;
+        }
+
+        public static bool SqlBetween(this IComparable a, IComparable b, IComparable c)
+        {
+            return a.InclusiveBetween(b, c);
+        }
+
         /// <summary>
         /// Returns a boolean that indicates whether or not a list contains any duplicates.  This method uses hashsets for duplicate comparison and will fail at the first duplicate.
         /// </summary>

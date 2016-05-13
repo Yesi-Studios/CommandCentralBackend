@@ -51,8 +51,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public CorrespondenceMapping() 
             {
-                Table("correspondences");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Originator).Not.Nullable();

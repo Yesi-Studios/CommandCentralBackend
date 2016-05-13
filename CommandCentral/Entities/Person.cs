@@ -256,6 +256,67 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Helper Methods
+        
+        /// <summary>
+        /// Returns a boolean indicating whether or not this person is in the chain of command of a given person.
+        /// <para/>
+        /// Person A (this person) is in Person B's chain of command if:
+        /// <para/>
+        /// A and B have the same command and Person A has a command-level permission OR
+        /// <para />
+        /// A and B have the same command and department and Person A has a department-level permission OR
+        /// <para />
+        /// A and B have the same command and department and division and Person A has a division-level permission.
+        /// <para />
+        /// Note: No person may be in his/her own chain of command.  Developers are in everyone's chain of command.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInChainOfCommandOf(Person person)
+        {
+            if (HasSpecialPermissions(SpecialPermissions.Developer))
+                return true;
+
+            if (Id == person.Id)
+                return false;
+
+            if (HasPermissionLevel(PermissionLevels.Command) && Command.Equals(person.Command))
+                return true;
+
+            if (HasPermissionLevel(PermissionLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
+                return true;
+
+            if (HasPermissionLevel(PermissionLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating if this person has all of the special permissions passed.
+        /// </summary>
+        /// <param name="permissions"></param>
+        /// <returns></returns>
+        public virtual bool HasSpecialPermissions(params SpecialPermissions[] permissions)
+        {
+            return PermissionGroups.SelectMany(x => x.SpecialPermissions).Except(permissions).Any();
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether or not this person has a permission that grants him/her the given permission level.
+        /// </summary>
+        /// <param name="permissionLevel"></param>
+        /// <returns></returns>
+        public virtual bool HasPermissionLevel(PermissionLevels permissionLevel)
+        {
+            return PermissionGroups.Any(x => x.PermissionLevel == permissionLevel);
+        }
+
+        #endregion
+
+        #region Client Access
+
         #region Client Access Methods
 
         #region Login/Logout
@@ -334,7 +395,6 @@ namespace CommandCentral.Entities
                             IsActive = true,
                             LastUsedTime = token.CallTime,
                             LoginTime = token.CallTime,
-                            Permissions = new List<PermissionGroup>(person.PermissionGroups), //We can't just assign it, we need to copy it.  This is so that we don't have shared references to the same collection.
                             Person = person
                         };
 
@@ -844,6 +904,8 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Endpoints
+
         /// <summary>
         /// The exposed endpoints
         /// </summary>
@@ -997,6 +1059,10 @@ namespace CommandCentral.Entities
             }
         }
 
+        #endregion
+
+        #endregion Client Access
+
         /// <summary>
         /// Maps a person to the database.
         /// </summary>
@@ -1007,8 +1073,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public PersonMapping()
             {
-                Table("persons");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Sex).Nullable().LazyLoad();

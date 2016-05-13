@@ -82,8 +82,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public BilletMapping()
             {
-                Table("billets");
-
                 Id(x => x.Id);
 
                 Map(x => x.Title).Length(40).Not.Nullable();

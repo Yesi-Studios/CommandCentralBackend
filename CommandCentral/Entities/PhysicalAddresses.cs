@@ -78,8 +78,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public PhysicalAddressMapping()
             {
-                Table("physicaladdresses");
-
                 Id(x => x.Id);
 
                 References(x => x.Owner).Not.Nullable();

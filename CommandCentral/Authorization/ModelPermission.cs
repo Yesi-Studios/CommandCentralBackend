@@ -81,23 +81,18 @@ namespace CommandCentral.Authorization
             /// </summary>
             public ModelPermissionMapping()
             {
-                Table("modelpermissions");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.ModelName).Not.Nullable().Length(100);
                 HasMany(x => x.SearchableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Table("modelpermissionsearchablefields")
                     .Element("SearchableField");
                 HasMany(x => x.ReturnableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Table("modelpermissionreturnablefields")
                     .Element("ReturnableField");
                 HasMany(x => x.EditableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Table("modelpermissioneditablefields")
                     .Element("EditableFields");
             }
         }

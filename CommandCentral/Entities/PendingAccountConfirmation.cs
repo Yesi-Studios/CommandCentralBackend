@@ -56,8 +56,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public PendingAccountConfirmationMapping()
             {
-                Table("pending_account_confirmations");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Person).Not.Nullable().Unique();

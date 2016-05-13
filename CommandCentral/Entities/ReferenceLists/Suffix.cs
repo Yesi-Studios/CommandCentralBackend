@@ -17,8 +17,6 @@ namespace CommandCentral.Entities.ReferenceLists
             /// </summary>
             public SufffixMapping()
             {
-                Table("suffixes");
-
                 Id(x => x.Id);
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(10);

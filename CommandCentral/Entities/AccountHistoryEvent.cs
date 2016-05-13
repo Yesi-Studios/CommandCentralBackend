@@ -82,8 +82,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public AccountHistoryEventMapping()
             {
-                Table("account_history_events");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.EventTime).Not.Nullable();

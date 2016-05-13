@@ -72,8 +72,6 @@ namespace CommandCentral.Entities
             /// </summary>
             public PhoneNumberMapping()
             {
-                Table("phone_numbers");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner);

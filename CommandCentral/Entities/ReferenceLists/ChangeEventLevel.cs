@@ -17,8 +17,6 @@ namespace CommandCentral.Entities.ReferenceLists
             /// </summary>
             public ChangeEventLevelMapping()
             {
-                Table("change_event_levels");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(10);

@@ -18,8 +18,6 @@ namespace CommandCentral.Entities.ReferenceLists
             /// </summary>
             public UICMapping()
             {
-                Table("uics");
-
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Length(10).Unique();

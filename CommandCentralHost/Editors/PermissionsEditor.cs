@@ -163,7 +163,7 @@ namespace CommandCentralHost.Editors
                             }
                         case 4:
                             {
-                                var allSpecialPermissions = session.QueryOver<CommandCentral.Authorization.ReferenceLists.SpecialPermission>().List().ToList();
+                                var allSpecialPermissions = Enum.GetNames(typeof(SpecialPermissions)).ToEnumList().ToList();
 
                                 ListEditor.EditList(group.SpecialPermissions, allSpecialPermissions, "Special Permissions Editor");
 
