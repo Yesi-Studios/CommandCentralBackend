@@ -7,6 +7,9 @@ using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Transform;
+using NHibernate.Criterion;
+using NHibernate.Linq;
+using AtwoodUtils;
 
 namespace CommandCentral.Entities
 {
@@ -846,6 +849,12 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         private static void LoadPerson_Client(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
 
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
@@ -896,8 +905,54 @@ namespace CommandCentral.Entities
                 }
             }
 
-            token.SetResult(person
-                );
+            token.SetResult(person);
+        }
+
+        private static void SimpleSearchPersons_Client(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Make sure the client has permission to search persons.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.SearchPersons))
+            {
+                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+            }
+
+            if (!token.Args.ContainsKey("searchterm"))
+            {
+                token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            string searchTerm = token.Args["searchterm"] as string;
+            
+            //And now we're going to split the search term by any white space into a list of search terms.
+            var searchTerms = searchTerm.Split((char[])null);
+
+            //Build the query over simple search for each of the search terms.
+            Division divisionAlias = null;
+            Department departmentAlias = null;
+            Command commandAlias = null;
+            Rank rankAlias = null;
+            Rate rateAlias = null;
+            UIC uicAlias = null;
+
+            var queryOver = token.CommunicationSession.QueryOver<Person>().Left.JoinQueryOver<Rank>(x => x.Rank);
+            foreach (string term in searchTerms)
+            {
+
+                queryOver = queryOver.Where(Restrictions.On<Person>(x => x.FirstName).IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                Restrictions.On<Person>(x => x.LastName).IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                Restrictions.On<Person>(x => x.MiddleName).IsInsensitiveLike(term, MatchMode.Anywhere));
+
+            }
+
+
         }
 
         #endregion

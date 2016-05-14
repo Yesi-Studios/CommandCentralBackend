@@ -118,7 +118,7 @@ namespace CommandCentral.Entities
         /// <para />
         /// Options: 
         /// <para />
-        /// newsitemid - the Id of the news item we want to delete.
+        /// musterrecordid - the Id of the muster record we want to load.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -229,7 +229,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadMusterRecordsByMusterDay(MessageToken token)
+        private static void LoadMusterRecordsByMusterDay_Client(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -393,6 +393,105 @@ namespace CommandCentral.Entities
                 {
                     new EndpointDescription
                     {
+                        Name = "LoadTodaysMuster",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadTodaysMuster_Client,
+                        Description = "Loads the current day's muster, returning all muster records for today, all persons who still need to be mustered, the current day, and a list of those persons who the client can muster.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "SubmitMuster",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = SubmitMuster_Client,
+                        Description = "Given a dictionary of personIds/MusterStatuses, attempts to submit muster for all persons, failing if a person doesn't exist for the given Id, or if the client can't submit muster for any one of the persons.  If a person has already been mustered for this day, that person is not re-mustered.  All persons who were mustered, their Ids will be returned.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "mustersubmissions - A dictionary where the key is the person's Id, and the value is the MusterStatus to assign to this person.  The muster status should be a full muster status object."
+                        },
+                        RequiredSpecialPermissions = new List<string> { "SubmitMuster" },
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "LoadMusterRecordsByMusterDay",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadMusterRecordsByMusterDay_Client,
+                        Description = "Loads all muster records for a given muster date. This will be converted to a muster date based on the rollover time shift.  Recommend that you submit the date time without a time portion or with the time portion set to midnight - although it doesn't matter.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "musterdate - The date for which to load muster records. Keep in mind, asking for muster records for a time after the roll over time will in fact return the next day's muster records.  This is due to the rollover time shift."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "LoadMusterRecordsByMusterer",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadMusterRecordsByMusterer_Client,
+                        Description = "Loads all muster records for a given person in which the person was the Musterer - the one doing le mustering.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "mustererId - the Id of the person for whom to load muster records where the person is the one doing the mustering."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
+                        Name = "LoadMusterRecordsByMusteree",
+                        AllowArgumentLogging = true,
+                        AllowResponseLogging = true,
+                        AuthorizationNote = "None",
+                        DataMethod = LoadMusterRecordsByMusteree_Client,
+                        Description = "Loads all muster records for a given person in which the person was the Musteree - the one being le mustered.",
+                        ExampleOutput = () => "TODO",
+                        IsActive = true,
+                        OptionalParameters = null,
+                        RequiredParameters = new List<string>
+                        {
+                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
+                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
+                            "mustereeId - the Id of the person for whom to load muster records where the person is the one being mustered."
+                        },
+                        RequiredSpecialPermissions = null,
+                        RequiresAuthentication = true
+                    },
+                    new EndpointDescription
+                    {
                         Name = "LoadMusterRecord",
                         AllowArgumentLogging = true,
                         AllowResponseLogging = true,
@@ -406,7 +505,7 @@ namespace CommandCentral.Entities
                         {
                             "apikey - The unique GUID token assigned to your application for metrics purposes.",
                             "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "musterrecordid - The Id of the muster record we want to load."
+                            "musterrecordid - the Id of the muster record we want to load."
                         },
                         RequiredSpecialPermissions = null,
                         RequiresAuthentication = true

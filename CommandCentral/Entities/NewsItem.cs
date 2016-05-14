@@ -62,22 +62,26 @@ namespace CommandCentral.Entities
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
+
             //Get the news item ID we're supposed to load.
-            else if (!token.Args.ContainsKey("newsitemid"))
-                token.AddErrorMessage("You didn't send an 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            else
+            if (!token.Args.ContainsKey("newsitemid"))
             {
-                //Ok, so there is a newsitemid!  Is it legit?
-                Guid newsItemId;
-                if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
-                    token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                else
-                {
-                    //Ok, well it's a GUID.   Do we have it in the database?...
-                    token.SetResult(token.CommunicationSession.Get<NewsItem>(newsItemId));
-                }
+                token.AddErrorMessage("You didn't send an 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
             }
+
+            //Ok, so there is a newsitemid!  Is it legit?
+            Guid newsItemId;
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
+            {
+                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok, well it's a GUID.   Do we have it in the database?...
+            token.SetResult(token.CommunicationSession.Get<NewsItem>(newsItemId));
         }
 
         /// <summary>
@@ -97,12 +101,11 @@ namespace CommandCentral.Entities
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
-            else
-            {
-                //Set the result.
-                token.SetResult(token.CommunicationSession.QueryOver<NewsItem>().List());
-            }
+
+            //Set the result.
+            token.SetResult(token.CommunicationSession.QueryOver<NewsItem>().List());
         }
 
         /// <summary>
@@ -124,49 +127,65 @@ namespace CommandCentral.Entities
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
-            else
+
+            //Make sure the client has permission to manage the news.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
             {
-                //Let's see if the parameters are here.
-                if (!token.Args.ContainsKey("title"))
-                    token.AddErrorMessage("You didn't send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-                if (!token.Args.ContainsKey("paragraphs"))
-                    token.AddErrorMessage("You didn't send a 'paragraphs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-                if (!token.HasError)
-                {
-                    string title = token.Args["title"] as string;
-                    List<string> paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
-
-
-                    //Now build the whole news item.
-                    NewsItem newsItem = new NewsItem
-                    {
-                        CreationTime = token.CallTime,
-                        Creator = token.AuthenticationSession.Person,
-                        Paragraphs = paragraphs,
-                        Title = title
-                    };
-
-                    //Now we just need to validate the news item object and throw back any errors if we get them.
-                    NewsItemValidator validator = new NewsItemValidator();
-                    var results = validator.Validate(newsItem);
-                    if (results.IsValid)
-                    {
-                        //Ok, it's a good news item.  Let's... stick it in.
-                        token.CommunicationSession.SaveOrUpdate(newsItem);
-
-                        //Send the Id back to the client.
-                        token.SetResult(newsItem.Id);
-                    }
-                    else
-                    {
-                        //Send back the error messages.
-                        token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    }
-                }
+                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
+
+            //Let's see if the parameters are here.
+            if (!token.Args.ContainsKey("title"))
+                token.AddErrorMessage("You didn't send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+            if (!token.Args.ContainsKey("paragraphs"))
+                token.AddErrorMessage("You didn't send a 'paragraphs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+            if (token.HasError)
+                return;
+
+            string title = token.Args["title"] as string;
+            List<string> paragraphs = null;
+
+
+            //Do the cast here in case it fails.
+            try
+            {
+                paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
+            }
+            catch (Exception e)
+            {
+                token.AddErrorMessage("There was an error while attempting to cast your parahraphs.  It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now build the whole news item.
+            NewsItem newsItem = new NewsItem
+            {
+                CreationTime = token.CallTime,
+                Creator = token.AuthenticationSession.Person,
+                Paragraphs = paragraphs,
+                Title = title
+            };
+
+            //Now we just need to validate the news item object and throw back any errors if we get them.
+            NewsItemValidator validator = new NewsItemValidator();
+            var results = validator.Validate(newsItem);
+
+            if (!results.IsValid)
+            {
+                //Send back the error messages.
+                token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok, it's a good news item.  Let's... stick it in.
+            token.CommunicationSession.SaveOrUpdate(newsItem);
+
+            //Send the Id back to the client.
+            token.SetResult(newsItem.Id);
         }
 
         /// <summary>
@@ -185,60 +204,69 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Make sure the client has permission to manage the news.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
+            {
+                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+            }
+
+            //Let's see if the parameters are here.
+            if (!token.Args.ContainsKey("newsitem"))
+            {
+                token.AddErrorMessage("You didn't send a 'newsitem' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Get the news item from the client.
+            NewsItem newsItemFromClient = null;
+            try
+            {
+                newsItemFromClient = token.Args["newsitem"].CastJToken<NewsItem>();
+            }
+            catch (Exception e)
+            {
+                token.AddErrorMessage("There was an error while casting your newsitem parameter's value into a news item.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+                
+            //Before we even compare it to the database, let's ensure its validity. 
+            NewsItemValidator validator = new NewsItemValidator();
+            var results = validator.Validate(newsItemFromClient);
+            if (!results.IsValid)
+            {
+                //Send back the error messages.
+                token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
+            //Ok, it's a good news item so now we're going to compare it to the one in the database.
+            NewsItem newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemFromClient.Id);
+
+            if (newsItemFromDB == null)
+            {
+                token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                return;
+            }
+
+            //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
+            //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
+            var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x => x.PropertyName != "title" || x.PropertyName != "paragraphs");
+
+            if (unauthorizedVariances.Any())
+            {
+                var errors = unauthorizedVariances.Select(x => "You are not authorized to edit the '{0}' property.".FormatS(x.PropertyName));
+                token.AddErrorMessages(errors, ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
             else
             {
-                if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
-                {
-                    token.AddErrorMessage("You are not authorized to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                }
-                else
-                {
-                    //Let's see if the parameters are here.
-                    if (!token.Args.ContainsKey("newsitem"))
-                        token.AddErrorMessage("You didn't send a 'newsitem' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-                    //Get the news item from the client.
-                    NewsItem newsItemFromClient = token.Args["newsitem"].CastJToken<NewsItem>();
-
-                    //Before we even compare it to the database, let's ensure its validity. 
-                    NewsItemValidator validator = new NewsItemValidator();
-                    var results = validator.Validate(newsItemFromClient);
-                    if (results.IsValid)
-                    {
-                        //Ok, it's a good news item so now we're going to compare it to the one in the database.
-                        NewsItem newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemFromClient.Id);
-
-                        if (newsItemFromDB == null)
-                        {
-                            token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                        }
-                        else
-                        {
-                            //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
-                            //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
-                            var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x => x.PropertyName != "title" || x.PropertyName != "paragraphs");
-
-                            if (unauthorizedVariances.Any())
-                            {
-                                var errors = unauthorizedVariances.Select(x => "You are not authorized to edit the '{0}' property.".FormatS(x.PropertyName));
-                                token.AddErrorMessages(errors, ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            }
-                            else
-                            {
-                                //Ok so there's no unauthorized variances.  I guess we can... do the update then?
-                                token.CommunicationSession.Update(newsItemFromClient);
-                                token.SetResult("Success");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //Send back the error messages.
-                        token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    }
-                }
+                //Ok so there's no unauthorized variances.  I guess we can... do the update then?
+                token.CommunicationSession.Update(newsItemFromClient);
+                token.SetResult("Success");
             }
         }
 
@@ -258,44 +286,43 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
-            else
+
+            //Make sure the client has permission to manage the news.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
             {
-                if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
-                {
-                    token.AddErrorMessage("You are not authorized to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                }
-                else
-                {
-                    //Get the news item id.
-                    if (!token.Args.ContainsKey("newsitemid"))
-                        token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    else
-                    {
-                        //Ok, so there is a news item id!  Is it legit?
-                        Guid newsItemId;
-                        if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
-                            token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        else
-                        {
-                            //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
-                            var newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemId);
-
-                            if (newsItemFromDB == null)
-                            {
-                                token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                            }
-                            else
-                            {
-                                token.CommunicationSession.Delete(newsItemId);
-
-                                token.SetResult("Success");
-                            }
-                        }
-                    }
-                }
+                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
+
+            //Get the news item id.
+            if (!token.Args.ContainsKey("newsitemid"))
+            {
+                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+            
+            //Ok, so there is a news item id!  Is it legit?
+            Guid newsItemId;
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
+            {
+                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
+            var newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemId);
+
+            if (newsItemFromDB == null)
+            {
+                token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                return;
+            }
+
+            token.CommunicationSession.Delete(newsItemId);
+
+            token.SetResult("Success");
         }
 
 
@@ -413,8 +440,6 @@ namespace CommandCentral.Entities
         }
 
         #endregion
-
-
 
         /// <summary>
         /// Maps a news item to the database.
