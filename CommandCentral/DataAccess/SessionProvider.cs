@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using CommandCentral.Entities;
 using FluentNHibernate.Cfg;
 using FluentNHibernate.Cfg.Db;
@@ -7,6 +8,7 @@ using NHibernate;
 using NHibernate.Caches.SysCache;
 using NHibernate.Cfg;
 using NHibernate.Metadata;
+using System.Linq;
 
 namespace CommandCentral.DataAccess
 {
@@ -20,12 +22,14 @@ namespace CommandCentral.DataAccess
 
         private static readonly NHibernate.Tool.hbm2ddl.SchemaExport _schema;
 
+        private static readonly ConcurrentDictionary<string, IClassMetadata> _allClassMetadata;
+
         /// <summary>
         /// Static initializer sets up the NHibernate configuration and scans the assembly for all class maps.
         /// </summary>
         static NHibernateHelper()
         {
-           /* Configuration configuration = Fluently.Configure().Database(
+           Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test_db")
                         .Username("xanneth")
@@ -35,9 +39,9 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
+                .BuildConfiguration();
 
-            Configuration configuration = Fluently.Configure().Database(
+            /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test")
                         .Username("niocga")
@@ -46,7 +50,7 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
+                .BuildConfiguration();*/
 
             /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
@@ -63,6 +67,17 @@ namespace CommandCentral.DataAccess
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);
 
             _sessionFactory = configuration.BuildSessionFactory();
+
+            _allClassMetadata = new ConcurrentDictionary<string, IClassMetadata>(
+                _sessionFactory.GetAllClassMetadata()
+                    .ToList()
+                    .Select(x =>
+                    {
+                        return new KeyValuePair<string, IClassMetadata>(
+                            x.Key.Split('.').Last(),
+                            x.Value);
+                    })
+                    .ToDictionary(x => x.Key, x=> x.Value));
         }
 
         /// <summary>
@@ -90,7 +105,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
-            return _sessionFactory.GetClassMetadata(entityName);
+            return _allClassMetadata[entityName];
         }
 
         /// <summary>

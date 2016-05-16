@@ -104,7 +104,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The endpoint that was invoked by the client.
         /// </summary>
-        public virtual EndpointDescription Endpoint { get; set; }
+        public virtual ServiceEndpoint Endpoint { get; set; }
 
         /// <summary>
         /// Any error messages that occur during the request are pushed to this property.
@@ -185,7 +185,7 @@ namespace CommandCentral.ClientAccess
         {
             return "{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}\n\t\tError Code: {8}\n\t\t Status Code: {9}\n\t\tMessages: {10}"
                 .FormatS(Id, 
-                Endpoint == null ? CalledEndpoint : Endpoint.Name, 
+                Endpoint == null ? CalledEndpoint : Endpoint.EndpointMethodAttribute.EndpointName, 
                 State, 
                 CallTime.ToString(CultureInfo.InvariantCulture), 
                 DateTime.Now.Subtract(CallTime).ToString(), 
@@ -304,8 +304,14 @@ namespace CommandCentral.ClientAccess
 
         #endregion
 
+        /// <summary>
+        /// Maps a message token to the database.
+        /// </summary>
         public class MessageTokenMapping : ClassMap<MessageToken>
         {
+            /// <summary>
+            /// Maps a message token to the database.
+            /// </summary>
             public MessageTokenMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
@@ -323,11 +329,6 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.HandledTime);
                 Map(x => x.HostAddress);
                 Map(x => x.RawResponseBody).Length(10000).Access.ReadOnly();
-
-                Component(x => x.Endpoint, endpoint =>
-                    {
-                        endpoint.Map(x => x.Name).Nullable().Column("ResolvedEndpointName");
-                    });
 
                 HasMany(x => x.ErrorMessages)
                     .KeyColumn("MessageTokenId")

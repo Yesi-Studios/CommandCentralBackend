@@ -42,111 +42,17 @@ namespace CommandCentral.Entities
         #region Client Access
 
         /// <summary>
-        /// The endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "GetProfileLockByOwner",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = GetProfileLockByOwner_Client,
-                        Description = "Given a person ID, gets a profile lock owned by that person or null if none exists.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "personid - the person for whom to check owns a profile lock."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "GetProfileLockByLockedPerson",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = GetProfileLockByLockedPerson_Client,
-                        Description = "Given a person ID, gets a profile lock on the person's profile or null if none exists.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "personid - the person for whom to check for a profile lock."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "TakeProfileLock",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = TakeProfileLock_Client,
-                        Description = "Given a person ID, attempts to take a lock on the person's profile - preventing edits to the profile by anyone else.  If a lock already exists on the account and it is owned by the client, the lock is renewed.  If the lock has aged off, the lock is released and the client is given the lock.  If the lock exists, is not owned by the client, and has not aged off, a LockOwned error is returned.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "personid - The person for whom to attempt to take a lock."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "ReleaseProfileLock",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = ReleaseProfileLock_Client,
-                        Description = "Given a person ID, attempts to release a lock on the given profile.  Locks may be released by their owners or by anyone after the max age.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "personid - The person for whom to attempt to release a lock."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    }
-
-                };
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a person ID, gets a profile lock owned by that person or null if none exists.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// personid : the person for whom to check owns a profile lock.
+        /// Client Parameters:  <para />
+        ///     personid : the person for whom to check owns a profile lock.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void GetProfileLockByOwner_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "GetProfileLockByOwner", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetProfileLockByOwner(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -171,17 +77,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a person ID, gets a profile lock on the person's profile or null if none exists.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// personid : the person for whom to check for a profile lock.
+        /// Client Parameters: <para />
+        ///     personid : the person for whom to check for a profile lock.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void GetProfileLockByLockedPerson_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "GetProfileLockByLockedPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetProfileLockByLockedPerson(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -206,17 +112,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a person ID, attempts to take a lock on the person's profile - preventing edits to the profile by anyone else.  If a lock already exists on the account and it is owned by the client, the lock is renewed.  If the lock has aged off, the lock is released and the client is given the lock.  If the lock exists, is not owned by the client, and has not aged off, a LockOwned error is returned.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// personid : the person for whom to attempt to take a lock.
+        /// Client Parameters: <para />
+        ///     personid : the person for whom to attempt to take a lock.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void TakeProfileLock_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "TakeProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_TakeProfileLock(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -293,17 +199,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a person ID, attempts to release a lock on the given profile.  Locks may be released by their owners or by anyone after the max age.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// personid : the person for whom to attempt to release a lock.
+        /// Client Parameters: <para />
+        ///     personid : the person for whom to attempt to release a lock.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void ReleaseProfileLock_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "ReleaseProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_ReleaseProfileLock(MessageToken token)
         {
             //Stole most of this shit from the TakeProfileLock endpoint lololol.
             if (token.AuthenticationSession == null)

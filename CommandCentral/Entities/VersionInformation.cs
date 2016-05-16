@@ -52,53 +52,17 @@ namespace CommandCentral.Entities
         #region Client Access
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Returns all version information objects.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// None
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Returns all version information items, sorted by Time - descending.
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadVersions_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadVersions", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadVersions(MessageToken token)
         {
             //Very easily we're just going to throw back all the versions.  Easy day.  We're going to order the versions by time.
             token.SetResult(token.CommunicationSession.QueryOver<VersionInformation>().List<VersionInformation>().OrderByDescending(x => x.Time).ToList());
         }
-
-        /// <summary>
-        /// The exposed endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "LoadVersions",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadVersions_Client,
-                        Description = "Returns all version information objects.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    }
-                };
-            }
-        }
-
 
         #endregion
 

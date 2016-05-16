@@ -316,6 +316,66 @@ namespace CommandCentral.Entities
             return PermissionGroups.Any(x => x.PermissionLevel == permissionLevel);
         }
 
+        /// <summary>
+        /// Returns a boolean indicating whether or not this person can search in the given fields.
+        /// </summary>
+        /// <param name="entityName"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public virtual bool CanSearchFields(string entityName = "Person", params string[] fields)
+        {
+            var searchableFields = PermissionGroups
+                .SelectMany(x => x.ModelPermissions)
+                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .SelectMany(x => x.SearchableFields);
+
+            foreach (var field in fields)
+                if (!searchableFields.Contains(field))
+                    return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether or not this person can return the given fields.
+        /// </summary>
+        /// <param name="entityName"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public virtual bool CanReturnFields(string entityName = "Person", params string[] fields)
+        {
+            var returnableFields = PermissionGroups
+                .SelectMany(x => x.ModelPermissions)
+                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .SelectMany(x => x.ReturnableFields);
+
+            foreach (var field in fields)
+                if (!returnableFields.Contains(field))
+                    return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether or not this person can edit the given fields.
+        /// </summary>
+        /// <param name="entityName"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public virtual bool CanEditFields(string entityName = "Person", params string[] fields)
+        {
+            var editableFields = PermissionGroups
+                .SelectMany(x => x.ModelPermissions)
+                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .SelectMany(x => x.ReturnableFields);
+
+            foreach (var field in fields)
+                if (!editableFields.Contains(field))
+                    return false;
+
+            return true;
+        }
+
         #endregion
 
         #region Client Access
@@ -325,7 +385,7 @@ namespace CommandCentral.Entities
         #region Login/Logout
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Logs in the user by searching for the user's username and then checking to ensure that the password matches the password given.  
         /// Passwords are compared using a slow equals to defend against server timing attacks.
@@ -337,18 +397,16 @@ namespace CommandCentral.Entities
         /// If the username/password combo is good, we create a new session, insert it into the database and add it to the cache.
         /// <para />
         /// Finally, we return the session id to be used as the authentication token for further requests along with some other information.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// username : the username of the account that we are trying to log into.
-        /// <para />
-        /// password : the clear text password for the given username.
+        /// <para/>
+        /// Client Parameters: <para />
+        ///     Username - The username of the account for which to attempt to login as. <para />
+        ///     Password - The plain text password related to the same account as the username.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void Login_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "Login", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_Login(MessageToken token)
         {
-
             //Let's see if the parameters are here.
             if (!token.Args.ContainsKey("username"))
                 token.AddErrorMessage("You didn't send a 'username' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -422,45 +480,41 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Logs out the user by invalidating the session/deleted it from the database.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// There are no parameters.  We use the authentication token from the authentication layer to do the logout.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void Logout_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "Logout", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_Logout(MessageToken token)
         {
 
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
-            else
+
+            //Log the event
+            token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
             {
-                //Log the event
-                token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
-                {
-                    AccountHistoryEventType = AccountHistoryEventTypes.Logout,
-                    EventTime = token.CallTime,
-                    Person = token.AuthenticationSession.Person
-                });
+                AccountHistoryEventType = AccountHistoryEventTypes.Logout,
+                EventTime = token.CallTime,
+                Person = token.AuthenticationSession.Person
+            });
 
-                //Now update the person
-                token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
+            //Now update the person
+            token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
 
-                //Okey dokey, now let's delete the session.
-                token.CommunicationSession.Delete(token.AuthenticationSession);
+            //Okey dokey, now let's delete the session.
+            token.CommunicationSession.Delete(token.AuthenticationSession);
 
-                //Remove the authentication session from the token because it has been deleted.
-                token.AuthenticationSession = null;
+            //Remove the authentication session from the token because it has been deleted.
+            token.AuthenticationSession = null;
 
-                token.SetResult("Success");
-            }
+            token.SetResult("Success");
         }
 
         #endregion
@@ -468,7 +522,8 @@ namespace CommandCentral.Entities
         #region Registration
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// <para />
         /// Begins the registration process by sending an email to the account to whom the SSN belongs.  
         /// This email contains a confirmation key that has also been inserted into the database.
@@ -477,13 +532,13 @@ namespace CommandCentral.Entities
         /// <para /> 
         /// If the account is already claimed, then trying to start the registration process for this account looks pretty bad and we send an email to a bunch of people to inform them that this happened.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// ssn : The SSN of the account that we are going to try to claim.
+        /// Client Parameters: <para />
+        ///     SSN - The ssn that belongs to the account for which the client wants to start the registration process.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void BeginRegistration_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "BeginRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_BeginRegistration(MessageToken token)
         {
             //First we need the client's ssn.  This is the account they want to claim.
             if (!token.Args.ContainsKey("ssn"))
@@ -576,23 +631,21 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Completes the registration process by assigning a username and password to a user's account, thus allowing the user to claim the account.  If the account confirmation id isn't valid,
         /// <para />
         /// an error is thrown.  The could happen if begin registration hasn't happened yet.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// username : the username the client wants to assign to the account.
-        /// <para />
-        /// password : the password the client wants to assign to the account.
-        /// <para />
-        /// accountconfirmationid : The unique Id that was sent to the user's email address by the begin registration endpoint.
+        /// Client Parameters: <para />
+        ///     Username - The username the client wants to assign to the account. <para />
+        ///     Password - The password the client wants to assign to the account. <para />
+        ///     AccountConfirmationId - The unique Id that was sent to the user's email address by the begin registration endpoint.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void CompleteRegistration_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "CompleteRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_CompleteRegistration(MessageToken token)
         {
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("username"))
@@ -672,19 +725,19 @@ namespace CommandCentral.Entities
         #region Password Reset
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// In order to start a password reset, we're going to use the given email address and ssn to load the person's is claimed field.  If is claimed is false, 
         /// then the account hasn't been claimed yet and you can't reset the password.  
         /// <para />
-        /// Options: 
-        /// <para />
-        /// email : The email address of the account we want to reset
-        /// ssn : The SSN of the account we want to reset.
+        /// Client Parameters: <para />
+        ///     email : The email address of the account we want to reset <para/>
+        ///     ssn : The SSN of the account we want to reset.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void BeginPasswordReset_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "BeginPasswordReset", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_BeginPasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("email"))
@@ -753,18 +806,18 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Completes a password reset by updating the password to the given password for the given reset password id.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// passwordResetID : The reset password id that was emailed to the client during the start password reset endpoint.
-        /// password : The password the client wants the account to have.
+        /// Client Parameters: <para />
+        ///     passwordResetID : The reset password id that was emailed to the client during the start password reset endpoint. <para />
+        ///     password : The password the client wants the account to have.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void CompletePasswordReset_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "CompletePasswordReset", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_CompletePasswordReset(MessageToken token)
         {
 
             //First, let's make sure the args are present.
@@ -837,17 +890,17 @@ namespace CommandCentral.Entities
         #region Get/Load/Select/Search
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// personid - The ID of the person to load.
+        /// Client Parameters: <para />
+        ///     personid - The ID of the person to load.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadPerson_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadPerson(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -908,7 +961,20 @@ namespace CommandCentral.Entities
             token.SetResult(person);
         }
 
-        private static void SimpleSearchPersons_Client(MessageToken token)
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Conducts a simple search.  Simple search uses a list of search terms and returns all those rows in which each term appears at least once in each of the search fields.
+        /// <para/>
+        /// In this case those fields are FirstName, LastName, MiddleName, UIC, Rate, Rank, Command, Department and Division.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     searchterm - A single string in which the search terms are broken up by a space.  Intended to be the exact input as given by the user.  This string will be split into an array of search terms by all whitespace.  The search terms are parameterized and no scrubbing of the user input is necessary.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "SimpleSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_SimpleSearchPersons(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -918,9 +984,19 @@ namespace CommandCentral.Entities
             }
 
             //Make sure the client has permission to search persons.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.SearchPersons))
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
             {
                 token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //And then make sure the client is allowed to search in these fields and return these fields.
+            if (!token.AuthenticationSession.Person.CanSearchFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division") ||
+                !token.AuthenticationSession.Person.CanReturnFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division"))
+            {
+                token.AddErrorMessage("In order to conduct a simple search you must be able to both search and return the following fields: {0}"
+                    .FormatS(String.Join(",", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division")), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
             }
 
             if (!token.Args.ContainsKey("searchterm"))
@@ -934,185 +1010,43 @@ namespace CommandCentral.Entities
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
 
-            //Build the query over simple search for each of the search terms.
-            Division divisionAlias = null;
-            Department departmentAlias = null;
-            Command commandAlias = null;
-            Rank rankAlias = null;
-            Rate rateAlias = null;
-            UIC uicAlias = null;
-
-            var queryOver = token.CommunicationSession.QueryOver<Person>().Left.JoinQueryOver<Rank>(x => x.Rank);
+            //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
+            var queryOver = token.CommunicationSession.QueryOver<Person>();
             foreach (string term in searchTerms)
             {
-
-                queryOver = queryOver.Where(Restrictions.On<Person>(x => x.FirstName).IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                Restrictions.On<Person>(x => x.LastName).IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                Restrictions.On<Person>(x => x.MiddleName).IsInsensitiveLike(term, MatchMode.Anywhere));
-
+                queryOver = queryOver.Where(Restrictions.Disjunction()
+                    .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                    .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                    .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Rate.Id).In(QueryOver.Of<Rate>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id))));
             }
-
-
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Endpoints
-
-        /// <summary>
-        /// The exposed endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
+            
+            //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
+            var results = queryOver.List().Select(x =>
                 {
-                    new EndpointDescription
+                    return new
                     {
-                        Name = "Login",
-                        AllowArgumentLogging = false,
-                        AllowResponseLogging = false,
-                        AuthorizationNote = "None",
-                        DataMethod = Login_Client,
-                        Description = "Logs in the user given a proper username/password combination and returns a GUID.  This GUID is the client's authentication token and must be included in all subsequent authentication-required requests.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "username - The user's case sensitive username.",
-                            "password - The user's case sensitive password."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "Logout",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "Client must be logged in.",
-                        DataMethod = Logout_Client,
-                        Description = "Logs out the user by invalidating the session/deleted it from the database.",
-                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "BeginRegistration",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None.",
-                        DataMethod = BeginRegistration_Client,
-                        Description = "Begins the registration process.",
-                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "CompleteRegistration",
-                        AllowArgumentLogging = false,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None.",
-                        DataMethod = CompleteRegistration_Client,
-                        Description = "Completes the registration process and assigns the username and password to the desired user account.",
-                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "username - The username the client wants to be assigned to the account.",
-                            "password - The password the client wants to be assigned to the account.",
-                            "accountconfirmationid - The unique GUID token that was sent to the user through their DOD email."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "BeginPasswordReset",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None.",
-                        DataMethod = BeginPasswordReset_Client,
-                        Description = "Starts the password reset process by sending the client an email with a link they can click on to reset their password.",
-                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "ssn - The user's SSN.  SSNs are expected to consist of numbers only.  Non-digit characters will cause an exception.",
-                            "email - The email address of the account we want to reset.  This must be a DOD email address and be on the same account as the given SSN."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "CompletePasswordReset",
-                        AllowArgumentLogging = false,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None.",
-                        DataMethod = CompletePasswordReset_Client,
-                        Description = "Finishes the password reset process by setting the password to the received password for the reset password id.",
-                        ExampleOutput = () => "Success - This return value can be ignored entirely and the string that is returned (“Success”) can be replaced with anything else.  Instead, I recommend checking the return container’s .HasError property.  If error is false, then you can assume the method completed successfully.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "passwordresetid - The password reset id that was emailed to the client during the start password reset endpoint.",
-                            "password - The password the client wants the account to have."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "LoadPerson",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "Those fields the client can't return will be set to null.",
-                        DataMethod = LoadPerson_Client,
-                        Description = "Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.",
-                        ExampleOutput = () => "An entire person object containing the entire record minus those fields the client was not allowed to return.  These fields are set to null.",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "personid - The ID of the person to load."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    }
-
-                };
-            }
+                        x.Id,
+                        x.LastName,
+                        x.MiddleName,
+                        x.FirstName,
+                        Rank = x.Rank.Value,
+                        Rate = x.Rate.Value,
+                        UIC = x.UIC.Value,
+                        Command = x.Command.Value,
+                        Department = x.Department.Value,
+                        Division = x.Division.Value
+                    };
+                });
+            token.SetResult(results);
         }
+
+        #endregion
 
         #endregion
 

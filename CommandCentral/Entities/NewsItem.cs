@@ -46,17 +46,17 @@ namespace CommandCentral.Entities
         #region Client Access
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads a single news item for the given Id or returns null if it does not exist.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// newsitemid - The Id of the news item we want to load.
+        /// Client Parameters: <para />
+        ///     newsitemid - The Id of the news item we want to load.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadNewsItem_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -85,17 +85,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads all news items.
         /// <para />
-        /// Options: 
-        /// <para />
+        /// Client Parameters: <para />
         /// None
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadNewsItems_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadNewsItems", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadNewsItems(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -109,18 +109,18 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Creates a news item given a title and paragraphs.  Returns the new Id of the news item.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// title - A title for the news item.
-        /// paragraphs - The new paragraphs to be added to the new news item.   
+        /// Client Parameters: <para />
+        ///     title - A title for the news item. <para />
+        ///     paragraphs - The new paragraphs to be added to the new news item.   
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void CreateNewsItem_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "CreateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_CreateNewsItem(MessageToken token)
         {
 
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
@@ -189,17 +189,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Updates a news item from the client.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// newsitem - A news item object you want to update.
+        /// Client Parameters: <para />
+        ///     newsitem - A news item object you want to update.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void UpdateNewsItem_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "UpdateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_UpdateNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -271,17 +271,17 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Deletes a news item.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// newsitemid - the Id of the news item we want to delete.
+        /// Client Parameters: <para />
+        ///     newsitemid - the Id of the news item we want to delete.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void DeleteNewsItem_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "DeleteNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_DeleteNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -323,120 +323,6 @@ namespace CommandCentral.Entities
             token.CommunicationSession.Delete(newsItemId);
 
             token.SetResult("Success");
-        }
-
-
-        /// <summary>
-        /// The endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "LoadNewsItem",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadNewsItem_Client,
-                        Description = "Loads a single news item for the given Id or returns null if it does not exist.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "newsitemid - The Id of the news item we want to load."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "LoadNewsItems",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadNewsItems_Client,
-                        Description = "Loads all news items.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "DeleteNewsItem",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "Must have the Manage News Permission.",
-                        DataMethod = DeleteNewsItem_Client,
-                        Description = "Deletes the requested news item.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "newsitemid - The Id of the news item you want to delete."
-                        },
-                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "UpdateNewsItem",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "Must have the Manage News Permission.  Additionally, changes to any property besides the Title or the Paragraphs are not allowed.",
-                        DataMethod = DeleteNewsItem_Client,
-                        Description = "Updates the requested news item in the database.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "newsitem - A properly formatted news item.  This should represent the state of the object as you wish it to be."
-                        },
-                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "CreateNewsItem",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "Must have the Manage News Permission.",
-                        DataMethod = CreateNewsItem_Client,
-                        Description = "Creates a news item and returns the item's assigned Id.  The Id, Creator, and CreationTime will be set for you.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "title - The new title of the news item.",
-                            "paragraphs - a JSON array of strings representing the paragraphs in the news item."
-                        },
-                        RequiredSpecialPermissions = new[] { "Manage News" }.ToList(),
-                        RequiresAuthentication = true
-                    }
-                };
-            }
         }
 
         #endregion

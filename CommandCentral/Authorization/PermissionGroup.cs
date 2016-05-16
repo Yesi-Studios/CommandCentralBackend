@@ -81,67 +81,13 @@ namespace CommandCentral.Authorization
         #region Client Access
 
         /// <summary>
-        /// The endpoints
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "GetModelPermissions",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = GetModelPermissions_Client,
-                        Description = "Convenience method that returns the client's permissions to all models in a dictionary where the key is the model's name and the value is a flattened model permission object representing all permissions to the model.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    },
-                    new EndpointDescription
-                    {
-                        Name = "LoadPermissionGroups",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadPermissionGroups_Client,
-                        Description = "No Authorization is required for this method.  Returns all permission groups.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    }
-                };
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Returns the client's permissions to all models in a dictionary where the key is the model's name and the value is a flattened model permission object representing all permissions to the model.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// None
-        /// </summary>
+        /// Gets all model permissions for the client and sorts those model permissions as a dictionary grouped by the model name.
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void GetModelPermissions_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "GetModelPermissions", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetModelPermissions(MessageToken token)
         {
             //Make sure we're logged in.
             if (token.AuthenticationSession == null)
@@ -168,19 +114,15 @@ namespace CommandCentral.Authorization
             //And here's the result!
             token.SetResult(result);
         }
-
+        
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// No Authorization is required for this method.  Returns all permission groups.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// None.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Returns all permissions groups currently available to all users.
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadPermissionGroups_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadPermissionGroups(MessageToken token)
         {
             token.SetResult(token.CommunicationSession.QueryOver<PermissionGroup>().List());
         }

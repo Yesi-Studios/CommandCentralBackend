@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.DataAccess;
+using System.Linq.Expressions;
 
 namespace CommandCentral.ClientAccess.Service
 {
@@ -30,23 +31,48 @@ namespace CommandCentral.ClientAccess.Service
         /// <summary>
         /// Gets the exposed endpoints.
         /// </summary>
-        public static ConcurrentDictionary<string, EndpointDescription> EndpointDescriptions { get; private set; }
+        public static ConcurrentDictionary<string, ServiceEndpoint> EndpointDescriptions { get; private set; }
 
         /// <summary>
-        /// Static constructor that builds the _endpointDescriptions.  This is how we register new _endpointDescriptions.
+        /// Static constructor that builds the Endpoint Descriptions.
         /// </summary>
         static CommandCentralService()
         {
-            EndpointDescriptions = new ConcurrentDictionary<string, EndpointDescription>(
-                Entities.NewsItem.EndpointDescriptions
-                .Concat(Entities.Person.EndpointDescriptions)
-                .Concat(Entities.ReferenceLists.Command.EndpointDescriptions)
-                .Concat(ReferenceListItemBase.EndpointDescriptions)
-                .Concat(Entities.VersionInformation.EndpointDescriptions)
-                .Concat(Entities.Change.EndpointDescriptions)
-                .Concat(Authorization.PermissionGroup.EndpointDescriptions)
-                .Concat(Entities.ProfileLock.EndpointDescriptions)
-                .Concat(Entities.MusterRecord.EndpointDescriptions).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase));
+            EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(ScanForEndpoints());
+        }
+
+        /// <summary>
+        /// Scans the entire executing assembly for any service endpoint methods and reads them into a dictionary.
+        /// </summary>
+        /// <returns></returns>
+        private static Dictionary<string, ServiceEndpoint> ScanForEndpoints()
+        {
+            return Assembly.GetExecutingAssembly().GetTypes()
+                    .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
+                    .Where(x => x.GetCustomAttribute<EndpointMethodAttribute>() != null)
+                    .Select(x =>
+                    {
+                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 1 || x.GetParameters()[0].ParameterType != typeof(MessageToken))
+                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of an endpoint method!".FormatS(x.Name, x.DeclaringType.Name));
+
+                        var parameters = x.GetParameters()
+                           .Select(p => Expression.Parameter(p.ParameterType, p.Name))
+                           .ToArray();
+                        var call = Expression.Call(null, x, parameters);
+                        var endpointMethod = (Action<MessageToken>)Expression.Lambda(call, parameters).Compile();
+
+                        var endpointMethodAttribute = x.GetCustomAttribute<EndpointMethodAttribute>();
+                        if (string.IsNullOrWhiteSpace(endpointMethodAttribute.EndpointName))
+                            endpointMethodAttribute.EndpointName = x.Name;
+
+                        return new ServiceEndpoint
+                        {
+                            EndpointMethod = endpointMethod,// lambda.Compile(),
+                            EndpointMethodAttribute = endpointMethodAttribute,
+                            ExampleOutput = "TODO",
+                            IsActive = true
+                        };
+                    }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion
@@ -72,7 +98,7 @@ namespace CommandCentral.ClientAccess.Service
             try
             {
                 //Get the endpoint
-                EndpointDescription description;
+                ServiceEndpoint description;
                 if (!EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                 {
                     token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
@@ -136,7 +162,7 @@ namespace CommandCentral.ClientAccess.Service
                 Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
 
                 //Ok, now we know that the request is valid let's see if we need to authenticate it.
-                if (description.RequiresAuthentication)
+                if (description.EndpointMethodAttribute.RequiresAuthentication)
                 {
                     AuthenticateMessage(token);
 
@@ -156,7 +182,7 @@ namespace CommandCentral.ClientAccess.Service
                 }
 
                 //Invoke the data method to which the endpoint points.
-                description.DataMethod(token);
+                description.EndpointMethod(token);
                 token.State = MessageStates.Invoked;
 
                 Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
@@ -228,7 +254,7 @@ namespace CommandCentral.ClientAccess.Service
             {
 
                 //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
-                EndpointDescription endpointDescription;
+                ServiceEndpoint endpointDescription;
                 if (!EndpointDescriptions.TryGetValue(endpoint, out endpointDescription))
                 {
                     result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
@@ -248,29 +274,9 @@ namespace CommandCentral.ClientAccess.Service
                         }
                     }
 
-                    string requiredParamaters = "None";
-                    if (endpointDescription.RequiredParameters != null && endpointDescription.RequiredParameters.Any())
-                        requiredParamaters = string.Join(Environment.NewLine, endpointDescription.RequiredParameters.Select(x => string.Format("{0} <br />", x)));
+                    result = "todo";
 
-                    string optionalParameters = "None";
-                    if (endpointDescription.OptionalParameters != null && endpointDescription.OptionalParameters.Any())
-                        optionalParameters = string.Join(Environment.NewLine, endpointDescription.OptionalParameters.Select(x => string.Format("{0} <br />", x)));
-
-                    string requiredSpecialPerms = "None";
-                    if (endpointDescription.RequiredSpecialPermissions != null && endpointDescription.RequiredSpecialPermissions.Any())
-                        requiredSpecialPerms = string.Join(",", endpointDescription.RequiredSpecialPermissions);
-
-                    string authNote = "None";
-                    if (!string.IsNullOrWhiteSpace(endpointDescription.AuthorizationNote))
-                        authNote = endpointDescription.AuthorizationNote;
-
-                    string output = "Ask Atwood to write this";
-                    if (endpointDescription.ExampleOutput != null)
-                        output = endpointDescription.ExampleOutput();
-
-                    result = string.Format(templatePage, endpoint, endpointDescription.Description, requiredSpecialPerms, requiredParamaters, optionalParameters,
-                        authNote, endpointDescription.RequiresAuthentication, endpointDescription.AllowArgumentLogging, endpointDescription.AllowResponseLogging,
-                        endpointDescription.IsActive, output);
+                    
                 }
 
             }

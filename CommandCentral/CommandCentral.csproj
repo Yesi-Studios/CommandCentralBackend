@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Authorization\PermissionLevelsEnum.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
+    <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
@@ -97,7 +98,7 @@
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />
-    <Compile Include="ClientAccess\EndpointDescription.cs" />
+    <Compile Include="ClientAccess\ServiceEndpoint.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
     <Compile Include="DataAccess\SessionProvider.cs" />

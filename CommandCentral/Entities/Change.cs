@@ -161,50 +161,17 @@ namespace CommandCentral.Entities
         #region Client Access
 
         /// <summary>
-        /// The endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "LoadChanges",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadChanges_Client,
-                        Description = "Loads all changes that have been made to a given object.  Non-returnable fields will have their values redacted.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes.",
-                            "authenticationtoken - The GUID authentication token for the user that was retrieved after successful login.",
-                            "objectid - the ID of the object for which to load changes."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = true
-                    }
-                };
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads all changes that have been made to a given object.  Non-returnable fields will have their values redacted.
         /// <para />
-        /// Options: 
-        /// <para />
-        /// objectid : the ID of the object for which to load changes.
+        /// Client Parameters: <para />
+        ///     objectid : the ID of the object for which to load changes.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadChanges_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadChanges", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadChanges(MessageToken token)
         {
             //Make sure we have the parameter we expect and that it is in the Guid format.
             if (!token.Args.ContainsKey("objectid"))

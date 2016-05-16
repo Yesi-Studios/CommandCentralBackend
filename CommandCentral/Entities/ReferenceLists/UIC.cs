@@ -24,7 +24,6 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Description).Nullable().Length(40);
 
                 Cache.ReadWrite();
-
             }
         }
 

@@ -24,9 +24,9 @@ namespace CommandCentralHost.Editors
                 "".WriteLine();
 
                 //And then print them out.
-                List<string[]> lines = new List<string[]> { new[] { "#", "Name", "Is Active", "Description" } };
+                List<string[]> lines = new List<string[]> { new[] { "#", "Name", "Is Active" } };
                 for (int x = 0; x < endpoints.Count; x++)
-                    lines.Add(new[] { x.ToString(), endpoints.ElementAt(x).Key, endpoints.ElementAt(x).Value.IsActive.ToString(), endpoints.ElementAt(x).Value.Description.Truncate(150) });
+                    lines.Add(new[] { x.ToString(), endpoints.ElementAt(x).Key, endpoints.ElementAt(x).Value.IsActive.ToString() });
                 DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
 
                 int option;

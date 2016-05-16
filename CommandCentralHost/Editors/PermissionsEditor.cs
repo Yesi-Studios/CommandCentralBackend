@@ -21,10 +21,11 @@ namespace CommandCentralHost.Editors
 
                 "1. Edit Permission Groups".WriteLine();
                 "2. Edit Model Permissions".WriteLine();
-                "3. Return".WriteLine();
+                "3. Manage User Permissions".WriteLine();
+                "4. Return".WriteLine();
 
                 int option;
-                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 3)
+                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 4)
                 {
                     switch (option)
                     {
@@ -40,6 +41,11 @@ namespace CommandCentralHost.Editors
                                 break;
                             }
                         case 3:
+                            {
+                                EditUserPermissions();
+                                break;
+                            }
+                        case 4:
                             {
                                 keepLooping = false;
                                 break;
@@ -183,7 +189,7 @@ namespace CommandCentralHost.Editors
                                 Console.Clear();
                                 "The current permission level is, '{0}'. Choose a new one from below.".FormatS(group.PermissionLevel).WriteLine();
                                 "".WriteLine();
-                                
+
                                 var names = Enum.GetNames(typeof(PermissionLevels));
                                 for (int x = 0; x < names.Length; x++)
                                     "{0}. {1}".FormatS(x, names[x]).WriteLine();
@@ -239,7 +245,7 @@ namespace CommandCentralHost.Editors
                             //We need to go get the total return fields for this model name.
                             int totalProperties = NHibernateHelper.GetEntityMetadata(modelPermissions[x].ModelName).PropertyNames.Length;
 
-                            lines.Add(new[] { x.ToString(), modelPermissions[x].Name, modelPermissions[x].ModelName, 
+                            lines.Add(new[] { x.ToString(), modelPermissions[x].Name, modelPermissions[x].ModelName,
                                 "{0}/{1}".FormatS(modelPermissions[x].ReturnableFields.Count, totalProperties),
                                 "{0}/{1}".FormatS(modelPermissions[x].EditableFields.Count, totalProperties),
                                 "{0}/{1}".FormatS(modelPermissions[x].SearchableFields.Count, totalProperties)});
@@ -280,7 +286,7 @@ namespace CommandCentralHost.Editors
                             {
                                 item.ModelName = allEntitityMetadata[modelNameOption].Key;
                             }
-                            
+
                             session.Save(item);
                         }
 
@@ -420,7 +426,72 @@ namespace CommandCentralHost.Editors
             }
         }
 
+        private static void EditUserPermissions()
+        {
+            bool keepLooping = true;
 
+            using (var session = NHibernateHelper.CreateSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    while (keepLooping)
+                    {
+                        Console.Clear();
+                        "Welcome to the user permissions editor.".WriteLine();
+                        "Enter the last name of the person for whom you want to edit permissions or enter a blank line to return.".WriteLine();
+                        "".WriteLine();
 
+                        string input = Console.ReadLine();
+                        if (string.IsNullOrWhiteSpace(input))
+                            keepLooping = false;
+                        {
+                            Console.Clear();
+                            var persons = session.QueryOver<CommandCentral.Entities.Person>()
+                                .WhereRestrictionOn(x => x.LastName)
+                                .IsInsensitiveLike(input, NHibernate.Criterion.MatchMode.Anywhere)
+                                .List();
+
+                            if (persons.Any())
+                            {
+                                Console.Clear();
+                                "Choose the number of the person whose permissions you want to edit or enter a blank line to cancel.".WriteLine();
+                                "".WriteLine();
+
+                                //And then print them out.
+                                List<string[]> lines = new List<string[]> { new[] { "#", "Rate", "First Name", "Last Name" } };
+                                for (int x = 0; x < persons.Count; x++)
+                                {
+                                    lines.Add(new[] { x.ToString(), persons[x].Rate.Value, persons[x].FirstName, persons[x].LastName });
+                                }
+                                DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
+
+                                int option;
+                                string selectInput = Console.ReadLine();
+                                if (!string.IsNullOrWhiteSpace(selectInput) && int.TryParse(selectInput, out option) && option >= 0 && option < persons.Count)
+                                {
+                                    var allPermissionGroups = session.QueryOver<PermissionGroup>().List().ToList();
+
+                                    ListEditor.EditList(persons[option].PermissionGroups, allPermissionGroups, "User Permissions Editor");
+                                }
+                            }
+                            else
+                            {
+                                "Your search returned no users.".WriteLine();
+                                "Press any key to try again...".WriteLine();
+                                Console.ReadKey();
+                            }
+                        }
+                    }
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
     }
 }

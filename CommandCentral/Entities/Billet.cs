@@ -62,7 +62,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// All the endpoints
         /// </summary>
-        public static Dictionary<string, EndpointDescription> EndpointDescriptions
+        public static Dictionary<string, ServiceEndpoint> EndpointDescriptions
         {
             get
             {

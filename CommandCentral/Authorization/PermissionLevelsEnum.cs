@@ -11,6 +11,9 @@ namespace CommandCentral.Authorization
     /// </summary>
     public enum PermissionLevels
     {
+        /// <summary>
+        /// A permission with this permission level may be exercised by a person on all other person's in his/her same command.
+        /// </summary>
         Command,
         Department,
         Division,

@@ -51,17 +51,13 @@ namespace CommandCentral.Entities.ReferenceLists
         #region Client Access
 
         /// <summary>
-        /// WARNING!  THIS IS A CLIENT METHOD.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Returns all commands, group by the command name.
-        /// <para />
-        /// Options: 
-        /// <para />
-        /// None
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Loads all commands and their corresponding departments/divisions from the database.cache.
         /// <param name="token"></param>
         /// <returns></returns>
-        private static void LoadCommands_Client(MessageToken token)
+        [EndpointMethod(EndpointName = "LoadCommands", AllowArgumentLogging = true, AllowResponseLogging =  true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadCommands(MessageToken token)
         {
             //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
             token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>().GroupBy(x => x.Value).Select(x =>
@@ -69,38 +65,6 @@ namespace CommandCentral.Entities.ReferenceLists
                 return new KeyValuePair<string, List<Command>>(x.Key, x.ToList());
             }).ToDictionary(x => x.Key, x => x.Value));
         }
-
-        /// <summary>
-        /// The exposed endpoints
-        /// </summary>
-        public static List<EndpointDescription> EndpointDescriptions
-        {
-            get
-            {
-                return new List<EndpointDescription>
-                {
-                    new EndpointDescription
-                    {
-                        Name = "LoadCommands",
-                        AllowArgumentLogging = true,
-                        AllowResponseLogging = true,
-                        AuthorizationNote = "None",
-                        DataMethod = LoadCommands_Client,
-                        Description = "Returns all commands, group by the command name.",
-                        ExampleOutput = () => "TODO",
-                        IsActive = true,
-                        OptionalParameters = null,
-                        RequiredParameters = new List<string>
-                        {
-                            "apikey - The unique GUID token assigned to your application for metrics purposes."
-                        },
-                        RequiredSpecialPermissions = null,
-                        RequiresAuthentication = false
-                    }
-                };
-            }
-        }
-        
 
         #endregion
 
