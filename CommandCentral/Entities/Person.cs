@@ -303,7 +303,12 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool HasSpecialPermissions(params SpecialPermissions[] permissions)
         {
-            return PermissionGroups.SelectMany(x => x.SpecialPermissions).Except(permissions).Any();
+            var userPermissions = PermissionGroups.SelectMany(x => x.SpecialPermissions);
+            foreach (var perm in permissions)
+                if (!userPermissions.Contains(perm))
+                    return false;
+
+            return true;
         }
 
         /// <summary>
@@ -326,7 +331,7 @@ namespace CommandCentral.Entities
         {
             var searchableFields = PermissionGroups
                 .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .Where(x => x.ModelName == "Person")
                 .SelectMany(x => x.SearchableFields);
 
             foreach (var field in fields)
@@ -346,7 +351,7 @@ namespace CommandCentral.Entities
         {
             var returnableFields = PermissionGroups
                 .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .Where(x => x.ModelName == "Person")
                 .SelectMany(x => x.ReturnableFields);
 
             foreach (var field in fields)
@@ -366,7 +371,7 @@ namespace CommandCentral.Entities
         {
             var editableFields = PermissionGroups
                 .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == DataAccess.NHibernateHelper.GetEntityMetadata("Person").EntityName)
+                .Where(x => x.ModelName == "Person")
                 .SelectMany(x => x.ReturnableFields);
 
             foreach (var field in fields)
@@ -1044,6 +1049,96 @@ namespace CommandCentral.Entities
                     };
                 });
             token.SetResult(results);
+        }
+
+        [EndpointMethod(EndpointName = "AdvancedSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_AdvancedSearchPersons(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Make sure the client has permission to search persons.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
+            {
+                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Let's find which fields the client wants to search in.  This should be a dictionary.
+            if (!token.Args.ContainsKey("filters"))
+            {
+                token.AddErrorMessage("You didn't send a 'filters' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+            Dictionary<string, string> filters = token.Args["filters"].CastJToken<Dictionary<string, string>>();
+
+            //Alright, now let's make sure the client is allowed to search in all of these fields.
+            if (!token.AuthenticationSession.Person.CanSearchFields("Person", filters.Select(x => x.Key).ToArray()))
+            {
+                token.AddErrorMessage("You were not allowed to search in one or more of the fields you asked to search in.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //And the fields the client wants to return.
+            if (!token.Args.ContainsKey("returnfields"))
+            {
+                token.AddErrorMessage("You didn't send a 'returnfields' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+            List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
+
+            //And make sure they can return it.
+            if (!token.AuthenticationSession.Person.CanReturnFields("Person", returnFields.ToArray()))
+            {
+                token.AddErrorMessage("You were not allowed to return on or more of the fields you asked to return.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //We're going to need the person object's metadata for the rest of this.
+            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
+            //Ok the client can search and return everything.  Now we need to build the actual query.
+            //To do this we need to determine what type each property is and then add it to the query.
+            var queryOver = token.CommunicationSession.QueryOver<Person>();
+            foreach (var filter in filters)
+            {
+                //.Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                //We need to know which type of property we're working with.
+                var property = personMetadata.GetPropertyType(filter.Key);
+                if (property.IsAssociationType)
+                {
+                    queryOver.Where(Restrictions.In(
+                }
+                else
+                    if (property.IsCollectionType)
+                    {
+                    }
+                    else
+                        if (property.IsComponentType)
+                        {
+                        }
+                        else 
+                        {
+                            queryOver.Where(Restrictions.InsensitiveLike(filter.Key, filter.Value, MatchMode.Anywhere));
+                        }
+            }
+            
+            var result = queryOver.List().Select(x =>
+                {
+                    var temp = new Dictionary<string, string>();
+                    foreach (var returnField in returnFields)
+                    {
+                        var value = personMetadata.GetPropertyValue(x, returnField, NHibernate.EntityMode.Poco);
+                        temp.Add(returnField, value == null ? "" : value.ToString());
+                    }
+                    return temp;
+                });
+
+            token.SetResult(result);
         }
 
         #endregion

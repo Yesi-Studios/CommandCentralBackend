@@ -101,7 +101,7 @@
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
-    <Compile Include="DataAccess\SessionProvider.cs" />
+    <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="ClientAccess\APIKey.cs" />
     <Compile Include="Entities\ReferenceLists\Command.cs" />
     <Compile Include="Entities\ReferenceLists\Department.cs" />

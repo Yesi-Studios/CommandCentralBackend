@@ -128,18 +128,16 @@ namespace CommandCentralHost
         {
             try
             {
+
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
                 SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
 
                 Console.ForegroundColor = ConsoleColor.Green;
 
-                bool keepLooping = true;
-
                 //In order to exit the application a call to Application.Exit is made from one of the dialogue options.
-                // ReSharper disable once LoopVariableIsNeverChangedInsideLoop
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                while (keepLooping)
+                while (true)
                 {
                     try
                     {
