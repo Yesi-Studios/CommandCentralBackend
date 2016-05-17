@@ -55,6 +55,19 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns the Address field.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return Address;
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps an email address to the database.
         /// </summary>

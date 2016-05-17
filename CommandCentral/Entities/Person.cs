@@ -385,8 +385,6 @@ namespace CommandCentral.Entities
 
         #region Client Access
 
-        #region Client Access Methods
-
         #region Login/Logout
 
         /// <summary>
@@ -1106,25 +1104,203 @@ namespace CommandCentral.Entities
             var queryOver = token.CommunicationSession.QueryOver<Person>();
             foreach (var filter in filters)
             {
-                //.Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                //We need to know which type of property we're working with.
+                var searchTerms = filter.Value.Split((char[])null);
+
                 var property = personMetadata.GetPropertyType(filter.Key);
-                if (property.IsAssociationType)
+
+                //If it's any besides a basic type, then we need to declare the search strategy for each one.
+                if (property.IsAssociationType || property.IsCollectionType || property.IsComponentType)
                 {
-                    queryOver.Where(Restrictions.In(
-                }
-                else
-                    if (property.IsCollectionType)
+                    //For now we're going to provide options for every property and a default.
+                    switch (filter.Key)
                     {
+                        case "Rank":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Rate":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Rate.Id).In(QueryOver.Of<Rate>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "UIC":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Command":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Department":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Division":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Ethnicity":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "ReligiousPreference":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Suffix":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Suffix.Id).In(QueryOver.Of<Suffix>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "DutyStatus":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Sex":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "Billet":
+                            {
+                                //If the client is searching in billet, then it's a simple search, meaning we have to split the search term.
+
+                                foreach (string term in searchTerms)
+                                {
+                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.Billet.Id).In(QueryOver.Of<Billet>().Where(Restrictions.Disjunction()
+                                    .Add<Billet>(x => x.Designation.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Billet>(x => x.Funding.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Billet>(x => x.IdNumber.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Billet>(x => x.Remarks.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Billet>(x => x.SuffixCode.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Billet>(x => x.Title.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add(Subqueries.WhereProperty<Billet>(x => x.NEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                                    .Add(Subqueries.WhereProperty<Billet>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))).Select(x => x.Id)));
+                                }
+
+                                break;
+                            }
+                        case "NECs":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Restrictions.Where<Person>(x => x.NECs.Any(nec => nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "EmailAddresses":
+                            {
+                                EmailAddress addressAlias = null;
+                                queryOver = queryOver
+                                    .JoinAlias(x => x.EmailAddresses, () => addressAlias)
+                                    .Fetch(x => x.EmailAddresses).Eager;
+
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(() => addressAlias.Address.IsInsensitiveLike(term, MatchMode.Anywhere));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "PhysicalAddresses":
+                            {
+
+                                //Physical addresses allow a simple search across the object.
+
+                                foreach (string term in searchTerms)
+                                {
+                                    queryOver = queryOver.Where(x => 
+                                        x.PhysicalAddresses.Any(
+                                            physicalAddress =>
+                                                physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                physicalAddress.Country.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                physicalAddress.Route.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                physicalAddress.StreetNumber.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
+                                }
+                                
+                                break;
+                            }
+                        case "PhoneNumbers":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Restrictions.Where<Person>(x => x.PhoneNumbers.Any(phoneNumber => phoneNumber.Number.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "PermissionGroups":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Restrictions.Where<Person>(x => x.PermissionGroups.Any(perm => perm.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "SubscribedChangeEvents":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                foreach (var term in searchTerms)
+                                    disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        default:
+                            {
+                                //If the client tried to search in something that isn't supported, then fuck em.
+                                token.AddErrorMessage("Your request to search in the field, '{0}', is not supported.  We do not currently provide a search strategy for this property.  If you think we should provide the ability to search in this property, please contact the development team with your suggestion.".FormatS(filter.Key), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
                     }
-                    else
-                        if (property.IsComponentType)
-                        {
-                        }
-                        else 
-                        {
-                            queryOver.Where(Restrictions.InsensitiveLike(filter.Key, filter.Value, MatchMode.Anywhere));
-                        }
+                }
+                else 
+                {
+                    var disjunction = Restrictions.Disjunction();
+                    foreach (var term in searchTerms)
+                        disjunction.Add(Restrictions.InsensitiveLike(filter.Key, term, MatchMode.Anywhere));
+                    queryOver = queryOver.Where(disjunction);
+                }
             }
             
             var result = queryOver.List().Select(x =>
@@ -1135,6 +1311,8 @@ namespace CommandCentral.Entities
                         var value = personMetadata.GetPropertyValue(x, returnField, NHibernate.EntityMode.Poco);
                         temp.Add(returnField, value == null ? "" : value.ToString());
                     }
+                    //We're also going to append the Id onto every search result so that the client knows who this is.
+                    temp.Add("Id", personMetadata.GetIdentifier(x, NHibernate.EntityMode.Poco).ToString());
                     return temp;
                 });
 
@@ -1144,8 +1322,6 @@ namespace CommandCentral.Entities
         #endregion
 
         #endregion
-
-        #endregion Client Access
 
         /// <summary>
         /// Maps a person to the database.

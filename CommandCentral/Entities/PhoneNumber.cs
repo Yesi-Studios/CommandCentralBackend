@@ -62,6 +62,19 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns the Number property.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return Number;
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a single phone number to the database.
         /// </summary>

@@ -94,6 +94,7 @@
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
+    <Compile Include="NHibernateExtensions.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />

@@ -1,4 +1,5 @@
 ﻿using System;
+using AtwoodUtils;
 using FluentNHibernate.Mapping;
 
 namespace CommandCentral.Entities
@@ -65,6 +66,19 @@ namespace CommandCentral.Entities
         /// The longitude of this physical address.
         /// </summary>
         public virtual float? Longitude { get; set; }
+
+        #endregion
+
+        #region 
+
+        /// <summary>
+        /// Returns the address in this format: 123 Fake Street, Happyville, TX 54321, United States
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "{0} {1}, {2}, {3} {4}, {5}".FormatS(StreetNumber, Route, City, State, ZipCode, Country);
+        }
 
         #endregion
 

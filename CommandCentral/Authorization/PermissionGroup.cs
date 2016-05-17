@@ -57,7 +57,7 @@ namespace CommandCentral.Authorization
         /// Returns Name.
         /// </summary>
         /// <returns></returns>
-        public new virtual string ToString()
+        public override string ToString()
         {
             return Name;
         }
