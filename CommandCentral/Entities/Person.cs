@@ -429,6 +429,7 @@ namespace CommandCentral.Entities
                 //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                 var person = token.CommunicationSession.QueryOver<Person>()
                     .Where(x => x.Username == username)
+                    .Fetch(x => x.PermissionGroups).Eager
                     .SingleOrDefault<Person>();
 
                 if (person == null)
@@ -931,14 +932,14 @@ namespace CommandCentral.Entities
             //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
             NHibernate.NHibernateUtil.Initialize(person);
-            person = token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person) as Person;
+            token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person);
 
-            
+            //Now we need to evict this copy of the person from the session so that our changes to it don't reflect in the database.  That would be awkward.
+            token.CommunicationSession.Evict(person);
+
             //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
             if (person != null && personId != token.AuthenticationSession.Person.Id)
             {
-                //Now we need to evict this copy of the person from the session so that our changes to it don't reflect in the database.  That would be awkward.
-                token.CommunicationSession.Evict(person);
 
                 var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
 
@@ -961,7 +962,9 @@ namespace CommandCentral.Entities
                 }
             }
 
-            token.SetResult(person);
+            Person test = person;
+
+            token.SetResult(test);
         }
 
         /// <summary>
@@ -1378,8 +1381,6 @@ namespace CommandCentral.Entities
                 HasMany(x => x.EmailAddresses).LazyLoad().Cascade.All();
                 HasMany(x => x.PhoneNumbers).LazyLoad().Cascade.All();
                 HasMany(x => x.PhysicalAddresses).LazyLoad().Cascade.All();
-
-                LazyLoad();
             }
         }
 

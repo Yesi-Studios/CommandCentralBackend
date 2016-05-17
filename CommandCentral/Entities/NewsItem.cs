@@ -256,7 +256,10 @@ namespace CommandCentral.Entities
 
             //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
             //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
-            var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x => x.PropertyName != "title" || x.PropertyName != "paragraphs");
+            var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x => 
+                !x.PropertyName.SafeEquals("Creator") && 
+                !x.PropertyName.SafeEquals("title") && 
+                !x.PropertyName.SafeEquals("paragraphs"));
 
             if (unauthorizedVariances.Any())
             {
@@ -265,8 +268,10 @@ namespace CommandCentral.Entities
             }
             else
             {
+                newsItemFromDB.Title = newsItemFromClient.Title;
+                newsItemFromDB.Paragraphs = newsItemFromClient.Paragraphs;
                 //Ok so there's no unauthorized variances.  I guess we can... do the update then?
-                token.CommunicationSession.Update(newsItemFromClient);
+                token.CommunicationSession.Update(newsItemFromDB);
                 token.SetResult("Success");
             }
         }
@@ -321,7 +326,7 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            token.CommunicationSession.Delete(newsItemId);
+            token.CommunicationSession.Delete(newsItemFromDB);
 
             token.SetResult("Success");
         }
@@ -338,7 +343,7 @@ namespace CommandCentral.Entities
             /// </summary>
             public NewsItemMapping()
             {
-                Id(x => x.Id).GeneratedBy.Assigned();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Creator);
 

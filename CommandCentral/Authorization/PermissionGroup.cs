@@ -149,7 +149,7 @@ namespace CommandCentral.Authorization
                     .KeyColumn("PermissionGroupId")
                     .Element("SpecialPermission");
 
-                HasManyToMany(x => x.ModelPermissions);
+                HasManyToMany(x => x.ModelPermissions).Fetch.Select();
                 HasManyToMany(x => x.SubordinatePermissionGroups)
                     .ParentKeyColumn("PermissionGroupID")
                     .ChildKeyColumn("SubordinatePermissionGroupID");
