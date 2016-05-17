@@ -34,7 +34,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The paragraphs contained in this news item.
         /// </summary>
-        public virtual List<string> Paragraphs { get; set; }
+        public virtual IList<string> Paragraphs { get; set; }
 
         /// <summary>
         /// The time this news item was created.
@@ -164,6 +164,7 @@ namespace CommandCentral.Entities
             //Now build the whole news item.
             NewsItem newsItem = new NewsItem
             {
+                Id = Guid.NewGuid(),
                 CreationTime = token.CallTime,
                 Creator = token.AuthenticationSession.Person,
                 Paragraphs = paragraphs,
@@ -337,14 +338,14 @@ namespace CommandCentral.Entities
             /// </summary>
             public NewsItemMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Creator);
 
                 Map(x => x.Title).Not.Nullable().Length(50);
                 HasMany(x => x.Paragraphs)
                     .KeyColumn("NewsItemID")
-                    .Element("Paragraph");
+                    .Element("Paragraph", x => x.Length(10000));
                 Map(x => x.CreationTime).Not.Nullable();
             }
         }

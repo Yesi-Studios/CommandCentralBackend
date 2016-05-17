@@ -94,13 +94,13 @@ namespace CommandCentralHost.Editors
                         EAOS = new DateTime(2018, 1, 27),
                         Rank = session.QueryOver<Rank>().Where(x => x.Value == "E5").SingleOrDefault<Rank>(),
                         Rate = session.QueryOver<Rate>().Where(x => x.Value == "CTI2").SingleOrDefault<Rate>(),
-                        UIC = session.QueryOver<UIC>().Where(x => x.Value == "40533").SingleOrDefault<UIC>(),
+                        UIC = session.QueryOver<UIC>().Where(x => x.Value == "41247").SingleOrDefault<UIC>(),
                         DutyStatus = session.QueryOver<DutyStatus>().Where(x => x.Value == "Active").SingleOrDefault<DutyStatus>(),
                         Command = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>(),
                         Department = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
-                                        .Departments.First(x => x.Value == "N0"),
+                                        .Departments.First(x => x.Value == "C20"),
                         Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
-                                        .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
+                                        .Departments.First(x => x.Value == "C20").Divisions.First(x => x.Value == "C22"),
 
 
                     };

@@ -38,7 +38,7 @@ namespace CommandCentral
         /// Returns the Value.
         /// </summary>
         /// <returns></returns>
-        public new virtual string ToString()
+        public override string ToString()
         {
             return Value;
         }

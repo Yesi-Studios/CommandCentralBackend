@@ -23,6 +23,8 @@ namespace CommandCentralHost.Editors
                 "Enter the number of an endpoint to enable/disable it or a blank line to cancel.".WriteLine();
                 "".WriteLine();
 
+                System.Windows.Forms.Clipboard.SetText(String.Join(", ", endpoints.Select(x => x.Key)));
+
                 //And then print them out.
                 List<string[]> lines = new List<string[]> { new[] { "#", "Name", "Is Active" } };
                 for (int x = 0; x < endpoints.Count; x++)

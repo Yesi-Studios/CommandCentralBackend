@@ -232,7 +232,8 @@ namespace CommandCentral.ClientAccess
             {
                 try
                 {
-                    Args = RawRequestBody.Deserialize<Dictionary<string, object>>();
+                    var dict = RawRequestBody.Deserialize<Dictionary<string, object>>();
+                    Args = new Dictionary<string, object>(dict, StringComparer.OrdinalIgnoreCase);
                 }
                 catch
                 {

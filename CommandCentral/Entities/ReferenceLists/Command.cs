@@ -41,7 +41,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// Returns the value (name) of this command.
         /// </summary>
         /// <returns></returns>
-        public new virtual string ToString()
+        public override string ToString()
         {
             return Value;
         }

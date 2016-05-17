@@ -1046,7 +1046,7 @@ namespace CommandCentral.Entities
                         Division = x.Division.Value
                     };
                 });
-            token.SetResult(results);
+            token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Rank", "Rate", "UIC", "Command", "Department", "Division" }});
         }
 
         [EndpointMethod(EndpointName = "AdvancedSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
@@ -1316,7 +1316,7 @@ namespace CommandCentral.Entities
                     return temp;
                 });
 
-            token.SetResult(result);
+            token.SetResult(new { Results = result });
         }
 
         #endregion
