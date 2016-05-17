@@ -95,6 +95,8 @@ namespace CommandCentral.ClientAccess.Service
             //Add the CORS headers to the request to allow the cross domain stuff.  We need to add this outside the try/catch block so that we can send responses to the client for an exception.
             Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
 
+            WebOperationContext.Current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
+
             try
             {
                 //Get the endpoint
@@ -103,14 +105,14 @@ namespace CommandCentral.ClientAccess.Service
                 {
                     token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                    return token.ConstructResponse();
+                    return token.ConstructResponseString();
                 }
 
                 if (!description.IsActive)
                 {
                     token.AddErrorMessage("The endpoint you requested is not currently available at this time.", ErrorTypes.Validation, System.Net.HttpStatusCode.ServiceUnavailable);
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                    return token.ConstructResponse();
+                    return token.ConstructResponseString();
                 }
 
                 //Create the NHibernate communication session that will be carried throughout this request.
@@ -126,7 +128,7 @@ namespace CommandCentral.ClientAccess.Service
                 if (token.HasError)
                 {
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                    return token.ConstructResponse();
+                    return token.ConstructResponseString();
                 }
 
                 //Get the apikey.
@@ -153,7 +155,7 @@ namespace CommandCentral.ClientAccess.Service
                 if (token.HasError)
                 {
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                    return token.ConstructResponse();
+                    return token.ConstructResponseString();
                 }
 
                 //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
@@ -170,7 +172,7 @@ namespace CommandCentral.ClientAccess.Service
                     if (token.HasError)
                     {
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                        return token.ConstructResponse();
+                        return token.ConstructResponseString();
                     }
 
                     //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
@@ -205,7 +207,7 @@ namespace CommandCentral.ClientAccess.Service
 
                 //Return the final response.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                return token.ConstructResponse();
+                return token.ConstructResponseString();
             }
             catch (Exception e)
             {
@@ -225,103 +227,8 @@ namespace CommandCentral.ClientAccess.Service
                 Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Critical);
 
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                return token.ConstructResponse();
+                return token.ConstructResponseString();
             }
-        }
-
-        /// <summary>
-        /// Returns documentation for a given endpoint in the form of a web page.
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <returns></returns>
-        public async Task<Stream> GetDocumentationForEndpoint(string endpoint)
-        {
-            //Add the CORS headers to this request.
-            Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
-
-            //Set the outgoing type as HTML
-            Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
-            WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
-
-            string result;
-
-            //Is endpoint not null or empty?
-            if (string.IsNullOrWhiteSpace(endpoint))
-            {
-                result = "The endpoint name can not be null or empty.";
-            }
-            else
-            {
-
-                //Alright, before we do anything, try to get the endpoint.  If this endpoint doesn't exist, then we can just stop here.
-                ServiceEndpoint endpointDescription;
-                if (!EndpointDescriptions.TryGetValue(endpoint, out endpointDescription))
-                {
-                    result = string.Format("The endpoint, '{0}', was not valid.  You can not request its documentation.  Try checking your spelling.", endpoint);
-                }
-                else
-                {
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    string templateName = "CommandCentral.Resources.Documentation.DocumentationTemplate.html";
-
-                    string templatePage;
-                    using (Stream stream = assembly.GetManifestResourceStream(templateName))
-                    {
-                        Debug.Assert(stream != null, "stream != null");
-                        using (StreamReader reader = new StreamReader(stream))
-                        {
-                            templatePage = await reader.ReadToEndAsync();
-                        }
-                    }
-
-                    result = "todo";
-
-                    
-                }
-
-            }
-
-            byte[] resultBytes = Encoding.UTF8.GetBytes(result);
-            return new MemoryStream(resultBytes);
-        }
-
-        /// <summary>
-        /// Returns documentation for all _endpointDescriptions.
-        /// </summary>
-        /// <returns></returns>
-        public async Task<Stream> GetAllDocumentation()
-        {
-            //Add the CORS headers to this request.
-            Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
-
-            //Set the outgoing type as HTML
-            Debug.Assert(WebOperationContext.Current != null, "WebOperationContext.Current != null");
-            WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
-
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            string templateName = "CommandCentral.Resources.Documentation.AllEndpointsTemplate.html";
-
-            string templatePage;
-            using (Stream stream = assembly.GetManifestResourceStream(templateName))
-            {
-                Debug.Assert(stream != null, "stream != null");
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    templatePage = await reader.ReadToEndAsync();
-                }
-            }
-
-            string endpointTemplate = @"<li class='list-group-item'><a href='./man/{0}'>{0}</a></li>";
-
-            string endpointBuild = "";
-
-            EndpointDescriptions.ToList().OrderBy(x => x.Key).ToList().ForEach(x =>
-            {
-                endpointBuild += string.Format(endpointTemplate, x.Key) + Environment.NewLine;
-            });
-
-            byte[] resultBytes = Encoding.UTF8.GetBytes(string.Format(templatePage, endpointBuild));
-            return new MemoryStream(resultBytes);
         }
 
         #endregion

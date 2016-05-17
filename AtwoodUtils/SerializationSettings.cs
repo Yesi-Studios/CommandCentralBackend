@@ -10,8 +10,8 @@ namespace AtwoodUtils
         {
             Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
             ContractResolver = new NHibernateContractResolver(),
-            PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-            ReferenceLoopHandling = ReferenceLoopHandling.Serialize
+            PreserveReferencesHandling = PreserveReferencesHandling.None,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
 
         public class NHibernateContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver

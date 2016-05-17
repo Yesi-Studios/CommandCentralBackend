@@ -67,7 +67,7 @@ namespace AtwoodUtils
 
         public static string Serialize(this object obj)
         {
-            return JsonConvert.SerializeObject(obj, Formatting.Indented, SerializationSettings.StandardSettings);
+            return JsonConvert.SerializeObject(obj, Formatting.None, SerializationSettings.StandardSettings);
         }
 
         public static T Deserialize<T>(this string json)

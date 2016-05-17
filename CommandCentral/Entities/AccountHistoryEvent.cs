@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
+using AtwoodUtils;
 
 namespace CommandCentral.Entities
 {
@@ -69,6 +70,19 @@ namespace CommandCentral.Entities
         /// The time at which this event occurred.
         /// </summary>
         public virtual DateTime EventTime { get; set; }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Returns the EventType @ Time
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "{0} @ {1}".FormatS(this.AccountHistoryEventType, this.EventTime);
+        }
 
         #endregion
 

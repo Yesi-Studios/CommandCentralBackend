@@ -21,21 +21,5 @@ namespace CommandCentral.ClientAccess.Service
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint);
 
-        /// <summary>
-        /// Returns documentation for a given endpoint.
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <returns></returns>
-        [OperationContract]
-        [WebGet(UriTemplate = "/man/{endpoint}", BodyStyle = WebMessageBodyStyle.Bare)]
-        Task<Stream> GetDocumentationForEndpoint(string endpoint);
-
-        /// <summary>
-        /// Returns documentation for all endpoints.
-        /// </summary>
-        /// <returns></returns>
-        [OperationContract]
-        [WebGet(UriTemplate = "/man", BodyStyle = WebMessageBodyStyle.Bare)]
-        Task<Stream> GetAllDocumentation();
     }
 }

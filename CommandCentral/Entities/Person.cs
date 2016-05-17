@@ -931,15 +931,18 @@ namespace CommandCentral.Entities
             //Now let's load the person and then set any fields the client isn't allowed to see to null.
             //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
-            NHibernate.NHibernateUtil.Initialize(person);
-            token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person);
+            //NHibernate.NHibernateUtil.Initialize(person);
+            //token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person);
 
             //Now we need to evict this copy of the person from the session so that our changes to it don't reflect in the database.  That would be awkward.
-            token.CommunicationSession.Evict(person);
+            //token.CommunicationSession.Evict(person);
+
+            Person personReturn = null;
 
             //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
             if (person != null && personId != token.AuthenticationSession.Person.Id)
             {
+                personReturn = new Person();
 
                 var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
 
@@ -957,14 +960,15 @@ namespace CommandCentral.Entities
                 //Set the nulls if they're null.
                 foreach (var propertyName in allPropertyNames)
                 {
-                    if (!returnableFields.Contains(propertyName))
-                        personMetadata.SetPropertyValue(person, propertyName, null, NHibernate.EntityMode.Poco);
+                    personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
                 }
             }
+            else
+            {
+                personReturn = person;
+            }
 
-            Person test = person;
-
-            token.SetResult(test);
+            token.SetResult(personReturn);
         }
 
         /// <summary>

@@ -144,7 +144,7 @@ namespace CommandCentral.ClientAccess
         {
             get
             {
-                return ConstructResponse();
+                return ConstructResponseString();
             }
         }
 
@@ -291,7 +291,7 @@ namespace CommandCentral.ClientAccess
         /// Returns the JSON string of a return container than contains the response that should be sent back to the client for this object.
         /// </summary>
         /// <returns></returns>
-        public virtual string ConstructResponse()
+        public virtual string ConstructResponseString()
         {
             return new ReturnContainer
             {
@@ -301,6 +301,22 @@ namespace CommandCentral.ClientAccess
                 ReturnValue = Result,
                 StatusCode = StatusCode
             }.Serialize();
+        }
+
+        /// <summary>
+        /// Returns the return container that should be returned to the client.
+        /// </summary>
+        /// <returns></returns>
+        public virtual ReturnContainer ContructReturnContainer()
+        {
+            return new ReturnContainer
+            {
+                ErrorMessages = ErrorMessages.ToList(),
+                ErrorType = ErrorType,
+                HasError = HasError,
+                ReturnValue = Result,
+                StatusCode = StatusCode
+            };
         }
 
         #endregion
