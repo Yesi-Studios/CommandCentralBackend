@@ -84,12 +84,10 @@
     <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
-    <Compile Include="Entities\Correspondence.cs" />
     <Compile Include="Entities\Errors.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
     <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
-    <Compile Include="Entities\ReferenceLists\CorrespondenceStatus.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />

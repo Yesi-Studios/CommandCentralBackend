@@ -1335,9 +1335,6 @@ namespace CommandCentral.Entities
         /// </summary>
         public class PersonMapping : ClassMap<Person>
         {
-            //TEST
-
-
             /// <summary>
             /// Maps a person to the database.
             /// </summary>
