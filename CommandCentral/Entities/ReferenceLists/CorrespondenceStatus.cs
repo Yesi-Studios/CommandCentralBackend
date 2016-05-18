@@ -16,7 +16,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Value).Not.Nullable().Length(50).Unique();
-                Map(x => x.Description).Not.Nullable().Length(50);
+                Map(x => x.Description).Nullable().Length(50);
 
                 Cache.ReadWrite();
             }

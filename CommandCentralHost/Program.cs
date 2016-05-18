@@ -126,6 +126,7 @@ namespace CommandCentralHost
         [STAThread]
         private static void Main()
         {
+
             try
             {
                 Console.WindowWidth = 200;
