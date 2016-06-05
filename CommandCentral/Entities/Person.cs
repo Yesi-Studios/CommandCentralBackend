@@ -1388,6 +1388,9 @@ namespace CommandCentral.Entities
             }
         }
 
+        /// <summary>
+        /// Validates a person object.
+        /// </summary>
         public class PersonValidator : AbstractValidator<Person>
         {
 

@@ -29,21 +29,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The carrier of this phone number, eg.  Verizon, etc.
         /// </summary>
-        public virtual string Carrier { get; set; }
-
-        /// <summary>
-        /// The carrier's SMS email address.
-        /// </summary>
-        public virtual string CarrierMailAddress
-        {
-            get
-            {
-                if (Carrier == null)
-                    return null;
-                
-                return TextMessageHelper.PhoneCarrierMailDomainMappings[Carrier];
-            }
-        }
+        public virtual PhoneCarrier Carrier { get; set; }
 
         /// <summary>
         /// Indicates whether or not the person who owns this phone number wants any contact to occur using it.
@@ -59,6 +45,12 @@ namespace CommandCentral.Entities
         /// The type of this phone. eg. Cell, Home, Work
         /// </summary>
         public virtual PhoneNumberType PhoneType { get; set; }
+
+        #endregion
+
+        #region Helper Methods
+
+        //public virtual System.Net.Mail.mail
 
         #endregion
 
@@ -89,9 +81,9 @@ namespace CommandCentral.Entities
 
                 References(x => x.Owner);
                 References(x => x.PhoneType);
+                References(x => x.Carrier);
 
                 Map(x => x.Number).Not.Nullable().Length(15);
-                Map(x => x.Carrier).Nullable().Length(20);
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
 

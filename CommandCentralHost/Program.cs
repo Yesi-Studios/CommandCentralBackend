@@ -93,7 +93,7 @@ namespace CommandCentralHost
             new DialogueOption
             {
                 OptionText = "Manage Versions",
-                Method = VersionEditor.EditVersions,
+                 Method = VersionEditor.EditVersions,
                 DisplayCriteria = () => true
             },
             new DialogueOption
@@ -126,7 +126,6 @@ namespace CommandCentralHost
         [STAThread]
         private static void Main()
         {
-
             try
             {
                 Console.WindowWidth = 200;
