@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using System.IO;
+using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.ServiceModel.Web;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace AtwoodUtils
 {
@@ -14,17 +16,17 @@ namespace AtwoodUtils
         //I have no idea what is going on down here... But it works.  Thank you Stack Overflow
         public static double HaversineDistance(LatitudeAndLongitude pos1, LatitudeAndLongitude pos2, DistanceUnit unit)
         {
-            double R = (unit == DistanceUnit.Miles) ? 3960 : 6371;
+            double r = (unit == DistanceUnit.Miles) ? 3960 : 6371;
             var lat = ConvertDegreesToRadians((pos2.Latitude - pos1.Latitude));
             var lng = ConvertDegreesToRadians((pos2.Longitude - pos1.Longitude));
             var h1 = Math.Sin(lat / 2) * Math.Sin(lat / 2) +
                           Math.Cos(ConvertDegreesToRadians(pos1.Latitude)) * Math.Cos(ConvertDegreesToRadians(pos2.Latitude)) *
                           Math.Sin(lng / 2) * Math.Sin(lng / 2);
             var h2 = 2 * Math.Asin(Math.Min(1, Math.Sqrt(h1)));
-            return R * h2;
+            return r * h2;
         }
 
-        public enum DistanceUnit { Miles, Kilometers };
+        public enum DistanceUnit { Miles, Kilometers }
 
         public struct LatitudeAndLongitude
         {
@@ -32,12 +34,18 @@ namespace AtwoodUtils
             public double Longitude { get; set; }
         }
 
-        public static double ConvertDegreesToRadians(double degrees)
+        private static double ConvertDegreesToRadians(double degrees)
         {
             double radians = (Math.PI / 180) * degrees;
             return (radians);
         }
 
+        /// <summary>
+        /// Determines whether or not a type is assignable to a generic type.
+        /// </summary>
+        /// <param name="givenType"></param>
+        /// <param name="genericType"></param>
+        /// <returns></returns>
         public static bool IsAssignableToGenericType(Type givenType, Type genericType)
         {
             var interfaceTypes = givenType.GetInterfaces();
@@ -57,30 +65,32 @@ namespace AtwoodUtils
             return IsAssignableToGenericType(baseType, genericType);
         }
 
-        public static Dictionary<string, object> ConvertPostDataToDict(Stream data)
+        /// <summary>
+        /// Gets all types that have a attribute, T.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
+        static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly) where T : Attribute
         {
-            try
+            foreach (Type type in assembly.GetTypes())
             {
-                Dictionary<string, object> args = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                using (StreamReader reader = new StreamReader(data))
+                if (type.GetCustomAttributes(typeof(T), true).Length > 0)
                 {
-                    string json = reader.ReadToEnd();
-
-                    if (string.IsNullOrEmpty(json))
-                        return new Dictionary<string, object>();
-
-                    Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(json).AsEnumerable().ToList().ForEach(x =>
-                    {
-                        args.Add(x.Key.ToLower(), x.Value);
-                    });
-
+                    yield return type;
                 }
-                return args;
             }
-            catch (Exception e)
-            {
-                throw e;
-            }
+        }
+
+        /// <summary>
+        /// Reads all text from a stream.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string ConvertStreamToString(Stream data)
+        {
+            using (StreamReader reader = new StreamReader(data))
+                return reader.ReadToEnd();
         }
 
         /// <summary>
@@ -88,7 +98,7 @@ namespace AtwoodUtils
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        public static bool IsValidJSON(string json)
+        public static bool IsValidJson(string json)
         {
             json = json.Trim();
 
@@ -96,7 +106,12 @@ namespace AtwoodUtils
         }
 
         
-
+        /// <summary>
+        /// Pads elements in a nice grid.
+        /// </summary>
+        /// <param name="lines"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
         public static string PadElementsInLines(List<string[]> lines, int padding = 1)
         {
 
@@ -127,64 +142,7 @@ namespace AtwoodUtils
 
 
         }
-
-        public static string GetAuthTokenFromArgs(Dictionary<string, object> args)
-        {
-            try
-            {
-                if (!args.ContainsKey("authenticationtoken"))
-                    return null;
-
-                return args["authenticationtoken"].ToString();
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static string GetOrderByFromArgs(Dictionary<string, object> dict)
-        {
-            try
-            {
-                if (!dict.ContainsKey("orderby"))
-                    return null;
-                return dict["orderby"].ToString();
-            }
-            catch
-            {
-                
-                throw;
-            }
-        }
-
-        public static int GetLimitFromArgs(Dictionary<string, object> dict, int returnLimit)
-        {
-            try
-            {
-                if (!dict.ContainsKey("limit"))
-                    return returnLimit;
-
-                int limit = -1;
-                if (!Int32.TryParse(dict["limit"].ToString(), out limit) || limit < 0 || limit > returnLimit)
-                    return returnLimit;
-
-                return limit;
-            }
-            catch
-            {
-                
-                throw;
-            }
-        }
-
-        public static string GetAPIKeyFromArgs(Dictionary<string, object> args)
-        {
-            if (!args.ContainsKey("apikey"))
-                return null;
-
-            return args["apikey"].ToString();
-        }
+        
 
         /// <summary>
         /// Gets the calling method name.
@@ -196,7 +154,11 @@ namespace AtwoodUtils
             return name;
         }
 
-        public static void AddCORSHeadersToResponse(System.ServiceModel.Web.WebOperationContext current)
+        /// <summary>
+        /// Adds the CORS headers to the outgoing response to enable cross domain requests.
+        /// </summary>
+        /// <param name="current"></param>
+        public static void AddCorsHeadersToResponse(WebOperationContext current)
         {
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST");
@@ -205,46 +167,19 @@ namespace AtwoodUtils
 
         public static string BuildJoinStatement(IEnumerable<string> tableNames, string primaryKeyName)
         {
-            if (tableNames == null || tableNames.Count() == 0)
+            var names = tableNames as IList<string> ?? tableNames.ToList();
+            if (tableNames == null || !names.Any())
                 throw new ArgumentException("The table names argument may not be empty or null.");
 
             string str = "";
-            for (int x = 0; x < tableNames.Count(); x++)
+            for (int x = 0; x < names.Count; x++)
             {
                 if (x == 0)
-                    str += string.Format("`{0}` ", tableNames.ElementAt(x));
+                    str += string.Format("`{0}` ", names.ElementAt(x));
                 else
-                    str += string.Format("JOIN `{0}` USING (`{1}`) ", tableNames.ElementAt(x), primaryKeyName);
+                    str += string.Format("JOIN `{0}` USING (`{1}`) ", names.ElementAt(x), primaryKeyName);
             }
             return str;
-        }
-
-        public static dynamic GetAddressFromGoogleAPIResponse(Newtonsoft.Json.Linq.JObject obj)
-        {
-            var results = (Newtonsoft.Json.Linq.JArray)obj.SelectToken("results");
-
-            if (results.Count == 0)
-                return null;
-
-            var result = results.First;
-            var addressComponents = result.SelectToken("address_components");
-            var lat = result.SelectToken("geometry").SelectToken("location").Value<double>("lat");
-            var lng = result.SelectToken("geometry").SelectToken("location").Value<double>("lng");
-
-            var address = new 
-            { 
-                StreetNumber = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("street_number")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject( new { long_name = (string)null })).Value<string>("long_name"),
-                Route = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("route")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                City = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("locality")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                County = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("administrative_area_level_2")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                State = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("administrative_area_level_1")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                Country = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("country")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                ZipCode = (addressComponents.Where(x => ((Newtonsoft.Json.Linq.JArray)x.SelectToken("types")).ToObject<List<string>>().Contains("postal_code")).FirstOrDefault() ?? Newtonsoft.Json.Linq.JToken.FromObject(new { long_name = (string)null })).Value<string>("long_name"),
-                Latitude = lat,
-                Longitude = lng
-            };
-
-            return address;
         }
 
         /// <summary>
@@ -257,17 +192,12 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static bool IsPortAvailable(int port)
         {
-            try
-            {
-                System.Net.NetworkInformation.IPGlobalProperties ipGlobalProperties = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
+            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
 
-                return !ipGlobalProperties.GetActiveTcpConnections().ToList().Exists(x => x.LocalEndPoint.Port == port) 
-                    && !ipGlobalProperties.GetActiveTcpListeners().ToList().Exists(x => x.Port == port);
-            }
-            catch
-            {
-                throw;
-            }
+            return !ipGlobalProperties.GetActiveTcpConnections().ToList().Exists(x => x.LocalEndPoint.Port == port)
+                && !ipGlobalProperties.GetActiveTcpListeners().ToList().Exists(x => x.Port == port);
+            
+            
         }
 
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AtwoodUtils
+﻿namespace AtwoodUtils
 {
     /// <summary>
     /// Describes a single variance between two values and the field name they came from.
@@ -30,7 +24,7 @@ namespace AtwoodUtils
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("The field '{0}' was changed from '{1}' to '{2}'.", OldValue, NewValue);
+            return string.Format("The field '{0}' was changed from '{1}' to '{2}'.", PropertyName, OldValue, NewValue);
         }
 
     }
