@@ -3,19 +3,19 @@
 namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
-    /// Describes a single Rate.
+    /// Describes a single designation.  This is the job title for civilians, the rate for enlisted and the designator for officers.
     /// </summary>
-    public class Rate : ReferenceListItemBase
+    public class Designation : ReferenceListItemBase
     {
         /// <summary>
-        /// Maps a Rate to the database.
+        /// Maps a Designation to the database.
         /// </summary>
-        public class RateMapping : ClassMap<Rate>
+        public class DesignationMapping : ClassMap<Designation>
         {
             /// <summary>
-            /// Maps a Rate to the database.
+            /// Maps a Designation to the database.
             /// </summary>
-            public RateMapping()
+            public DesignationMapping()
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
@@ -25,6 +25,5 @@ namespace CommandCentral.Entities.ReferenceLists
                 Cache.ReadWrite();
             }
         }
-
     }
 }

@@ -29,7 +29,7 @@ namespace CommandCentral.DataAccess
         /// </summary>
         static NHibernateHelper()
         {
-           /*Configuration configuration = Fluently.Configure().Database(
+           Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test_db")
                         .Username("xanneth")
@@ -39,7 +39,7 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
+                .BuildConfiguration();
 
             /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
@@ -64,7 +64,7 @@ namespace CommandCentral.DataAccess
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();*/
 
-            Configuration configuration = Fluently.Configure().Database(
+            /*Configuration configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database("test")
                         .Username("admin")
@@ -73,7 +73,7 @@ namespace CommandCentral.DataAccess
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
+                .BuildConfiguration();*/
 
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);

@@ -42,9 +42,9 @@ namespace CommandCentral.Entities
         public virtual bool IsPreferred { get; set; }
 
         /// <summary>
-        /// The type of this phone. eg. Cell, Home, Work
+        /// The type of this phone. eg. Mobile, Home, Work
         /// </summary>
-        public virtual PhoneNumberType PhoneType { get; set; }
+        public virtual PhoneNumberTypes PhoneType { get; set; }
 
         #endregion
 
@@ -80,12 +80,12 @@ namespace CommandCentral.Entities
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Owner);
-                References(x => x.PhoneType);
                 References(x => x.Carrier);
 
                 Map(x => x.Number).Not.Nullable().Length(15);
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
+                Map(x => x.PhoneType).Not.Nullable();
 
 
             }

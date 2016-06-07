@@ -285,15 +285,23 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            Dictionary<Guid, ReferenceLists.MusterStatus> musterSubmissions = new Dictionary<Guid, ReferenceLists.MusterStatus>();
+            Dictionary<Guid, string> musterSubmissions = new Dictionary<Guid, string>();
             //When we try to parse the JSON from the request, we'll do it in a try catch because there's no convenient, performant TryParse implementation for this.
             try
             {
-                musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, ReferenceLists.MusterStatus>>();
+                musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>();
             }
             catch (Exception e)
             {
                 token.AddErrorMessage("There was an error while trying to format your 'mustersubmissions' argument.  It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Validate the muster statuses
+            MusterStatuses tempStatus;
+            if (musterSubmissions.Values.Any(x => !Enum.TryParse<MusterStatuses>(x, out tempStatus)))
+            {
+                token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -328,12 +336,12 @@ namespace CommandCentral.Entities
                     Command = person.Command.Value,
                     Department = person.Department.Value,
                     Division = person.Department.Value,
-                    DutyStatus = person.DutyStatus.Value,
+                    DutyStatus = person.DutyStatus.ToString(),
                     MusterDayOfYear = musterDayOfYear,
                     Musteree = person,
                     Musterer= token.AuthenticationSession.Person,
-                    MusterStatus = musterSubmissions[person.Id].Value,
-                    Rank = person.Rank.Value,
+                    MusterStatus = musterSubmissions[person.Id].ToString(),
+                    Rank = person.Designation.Value,
                     SubmitTime = token.CallTime
                 });
             }

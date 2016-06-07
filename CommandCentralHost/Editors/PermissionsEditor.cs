@@ -462,7 +462,7 @@ namespace CommandCentralHost.Editors
                                 List<string[]> lines = new List<string[]> { new[] { "#", "Rate", "First Name", "Last Name" } };
                                 for (int x = 0; x < persons.Count; x++)
                                 {
-                                    lines.Add(new[] { x.ToString(), persons[x].Rate.Value, persons[x].FirstName, persons[x].LastName });
+                                    lines.Add(new[] { x.ToString(), persons[x].Designation.Value, persons[x].FirstName, persons[x].LastName });
                                 }
                                 DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
 

@@ -56,7 +56,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's sex.
         /// </summary>
-        public virtual Sex Sex { get; set; }
+        public virtual Sexes Sex { get; set; }
 
         /// <summary>
         /// The person's remarks.  This is the primary comments section
@@ -79,14 +79,14 @@ namespace CommandCentral.Entities
         public virtual Suffix Suffix { get; set; }
 
         /// <summary>
-        /// The person's rank (e5, etc.)
+        /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
         /// </summary>
-        public virtual Rank Rank { get; set; }
+        public virtual Paygrades Paygrade { get; set; }
 
         /// <summary>
-        /// The person's rate (CTI2, CTR1)
+        /// The person's Designation (CTI2, CTR1, 1114, Job title)
         /// </summary>
-        public virtual Rate Rate { get; set; }
+        public virtual Designation Designation { get; set; }
 
         /// <summary>
         /// The person's division
@@ -145,7 +145,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's duty status
         /// </summary>
-        public virtual DutyStatus DutyStatus { get; set; }
+        public virtual DutyStatuses DutyStatus { get; set; }
 
         /// <summary>
         /// The person's UIC
@@ -254,7 +254,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("{0} {1}, {2} {3}", Rate == null ? "" : Rate.Value, LastName, FirstName, MiddleName);
+            return string.Format("{0} {1}, {2} {3}", Designation == null ? "" : Designation.Value, LastName, FirstName, MiddleName);
         }
 
         #endregion
@@ -976,7 +976,7 @@ namespace CommandCentral.Entities
         /// <para />
         /// Conducts a simple search.  Simple search uses a list of search terms and returns all those rows in which each term appears at least once in each of the search fields.
         /// <para/>
-        /// In this case those fields are FirstName, LastName, MiddleName, UIC, Rate, Rank, Command, Department and Division.
+        /// In this case those fields are FirstName, LastName, MiddleName, UIC, Paygrade, Designation, Command, Department and Division.
         /// <para />
         /// Client Parameters: <para />
         ///     searchterm - A single string in which the search terms are broken up by a space.  Intended to be the exact input as given by the user.  This string will be split into an array of search terms by all whitespace.  The search terms are parameterized and no scrubbing of the user input is necessary.
@@ -1001,11 +1001,11 @@ namespace CommandCentral.Entities
             }
 
             //And then make sure the client is allowed to search in these fields and return these fields.
-            if (!token.AuthenticationSession.Person.CanSearchFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division") ||
-                !token.AuthenticationSession.Person.CanReturnFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division"))
+            if (!token.AuthenticationSession.Person.CanSearchFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division") ||
+                !token.AuthenticationSession.Person.CanReturnFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division"))
             {
                 token.AddErrorMessage("In order to conduct a simple search you must be able to both search and return the following fields: {0}"
-                    .FormatS(String.Join(",", "LastName", "MiddleName", "FirstName", "UIC", "Rate", "Rank", "Command", "Department", "Division")), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                    .FormatS(String.Join(",", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division")), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -1028,8 +1028,8 @@ namespace CommandCentral.Entities
                     .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Rate.Id).In(QueryOver.Of<Rate>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                    .Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                    .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -1045,15 +1045,15 @@ namespace CommandCentral.Entities
                         x.LastName,
                         x.MiddleName,
                         x.FirstName,
-                        Rank = x.Rank.Value,
-                        Rate = x.Rate.Value,
+                        Paygrade = x.Paygrade,
+                        Designation = x.Designation.Value,
                         UIC = x.UIC.Value,
                         Command = x.Command.Value,
                         Department = x.Department.Value,
                         Division = x.Division.Value
                     };
                 });
-            token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Rank", "Rate", "UIC", "Command", "Department", "Division" }});
+            token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }});
         }
 
         [EndpointMethod(EndpointName = "AdvancedSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
@@ -1121,19 +1121,11 @@ namespace CommandCentral.Entities
                     //For now we're going to provide options for every property and a default.
                     switch (filter.Key)
                     {
-                        case "Rank":
+                        case "Designation":
                             {
                                 var disjunction = Restrictions.Disjunction();
                                 foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Rank.Id).In(QueryOver.Of<Rank>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Rate":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Rate.Id).In(QueryOver.Of<Rate>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
                                 queryOver = queryOver.Where(disjunction);
                                 break;
                             }
@@ -1190,22 +1182,6 @@ namespace CommandCentral.Entities
                                 var disjunction = Restrictions.Disjunction();
                                 foreach (var term in searchTerms)
                                     disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Suffix.Id).In(QueryOver.Of<Suffix>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "DutyStatus":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Sex":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
                                 queryOver = queryOver.Where(disjunction);
                                 break;
                             }
@@ -1342,19 +1318,19 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Sex).Nullable().LazyLoad();
                 References(x => x.Ethnicity).Nullable().LazyLoad();
                 References(x => x.ReligiousPreference).Nullable().LazyLoad();
                 References(x => x.Suffix).Nullable().LazyLoad();
-                References(x => x.Rank).Not.Nullable().LazyLoad();
-                References(x => x.Rate).Not.Nullable().LazyLoad();
+                References(x => x.Designation).Not.Nullable().LazyLoad();
                 References(x => x.Division).Not.Nullable().LazyLoad();
                 References(x => x.Department).Not.Nullable().LazyLoad();
                 References(x => x.Command).Not.Nullable().LazyLoad();
                 References(x => x.Billet).Nullable().LazyLoad();
-                References(x => x.DutyStatus).Not.Nullable().LazyLoad();
                 References(x => x.UIC).Not.Nullable().LazyLoad();
 
+                Map(x => x.DutyStatus).Not.Nullable();
+                Map(x => x.Paygrade).Not.Nullable();
+                Map(x => x.Sex).Not.Nullable();
                 Map(x => x.LastName).Not.Nullable().Length(40);
                 Map(x => x.FirstName).Not.Nullable().Length(40).LazyLoad();
                 Map(x => x.MiddleName).Nullable().Length(40).LazyLoad();

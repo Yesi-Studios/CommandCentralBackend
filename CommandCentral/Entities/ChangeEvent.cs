@@ -21,7 +21,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The level of importance this change has.
         /// </summary>
-        public virtual ChangeEventLevel EventLevel { get; set; }
+        public virtual ChangeEventLevels EventLevel { get; set; }
 
         /// <summary>
         /// The name of this change.
@@ -62,11 +62,10 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.EventLevel);
-
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.TriggerModel).Not.Nullable().Length(20);
                 Map(x => x.Description).Nullable().Length(40);
+                Map(x => x.EventLevel).Not.Nullable();
 
                 HasMany(x => x.TriggerFields)
                     .KeyColumn("ChangeEventID")

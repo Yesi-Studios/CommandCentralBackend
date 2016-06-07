@@ -88,10 +88,10 @@
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
     <Compile Include="Entities\PhoneCarrier.cs" />
-    <Compile Include="Entities\ReferenceLists\ChangeEventLevel.cs" />
-    <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
+    <Compile Include="Enums\ChangeEventLevelsEnum.cs" />
+    <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
-    <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
+    <Compile Include="Enums\MusterStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Entities\Billet.cs" />
@@ -109,10 +109,10 @@
     <Compile Include="EmailHelper.cs" />
     <Compile Include="Entities\ReferenceLists\NEC.cs" />
     <Compile Include="Entities\NewsItem.cs" />
-    <Compile Include="Entities\ReferenceLists\PhoneNumberType.cs" />
-    <Compile Include="Entities\ReferenceLists\Rank.cs" />
+    <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
+    <Compile Include="Enums\PaygradesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
-    <Compile Include="Entities\ReferenceLists\Sex.cs" />
+    <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Suffix.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\VersionInformation.cs" />

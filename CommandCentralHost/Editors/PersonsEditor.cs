@@ -39,75 +39,19 @@ namespace CommandCentralHost.Editors
                         DateOfBirth = new DateTime(1992, 04, 24),
                         DateOfArrival = new DateTime(2013, 08, 23),
                         EAOS = new DateTime(2018, 1, 27),
-                        Rank = session.QueryOver<Rank>().Where(x => x.Value == "E5").SingleOrDefault<Rank>(),
-                        Rate = session.QueryOver<Rate>().Where(x => x.Value == "CTI2").SingleOrDefault<Rate>(),
+                        Paygrade = CommandCentral.Paygrades.E5,
+                        Designation = session.QueryOver<Designation>().Where(x => x.Value == "CTI").SingleOrDefault<Designation>(),
                         UIC = session.QueryOver<UIC>().Where(x => x.Value == "40533").SingleOrDefault<UIC>(),
-                        DutyStatus = session.QueryOver<DutyStatus>().Where(x => x.Value == "Active").SingleOrDefault<DutyStatus>(),
+                        DutyStatus = CommandCentral.DutyStatuses.Active,
                         Command = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>(),
                         Department = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
                                         .Departments.First(x => x.Value == "N0"),
                         Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
                                         .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
-
-
                     };
                     person.EmailAddresses.First().Owner = person;
 
                     session.SaveOrUpdate(person);
-                    
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-        }
-
-        internal static void CreateMcLean()
-        {
-            using (var session = NHibernateHelper.CreateSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-
-                    var person = new Person()
-                    {
-                        LastName = "McLean",
-                        FirstName = "Angus",
-                        SSN = "888888888",
-                        IsClaimed = false,
-                        EmailAddresses = new List<EmailAddress>()
-                        {
-                            new EmailAddress
-                            {
-                                Address = "angus.l.mclean5@mail.mil",
-                                IsContactable = true,
-                                IsPreferred = true
-                            }
-                        },
-                        DateOfBirth = new DateTime(1992, 04, 24),
-                        DateOfArrival = new DateTime(2013, 08, 23),
-                        EAOS = new DateTime(2018, 1, 27),
-                        Rank = session.QueryOver<Rank>().Where(x => x.Value == "E5").SingleOrDefault<Rank>(),
-                        Rate = session.QueryOver<Rate>().Where(x => x.Value == "CTI2").SingleOrDefault<Rate>(),
-                        UIC = session.QueryOver<UIC>().Where(x => x.Value == "41247").SingleOrDefault<UIC>(),
-                        DutyStatus = session.QueryOver<DutyStatus>().Where(x => x.Value == "Active").SingleOrDefault<DutyStatus>(),
-                        Command = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>(),
-                        Department = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
-                                        .Departments.First(x => x.Value == "C20"),
-                        Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
-                                        .Departments.First(x => x.Value == "C20").Divisions.First(x => x.Value == "C22"),
-
-
-                    };
-                    person.EmailAddresses.First().Owner = person;
-
-                    session.SaveOrUpdate(person);
-
 
                     transaction.Commit();
                 }
