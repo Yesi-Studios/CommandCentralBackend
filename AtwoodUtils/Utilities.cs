@@ -94,6 +94,19 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// A null safe method for getting an object's hashcode.  Returns 0 if the object is null.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static int GetSafeHashCode(object obj)
+        {
+            if (obj == null)
+                return 0;
+
+            return obj.GetHashCode();
+        }
+
+        /// <summary>
         /// Determines whether or not a given string starts and ends with either {} or [].
         /// </summary>
         /// <param name="json"></param>

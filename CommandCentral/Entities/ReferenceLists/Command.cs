@@ -46,6 +46,41 @@ namespace CommandCentral.Entities.ReferenceLists
             return Value;
         }
 
+        /// <summary>
+        /// Determines if an object is equal to this object.  wtf do you think equals does?
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Command))
+                return false;
+
+            var other = (Command)obj;
+            if (other == null)
+                return false;
+
+            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
+        }
+
+        /// <summary>
+        /// Gets the hashcode and ignores any dependencies.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + (String.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());
+                hash = hash * 23 + (String.IsNullOrEmpty(Description) ? "".GetHashCode() : Description.GetHashCode());
+
+                return hash;
+            }
+        }
+
         #endregion
 
         #region Client Access

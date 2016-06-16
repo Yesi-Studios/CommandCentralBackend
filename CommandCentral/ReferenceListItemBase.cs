@@ -43,6 +43,40 @@ namespace CommandCentral
             return Value;
         }
 
+        /// <summary>
+        /// Compares this reference list to another reference list.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+
+            if (obj as ReferenceListItemBase == null)
+                return false;
+
+            var other = (ReferenceListItemBase)obj;
+
+            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
+        }
+
+        /// <summary>
+        /// Gets the hashcode of this object. Seeds are 17 and 23
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + (string.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());
+                hash = hash * 23 + (string.IsNullOrEmpty(Description) ? "".GetHashCode() : Description.GetHashCode());
+
+                return hash;
+            }
+        }
+
         #endregion
 
         #region Helper Methods

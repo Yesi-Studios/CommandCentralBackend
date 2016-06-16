@@ -968,7 +968,7 @@ namespace CommandCentral.Entities
                 personReturn = person;
             }
 
-            token.SetResult(personReturn);
+            token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = new List<string>() { "FirstName", "LastName" }, ReturnableFields = new List<string>() { "FirstName", "LastName" } });
         }
 
         /// <summary>
@@ -1056,6 +1056,18 @@ namespace CommandCentral.Entities
             token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }});
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Conducts an advanced search.  Advanced search uses a series of key/value pairs where the key is a property to be searched and the value is a string of text which make up the search terms in
+        /// a simple search across the property.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     filters - The properties to search and the values to search for.
+        ///     returnfields - The fields the client would like returned.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [EndpointMethod(EndpointName = "AdvancedSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_AdvancedSearchPersons(MessageToken token)
         {
@@ -1298,8 +1310,137 @@ namespace CommandCentral.Entities
                     temp.Add("Id", personMetadata.GetIdentifier(x, NHibernate.EntityMode.Poco).ToString());
                     return temp;
                 });
-
+            
             token.SetResult(new { Results = result });
+        }
+
+        #endregion
+
+        #region Update
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Given a person, updates the person assuming the person is allowed to edit the properties that have changed.  Additionally, a lock must be owned on the person by the client.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     person - a properly formatted JSON person to be updated.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "UpdatePerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_UpdatePerson(MessageToken token)
+        {
+
+            //First make sure we have a session.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to edit a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Now make sure we have permission to edit users.
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.EditPerson))
+            {
+                token.AddErrorMessage("You must have permission to edit a person in order to edit a person. lol.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Ok, now we need to find the person the client sent us and try to parse it into a person.
+            if (!token.Args.ContainsKey("person"))
+            {
+                token.AddErrorMessage("In order to update a person, you must send a person... ", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Try the parse
+            Person personFromClient;
+            try
+            {
+                personFromClient = token.Args["person"].CastJToken<Person>();
+
+                if (personFromClient == null)
+                {
+                    token.AddErrorMessage("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+            }
+            catch
+            {
+                token.AddErrorMessage("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok no we have a person! First thing to do, before allowing any update, is to validate the person.
+            var results = new PersonValidator().Validate(personFromClient);
+
+            //If there are any errors with the validation, let's throw those back to the client.
+            if (results.Errors.Any())
+            {
+                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
+            ProfileLock profileLock = token.CommunicationSession.QueryOver<ProfileLock>()
+                                        .Where(x => x.LockedPerson.Id == personFromClient.Id)
+                                        .SingleOrDefault();
+
+            //If we got no profile lock, then bail
+            if (profileLock == null)
+            {
+                token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
+            if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
+            {
+                token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
+            Person personFromDB = token.CommunicationSession.Get<Person>(personFromClient.Id);
+
+            //Did we get a person?  If not, the person the client gave us is bullshit.
+            if (personFromDB == null)
+            {
+                token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok, now let's compare the person in the DB to the person the client gave us.  We are also going to take only those variances that exist for fields the client is allowed to view.
+            //This is because fields the client wasn't allowed to see will appear as "null" and thus appear as though they were changed.
+            var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
+            var variances = personFromDB.DetailedCompare(personFromClient).Where(x => returnableFields.Contains(x.PropertyName));
+
+            //Now let's see if the client is allowed to edit the fields he/she tried to edit.
+            var editableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.EditableFields)).ToList();
+            var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
+            if (unauthorizedEdits.Any())
+            {
+                token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
+            token.CommunicationSession.Update(personFromClient);
+            
+            //Now that's done, let's log what we changed.
+            Change.LogChanges(variances.Select(x =>
+                new Change
+                {
+                    Editor = token.AuthenticationSession.Person,
+                    ObjectId = personFromClient.Id,
+                    ObjectName = "Person",
+                    Remarks = "Edit",
+                    Time = token.CallTime,
+                    Variance = x
+                }));
+
+            //And then we're done!
+            token.SetResult("Success");
         }
 
         #endregion
@@ -1321,12 +1462,12 @@ namespace CommandCentral.Entities
                 References(x => x.Ethnicity).Nullable().LazyLoad();
                 References(x => x.ReligiousPreference).Nullable().LazyLoad();
                 References(x => x.Suffix).Nullable().LazyLoad();
-                References(x => x.Designation).Not.Nullable().LazyLoad();
-                References(x => x.Division).Not.Nullable().LazyLoad();
-                References(x => x.Department).Not.Nullable().LazyLoad();
-                References(x => x.Command).Not.Nullable().LazyLoad();
+                References(x => x.Designation).Nullable().LazyLoad();
+                References(x => x.Division).Nullable().LazyLoad();
+                References(x => x.Department).Nullable().LazyLoad();
+                References(x => x.Command).Nullable().LazyLoad();
                 References(x => x.Billet).Nullable().LazyLoad();
-                References(x => x.UIC).Not.Nullable().LazyLoad();
+                References(x => x.UIC).Nullable().LazyLoad();
 
                 Map(x => x.DutyStatus).Not.Nullable();
                 Map(x => x.Paygrade).Not.Nullable();
@@ -1369,6 +1510,131 @@ namespace CommandCentral.Entities
         /// </summary>
         public class PersonValidator : AbstractValidator<Person>
         {
+            public PersonValidator()
+            {
+                RuleFor(x => x.Id).NotEmpty();
+                RuleFor(x => x.LastName).NotEmpty().Length(40)
+                    .WithMessage("The last name must not be left blank and must not exceed 40 characters.");
+                RuleFor(x => x.FirstName).Length(40)
+                    .WithMessage("The first name must not exceed 40 characters.");
+                RuleFor(x => x.MiddleName).Length(40)
+                    .WithMessage("The middle name must not exceed 40 characters.");
+                RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}-(?!00)\d{2}-(?!0{4})\d{4}$"))
+                    .WithMessage("The SSN must be valid.");
+                RuleFor(x => x.DateOfBirth).NotEmpty()
+                    .WithMessage("The DOB must not be left blank.");
+                RuleFor(x => x.Sex).NotEmpty()
+                    .WithMessage("The sex must not be left blank.");
+                RuleFor(x => x.Remarks).Length(150)
+                    .WithMessage("Remarks must not exceed 150 characters.");
+                RuleFor(x => x.Ethnicity).Must(x =>
+                    {
+                        Ethnicity ethnicity = DataAccess.NHibernateHelper.CreateSession().Get<Ethnicity>(x.Id);
+
+                        if (ethnicity == null)
+                            return false;
+
+                        return ethnicity.Equals(x);
+                    })
+                    .WithMessage("The ethnicity wasn't valid.  It must match exactly a list item in the database.");
+                RuleFor(x => x.ReligiousPreference).Must(x =>
+                    {
+                        ReligiousPreference pref = DataAccess.NHibernateHelper.CreateSession().Get<ReligiousPreference>(x.Id);
+
+                        if (pref == null)
+                            return false;
+
+                        return pref.Equals(x);
+                    })
+                    .WithMessage("The religious preference wasn't valid.  It must match exactly a list item in the database.");
+                RuleFor(x => x.Suffix).Must(x =>
+                    {
+                        Suffix suffix = DataAccess.NHibernateHelper.CreateSession().Get<Suffix>(x.Id);
+
+                        if (suffix == null)
+                            return false;
+
+                        return suffix.Equals(x);
+                    })
+                    .WithMessage("The suffix wasn't valid.  It must match exactly a list item in the database.");
+                RuleFor(x => x.Designation).Must(x =>
+                    {
+                        Designation designation = DataAccess.NHibernateHelper.CreateSession().Get<Designation>(x.Id);
+
+                        if (designation == null)
+                            return false;
+
+                        return designation.Equals(x);
+                    })
+                    .WithMessage("The designation wasn't valid.  It must match exactly a list item in the database.");
+                RuleFor(x => x.Division).Must(x =>
+                    {
+                        Division division = DataAccess.NHibernateHelper.CreateSession().Get<Division>(x.Id);
+
+                        if (division == null)
+                            return false;
+
+                        return division.Equals(x);
+                    })
+                    .WithMessage("The division wasn't a valid division.  It must match exactly.");
+                RuleFor(x => x.Department).Must(x =>
+                    {
+                        Department department = DataAccess.NHibernateHelper.CreateSession().Get<Department>(x.Id);
+
+                        if (department == null)
+                            return false;
+
+                        return department.Equals(x);
+                    })
+                    .WithMessage("The department was invalid.");
+                RuleFor(x => x.Command).Must(x =>
+                    {
+                        Command command = DataAccess.NHibernateHelper.CreateSession().Get<Command>(x.Id);
+
+                        if (command == null)
+                            return false;
+
+                        return command.Equals(x);
+                    })
+                    .WithMessage("The command was invalid.");
+                RuleFor(x => x.Billet).Must(x =>
+                    {
+                        Billet billet = DataAccess.NHibernateHelper.CreateSession().Get<Billet>(x.Id);
+
+                        if (billet == null)
+                            return false;
+
+                        return billet.Equals(x);
+                    });
+                RuleForEach(x => x.NECs).Must(x =>
+                    {
+                        NEC nec = DataAccess.NHibernateHelper.CreateSession().Get<NEC>(x.Id);
+
+                        if (nec == null)
+                            return false;
+
+                        return nec.Equals(x);
+                    });
+                RuleFor(x => x.Supervisor).Length(40);
+                RuleFor(x => x.WorkCenter).Length(40);
+                RuleFor(x => x.WorkRoom).Length(40);
+                RuleFor(x => x.Shift).Length(40);
+                RuleFor(x => x.WorkRemarks).Length(150);
+                RuleFor(x => x.UIC).Must(x =>
+                    {
+                        UIC uic = DataAccess.NHibernateHelper.CreateSession().Get<UIC>(x.Id);
+
+                        if (uic == null)
+                            return false;
+
+                        return uic.Equals(x);
+                    });
+                RuleFor(x => x.JobTitle).Length(40);
+               
+
+
+
+            }
 
         }
 

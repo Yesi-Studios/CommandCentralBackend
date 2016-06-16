@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CommandCentral.ClientAccess;
 using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
+using AtwoodUtils;
 
 namespace CommandCentral.Entities
 {
@@ -59,14 +60,57 @@ namespace CommandCentral.Entities
         /// </summary>
         public virtual UIC UIC { get; set; }
 
+        #endregion
+
+        #region Overrides
+
         /// <summary>
-        /// All the endpoints
+        /// Returns the title.
         /// </summary>
-        public static Dictionary<string, ServiceEndpoint> EndpointDescriptions
+        /// <returns></returns>
+        public override string ToString()
         {
-            get
+            return this.Title;
+        }
+
+        /// <summary>
+        /// Compares an object to this billet. Guess what it returns if they're the same?  True.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Billet))
+                return false;
+
+            var other = (Billet)obj;
+
+            return this.Id == other.Id && string.Equals(this.Title, other.Title) && string.Equals(this.IdNumber, other.IdNumber) && string.Equals(this.SuffixCode, other.SuffixCode)
+                && string.Equals(this.Remarks, other.Remarks) && string.Equals(this.Designation, other.Designation) && string.Equals(this.Funding, other.Funding)
+                && Object.Equals(this.NEC, other.NEC) && Object.Equals(this.UIC, other.UIC);
+        }
+
+        /// <summary>
+        /// Returns yo 'ole hashcode.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
             {
-                throw new NotImplementedException();
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Title);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IdNumber);
+                hash = hash * 23 + Utilities.GetSafeHashCode(SuffixCode);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Remarks);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Designation);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Funding);
+                hash = hash * 23 + Utilities.GetSafeHashCode(NEC);
+                hash = hash * 23 + Utilities.GetSafeHashCode(UIC);
+
+                return hash;
             }
         }
 

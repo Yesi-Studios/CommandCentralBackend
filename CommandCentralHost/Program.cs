@@ -126,6 +126,9 @@ namespace CommandCentralHost
         [STAThread]
         private static void Main()
         {
+
+            //PersonsEditor.CreateMcLean();
+
             try
             {
                 Console.WindowWidth = 200;

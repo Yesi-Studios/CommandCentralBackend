@@ -27,6 +27,11 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         public virtual string Description { get; set; }
 
+        /// <summary>
+        /// The department to which this division belongs.
+        /// </summary>
+        public virtual Department Department { get; set; }
+
         #endregion
 
         #region Overrides
@@ -38,6 +43,39 @@ namespace CommandCentral.Entities.ReferenceLists
         public override string ToString()
         {
             return Value;
+        }
+
+        /// <summary>
+        /// Compares this property to another division
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Division))
+                return false;
+
+            var other = (Division)obj;
+
+            return this.Description == other.Description && this.Id == other.Id && this.Value == other.Value;
+        }
+
+        /// <summary>
+        /// Hashes all but the dependency properties
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + (String.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());
+                hash = hash * 23 + (String.IsNullOrEmpty(Description) ? "".GetHashCode() : Description.GetHashCode());
+
+                return hash;
+            }
         }
 
         #endregion
@@ -56,6 +94,8 @@ namespace CommandCentral.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
+
+                References(x => x.Department);
 
                 Cache.ReadWrite();
             }

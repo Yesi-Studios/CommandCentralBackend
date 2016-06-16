@@ -39,6 +39,19 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Helper Methods
+
+        /// <summary>
+        /// Returns a timespan indicating for how much longer this profile lock is valid.
+        /// </summary>
+        /// <returns></returns>
+        public virtual TimeSpan GetTimeRemaining()
+        {
+            return DateTime.Now.Subtract(SubmitTime);
+        }
+
+        #endregion
+
         #region Client Access
 
         /// <summary>

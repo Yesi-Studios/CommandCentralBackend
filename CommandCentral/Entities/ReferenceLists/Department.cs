@@ -27,6 +27,11 @@ namespace CommandCentral.Entities.ReferenceLists
         public virtual string Description { get; set; }
 
         /// <summary>
+        /// The command to which this department belongs.
+        /// </summary>
+        public virtual Command Command { get; set; }
+
+        /// <summary>
         /// A list of those divisions that belong to this department.
         /// </summary>
         public virtual IList<Division> Divisions { get; set; }
@@ -43,6 +48,42 @@ namespace CommandCentral.Entities.ReferenceLists
         public override string ToString()
         {
             return Value;
+        }
+
+        /// <summary>
+        /// Compares a fucking department to another department.  What else?
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+
+            if (!(obj is Department))
+                return false;
+
+            var other = (Department)obj;
+            if (other == null)
+                return false;
+
+            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
+        }
+
+        /// <summary>
+        /// Gets the hash code. Ignores dependencies. This kills the hash function.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + (String.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());
+                hash = hash * 23 + (String.IsNullOrEmpty(Description) ? "".GetHashCode() : Description.GetHashCode());
+
+                return hash;
+            }
         }
 
         #endregion
@@ -63,6 +104,8 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Description).Nullable().Length(50);
 
                 HasMany(x => x.Divisions).Cascade.All();
+
+                References(x => x.Command);
 
                 Cache.ReadWrite();
             }

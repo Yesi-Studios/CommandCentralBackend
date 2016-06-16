@@ -39,7 +39,11 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Indicates that a person is allowed to submit the muster for other persons.
         /// </summary>
-        SubmitMuster
+        SubmitMuster,
+        /// <summary>
+        /// Indicates that a person is allowed to begin a correspondence.
+        /// </summary>
+        InitiateCorrespondence
     }
 
     /// <summary>

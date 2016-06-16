@@ -2,6 +2,7 @@
 using AtwoodUtils;
 using System.Linq;
 using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities
 {
@@ -84,6 +85,15 @@ namespace CommandCentral.Entities
                 Map(x => x.Address).Not.Nullable().Unique();
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
+            }
+        }
+
+        public class EmailAddressValidator : AbstractValidator<EmailAddress>
+        {
+            public EmailAddressValidator()
+            {
+                //TODO
+                throw new NotImplementedException();
             }
         }
 
