@@ -45,9 +45,9 @@ namespace CommandCentral.Authorization
         public virtual IList<SpecialPermissions> SpecialPermissions { get; set; }
 
         /// <summary>
-        /// The level of this permission.  For example, a department level permission allows the user to exercise the permissions granted by this permission group when dealing with members in his/her same department.
+        /// The level of this permission.  Though any integer is acceptable, let's try to keep it between 10 and 1.  Permission groups that share the same permission level
         /// </summary>
-        public virtual PermissionLevels PermissionLevel { get; set; }
+        public virtual int PermissionLevel { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
@@ -148,7 +148,7 @@ namespace CommandCentral.Authorization
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
-                Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
+                Map(x => x.PermissionLevel).Not.Nullable();
 
                 References(x => x.PermissionTrack);
 

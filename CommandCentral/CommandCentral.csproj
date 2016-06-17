@@ -73,7 +73,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\AuthorizationToken.cs" />
-    <Compile Include="Authorization\PermissionLevelsEnum.cs" />
     <Compile Include="Authorization\PermissionTrack.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
