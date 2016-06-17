@@ -1447,6 +1447,16 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        public class PersonAuthenticator
+        {
+
+            private Dictionary<string, 
+
+            public PersonAuthenticator()
+            {
+            }
+        }
+
         /// <summary>
         /// Maps a person to the database.
         /// </summary>

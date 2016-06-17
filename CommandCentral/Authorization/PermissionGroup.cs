@@ -30,6 +30,11 @@ namespace CommandCentral.Authorization
         public virtual string Description { get; set; }
 
         /// <summary>
+        /// The permission track in which this permission resides.
+        /// </summary>
+        public virtual PermissionTrack PermissionTrack { get; set; }
+
+        /// <summary>
         /// The list of sub-permissions that describe what rights this permission group grants to what model.
         /// </summary>
         public virtual IList<ModelPermission> ModelPermissions { get; set; }
@@ -144,6 +149,8 @@ namespace CommandCentral.Authorization
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
                 Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
+
+                References(x => x.PermissionTrack);
 
                 HasMany(x => x.SpecialPermissions)
                     .KeyColumn("PermissionGroupId")
