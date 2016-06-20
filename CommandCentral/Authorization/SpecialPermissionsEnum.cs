@@ -43,7 +43,11 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Indicates that a person is allowed to begin a correspondence.
         /// </summary>
-        InitiateCorrespondence
+        InitiateCorrespondence,
+        /// <summary>
+        /// Indicates that a person is allowed to make edits to the permission system.  
+        /// </summary>
+        CanEditPermissionsSystem
     }
 
     /// <summary>

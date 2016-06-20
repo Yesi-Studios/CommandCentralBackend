@@ -275,8 +275,9 @@ namespace CommandCentral.Entities
         /// Note: No person may be in his/her own chain of command.  Developers are in everyone's chain of command.
         /// </summary>
         /// <param name="person"></param>
+        /// <param name="track">The track in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person)
+        public virtual bool IsInChainOfCommandOf(Person person, PermissionTrack track)
         {
             if (HasSpecialPermissions(SpecialPermissions.Developer))
                 return true;
@@ -1446,6 +1447,16 @@ namespace CommandCentral.Entities
         #endregion
 
         #endregion
+
+        public class PersonAuthenticator
+        {
+
+            private Dictionary<string, 
+
+            public PersonAuthenticator()
+            {
+            }
+        }
 
         /// <summary>
         /// Maps a person to the database.
