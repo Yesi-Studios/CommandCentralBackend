@@ -1615,11 +1615,16 @@ namespace CommandCentral.Entities
 
                         return nec.Equals(x);
                     });
-                RuleFor(x => x.Supervisor).Length(40);
-                RuleFor(x => x.WorkCenter).Length(40);
-                RuleFor(x => x.WorkRoom).Length(40);
-                RuleFor(x => x.Shift).Length(40);
-                RuleFor(x => x.WorkRemarks).Length(150);
+                RuleFor(x => x.Supervisor).Length(40)
+                    .WithMessage("The supervisor field may not be longer than 40 characters.");
+                RuleFor(x => x.WorkCenter).Length(40)
+                    .WithMessage("The work center field may not be longer than 40 characters.");
+                RuleFor(x => x.WorkRoom).Length(40)
+                    .WithMessage("The work room field may not be longer than 40 characters.");
+                RuleFor(x => x.Shift).Length(40)
+                    .WithMessage("The shift field may not be longer than 40 characters.");
+                RuleFor(x => x.WorkRemarks).Length(150)
+                    .WithMessage("The work remarks field may not be longer than 150 characters.");
                 RuleFor(x => x.UIC).Must(x =>
                     {
                         UIC uic = DataAccess.NHibernateHelper.CreateSession().Get<UIC>(x.Id);
@@ -1628,8 +1633,10 @@ namespace CommandCentral.Entities
                             return false;
 
                         return uic.Equals(x);
-                    });
-                RuleFor(x => x.JobTitle).Length(40);
+                    })
+                    .WithMessage("The UIC was invalid.");
+                RuleFor(x => x.JobTitle).Length(40)
+                    .WithMessage("The job title may not be longer than 40 characters.");
                
 
 
