@@ -30,14 +30,7 @@ namespace CommandCentral.Authorization
             }
         }
 
-        /// <summary>
-        /// Get a boolean indicating if the client is in the chain of command of the person he/she is trying to edit.
-        /// </summary>
-        public bool GetIsClientInChainOfCommandOfPerson()
-        {
-
-        }
-
+        
 
 
     }
