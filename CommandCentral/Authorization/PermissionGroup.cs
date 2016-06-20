@@ -30,11 +30,6 @@ namespace CommandCentral.Authorization
         public virtual string Description { get; set; }
 
         /// <summary>
-        /// The permission track in which this permission resides.
-        /// </summary>
-        public virtual PermissionTrack PermissionTrack { get; set; }
-
-        /// <summary>
         /// The list of sub-permissions that describe what rights this permission group grants to what model.
         /// </summary>
         public virtual IList<ModelPermission> ModelPermissions { get; set; }
@@ -45,9 +40,9 @@ namespace CommandCentral.Authorization
         public virtual IList<SpecialPermissions> SpecialPermissions { get; set; }
 
         /// <summary>
-        /// The level of this permission.  Though any integer is acceptable, let's try to keep it between 10 and 1.  Permission groups that share the same permission level
+        /// The level of this permission.  For example, a department level permission allows the user to exercise the permissions granted by this permission group when dealing with members in his/her same department.
         /// </summary>
-        public virtual int PermissionLevel { get; set; }
+        public virtual PermissionLevels PermissionLevel { get; set; }
 
         /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
@@ -106,20 +101,20 @@ namespace CommandCentral.Authorization
                             .SelectMany(x => x.ModelPermissions)
                             .GroupBy(x => x.ModelName)
                             .Select(x =>
-                                {
-                                    ModelPermission flattenedModelPermission = new ModelPermission { Name = "Flattened Permissions", ModelName = x.Key, Id = Guid.Empty };
-                                    flattenedModelPermission.ReturnableFields = x.SelectMany(y => y.ReturnableFields).Distinct().ToList();
-                                    flattenedModelPermission.EditableFields = x.SelectMany(y => y.EditableFields).Distinct().ToList();
-                                    flattenedModelPermission.SearchableFields = x.SelectMany(y => y.SearchableFields).Distinct().ToList();
+                            {
+                                ModelPermission flattenedModelPermission = new ModelPermission { Name = "Flattened Permissions", ModelName = x.Key, Id = Guid.Empty };
+                                flattenedModelPermission.ReturnableFields = x.SelectMany(y => y.ReturnableFields).Distinct().ToList();
+                                flattenedModelPermission.EditableFields = x.SelectMany(y => y.EditableFields).Distinct().ToList();
+                                flattenedModelPermission.SearchableFields = x.SelectMany(y => y.SearchableFields).Distinct().ToList();
 
-                                    //Ok so now we have the flattened model permission.  Let's put it into a keyvalue pair.
-                                    return new KeyValuePair<string, ModelPermission>(x.Key, flattenedModelPermission);
-                                }).ToDictionary(x => x.Key, x => x.Value);
+                                //Ok so now we have the flattened model permission.  Let's put it into a keyvalue pair.
+                                return new KeyValuePair<string, ModelPermission>(x.Key, flattenedModelPermission);
+                            }).ToDictionary(x => x.Key, x => x.Value);
 
             //And here's the result!
             token.SetResult(result);
         }
-        
+
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
@@ -148,9 +143,7 @@ namespace CommandCentral.Authorization
 
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
-                Map(x => x.PermissionLevel).Not.Nullable();
-
-                References(x => x.PermissionTrack);
+                Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
 
                 HasMany(x => x.SpecialPermissions)
                     .KeyColumn("PermissionGroupId")

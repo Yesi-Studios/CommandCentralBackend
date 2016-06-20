@@ -277,7 +277,7 @@ namespace CommandCentral.Entities
         /// <param name="person"></param>
         /// <param name="track">The track in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person, PermissionTrack track)
+        public virtual bool IsInChainOfCommandOf(Person person)
         {
             if (HasSpecialPermissions(SpecialPermissions.Developer))
                 return true;
@@ -1447,16 +1447,6 @@ namespace CommandCentral.Entities
         #endregion
 
         #endregion
-
-        public class PersonAuthenticator
-        {
-
-            private Dictionary<string, 
-
-            public PersonAuthenticator()
-            {
-            }
-        }
 
         /// <summary>
         /// Maps a person to the database.
