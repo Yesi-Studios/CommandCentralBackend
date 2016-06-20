@@ -940,16 +940,19 @@ namespace CommandCentral.Entities
 
             Person personReturn = null;
 
+            List<string> returnableFields = null;
+
+            //We need the metadata from the person class.
+            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
             //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
             if (person != null && personId != token.AuthenticationSession.Person.Id)
             {
                 personReturn = new Person();
 
-                var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
-
                 //Ok, now we need to set all the fields to null the client can't return.  First let's see what fields the client can return.
                 //This is going to go through all model permissions that target a Person, and get all the returnable fields.
-                var returnableFields = token.AuthenticationSession.Person.PermissionGroups
+                returnableFields = token.AuthenticationSession.Person.PermissionGroups
                                             .SelectMany(x => x.ModelPermissions
                                                 .Where(y => y.ModelName == personMetadata.EntityName)
                                                 .SelectMany(y => y.ReturnableFields))
@@ -967,9 +970,19 @@ namespace CommandCentral.Entities
             else
             {
                 personReturn = person;
+
+                returnableFields = personMetadata.PropertyNames.ToList();
             }
 
-            token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = new List<string>() { "FirstName", "LastName" }, ReturnableFields = new List<string>() { "FirstName", "LastName" } });
+            //We also need to tell the client what they can edit.
+            //TODO evaluate property authorization.
+            List<string> editableFields = token.AuthenticationSession.Person.PermissionGroups
+                                            .SelectMany(x => x.ModelPermissions
+                                                .Where(y => y.ModelName == personMetadata.EntityName)
+                                                .SelectMany(y => y.EditableFields))
+                                            .ToList();
+
+            token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = editableFields, ReturnableFields = returnableFields });
         }
 
         /// <summary>
@@ -1530,6 +1543,9 @@ namespace CommandCentral.Entities
                     .WithMessage("Remarks must not exceed 150 characters.");
                 RuleFor(x => x.Ethnicity).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Ethnicity ethnicity = DataAccess.NHibernateHelper.CreateSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
@@ -1540,6 +1556,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The ethnicity wasn't valid.  It must match exactly a list item in the database.");
                 RuleFor(x => x.ReligiousPreference).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         ReligiousPreference pref = DataAccess.NHibernateHelper.CreateSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
@@ -1550,6 +1569,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The religious preference wasn't valid.  It must match exactly a list item in the database.");
                 RuleFor(x => x.Suffix).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Suffix suffix = DataAccess.NHibernateHelper.CreateSession().Get<Suffix>(x.Id);
 
                         if (suffix == null)
@@ -1560,6 +1582,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The suffix wasn't valid.  It must match exactly a list item in the database.");
                 RuleFor(x => x.Designation).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Designation designation = DataAccess.NHibernateHelper.CreateSession().Get<Designation>(x.Id);
 
                         if (designation == null)
@@ -1570,6 +1595,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The designation wasn't valid.  It must match exactly a list item in the database.");
                 RuleFor(x => x.Division).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Division division = DataAccess.NHibernateHelper.CreateSession().Get<Division>(x.Id);
 
                         if (division == null)
@@ -1580,6 +1608,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The division wasn't a valid division.  It must match exactly.");
                 RuleFor(x => x.Department).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Department department = DataAccess.NHibernateHelper.CreateSession().Get<Department>(x.Id);
 
                         if (department == null)
@@ -1590,6 +1621,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The department was invalid.");
                 RuleFor(x => x.Command).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Command command = DataAccess.NHibernateHelper.CreateSession().Get<Command>(x.Id);
 
                         if (command == null)
@@ -1600,6 +1634,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The command was invalid.");
                 RuleFor(x => x.Billet).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         Billet billet = DataAccess.NHibernateHelper.CreateSession().Get<Billet>(x.Id);
 
                         if (billet == null)
@@ -1609,6 +1646,9 @@ namespace CommandCentral.Entities
                     });
                 RuleForEach(x => x.NECs).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         NEC nec = DataAccess.NHibernateHelper.CreateSession().Get<NEC>(x.Id);
 
                         if (nec == null)
@@ -1628,6 +1668,9 @@ namespace CommandCentral.Entities
                     .WithMessage("The work remarks field may not be longer than 150 characters.");
                 RuleFor(x => x.UIC).Must(x =>
                     {
+                        if (x == null)
+                            return true;
+
                         UIC uic = DataAccess.NHibernateHelper.CreateSession().Get<UIC>(x.Id);
 
                         if (uic == null)

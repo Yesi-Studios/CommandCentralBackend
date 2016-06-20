@@ -183,7 +183,7 @@ namespace CommandCentral.Entities
             }
 
             //Ok, it's a good news item.  Let's... stick it in.
-            token.CommunicationSession.SaveOrUpdate(newsItem);
+            token.CommunicationSession.Save(newsItem);
 
             //Send the Id back to the client.
             token.SetResult(newsItem.Id);
