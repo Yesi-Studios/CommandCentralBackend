@@ -96,9 +96,18 @@ namespace CommandCentral.DataAccess
         /// Creates a new session from the session factory.
         /// </summary>
         /// <returns></returns>
-        public static ISession CreateSession()
+        public static ISession CreateStatefulSession()
         {
             return _sessionFactory.OpenSession();
+        }
+
+        /// <summary>
+        /// Craeates a new session from the session factory. This session is stateless and has no cache.
+        /// </summary>
+        /// <returns></returns>
+        public static IStatelessSession CreateStatelessSession()
+        {
+            return _sessionFactory.OpenStatelessSession();
         }
 
         /// <summary>

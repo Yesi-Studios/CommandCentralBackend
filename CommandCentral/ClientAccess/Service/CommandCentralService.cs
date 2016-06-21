@@ -116,7 +116,7 @@ namespace CommandCentral.ClientAccess.Service
                 }
 
                 //Create the NHibernate communication session that will be carried throughout this request.
-                token.CommunicationSession = NHibernateHelper.CreateSession();
+                token.CommunicationSession = NHibernateHelper.CreateStatefulSession();
 
                 //Get the IP address of the host that called us.
                 token.HostAddress = ((RemoteEndpointMessageProperty)OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;

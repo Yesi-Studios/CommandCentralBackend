@@ -80,6 +80,7 @@
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="CronOperations.cs" />
+    <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Authorization\PermissionGroup.cs" />
     <Compile Include="Authorization\ModelPermission.cs" />

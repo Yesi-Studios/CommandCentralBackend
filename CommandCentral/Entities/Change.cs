@@ -66,7 +66,7 @@ namespace CommandCentral.Entities
                 {
                     Parallel.ForEach(changes, change =>
                     {
-                        using (var session = DataAccess.NHibernateHelper.CreateSession())
+                        using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                         using (var transaction = session.BeginTransaction())
                         {
                             try
@@ -96,7 +96,7 @@ namespace CommandCentral.Entities
         {
             Task.Factory.StartNew(() =>
             {
-                using (var session = DataAccess.NHibernateHelper.CreateSession())
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -131,7 +131,7 @@ namespace CommandCentral.Entities
         {
             Task.Factory.StartNew(() =>
             {
-                using (var session = DataAccess.NHibernateHelper.CreateSession())
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try

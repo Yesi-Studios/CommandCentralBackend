@@ -15,7 +15,7 @@ namespace CommandCentralHost.Editors
 
         internal static void CreateAtwood()
         {
-            using (var session = NHibernateHelper.CreateSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -65,7 +65,7 @@ namespace CommandCentralHost.Editors
 
         internal static void CreateMcLean()
         {
-            using (var session = NHibernateHelper.CreateSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

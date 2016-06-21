@@ -13,7 +13,7 @@ namespace CommandCentralHost.Editors
         {
             bool keepLooping = true;
 
-            using (var session = NHibernateHelper.CreateSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

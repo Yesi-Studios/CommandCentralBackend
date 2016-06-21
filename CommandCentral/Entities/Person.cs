@@ -4,6 +4,7 @@ using System.Linq;
 using CommandCentral.Authorization;
 using CommandCentral.ClientAccess;
 using CommandCentral.Entities.ReferenceLists;
+using CommandCentral.DataAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Transform;
@@ -954,7 +955,7 @@ namespace CommandCentral.Entities
                 //This is going to go through all model permissions that target a Person, and get all the returnable fields.
                 returnableFields = token.AuthenticationSession.Person.PermissionGroups
                                             .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == personMetadata.EntityName)
+                                                .Where(y => y.ModelName == "Person")
                                                 .SelectMany(y => y.ReturnableFields))
                                             .ToList();
 
@@ -978,7 +979,7 @@ namespace CommandCentral.Entities
             //TODO evaluate property authorization.
             List<string> editableFields = token.AuthenticationSession.Person.PermissionGroups
                                             .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == personMetadata.EntityName)
+                                                .Where(y => y.ModelName == "Person")
                                                 .SelectMany(y => y.EditableFields))
                                             .ToList();
 
@@ -1385,16 +1386,6 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok no we have a person! First thing to do, before allowing any update, is to validate the person.
-            var results = new PersonValidator().Validate(personFromClient);
-
-            //If there are any errors with the validation, let's throw those back to the client.
-            if (results.Errors.Any())
-            {
-                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
             //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
             ProfileLock profileLock = token.CommunicationSession.QueryOver<ProfileLock>()
                                         .Where(x => x.LockedPerson.Id == personFromClient.Id)
@@ -1415,7 +1406,11 @@ namespace CommandCentral.Entities
             }
 
             //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-            Person personFromDB = token.CommunicationSession.Get<Person>(personFromClient.Id);
+            //IMPORTANT: This load is done through a separate session so as not to pull the person from the cache, because this person might be the logged in user.
+            var validationSession = NHibernateHelper.CreateStatefulSession();
+            validationSession.FlushMode = NHibernate.FlushMode.Never;
+            validationSession.CacheMode = NHibernate.CacheMode.Ignore;
+            Person personFromDB = validationSession.Get<Person>(personFromClient.Id);
 
             //Did we get a person?  If not, the person the client gave us is bullshit.
             if (personFromDB == null)
@@ -1424,12 +1419,44 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok, now let's compare the person in the DB to the person the client gave us.  We are also going to take only those variances that exist for fields the client is allowed to view.
-            //This is because fields the client wasn't allowed to see will appear as "null" and thus appear as though they were changed.
-            var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
-            var variances = personFromDB.DetailedCompare(personFromClient).Where(x => returnableFields.Contains(x.PropertyName));
+            //If it's the logged in person.
+            if (personFromDB.Id == token.AuthenticationSession.Person.Id)
+            {
+                var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
 
-            //Now let's see if the client is allowed to edit the fields he/she tried to edit.
+                foreach (var field in returnableFields)
+                {
+                    var property = typeof(Person).GetProperty(field);
+
+                    property.SetValue(personFromDB, property.GetValue(personFromClient));
+                }
+            }
+            else
+            {
+                var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
+
+                foreach (var field in returnableFields)
+                {
+                    var property = typeof(Person).GetProperty(field);
+
+                    property.SetValue(personFromDB, property.GetValue(personFromClient));
+                }
+            }
+
+            //Determine what changed.
+            var variances = validationSession.GetDirtyProperties(personFromDB).ToList();
+
+            //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
+            var results = new PersonValidator().Validate(personFromClient);
+
+            //If there are any errors with the validation, let's throw those back to the client.
+            if (results.Errors.Any())
+            {
+                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
             var editableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.EditableFields)).ToList();
             var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
             if (unauthorizedEdits.Any())
@@ -1439,19 +1466,9 @@ namespace CommandCentral.Entities
             }
 
             //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
-            token.CommunicationSession.Update(personFromClient);
-            
-            //Now that's done, let's log what we changed.
-            Change.LogChanges(variances.Select(x =>
-                new Change
-                {
-                    Editor = token.AuthenticationSession.Person,
-                    ObjectId = personFromClient.Id,
-                    ObjectName = "Person",
-                    Remarks = "Edit",
-                    Time = token.CallTime,
-                    Variance = x
-                }));
+            validationSession.Update(personFromDB);
+            validationSession.Flush();
+            validationSession.Close();
 
             //And then we're done!
             token.SetResult("Success");
@@ -1527,26 +1544,26 @@ namespace CommandCentral.Entities
             public PersonValidator()
             {
                 RuleFor(x => x.Id).NotEmpty();
-                RuleFor(x => x.LastName).NotEmpty().Length(40)
+                RuleFor(x => x.LastName).NotEmpty().Length(1, 40)
                     .WithMessage("The last name must not be left blank and must not exceed 40 characters.");
-                RuleFor(x => x.FirstName).Length(40)
+                RuleFor(x => x.FirstName).Length(0, 40)
                     .WithMessage("The first name must not exceed 40 characters.");
-                RuleFor(x => x.MiddleName).Length(40)
+                RuleFor(x => x.MiddleName).Length(0, 40)
                     .WithMessage("The middle name must not exceed 40 characters.");
                 RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}-(?!00)\d{2}-(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
-                RuleFor(x => x.Sex).NotEmpty()
+                RuleFor(x => x.Sex).NotNull()
                     .WithMessage("The sex must not be left blank.");
-                RuleFor(x => x.Remarks).Length(150)
+                RuleFor(x => x.Remarks).Length(0, 150)
                     .WithMessage("Remarks must not exceed 150 characters.");
                 RuleFor(x => x.Ethnicity).Must(x =>
                     {
                         if (x == null)
                             return true;
 
-                        Ethnicity ethnicity = DataAccess.NHibernateHelper.CreateSession().Get<Ethnicity>(x.Id);
+                        Ethnicity ethnicity = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
                             return false;
@@ -1559,7 +1576,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        ReligiousPreference pref = DataAccess.NHibernateHelper.CreateSession().Get<ReligiousPreference>(x.Id);
+                        ReligiousPreference pref = DataAccess.NHibernateHelper.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
                             return false;
@@ -1572,7 +1589,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Suffix suffix = DataAccess.NHibernateHelper.CreateSession().Get<Suffix>(x.Id);
+                        Suffix suffix = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Suffix>(x.Id);
 
                         if (suffix == null)
                             return false;
@@ -1585,7 +1602,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Designation designation = DataAccess.NHibernateHelper.CreateSession().Get<Designation>(x.Id);
+                        Designation designation = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Designation>(x.Id);
 
                         if (designation == null)
                             return false;
@@ -1598,7 +1615,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Division division = DataAccess.NHibernateHelper.CreateSession().Get<Division>(x.Id);
+                        Division division = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Division>(x.Id);
 
                         if (division == null)
                             return false;
@@ -1611,7 +1628,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Department department = DataAccess.NHibernateHelper.CreateSession().Get<Department>(x.Id);
+                        Department department = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Department>(x.Id);
 
                         if (department == null)
                             return false;
@@ -1624,7 +1641,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Command command = DataAccess.NHibernateHelper.CreateSession().Get<Command>(x.Id);
+                        Command command = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Command>(x.Id);
 
                         if (command == null)
                             return false;
@@ -1637,7 +1654,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Billet billet = DataAccess.NHibernateHelper.CreateSession().Get<Billet>(x.Id);
+                        Billet billet = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Billet>(x.Id);
 
                         if (billet == null)
                             return false;
@@ -1649,29 +1666,29 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        NEC nec = DataAccess.NHibernateHelper.CreateSession().Get<NEC>(x.Id);
+                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
 
                         return nec.Equals(x);
                     });
-                RuleFor(x => x.Supervisor).Length(40)
+                RuleFor(x => x.Supervisor).Length(0, 40)
                     .WithMessage("The supervisor field may not be longer than 40 characters.");
-                RuleFor(x => x.WorkCenter).Length(40)
+                RuleFor(x => x.WorkCenter).Length(0, 40)
                     .WithMessage("The work center field may not be longer than 40 characters.");
-                RuleFor(x => x.WorkRoom).Length(40)
+                RuleFor(x => x.WorkRoom).Length(0, 40)
                     .WithMessage("The work room field may not be longer than 40 characters.");
-                RuleFor(x => x.Shift).Length(40)
+                RuleFor(x => x.Shift).Length(0, 40)
                     .WithMessage("The shift field may not be longer than 40 characters.");
-                RuleFor(x => x.WorkRemarks).Length(150)
+                RuleFor(x => x.WorkRemarks).Length(0, 150)
                     .WithMessage("The work remarks field may not be longer than 150 characters.");
                 RuleFor(x => x.UIC).Must(x =>
                     {
                         if (x == null)
                             return true;
 
-                        UIC uic = DataAccess.NHibernateHelper.CreateSession().Get<UIC>(x.Id);
+                        UIC uic = DataAccess.NHibernateHelper.CreateStatefulSession().Get<UIC>(x.Id);
 
                         if (uic == null)
                             return false;
@@ -1679,7 +1696,7 @@ namespace CommandCentral.Entities
                         return uic.Equals(x);
                     })
                     .WithMessage("The UIC was invalid.");
-                RuleFor(x => x.JobTitle).Length(40)
+                RuleFor(x => x.JobTitle).Length(0, 40)
                     .WithMessage("The job title may not be longer than 40 characters.");
                
 
