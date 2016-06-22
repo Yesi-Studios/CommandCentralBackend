@@ -933,11 +933,6 @@ namespace CommandCentral.Entities
             //Now let's load the person and then set any fields the client isn't allowed to see to null.
             //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
-            //NHibernate.NHibernateUtil.Initialize(person);
-            //token.CommunicationSession.GetSessionImplementation().PersistenceContext.Unproxy(person);
-
-            //Now we need to evict this copy of the person from the session so that our changes to it don't reflect in the database.  That would be awkward.
-            //token.CommunicationSession.Evict(person);
 
             Person personReturn = null;
 
@@ -975,6 +970,11 @@ namespace CommandCentral.Entities
                 returnableFields = personMetadata.PropertyNames.ToList();
             }
 
+            //HACK
+            //For now, we're going to manually limit the account history events to the 5 most recent.  Note that this means we're still loading them but then cutting them off.  That's not good.
+            //Later we'll need to find out how to get NHibernate to limit children selects.
+            personReturn.AccountHistory = personReturn.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList();
+
             //We also need to tell the client what they can edit.
             //TODO evaluate property authorization.
             List<string> editableFields = token.AuthenticationSession.Person.PermissionGroups
@@ -984,6 +984,44 @@ namespace CommandCentral.Entities
                                             .ToList();
 
             token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = editableFields, ReturnableFields = returnableFields });
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Returns all account history for the given person.  These are the login events, etc.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     personid - The ID of the person for whom to return the account historiiiiies.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, EndpointName = "LoadAccountHistoryByPerson", RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadAccountHistoryByPerson(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //First, let's make sure the args are present.
+            if (!token.Args.ContainsKey("personid"))
+                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+
+            //If there were any errors from the above checks, then stop now.
+            if (token.HasError)
+                return;
+
+            Guid personId;
+            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
+            {
+                token.AddErrorMessage("The person ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            token.SetResult(token.CommunicationSession.Get<Person>(personId).AccountHistory);
         }
 
         /// <summary>
