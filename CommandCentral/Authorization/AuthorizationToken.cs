@@ -18,16 +18,5 @@ namespace CommandCentral.Authorization
         /// The person who the client is trying to edit.
         /// </summary>
         public Entities.Person EditedPerson { get; set; }
-
-        /// <summary>
-        /// Indicates that the client is editing him or herself.
-        /// </summary>
-        public bool IsClientEditingSelf
-        {
-            get
-            {
-                return Client.Id == EditedPerson.Id;
-            }
-        }
     }
 }

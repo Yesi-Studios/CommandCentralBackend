@@ -1483,6 +1483,8 @@ namespace CommandCentral.Entities
         {
             public PersonAuthorizor()
             {
+                RulesFor("Id", AuthorizationRules.Never);
+                RulesFor("", AuthorizationRules.IfSelf, AuthorizationRules.IfInChainOfCommand);
             }
         }
 
