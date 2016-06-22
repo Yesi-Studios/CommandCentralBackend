@@ -72,7 +72,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\AuthorizationRules.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
+    <Compile Include="Authorization\IAuthorizationRule.cs" />
     <Compile Include="Authorization\PermissionLevelEnum.cs" />
     <Compile Include="Authorization\ReturnableAttribute.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />

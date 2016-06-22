@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace CommandCentral.Authorization
 {
-    class ReturnableAttribute
+    public class ReturnableAttribute : Attribute
     {
+        public List<IAuthorizationRule> Rules { get; set; }
     }
 }
