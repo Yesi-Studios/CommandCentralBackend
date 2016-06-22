@@ -939,7 +939,7 @@ namespace CommandCentral.Entities
             List<string> returnableFields = null;
 
             //We need the metadata from the person class.
-            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
             //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
             if (person != null && personId != token.AuthenticationSession.Person.Id)
@@ -973,7 +973,7 @@ namespace CommandCentral.Entities
             //HACK
             //For now, we're going to manually limit the account history events to the 5 most recent.  Note that this means we're still loading them but then cutting them off.  That's not good.
             //Later we'll need to find out how to get NHibernate to limit children selects.
-            personReturn.AccountHistory = personReturn.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList();
+            //personReturn.AccountHistory = personReturn.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList();
 
             //We also need to tell the client what they can edit.
             //TODO evaluate property authorization.
