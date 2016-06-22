@@ -76,6 +76,7 @@
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\IAuthorizationRule.cs" />
     <Compile Include="Authorization\PermissionLevelEnum.cs" />
+    <Compile Include="Authorization\PersonAuthenticator.cs" />
     <Compile Include="Authorization\ReturnableAttribute.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />

@@ -29,9 +29,5 @@ namespace CommandCentral.Authorization
                 return Client.Id == EditedPerson.Id;
             }
         }
-
-        
-
-
     }
 }

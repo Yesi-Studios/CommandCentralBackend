@@ -8,7 +8,6 @@ namespace CommandCentral.Authorization
 {
     public static class AuthorizationRules
     {
-
         public static NeverRule Never = new NeverRule();
 
         public class NeverRule : IAuthorizationRule

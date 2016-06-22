@@ -8,6 +8,13 @@ namespace CommandCentral.Authorization
 {
     public class ReturnableAttribute : Attribute
     {
-        public List<IAuthorizationRule> Rules { get; set; }
+        public IAuthorizationRule[] Rules { get; set; }
+
+        public ReturnableAttribute(params Type[] rules)
+        {
+
+
+            //this.Rules = rules;
+        }
     }
 }

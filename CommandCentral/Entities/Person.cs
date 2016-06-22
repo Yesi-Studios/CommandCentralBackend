@@ -25,6 +25,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's unique Id.
         /// </summary>
+        //[Returnable(typeof(AuthorizationRules.Never))]
         public virtual Guid Id { get; set; }
 
         #region Main Properties
@@ -1477,6 +1478,13 @@ namespace CommandCentral.Entities
         #endregion
 
         #endregion
+
+        public class PersonAuthorizor : AbstractAuthorizor
+        {
+            public PersonAuthorizor()
+            {
+            }
+        }
 
         /// <summary>
         /// Maps a person to the database.
