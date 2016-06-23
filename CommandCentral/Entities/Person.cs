@@ -1479,12 +1479,26 @@ namespace CommandCentral.Entities
 
         #endregion
 
-        public class PersonAuthorizor : AbstractAuthorizor
+        public class PersonAuthorizor : AbstractAuthorizor<Person>
         {
             public PersonAuthorizor()
             {
-                RulesFor("Id", AuthorizationRules.Never);
-                RulesFor("", AuthorizationRules.IfSelf, AuthorizationRules.IfInChainOfCommand);
+                RulesFor(x => x.Id)
+                    .Returnable()
+                        .ForEveryone()
+                    .Editable()
+                        .Never();
+
+                RulesFor(x => x.FirstName, x => x.LastName, x => x.MiddleName)
+                    .Returnable()
+                        .ForEveryone()
+                    .Editable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroupRule();
+
+
+
             }
         }
 

@@ -10,19 +10,25 @@ namespace CommandCentral.Authorization
 {
     public class AbstractAuthorizor<T>
     {
-        private Dictionary<string, IAuthorizationRule[]> _rules = new Dictionary<string, IAuthorizationRule[]>(StringComparer.OrdinalIgnoreCase);
+        private List<RuleGroup<T>> _ruleGroups = new List<RuleGroup<T>>();
 
-        public void RulesFor(string propertyName, params IAuthorizationRule[] rules)
+        public AuthorizationRuleBuilder<T> RulesFor<PropertyT>(params Expression<Func<T, PropertyT>>[] expressions)
         {
-            if (_rules.ContainsKey(propertyName))
-                throw new ArgumentException("The property, '{0}', already has a rule defined for it.".FormatS(propertyName));
+            List<string> propertyNames = expressions.Select(x => x.GetPropertyName()).ToList();
 
-            _rules.Add(propertyName, rules);
-        }
+            foreach (var propertyName in propertyNames)
+            {
+                if (_ruleGroups.Any(y => y.PropertyNames.Contains(propertyName)))
+                    throw new ArgumentException("The property, '{0}', already has a rule defined for it.".FormatS(propertyName));
+            }
 
-        private string GetPropertyName<T, TReturn>(this Expression<Func<T, TReturn>> expression)
-        {
-            return ((MemberExpression)expression.Body).Member.Name;
+            var ruleBuilder = new AuthorizationRuleBuilder<T>(propertyNames);
+
+            RuleGroup<T> group = new RuleGroup<T>(propertyNames, ruleBuilder);
+
+            _ruleGroups.Add(group);
+
+            return ruleBuilder;
         }
     }
 }
