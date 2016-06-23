@@ -72,6 +72,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\AuthorizationRuleResult.cs" />
     <Compile Include="Authorization\AuthorizationRuleBase.cs" />
     <Compile Include="Authorization\AuthorizationRuleBuilder.cs" />
     <Compile Include="Authorization\AuthorizationRuleCategoryEnum.cs" />
