@@ -1489,9 +1489,22 @@ namespace CommandCentral.Entities
                     .Editable()
                         .Never();
 
-                RulesFor(x => x.FirstName, x => x.LastName, x => x.MiddleName)
+                RulesFor(x => x.FirstName)
+                .AndFor(x => x.LastName)
+                .AndFor(x => x.MiddleName)
+                .AndFor(x => x.DateOfBirth)
                     .Returnable()
-                        .ForEveryone()
+                        .IfGrantedByPermissionGroupRule()
+                    .Editable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroupRule();
+
+                RulesFor(x => x.SSN)
+                    .Returnable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroupRule()
                     .Editable()
                         .IfSelf().Or().IfInChainOfCommand()
                         .And()

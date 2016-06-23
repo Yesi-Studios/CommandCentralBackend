@@ -17,5 +17,11 @@ namespace CommandCentral.Authorization
             this.PropertyNames = propertyNames;
             this.RuleBuilder = ruleBuilder;
         }
+
+        public RuleGroup(string initialPropertyName, AuthorizationRuleBuilder<T> ruleBuilder)
+        {
+            this.PropertyNames = new List<string> { initialPropertyName };
+            this.RuleBuilder = ruleBuilder;
+        }
     }
 }

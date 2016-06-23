@@ -10,31 +10,38 @@ namespace CommandCentral.Authorization
 {
     public class AuthorizationRuleBuilder<T>
     {
+        public AuthorizationRuleCategoryEnum CurrentCategory { get; set; }
 
-        private List<string> propertyNames { get; set; }
+        public RuleDisjunction CurrentDisjunction { get; set; }
 
-        private AuthorizationRuleCategoryEnum currentCategory { get; set; }
+        public List<RuleDisjunction> Disjunctions { get; set; }
 
-        private RuleDisjunction currentDisjunction { get; set; }
+        public RuleGroup<T> ParentRuleGroup { get; set; }
 
-        private List<RuleDisjunction> disjunctions { get; set; }
-
-        public AuthorizationRuleBuilder(List<string> propertyNames)
+        public AuthorizationRuleBuilder(string propertyName)
         {
-            this.propertyNames = propertyNames;
-            this.currentCategory = AuthorizationRuleCategoryEnum.Null;
+            this.ParentRuleGroup.PropertyNames = new List<string> { propertyName };
+            this.CurrentCategory = AuthorizationRuleCategoryEnum.Null;
 
 
-            disjunctions = new List<RuleDisjunction>();
-            this.currentDisjunction = new RuleDisjunction();
-            this.disjunctions.Add(this.currentDisjunction);
+            Disjunctions = new List<RuleDisjunction>();
+            this.CurrentDisjunction = new RuleDisjunction();
+            this.Disjunctions.Add(this.CurrentDisjunction);
 
         }
 
+        public AuthorizationRuleBuilder<T> AndFor<PropertyT>(Expression<Func<T, PropertyT>> expression)
+        {
+            this.ParentRuleGroup.PropertyNames.Add(expression.GetPropertyName());
+
+            return this;
+        }
+             
+
         public AuthorizationRuleBuilder<T> And()
         {
-            currentDisjunction = new RuleDisjunction();
-            disjunctions.Add(currentDisjunction);
+            CurrentDisjunction = new RuleDisjunction();
+            Disjunctions.Add(CurrentDisjunction);
 
             return this;
         }
@@ -46,43 +53,49 @@ namespace CommandCentral.Authorization
 
         public AuthorizationRuleBuilder<T> Returnable()
         {
-            currentCategory = AuthorizationRuleCategoryEnum.Return;
+            CurrentCategory = AuthorizationRuleCategoryEnum.Return;
+
+            CurrentDisjunction = new RuleDisjunction();
+            Disjunctions.Add(CurrentDisjunction);
             return this;
         }
 
         public AuthorizationRuleBuilder<T> Editable()
         {
-            currentCategory = AuthorizationRuleCategoryEnum.Edit;
+            CurrentCategory = AuthorizationRuleCategoryEnum.Edit;
+
+            CurrentDisjunction = new RuleDisjunction();
+            Disjunctions.Add(CurrentDisjunction);
             return this;
         }
 
         public AuthorizationRuleBuilder<T> IfSelf()
         {
-            currentDisjunction.Rules.Add(new Rules.IfSelfRule(currentCategory, propertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.IfSelfRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
         public AuthorizationRuleBuilder<T> Never()
         {
-            currentDisjunction.Rules.Add(new Rules.NeverRule(currentCategory, propertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.NeverRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
         public AuthorizationRuleBuilder<T> IfInChainOfCommand()
         {
-            currentDisjunction.Rules.Add(new Rules.IfInChainOfCommandRule(currentCategory, propertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.IfInChainOfCommandRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
         public AuthorizationRuleBuilder<T> ForEveryone()
         {
-            currentDisjunction.Rules.Add(new Rules.ForEveryoneRule(currentCategory, propertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.ForEveryoneRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
         public AuthorizationRuleBuilder<T> IfGrantedByPermissionGroupRule()
         {
-            currentDisjunction.Rules.Add(new Rules.IfGrantedByPermissionGroupRule(currentCategory, propertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.IfGrantedByPermissionGroupRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 

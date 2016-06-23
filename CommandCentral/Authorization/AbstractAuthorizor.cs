@@ -12,19 +12,13 @@ namespace CommandCentral.Authorization
     {
         private List<RuleGroup<T>> _ruleGroups = new List<RuleGroup<T>>();
 
-        public AuthorizationRuleBuilder<T> RulesFor<PropertyT>(params Expression<Func<T, PropertyT>>[] expressions)
+        public AuthorizationRuleBuilder<T> RulesFor<PropertyT>(Expression<Func<T, PropertyT>> expression)
         {
-            List<string> propertyNames = expressions.Select(x => x.GetPropertyName()).ToList();
+            string propertyName = expression.GetPropertyName();
 
-            foreach (var propertyName in propertyNames)
-            {
-                if (_ruleGroups.Any(y => y.PropertyNames.Contains(propertyName)))
-                    throw new ArgumentException("The property, '{0}', already has a rule defined for it.".FormatS(propertyName));
-            }
+            var ruleBuilder = new AuthorizationRuleBuilder<T>(propertyName);
 
-            var ruleBuilder = new AuthorizationRuleBuilder<T>(propertyNames);
-
-            RuleGroup<T> group = new RuleGroup<T>(propertyNames, ruleBuilder);
+            RuleGroup<T> group = new RuleGroup<T>(propertyName, ruleBuilder);
 
             _ruleGroups.Add(group);
 
