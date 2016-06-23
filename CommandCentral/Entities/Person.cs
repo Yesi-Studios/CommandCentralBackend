@@ -1489,6 +1489,25 @@ namespace CommandCentral.Entities
                     .Editable()
                         .Never();
 
+                RulesFor(x => x.IsClaimed)
+                .AndFor(x => x.Changes)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .Never();
+
+                RulesFor(x => x.PasswordHash)
+                    .Returnable()
+                        .Never()
+                    .Editable()
+                        .IfSelf();
+
+                RulesFor(x => x.AccountHistory)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSelf();
+
                 RulesFor(x => x.FirstName)
                 .AndFor(x => x.LastName)
                 .AndFor(x => x.MiddleName)
@@ -1506,6 +1525,10 @@ namespace CommandCentral.Entities
                 .AndFor(x => x.WorkRemarks)
                 .AndFor(x => x.DateOfArrival)
                 .AndFor(x => x.JobTitle)
+                .AndFor(x => x.EmailAddresses)
+                .AndFor(x => x.PhoneNumbers)
+                .AndFor(x => x.PhysicalAddresses)
+                .AndFor(x => x.ContactRemarks)
                     .Returnable()
                         .IfGrantedByPermissionGroup()
                     .Editable()
@@ -1539,6 +1562,7 @@ namespace CommandCentral.Entities
                 .AndFor(x => x.DutyStatus)
                 .AndFor(x => x.UIC)
                 .AndFor(x => x.EAOS)
+                .AndFor(x => x.DateOfDeparture)
                     .Returnable()
                         .IfGrantedByPermissionGroup()
                     .Editable()
@@ -1546,10 +1570,21 @@ namespace CommandCentral.Entities
                         .And()
                         .IfGrantedByPermissionGroup();
 
+                RulesFor(x => x.EmergencyContactInstructions)
+                .AndFor(x => x.Username)
+                .AndFor(x => x.SubscribedChangeEvents)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSelf()
+                        .And()
+                        .IfGrantedByPermissionGroup();
 
-
-
-
+                RulesFor(x => x.PermissionGroups)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSatisfiesPermissionGroupRule();
             }
         }
 

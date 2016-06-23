@@ -15,8 +15,13 @@ namespace CommandCentral.Authorization
         public Entities.Person Client { get; set; }
 
         /// <summary>
-        /// The person who the client is trying to edit.
+        /// The new version of the person the client sent us to be edited.
         /// </summary>
-        public Entities.Person EditedPerson { get; set; }
+        public Entities.Person NewPersonFromClient { get; set; }
+
+        /// <summary>
+        /// The old version of the person as it currently looks in the database, prior to any update.
+        /// </summary>
+        public Entities.Person OldPersonFromDB { get; set; }
     }
 }

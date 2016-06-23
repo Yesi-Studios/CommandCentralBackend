@@ -105,5 +105,11 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        public AuthorizationRuleBuilder<T> IfSatisfiesPermissionGroupRule()
+        {
+            CurrentDisjunction.Rules.Add(new Rules.PermissionGroupSpecialRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
+            return this;
+        }
+
     }
 }
