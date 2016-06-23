@@ -129,6 +129,49 @@ namespace CommandCentralHost
 
             try
             {
+
+                string version = "uh oh";
+
+                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+                {
+                    version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+                }
+                else
+                {
+                    int maxAttempts = 10;
+                    int currentAttempts = 1;
+                    bool keepTrying = true;
+
+                    string currentDirectory = System.IO.Directory.GetCurrentDirectory();
+
+                    while (keepTrying)
+                    {
+                        try
+                        {
+                            using (var repo = new LibGit2Sharp.Repository(currentDirectory))
+                            {
+                                LibGit2Sharp.Branch checkedOutBranch = repo.Head;
+                                version = checkedOutBranch.FriendlyName;
+
+                                keepTrying = false;
+                            }
+                        }
+                        catch
+                        {
+                            if (currentAttempts >= maxAttempts)
+                                throw;
+
+                            currentDirectory = System.IO.Directory.GetParent(currentDirectory).FullName;
+
+                            currentAttempts++;
+                        }
+                    }
+
+                }
+
+
+                Console.Title = "Command Central Backend Service v {0}".FormatS(version);
+
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
                 SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
@@ -144,7 +187,7 @@ namespace CommandCentralHost
 
                         Console.Clear();
 
-                        "Welcome to Command Central's Backend Host Application!".WriteLine();
+                        "Welcome to Command Central's Backend Service v {0}!".FormatS(version).WriteLine();
                         "".WriteLine();
                         //Determine which options to show the client.
                         var displayOptions = _dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
