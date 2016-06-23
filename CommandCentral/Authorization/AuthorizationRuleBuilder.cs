@@ -93,9 +93,15 @@ namespace CommandCentral.Authorization
             return this;
         }
 
-        public AuthorizationRuleBuilder<T> IfGrantedByPermissionGroupRule()
+        public AuthorizationRuleBuilder<T> IfGrantedByPermissionGroup()
         {
             CurrentDisjunction.Rules.Add(new Rules.IfGrantedByPermissionGroupRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
+            return this;
+        }
+
+        public AuthorizationRuleBuilder<T> IfHasSpecialPermission(SpecialPermissions specialPermission)
+        {
+            CurrentDisjunction.Rules.Add(new Rules.IfHasSpecialPermissionRule(CurrentCategory, this.ParentRuleGroup.PropertyNames, specialPermission));
             return this;
         }
 

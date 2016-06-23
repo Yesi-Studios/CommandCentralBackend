@@ -1493,22 +1493,60 @@ namespace CommandCentral.Entities
                 .AndFor(x => x.LastName)
                 .AndFor(x => x.MiddleName)
                 .AndFor(x => x.DateOfBirth)
+                .AndFor(x => x.Sex)
+                .AndFor(x => x.Remarks)
+                .AndFor(x => x.Ethnicity)
+                .AndFor(x => x.ReligiousPreference)
+                .AndFor(x => x.Suffix)
+                .AndFor(x => x.Designation)
+                .AndFor(x => x.Supervisor)
+                .AndFor(x => x.WorkCenter)
+                .AndFor(x => x.WorkRoom)
+                .AndFor(x => x.Shift)
+                .AndFor(x => x.WorkRemarks)
+                .AndFor(x => x.DateOfArrival)
+                .AndFor(x => x.JobTitle)
                     .Returnable()
-                        .IfGrantedByPermissionGroupRule()
+                        .IfGrantedByPermissionGroup()
                     .Editable()
                         .IfSelf().Or().IfInChainOfCommand()
                         .And()
-                        .IfGrantedByPermissionGroupRule();
+                        .IfGrantedByPermissionGroup();
 
                 RulesFor(x => x.SSN)
                     .Returnable()
                         .IfSelf().Or().IfInChainOfCommand()
                         .And()
-                        .IfGrantedByPermissionGroupRule()
+                        .IfGrantedByPermissionGroup()
                     .Editable()
                         .IfSelf().Or().IfInChainOfCommand()
                         .And()
-                        .IfGrantedByPermissionGroupRule();
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.Paygrade)
+                .AndFor(x => x.Division)
+                .AndFor(x => x.Department)
+                .AndFor(x => x.Command)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.Billet)
+                .AndFor(x => x.NECs)
+                .AndFor(x => x.DutyStatus)
+                .AndFor(x => x.UIC)
+                .AndFor(x => x.EAOS)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfHasSpecialPermission(SpecialPermissions.ManPowerAdmin)
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+
 
 
 

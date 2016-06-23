@@ -47,7 +47,12 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// Indicates that a person is allowed to make edits to the permission system.  
         /// </summary>
-        CanEditPermissionsSystem
+        CanEditPermissionsSystem,
+        /// <summary>
+        /// Indicates that a person is allowed to edit manpower things, such as billets.
+        /// </summary>
+        ManPowerAdmin
+
     }
 
     /// <summary>
