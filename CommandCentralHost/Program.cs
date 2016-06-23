@@ -129,7 +129,7 @@ namespace CommandCentralHost
 
             //PersonsEditor.CreateMcLean();
 
-            var test = new Person.PersonAuthorizor();
+            //var test = new Person.PersonAuthorizor();
 
             try
             {

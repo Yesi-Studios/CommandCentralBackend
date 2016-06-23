@@ -19,9 +19,10 @@ namespace CommandCentral.Authorization
         /// </summary>
         public Entities.Person NewPersonFromClient { get; set; }
 
-        /// <summary>
-        /// The old version of the person as it currently looks in the database, prior to any update.
-        /// </summary>
-        public Entities.Person OldPersonFromDB { get; set; }
+        public AuthorizationToken(Entities.Person client, Entities.Person newPersonFromClient)
+        {
+            this.Client = client;
+            this.NewPersonFromClient = newPersonFromClient;
+        }
     }
 }

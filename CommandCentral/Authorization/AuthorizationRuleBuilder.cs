@@ -18,16 +18,19 @@ namespace CommandCentral.Authorization
 
         public RuleGroup<T> ParentRuleGroup { get; set; }
 
+        public bool IgnoresGenericEdits { get; set; }
+
         public AuthorizationRuleBuilder(string propertyName)
         {
             this.ParentRuleGroup.PropertyNames = new List<string> { propertyName };
             this.CurrentCategory = AuthorizationRuleCategoryEnum.Null;
 
+            this.IgnoresGenericEdits = false;
+
 
             Disjunctions = new List<RuleDisjunction>();
             this.CurrentDisjunction = new RuleDisjunction();
             this.Disjunctions.Add(this.CurrentDisjunction);
-
         }
 
         public AuthorizationRuleBuilder<T> AndFor<PropertyT>(Expression<Func<T, PropertyT>> expression)
@@ -48,6 +51,20 @@ namespace CommandCentral.Authorization
 
         public AuthorizationRuleBuilder<T> Or()
         {
+            return this;
+        }
+
+        /// <summary>
+        /// Indicates that properties in this rule should not be updated even if asked to be updated.  
+        /// <para />
+        /// If this rule is set, then a manual update is the only way to update these properties.
+        /// <para />
+        /// This rule element is most often paired with Editable().Never()
+        /// </summary>
+        /// <returns></returns>
+        public AuthorizationRuleBuilder<T> MakeIgnoreGenericEdits()
+        {
+            IgnoresGenericEdits = true;
             return this;
         }
 

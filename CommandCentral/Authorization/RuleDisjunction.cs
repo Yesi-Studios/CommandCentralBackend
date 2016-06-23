@@ -15,9 +15,9 @@ namespace CommandCentral.Authorization
             Rules = new List<AuthorizationRuleBase>();
         }
 
-        public IEnumerable<AuthorizationRuleResult> Evaluate(AuthorizationToken authToken)
+        public bool Evaluate(AuthorizationToken authToken)
         {
-            return Rules.Select(x => x.AuthorizationOperation(authToken));
+            return Rules.Any(x => x.AuthorizationOperation(authToken));
         }
     }
 }

@@ -12,7 +12,7 @@ namespace CommandCentral.Authorization
 
         public AuthorizationRuleCategoryEnum ForCategory { get; set; }
 
-        public abstract AuthorizationRuleResult AuthorizationOperation(AuthorizationToken authToken);
+        public abstract bool AuthorizationOperation(AuthorizationToken authToken);
 
         public AuthorizationRuleBase(AuthorizationRuleCategoryEnum category, List<string> propertyNames)
         {

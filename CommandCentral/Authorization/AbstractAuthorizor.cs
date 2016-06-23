@@ -24,5 +24,28 @@ namespace CommandCentral.Authorization
 
             return ruleBuilder;
         }
+
+        public List<string> GetAuthorizedFields(Entities.Person client, Entities.Person newPersonFromClient, AuthorizationRuleCategoryEnum category)
+        {
+            if (category == AuthorizationRuleCategoryEnum.Null)
+                throw new ArgumentException("Category can't be null.");
+
+            List<string> properties = new List<string>();
+
+            AuthorizationToken authToken = new AuthorizationToken(client, newPersonFromClient);
+
+            foreach (var ruleGroup in _ruleGroups.Where(x => x.RuleBuilder.Disjunctions.Exists(y => y.Rules.First().ForCategory == category)))
+            {
+                if (category != AuthorizationRuleCategoryEnum.Edit || !ruleGroup.RuleBuilder.IgnoresGenericEdits)
+                {
+                    var passed = ruleGroup.RuleBuilder.Disjunctions.All(x => x.Evaluate(authToken));
+
+                    if (passed)
+                        properties.AddRange(ruleGroup.PropertyNames);
+                }
+            }
+
+            return properties;
+        }
     }
 }
