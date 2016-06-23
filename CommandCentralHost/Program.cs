@@ -127,10 +127,6 @@ namespace CommandCentralHost
         private static void Main()
         {
 
-            //PersonsEditor.CreateMcLean();
-
-            //var test = new Person.PersonAuthorizor();
-
             try
             {
                 Console.WindowWidth = 200;

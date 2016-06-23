@@ -86,7 +86,7 @@
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\Rules\ForEveryoneRule.cs" />
     <Compile Include="Authorization\PermissionLevelEnum.cs" />
-    <Compile Include="Authorization\AbstractAuthorizor.cs" />
+    <Compile Include="Authorization\AbstractAuthorizer.cs" />
     <Compile Include="Authorization\Rules\PermissionGroupSpecialRule.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />

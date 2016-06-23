@@ -281,9 +281,6 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInChainOfCommandOf(Person person)
         {
-            if (HasSpecialPermissions(SpecialPermissions.Developer))
-                return true;
-
             if (Id == person.Id)
                 return false;
 
@@ -1425,28 +1422,17 @@ namespace CommandCentral.Entities
                     return;
                 }
 
-                //If it's the logged in person.
-                if (personFromDB.Id == token.AuthenticationSession.Person.Id)
+                var authorizer = new PersonAuthorizer();
+
+                var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
+                var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
+                var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
+
+                foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
                 {
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
+                    var property = typeof(Person).GetProperty(field);
 
-                    foreach (var field in returnableFields)
-                    {
-                        var property = typeof(Person).GetProperty(field);
-
-                        property.SetValue(personFromDB, property.GetValue(personFromClient));
-                    }
-                }
-                else
-                {
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
-
-                    foreach (var field in returnableFields)
-                    {
-                        var property = typeof(Person).GetProperty(field);
-
-                        property.SetValue(personFromDB, property.GetValue(personFromClient));
-                    }
+                    property.SetValue(personFromDB, property.GetValue(personFromClient));
                 }
 
                 //Determine what changed.
@@ -1463,7 +1449,6 @@ namespace CommandCentral.Entities
                 }
 
                 //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-                var editableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.EditableFields)).ToList();
                 var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
                 if (unauthorizedEdits.Any())
                 {
@@ -1485,9 +1470,9 @@ namespace CommandCentral.Entities
 
         #endregion
 
-        public class PersonAuthorizor : AbstractAuthorizor<Person>
+        public class PersonAuthorizer : AbstractAuthorizer<Person>
         {
-            public PersonAuthorizor()
+            public PersonAuthorizer()
             {
                 RulesFor(x => x.Id)
                     .Returnable()

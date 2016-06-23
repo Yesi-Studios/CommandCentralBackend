@@ -20,17 +20,14 @@ namespace CommandCentral.Authorization
 
         public bool IgnoresGenericEdits { get; set; }
 
-        public AuthorizationRuleBuilder(string propertyName)
+        public AuthorizationRuleBuilder()
         {
-            this.ParentRuleGroup.PropertyNames = new List<string> { propertyName };
             this.CurrentCategory = AuthorizationRuleCategoryEnum.Null;
 
             this.IgnoresGenericEdits = false;
 
 
             Disjunctions = new List<RuleDisjunction>();
-            this.CurrentDisjunction = new RuleDisjunction();
-            this.Disjunctions.Add(this.CurrentDisjunction);
         }
 
         public AuthorizationRuleBuilder<T> AndFor<PropertyT>(Expression<Func<T, PropertyT>> expression)

@@ -8,7 +8,7 @@ using AtwoodUtils;
 
 namespace CommandCentral.Authorization
 {
-    public class AbstractAuthorizor<T>
+    public class AbstractAuthorizer<T>
     {
         private List<RuleGroup<T>> _ruleGroups = new List<RuleGroup<T>>();
 
@@ -16,16 +16,24 @@ namespace CommandCentral.Authorization
         {
             string propertyName = expression.GetPropertyName();
 
-            var ruleBuilder = new AuthorizationRuleBuilder<T>(propertyName);
+            var ruleBuilder = new AuthorizationRuleBuilder<T>();
 
             RuleGroup<T> group = new RuleGroup<T>(propertyName, ruleBuilder);
+            ruleBuilder.ParentRuleGroup = group;
+
+
 
             _ruleGroups.Add(group);
 
             return ruleBuilder;
         }
 
-        public List<string> GetAuthorizedFields(Entities.Person client, Entities.Person newPersonFromClient, AuthorizationRuleCategoryEnum category)
+        public List<string> GetPropertiesThatIgnoreEdit()
+        {
+            return _ruleGroups.Where(x => x.RuleBuilder.IgnoresGenericEdits).SelectMany(x => x.PropertyNames).ToList();
+        }
+
+        public List<string> GetAuthorizedProperties(Entities.Person client, Entities.Person newPersonFromClient, AuthorizationRuleCategoryEnum category)
         {
             if (category == AuthorizationRuleCategoryEnum.Null)
                 throw new ArgumentException("Category can't be null.");
@@ -38,7 +46,7 @@ namespace CommandCentral.Authorization
             {
                 if (category != AuthorizationRuleCategoryEnum.Edit || !ruleGroup.RuleBuilder.IgnoresGenericEdits)
                 {
-                    var passed = ruleGroup.RuleBuilder.Disjunctions.All(x => x.Evaluate(authToken));
+                    var passed = ruleGroup.RuleBuilder.Disjunctions.Where(x => x.Rules.Exists(y => y.ForCategory == category)).All(x => x.Evaluate(authToken));
 
                     if (passed)
                         properties.AddRange(ruleGroup.PropertyNames);
