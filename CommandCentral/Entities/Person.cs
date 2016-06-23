@@ -1422,12 +1422,15 @@ namespace CommandCentral.Entities
                     return;
                 }
 
+                //Get the validator we need.
                 var authorizer = new PersonAuthorizer();
 
+                //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
                 var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
                 var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
                 var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
 
+                //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
                 foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
                 {
                     var property = typeof(Person).GetProperty(field);
