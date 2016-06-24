@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -38,6 +39,11 @@ namespace AtwoodUtils
         {
             double radians = (Math.PI / 180) * degrees;
             return (radians);
+        }
+
+        public static string GetPropertyName<T, TReturn>(this Expression<Func<T, TReturn>> expression)
+        {
+            return ((MemberExpression)expression.Body).Member.Name;
         }
 
         /// <summary>

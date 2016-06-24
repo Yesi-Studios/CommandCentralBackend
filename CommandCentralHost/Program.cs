@@ -127,10 +127,40 @@ namespace CommandCentralHost
         private static void Main()
         {
 
-            //PersonsEditor.CreateMcLean();
-
             try
             {
+
+                string version = "uh oh";
+                bool isDebug = System.Diagnostics.Debugger.IsAttached;
+
+                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+                {
+                    version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+                }
+                else
+                {
+
+                    string repoPath = LibGit2Sharp.Repository.Discover(System.IO.Directory.GetCurrentDirectory());
+
+                    try
+                    {
+                        using (var repo = new LibGit2Sharp.Repository(repoPath))
+                        {
+                            var currentBranch = repo.Head;
+                            version = "{0} @ {1}".FormatS(currentBranch.FriendlyName, String.Concat(currentBranch.Tip.Id.ToString().Take(7)));
+                        }
+
+                    }
+                    catch
+                    {
+                        version = "Debug";
+                    }
+
+                }
+
+
+                Console.Title = "Command Central Backend Service | version ({0}): {1}".FormatS(isDebug ? "Debug" : "Release", version);
+
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
                 SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
@@ -146,7 +176,7 @@ namespace CommandCentralHost
 
                         Console.Clear();
 
-                        "Welcome to Command Central's Backend Host Application!".WriteLine();
+                        "Welcome to Command Central's Backend Service | version ({0}): {1}".FormatS(isDebug ? "Debug" : "Release", version).WriteLine();
                         "".WriteLine();
                         //Determine which options to show the client.
                         var displayOptions = _dialogueOptions.Where(x => x.DisplayCriteria()).ToList();

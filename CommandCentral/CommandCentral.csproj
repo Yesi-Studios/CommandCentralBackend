@@ -72,8 +72,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\AuthorizationEvaluationResult.cs" />
+    <Compile Include="Authorization\AuthorizationRuleBase.cs" />
+    <Compile Include="Authorization\AuthorizationRuleBuilder.cs" />
+    <Compile Include="Authorization\AuthorizationRuleCategoryEnum.cs" />
+    <Compile Include="Authorization\RuleDisjunction.cs" />
+    <Compile Include="Authorization\RuleGroup.cs" />
+    <Compile Include="Authorization\Rules\IfGrantedByPermissionGroupRule.cs" />
+    <Compile Include="Authorization\Rules\IfHasSpecialPermissionRule.cs" />
+    <Compile Include="Authorization\Rules\IfInChainOfCommandRule.cs" />
+    <Compile Include="Authorization\Rules\IfSelfRule.cs" />
+    <Compile Include="Authorization\Rules\NeverRule.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
+    <Compile Include="Authorization\Rules\ForEveryoneRule.cs" />
     <Compile Include="Authorization\PermissionLevelEnum.cs" />
+    <Compile Include="Authorization\AbstractAuthorizer.cs" />
+    <Compile Include="Authorization\Rules\PermissionGroupSpecialRule.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />

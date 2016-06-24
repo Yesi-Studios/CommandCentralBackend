@@ -25,6 +25,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's unique Id.
         /// </summary>
+        //[Returnable(typeof(AuthorizationRules.Never))]
         public virtual Guid Id { get; set; }
 
         #region Main Properties
@@ -280,9 +281,6 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInChainOfCommandOf(Person person)
         {
-            if (HasSpecialPermissions(SpecialPermissions.Developer))
-                return true;
-
             if (Id == person.Id)
                 return false;
 
@@ -1424,89 +1422,86 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
-            ProfileLock profileLock = token.CommunicationSession.QueryOver<ProfileLock>()
+            //Ok, so since we're read to do ze WORK we're going to do it on a separate session.
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                //Configure the caching and commiting.
+                session.FlushMode = NHibernate.FlushMode.Never;
+                session.CacheMode = NHibernate.CacheMode.Ignore;
+
+                //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
+                ProfileLock profileLock = session.QueryOver<ProfileLock>()
                                         .Where(x => x.LockedPerson.Id == personFromClient.Id)
                                         .SingleOrDefault();
 
-            //If we got no profile lock, then bail
-            if (profileLock == null)
-            {
-                token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
 
-            //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
-            if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
-            {
-                token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+                //If we got no profile lock, then bail
+                if (profileLock == null)
+                {
+                    token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                    return;
+                }
 
-            //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-            //IMPORTANT: This load is done through a separate session so as not to pull the person from the cache, because this person might be the logged in user.
-            var validationSession = NHibernateHelper.CreateStatefulSession();
-            validationSession.FlushMode = NHibernate.FlushMode.Never;
-            validationSession.CacheMode = NHibernate.CacheMode.Ignore;
-            Person personFromDB = validationSession.Get<Person>(personFromClient.Id);
+                //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
+                if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
+                {
+                    token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                    return;
+                }
 
-            //Did we get a person?  If not, the person the client gave us is bullshit.
-            if (personFromDB == null)
-            {
-                token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
+                Person personFromDB = session.Get<Person>(personFromClient.Id);
 
-            //If it's the logged in person.
-            if (personFromDB.Id == token.AuthenticationSession.Person.Id)
-            {
-                var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
+                //Did we get a person?  If not, the person the client gave us is bullshit.
+                if (personFromDB == null)
+                {
+                    token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
 
-                foreach (var field in returnableFields)
+                //Get the validator we need.
+                var authorizer = new PersonAuthorizer();
+
+                //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
+                var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
+                var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
+                var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
+
+                //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
+                foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
                 {
                     var property = typeof(Person).GetProperty(field);
 
                     property.SetValue(personFromDB, property.GetValue(personFromClient));
                 }
-            }
-            else
-            {
-                var returnableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.ReturnableFields)).ToList();
 
-                foreach (var field in returnableFields)
+                //Determine what changed.
+                var variances = session.GetDirtyProperties(personFromDB).ToList();
+
+                //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
+                var results = new PersonValidator().Validate(personFromClient);
+
+                //If there are any errors with the validation, let's throw those back to the client.
+                if (results.Errors.Any())
                 {
-                    var property = typeof(Person).GetProperty(field);
-
-                    property.SetValue(personFromDB, property.GetValue(personFromClient));
+                    token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
                 }
+
+                //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
+                var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
+                if (unauthorizedEdits.Any())
+                {
+                    token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                    return;
+                }
+
+                //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
+                session.Update(personFromDB);
+                session.Flush();
+                session.Close();
             }
-
-            //Determine what changed.
-            var variances = validationSession.GetDirtyProperties(personFromDB).ToList();
-
-            //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
-            var results = new PersonValidator().Validate(personFromClient);
-
-            //If there are any errors with the validation, let's throw those back to the client.
-            if (results.Errors.Any())
-            {
-                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-            var editableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions.Where(y => y.ModelName == "Person").SelectMany(y => y.EditableFields)).ToList();
-            var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
-            if (unauthorizedEdits.Any())
-            {
-                token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
-
-            //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
-            validationSession.Update(personFromDB);
-            validationSession.Flush();
-            validationSession.Close();
 
             //And then we're done!
             token.SetResult("Success");
@@ -1515,6 +1510,110 @@ namespace CommandCentral.Entities
         #endregion
 
         #endregion
+
+        public class PersonAuthorizer : AbstractAuthorizer<Person>
+        {
+            public PersonAuthorizer()
+            {
+                RulesFor(x => x.Id)
+                    .Returnable()
+                        .ForEveryone()
+                    .Editable()
+                        .Never();
+
+                RulesFor(x => x.IsClaimed).MakeIgnoreGenericEdits()
+                .AndFor(x => x.Changes)
+                .AndFor(x => x.AccountHistory)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .Never();
+
+                RulesFor(x => x.PasswordHash)
+                    .Returnable()
+                        .Never()
+                    .Editable()
+                        .IfSelf();
+
+                RulesFor(x => x.FirstName)
+                .AndFor(x => x.LastName)
+                .AndFor(x => x.MiddleName)
+                .AndFor(x => x.DateOfBirth)
+                .AndFor(x => x.Sex)
+                .AndFor(x => x.Remarks)
+                .AndFor(x => x.Ethnicity)
+                .AndFor(x => x.ReligiousPreference)
+                .AndFor(x => x.Suffix)
+                .AndFor(x => x.Designation)
+                .AndFor(x => x.Supervisor)
+                .AndFor(x => x.WorkCenter)
+                .AndFor(x => x.WorkRoom)
+                .AndFor(x => x.Shift)
+                .AndFor(x => x.WorkRemarks)
+                .AndFor(x => x.DateOfArrival)
+                .AndFor(x => x.JobTitle)
+                .AndFor(x => x.EmailAddresses)
+                .AndFor(x => x.PhoneNumbers)
+                .AndFor(x => x.PhysicalAddresses)
+                .AndFor(x => x.ContactRemarks)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.SSN)
+                    .Returnable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSelf().Or().IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.Paygrade)
+                .AndFor(x => x.Division)
+                .AndFor(x => x.Department)
+                .AndFor(x => x.Command)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfInChainOfCommand()
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.Billet)
+                .AndFor(x => x.NECs)
+                .AndFor(x => x.DutyStatus)
+                .AndFor(x => x.UIC)
+                .AndFor(x => x.EAOS)
+                .AndFor(x => x.DateOfDeparture)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfHasSpecialPermission(SpecialPermissions.ManPowerAdmin)
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.EmergencyContactInstructions)
+                .AndFor(x => x.Username)
+                .AndFor(x => x.SubscribedChangeEvents)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .IfSelf()
+                        .And()
+                        .IfGrantedByPermissionGroup();
+
+                RulesFor(x => x.PermissionGroups)
+                    .Returnable()
+                        .IfGrantedByPermissionGroup()
+                    .Editable()
+                        .Never();
+            }
+        }
 
         /// <summary>
         /// Maps a person to the database.

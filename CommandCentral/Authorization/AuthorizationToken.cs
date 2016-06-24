@@ -15,23 +15,14 @@ namespace CommandCentral.Authorization
         public Entities.Person Client { get; set; }
 
         /// <summary>
-        /// The person who the client is trying to edit.
+        /// The new version of the person the client sent us to be edited.
         /// </summary>
-        public Entities.Person EditedPerson { get; set; }
+        public Entities.Person NewPersonFromClient { get; set; }
 
-        /// <summary>
-        /// Indicates that the client is editing him or herself.
-        /// </summary>
-        public bool IsClientEditingSelf
+        public AuthorizationToken(Entities.Person client, Entities.Person newPersonFromClient)
         {
-            get
-            {
-                return Client.Id == EditedPerson.Id;
-            }
+            this.Client = client;
+            this.NewPersonFromClient = newPersonFromClient;
         }
-
-        
-
-
     }
 }
