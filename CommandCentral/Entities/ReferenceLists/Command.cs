@@ -95,10 +95,7 @@ namespace CommandCentral.Entities.ReferenceLists
         private static void EndpointMethod_LoadCommands(MessageToken token)
         {
             //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-            token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>().GroupBy(x => x.Value).Select(x =>
-            {
-                return new KeyValuePair<string, List<Command>>(x.Key, x.ToList());
-            }).ToDictionary(x => x.Key, x => x.Value));
+            token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>());
         }
 
         #endregion
