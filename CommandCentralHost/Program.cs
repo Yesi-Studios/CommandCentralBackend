@@ -107,6 +107,12 @@ namespace CommandCentralHost
                 OptionText = "View Entity Metadata",
                 Method = MetadataViewer.ViewAllEntityMetadata,
                 DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Manage Database Connection Settings",
+                Method = ConnectionEditor.EditConnection,
+                DisplayCriteria = () => true
             }
             
 

@@ -49,7 +49,6 @@ namespace CommandCentralHost.Editors
                         Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
                                         .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
                     };
-                    person.EmailAddresses.First().Owner = person;
 
                     session.SaveOrUpdate(person);
 
@@ -99,7 +98,6 @@ namespace CommandCentralHost.Editors
                         Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
                                         .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
                     };
-                    person.EmailAddresses.First().Owner = person;
 
                     session.SaveOrUpdate(person);
 

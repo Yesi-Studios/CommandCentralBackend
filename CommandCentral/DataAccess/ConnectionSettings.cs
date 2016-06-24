@@ -45,5 +45,7 @@ namespace CommandCentral.DataAccess
                 VerboseLogging = false
             }}
         };
+
+        public static string CurrentSettingsKey { get; set; }
     }
 }
