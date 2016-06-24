@@ -25,6 +25,9 @@ namespace CommandCentralHost.Editors
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
+                session.CacheMode = CacheMode.Refresh;
+
+
                 try
                 {
                     while (keepLooping)

@@ -138,39 +138,27 @@ namespace CommandCentralHost
                 }
                 else
                 {
-                    int maxAttempts = 10;
-                    int currentAttempts = 1;
-                    bool keepTrying = true;
 
-                    string currentDirectory = System.IO.Directory.GetCurrentDirectory();
+                    string repoPath = LibGit2Sharp.Repository.Discover(System.IO.Directory.GetCurrentDirectory());
 
-                    while (keepTrying)
+                    try
                     {
-                        try
+                        using (var repo = new LibGit2Sharp.Repository(repoPath))
                         {
-                            using (var repo = new LibGit2Sharp.Repository(currentDirectory))
-                            {
-                                LibGit2Sharp.Branch checkedOutBranch = repo.Head;
-                                version = checkedOutBranch.FriendlyName;
-
-                                keepTrying = false;
-                            }
+                            var currentBranch = repo.Head;
+                            version = "{0} @ {1}".FormatS(currentBranch.FriendlyName, String.Concat(currentBranch.Tip.Id.ToString().Take(7)));
                         }
-                        catch
-                        {
-                            if (currentAttempts >= maxAttempts)
-                                throw;
 
-                            currentDirectory = System.IO.Directory.GetParent(currentDirectory).FullName;
-
-                            currentAttempts++;
-                        }
+                    }
+                    catch
+                    {
+                        version = "Debug";
                     }
 
                 }
 
 
-                Console.Title = "Command Central Backend Service v {0}".FormatS(version);
+                Console.Title = "Command Central Backend Service | version (Debug): {0}".FormatS(version);
 
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
@@ -187,7 +175,7 @@ namespace CommandCentralHost
 
                         Console.Clear();
 
-                        "Welcome to Command Central's Backend Service v {0}!".FormatS(version).WriteLine();
+                        "Welcome to Command Central's Backend Service | version (Debug): {0}".FormatS(version).WriteLine();
                         "".WriteLine();
                         //Determine which options to show the client.
                         var displayOptions = _dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
