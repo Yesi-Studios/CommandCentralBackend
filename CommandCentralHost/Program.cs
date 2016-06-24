@@ -131,6 +131,7 @@ namespace CommandCentralHost
             {
 
                 string version = "uh oh";
+                bool isDebug = System.Diagnostics.Debugger.IsAttached;
 
                 if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
                 {
@@ -158,7 +159,7 @@ namespace CommandCentralHost
                 }
 
 
-                Console.Title = "Command Central Backend Service | version (Debug): {0}".FormatS(version);
+                Console.Title = "Command Central Backend Service | version ({0}): {1}".FormatS(isDebug ? "Debug" : "Release", version);
 
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
@@ -175,7 +176,7 @@ namespace CommandCentralHost
 
                         Console.Clear();
 
-                        "Welcome to Command Central's Backend Service | version (Debug): {0}".FormatS(version).WriteLine();
+                        "Welcome to Command Central's Backend Service | version ({0}): {1}".FormatS(isDebug ? "Debug" : "Release", version).WriteLine();
                         "".WriteLine();
                         //Determine which options to show the client.
                         var displayOptions = _dialogueOptions.Where(x => x.DisplayCriteria()).ToList();
