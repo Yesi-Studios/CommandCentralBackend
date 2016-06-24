@@ -17,11 +17,6 @@ namespace CommandCentral.Entities
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The  person to whom this phone number belongs.
-        /// </summary>
-        public virtual Person Owner { get; set; }
-
-        /// <summary>
         /// The actual phone number of this phone number object.
         /// </summary>
         public virtual string Number { get; set; }
@@ -79,7 +74,6 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Owner);
                 References(x => x.Carrier);
 
                 Map(x => x.Number).Not.Nullable().Length(15);

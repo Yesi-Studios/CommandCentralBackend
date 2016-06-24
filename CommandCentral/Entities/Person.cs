@@ -466,14 +466,6 @@ namespace CommandCentral.Entities
                         //Now insert it
                         token.CommunicationSession.Save(ses);
 
-                        //Now log the account history event on the person.
-                        person.AccountHistory.Add(new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = AccountHistoryEventTypes.Login,
-                            EventTime = token.CallTime,
-                            Person = person
-                        });
-
                         //And update the person
                         token.CommunicationSession.SaveOrUpdate(person);
 
@@ -500,14 +492,6 @@ namespace CommandCentral.Entities
                 token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
-
-            //Log the event
-            token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryEventTypes.Logout,
-                EventTime = token.CallTime,
-                Person = token.AuthenticationSession.Person
-            });
 
             //Now update the person
             token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
@@ -616,14 +600,6 @@ namespace CommandCentral.Entities
             //And then persist it.
             token.CommunicationSession.Save(pendingAccountConfirmation);
 
-            //Now let's make a new account event and then update the person.
-            person.AccountHistory.Add(new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryEventTypes.RegistrationStarted,
-                EventTime = token.CallTime,
-                Person = person
-            });
-
             //And then persist that by updating the person.
             token.CommunicationSession.Update(person);
 
@@ -705,14 +681,6 @@ namespace CommandCentral.Entities
             pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
             pendingAccountConfirmation.Person.IsClaimed = true;
 
-            //Ok, let's also add an account history saying we completed registration.
-            pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryEventTypes.RegistrationCompleted,
-                EventTime = token.CallTime,
-                Person = pendingAccountConfirmation.Person
-            });
-
             //Cool, so now just update the person object.
             token.CommunicationSession.Update(pendingAccountConfirmation.Person);
 
@@ -781,14 +749,6 @@ namespace CommandCentral.Entities
                 token.AddErrorMessage("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                 return;
             }
-
-            //And now we know it's claimed.  So make the event, log the event and send the email.
-            person.AccountHistory.Add(new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
-                EventTime = token.CallTime,
-                Person = person
-            });
 
             //Save the event
             token.CommunicationSession.Update(person);
@@ -871,13 +831,6 @@ namespace CommandCentral.Entities
             pendingPasswordReset.Person.PasswordHash = passwordHash;
 
             
-            pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetCompleted,
-                EventTime = token.CallTime,
-                Person = pendingPasswordReset.Person
-            });
-
             //Update/save it.
             token.CommunicationSession.Update(pendingPasswordReset);
 

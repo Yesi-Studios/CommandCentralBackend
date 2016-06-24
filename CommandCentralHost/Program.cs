@@ -123,6 +123,8 @@ namespace CommandCentralHost
         [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
         private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
 
+
+
         [STAThread]
         private static void Main()
         {

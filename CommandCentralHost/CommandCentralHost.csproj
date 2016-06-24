@@ -101,6 +101,7 @@
     <Compile Include="DialogueOption.cs" />
     <Compile Include="Editors\APIKeysEditor.cs" />
     <Compile Include="Editors\CommandsEditor.cs" />
+    <Compile Include="Editors\ConnectionEditor.cs" />
     <Compile Include="Editors\DepartmentsEditor.cs" />
     <Compile Include="Editors\DivisionsEditor.cs" />
     <Compile Include="Editors\EndpointEditor.cs" />

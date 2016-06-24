@@ -57,11 +57,6 @@ namespace CommandCentral.Entities
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The person on whose account this event occurred.
-        /// </summary>
-        public virtual Person Person { get; set; }
-
-        /// <summary>
         /// The type of history event that occurred.
         /// </summary>
         public virtual AccountHistoryEventTypes AccountHistoryEventType { get; set; }
@@ -100,8 +95,6 @@ namespace CommandCentral.Entities
 
                 Map(x => x.EventTime).Not.Nullable();
                 Map(x => x.AccountHistoryEventType).Not.Nullable().Length(50);
-
-                References(x => x.Person).Not.Nullable();
             }
         }
     }

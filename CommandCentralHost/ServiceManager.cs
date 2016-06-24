@@ -57,6 +57,9 @@ namespace CommandCentralHost
                         continue;
                     }
 
+                //Let's see what schema the client would like to connect to.
+                string schema = "test_default";
+
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(port))
                 {

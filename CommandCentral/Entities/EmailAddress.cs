@@ -20,11 +20,6 @@ namespace CommandCentral.Entities
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The person that owns this email address.
-        /// </summary>
-        public virtual Person Owner { get; set; }
-
-        /// <summary>
         /// The actual email address of this object.
         /// </summary>
         public virtual string Address { get; set; }
@@ -81,7 +76,6 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Owner).Not.Nullable();
                 Map(x => x.Address).Not.Nullable().Unique();
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();

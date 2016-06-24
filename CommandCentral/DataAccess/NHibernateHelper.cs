@@ -18,62 +18,49 @@ namespace CommandCentral.DataAccess
     public static class NHibernateHelper
     {
 
-        private static readonly ISessionFactory _sessionFactory;
+        private static ISessionFactory _sessionFactory;
 
-        private static readonly NHibernate.Tool.hbm2ddl.SchemaExport _schema;
+        private static NHibernate.Tool.hbm2ddl.SchemaExport _schema;
 
-        private static readonly ConcurrentDictionary<string, IClassMetadata> _allClassMetadata;
+        private static ConcurrentDictionary<string, IClassMetadata> _allClassMetadata;
+
+        private static bool isInitialized = false;
 
         /// <summary>
-        /// Static initializer sets up the NHibernate configuration and scans the assembly for all class maps.
+        /// Initializes the NHibernate Helper with the given connection settings.  Failure to call this method prior to DB interaction will cause all calls to fail.
         /// </summary>
-        static NHibernateHelper()
+        /// <param name="settings"></param>
+        public static void InitializeNHibernate(ConnectionSettings settings)
         {
-           /*Configuration configuration = Fluently.Configure().Database(
+            Configuration configuration = null;
+            
+            if (settings.VerboseLogging)
+            {
+                configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database("test_db")
-                        .Username("xanneth")
-                        .Password("douglas0678")
-                        .Server("localhost"))
+                    builder => builder.Database(settings.Database)
+                        .Username(settings.Username)
+                        .Password(settings.Password)
+                        .Server(settings.Server))
                     .ShowSql())
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
-
-            Configuration configuration = Fluently.Configure().Database(
+                .BuildConfiguration();
+            }
+            else
+            {
+                configuration = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database("test")
-                        .Username("niocga")
-                        .Password("niocga")
-                        .Server("gord14ec204")))
+                    builder => builder.Database(settings.Database)
+                        .Username(settings.Username)
+                        .Password(settings.Password)
+                        .Server(settings.Server)))
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();
-
-            //Acosta's machine
-            /*Configuration configuration = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database("test")
-                        .Username("niocga")
-                        .Password("niocga")
-                        .Server("localhost")))
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
-
-            /*Configuration configuration = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database("test")
-                        .Username("admin")
-                        .Password("password")
-                        .Server("localhost")))
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();*/
+            }
 
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(configuration);
@@ -89,7 +76,9 @@ namespace CommandCentral.DataAccess
                             x.Key.Split('.').Last(),
                             x.Value);
                     })
-                    .ToDictionary(x => x.Key, x=> x.Value));
+                    .ToDictionary(x => x.Key, x => x.Value));
+
+            isInitialized = true;
         }
 
         /// <summary>
@@ -98,6 +87,9 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static ISession CreateStatefulSession()
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             return _sessionFactory.OpenSession();
         }
 
@@ -107,6 +99,9 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IStatelessSession CreateStatelessSession()
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             return _sessionFactory.OpenStatelessSession();
         }
 
@@ -115,6 +110,9 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void Release()
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             _sessionFactory.Close();
             _sessionFactory.Dispose();
         }
@@ -126,6 +124,9 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             return _allClassMetadata[entityName];
         }
 
@@ -135,6 +136,9 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IDictionary<string, IClassMetadata> GetAllEntityMetadata()
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             return _allClassMetadata;
         }
 
@@ -143,6 +147,9 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void CreateSchema(bool dropFirst)
         {
+            if (!isInitialized)
+                throw new Exception("The NHibernate Helper has not yet been initialized.");
+
             System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;
             
             if (dropFirst)

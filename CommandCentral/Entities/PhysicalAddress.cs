@@ -18,11 +18,6 @@ namespace CommandCentral.Entities
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The person who owns this physical address.
-        /// </summary>
-        public virtual Person Owner { get; set; }
-
-        /// <summary>
         /// The street number.
         /// </summary>
         public virtual string StreetNumber { get; set; }
@@ -93,8 +88,6 @@ namespace CommandCentral.Entities
             public PhysicalAddressMapping()
             {
                 Id(x => x.Id);
-
-                References(x => x.Owner).Not.Nullable();
 
                 Map(x => x.StreetNumber).Not.Nullable().Length(45);
                 Map(x => x.Route).Not.Nullable().Length(45);
