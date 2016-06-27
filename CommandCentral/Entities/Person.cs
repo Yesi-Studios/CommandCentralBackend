@@ -1552,7 +1552,7 @@ namespace CommandCentral.Entities
                         .And()
                         .IfGrantedByPermissionGroup();
 
-                RulesFor(x => x.PermissionGroups)
+                RulesFor(x => x.PermissionGroups).MakeIgnoreGenericEdits()
                     .Returnable()
                         .IfGrantedByPermissionGroup()
                     .Editable()
