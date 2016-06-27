@@ -36,9 +36,17 @@ namespace CommandCentral.DataAccess
                 Username = "niocga",
                 VerboseLogging = false
             }},
-            { "Atwood's Home Machine", new ConnectionSettings
+            { "Atwood's Home Machine Production", new ConnectionSettings
             {
                 Database = "test_db",
+                Password = "douglas0678",
+                Server = "localhost",
+                Username = "xanneth",
+                VerboseLogging = false
+            }},
+            { "Atwood's Home Machine Development", new ConnectionSettings
+            {
+                Database = "command_central_development",
                 Password = "douglas0678",
                 Server = "localhost",
                 Username = "xanneth",

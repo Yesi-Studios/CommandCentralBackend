@@ -113,8 +113,20 @@ namespace CommandCentralHost
                 OptionText = "Manage Database Connection Settings",
                 Method = ConnectionEditor.EditConnection,
                 DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Create the McLean",
+                Method = PersonsEditor.CreateMcLean,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Create the Atwood",
+                Method = PersonsEditor.CreateAtwood,
+                DisplayCriteria = () => true
             }
-            
+
 
         };
 
