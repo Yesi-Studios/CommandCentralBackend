@@ -130,7 +130,6 @@
     <Compile Include="Enums\PaygradesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\Suffix.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="Entities\MusterRecord.cs" />

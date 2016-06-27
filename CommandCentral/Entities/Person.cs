@@ -51,6 +51,11 @@ namespace CommandCentral.Entities
         public virtual string SSN { get; set; }
 
         /// <summary>
+        /// The person's suffix.
+        /// </summary>
+        public virtual string Suffix { get; set; }
+
+        /// <summary>
         /// The person's date of birth.
         /// </summary>
         public virtual DateTime? DateOfBirth { get; set; }
@@ -74,11 +79,6 @@ namespace CommandCentral.Entities
         /// The person's religious preference
         /// </summary>
         public virtual ReligiousPreference ReligiousPreference { get; set; }
-
-        /// <summary>
-        /// The person's suffix, sch as IV, Esquire, etc.
-        /// </summary>
-        public virtual Suffix Suffix { get; set; }
 
         /// <summary>
         /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
@@ -1193,14 +1193,6 @@ namespace CommandCentral.Entities
                                 queryOver = queryOver.Where(disjunction);
                                 break;
                             }
-                        case "Suffix":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Suffix.Id).In(QueryOver.Of<Suffix>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
                         case "Billet":
                             {
                                 //If the client is searching in billet, then it's a simple search, meaning we have to split the search term.
@@ -1380,8 +1372,8 @@ namespace CommandCentral.Entities
             using (var transaction = session.BeginTransaction())
             {
                 //Configure the caching and commiting.
-                session.FlushMode = NHibernate.FlushMode.Never;
-                session.CacheMode = NHibernate.CacheMode.Ignore;
+                session.FlushMode = NHibernate.FlushMode.Commit;
+                session.CacheMode = NHibernate.CacheMode.Normal;
 
                 //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
                 ProfileLock profileLock = session.QueryOver<ProfileLock>()
@@ -1452,8 +1444,8 @@ namespace CommandCentral.Entities
 
                 //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                 session.Update(personFromDB);
-                session.Flush();
-                session.Close();
+
+                transaction.Commit();
             }
 
             //And then we're done!
@@ -1468,7 +1460,7 @@ namespace CommandCentral.Entities
         {
             public PersonAuthorizer()
             {
-                RulesFor(x => x.Id)
+                RulesFor(x => x.Id).MakeIgnoreGenericEdits()
                     .Returnable()
                         .ForEveryone()
                     .Editable()
@@ -1582,7 +1574,6 @@ namespace CommandCentral.Entities
 
                 References(x => x.Ethnicity).Nullable().LazyLoad();
                 References(x => x.ReligiousPreference).Nullable().LazyLoad();
-                References(x => x.Suffix).Nullable().LazyLoad();
                 References(x => x.Designation).Nullable().LazyLoad();
                 References(x => x.Division).Nullable().LazyLoad();
                 References(x => x.Department).Nullable().LazyLoad();
@@ -1613,6 +1604,7 @@ namespace CommandCentral.Entities
                 Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).LazyLoad();
                 Map(x => x.Username).Nullable().Length(40).Unique().LazyLoad();
                 Map(x => x.PasswordHash).Nullable().Length(100).LazyLoad();
+                Map(x => x.Suffix).Nullable().Length(40).LazyLoad();
 
                 HasManyToMany(x => x.NECs).LazyLoad();
                 HasManyToMany(x => x.PermissionGroups).LazyLoad();
@@ -1640,6 +1632,8 @@ namespace CommandCentral.Entities
                     .WithMessage("The first name must not exceed 40 characters.");
                 RuleFor(x => x.MiddleName).Length(0, 40)
                     .WithMessage("The middle name must not exceed 40 characters.");
+                RuleFor(x => x.Suffix).Length(0, 40)
+                    .WithMessage("The suffix must not exceed 40 characters.");
                 RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}-(?!00)\d{2}-(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
@@ -1674,19 +1668,6 @@ namespace CommandCentral.Entities
                         return pref.Equals(x);
                     })
                     .WithMessage("The religious preference wasn't valid.  It must match exactly a list item in the database.");
-                RuleFor(x => x.Suffix).Must(x =>
-                    {
-                        if (x == null)
-                            return true;
-
-                        Suffix suffix = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Suffix>(x.Id);
-
-                        if (suffix == null)
-                            return false;
-
-                        return suffix.Equals(x);
-                    })
-                    .WithMessage("The suffix wasn't valid.  It must match exactly a list item in the database.");
                 RuleFor(x => x.Designation).Must(x =>
                     {
                         if (x == null)

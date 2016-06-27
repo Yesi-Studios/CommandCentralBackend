@@ -96,8 +96,8 @@ namespace CommandCentral.Entities
                 Map(x => x.ZipCode).Not.Nullable().Length(45);
                 Map(x => x.Country).Not.Nullable().Length(45);
                 Map(x => x.IsHomeAddress).Not.Nullable();
-                Map(x => x.Latitude).Not.Nullable();
-                Map(x => x.Longitude).Not.Nullable();
+                Map(x => x.Latitude).Nullable();
+                Map(x => x.Longitude).Nullable();
 
             }
         }

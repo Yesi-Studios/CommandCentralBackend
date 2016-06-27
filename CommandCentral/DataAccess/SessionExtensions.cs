@@ -138,6 +138,9 @@ namespace CommandCentral.DataAccess
 
             Int32[] dirtyProps = persister.FindDirty(currentState, oldState, entity, sessionImpl);
 
+            if (dirtyProps == null)
+                yield break;
+
             foreach (var propIndex in dirtyProps)
             {
                 yield return new Variance { NewValue = currentState[propIndex], OldValue = oldState[propIndex], PropertyName = persister.PropertyNames[propIndex] };
