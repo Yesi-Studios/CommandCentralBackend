@@ -324,7 +324,7 @@ namespace CommandCentral.Authorization
             token.CommunicationSession.Update(person);
 
             //If we get here, then success.
-            token.SetResult("Success");
+            token.SetResult(new { WasSelf = person.Id == token.AuthenticationSession.Person.Id });
         }
 
         #endregion Client Access
