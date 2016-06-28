@@ -469,7 +469,7 @@ namespace CommandCentral.Entities
                         //And update the person
                         token.CommunicationSession.SaveOrUpdate(person);
 
-                        token.SetResult(new { PersonID = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                        token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                     }
                 }
             }
