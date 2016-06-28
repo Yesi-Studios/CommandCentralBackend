@@ -101,6 +101,7 @@ namespace CommandCentralHost.Editors
                         }
                         else
                         {
+                            //Client wants to make a new permission group.
                             var item = new PermissionGroup { Name = input };
                             session.Save(item);
                         }
@@ -141,10 +142,11 @@ namespace CommandCentralHost.Editors
                 "4. View/Edit Special Permissions".WriteLine();
                 "5. View/Edit Subordinate Permission Groups".WriteLine();
                 "6. View/Edit Permission Level".WriteLine();
-                "7. Return".WriteLine();
+                "7. View/Edit Permission Track".WriteLine();
+                "8. Return".WriteLine();
 
                 int option;
-                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 7)
+                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 8)
                 {
                     switch (option)
                     {
@@ -207,6 +209,24 @@ namespace CommandCentralHost.Editors
                                 break;
                             }
                         case 7:
+                            {
+                                Console.Clear();
+                                "The current permission track is, '{0}'. Choose a new one from below.".FormatS(group.PermissionTrack).WriteLine();
+                                "".WriteLine();
+
+                                var names = Enum.GetNames(typeof(PermissionTracks));
+                                for (int x = 0; x < names.Length; x++)
+                                    "{0}. {1}".FormatS(x, names[x]).WriteLine();
+
+                                int levelOption = -1;
+                                if (int.TryParse(Console.ReadLine(), out levelOption) && levelOption >= 0 && levelOption < names.Length)
+                                {
+                                    group.PermissionTrack = (PermissionTracks)Enum.Parse(typeof(PermissionTracks), names[levelOption]);
+                                }
+
+                                break;
+                            }
+                        case 8:
                             {
                                 keepLooping = false;
 

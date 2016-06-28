@@ -349,7 +349,7 @@ namespace CommandCentral.Authorization
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
                 Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
-                Map(x => x.PermissionTrack).Not.Nullable();
+                Map(x => x.PermissionTrack).Default("'{0}'".FormatS(PermissionTracks.None.ToString())).Not.Nullable(); //Same as above
 
                 HasMany(x => x.SpecialPermissions)
                     .KeyColumn("PermissionGroupId")

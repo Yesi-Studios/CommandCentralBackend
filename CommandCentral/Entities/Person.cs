@@ -326,6 +326,63 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
+        /// Returns a boolean indicating if this person is in a given permission track at any level.
+        /// </summary>
+        /// <param name="track"></param>
+        /// <returns></returns>
+        public virtual bool IsInPermissionTrack(PermissionTracks track)
+        {
+            return PermissionGroups.Any(x => x.PermissionTrack == track);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating if this person is in the same command as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameCommandAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating that this person is in the same command and department as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameDepartmentAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating that this person is in the same command, department, and division as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameDivisionAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
+        }
+
+        /// <summary>
+        /// Returns a permission level indicating the highest level of permissions a person has in a given track.
+        /// <para/>
+        /// For example, if a person has two permission groups in the Muster track, one at the division level and one at the command level, their highest permissions in the Muster track are command level.
+        /// </summary>
+        /// <param name="track"></param>
+        /// <returns></returns>
+        public virtual PermissionLevels GetHighestLevelInTrack(PermissionTracks track)
+        {
+            var groups = PermissionGroups.Where(x => x.PermissionTrack == track);
+
+            if (!groups.Any())
+                return PermissionLevels.None;
+
+            return groups.Max(x => x.PermissionLevel);
+        }
+
+        /// <summary>
         /// Returns a boolean indicating whether or not this person can search in the given fields.
         /// </summary>
         /// <param name="entityName"></param>

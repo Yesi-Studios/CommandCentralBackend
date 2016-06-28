@@ -12,6 +12,7 @@ namespace CommandCentral.Authorization
     public enum PermissionTracks
     {
         Muster,
-        Main
+        Main,
+        None
     }
 }
