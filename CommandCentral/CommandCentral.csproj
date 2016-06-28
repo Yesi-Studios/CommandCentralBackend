@@ -76,6 +76,7 @@
     <Compile Include="Authorization\AuthorizationRuleBase.cs" />
     <Compile Include="Authorization\AuthorizationRuleBuilder.cs" />
     <Compile Include="Authorization\AuthorizationRuleCategoryEnum.cs" />
+    <Compile Include="Authorization\PermissionTracksEnum.cs" />
     <Compile Include="Authorization\RuleDisjunction.cs" />
     <Compile Include="Authorization\RuleGroup.cs" />
     <Compile Include="Authorization\Rules\IfGrantedByPermissionGroupRule.cs" />

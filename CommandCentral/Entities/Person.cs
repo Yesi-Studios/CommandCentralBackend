@@ -25,7 +25,6 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's unique Id.
         /// </summary>
-        //[Returnable(typeof(AuthorizationRules.Never))]
         public virtual Guid Id { get; set; }
 
         #region Main Properties
@@ -173,6 +172,11 @@ namespace CommandCentral.Entities
         /// The date/time that the client left/will leave the command.
         /// </summary>
         public virtual DateTime? DateOfDeparture { get; set; }
+
+        /// <summary>
+        /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
+        /// </summary>
+        public virtual MusterRecord CurrentMusterStatus { get; set; }
 
         #endregion
 
@@ -1456,8 +1460,14 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        /// <summary>
+        /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
+        /// </summary>
         public class PersonAuthorizer : AbstractAuthorizer<Person>
         {
+            /// <summary>
+            /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
+            /// </summary>
             public PersonAuthorizer()
             {
                 RulesFor(x => x.Id).MakeIgnoreGenericEdits()
@@ -1466,9 +1476,11 @@ namespace CommandCentral.Entities
                     .Editable()
                         .Never();
 
+                //Properties in this group are updated by other endpoints and not the generic update endpoint.
                 RulesFor(x => x.IsClaimed).MakeIgnoreGenericEdits()
                 .AndFor(x => x.Changes)
                 .AndFor(x => x.AccountHistory)
+                .AndFor(x => x.CurrentMusterStatus)
                     .Returnable()
                         .IfGrantedByPermissionGroup()
                     .Editable()
@@ -1580,6 +1592,7 @@ namespace CommandCentral.Entities
                 References(x => x.Command).Nullable().LazyLoad();
                 References(x => x.Billet).Nullable().LazyLoad();
                 References(x => x.UIC).Nullable().LazyLoad();
+                References(x => x.CurrentMusterStatus).Not.Nullable().LazyLoad();
 
                 Map(x => x.DutyStatus).Not.Nullable();
                 Map(x => x.Paygrade).Not.Nullable();

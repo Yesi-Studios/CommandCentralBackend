@@ -42,9 +42,14 @@ namespace CommandCentral.Entities
         public virtual Person Musteree { get; set; }
 
         /// <summary>
-        /// The Person being mustered's rank. Fucking Mustard.
+        /// The Person being mustered's paygrade. Fucking Mustard.
         /// </summary>
-        public virtual string Rank { get; set; }
+        public virtual string Paygrade { get; set; }
+
+        /// <summary>
+        /// The person being mustered's UIC.  Fucking Mustard x 2.
+        /// </summary>
+        public virtual string UIC { get; set; }
 
         /// <summary>
         /// The person that is having the muster happen to them's division.
@@ -81,6 +86,11 @@ namespace CommandCentral.Entities
         /// </summary>
         public virtual int MusterDayOfYear { get; set; }
 
+        /// <summary>
+        /// The year this muster record is in.
+        /// </summary>
+        public virtual int MusterYear { get; set; }
+
         #endregion
 
         #region Helper Methods
@@ -105,6 +115,36 @@ namespace CommandCentral.Entities
                 else
                     return julCalendar.GetDayOfYear(dateTime) + 1;
             }
+        }
+
+        /// <summary>
+        /// Creates a new muster status with everything set to null except the musteree and the current day values.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="date">The date time for which to create this muster record.</param>
+        /// <returns></returns>
+        public static MusterRecord CreateDefaultMusterRecordForPerson(Person person, DateTime date)
+        {
+            return new MusterRecord
+            {
+                Command = null,
+                Department = null,
+                Division = null,
+                DutyStatus = null,
+                MusterDayOfYear = GetMusterDay(date),
+                Musteree = person,
+                Musterer = null,
+                MusterStatus = null,
+                MusterYear = date.Year,
+                Paygrade = null,
+                UIC = null,
+                SubmitTime = default(DateTime)
+            };
+        }
+
+        public static bool CanClientMusterPerson(Person client, Person person)
+        {
+
         }
 
         #endregion
@@ -250,7 +290,7 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate)).List());
+            token.SetResult(token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List());
         }
 
         /// <summary>
@@ -342,7 +382,7 @@ namespace CommandCentral.Entities
                     Musteree = person,
                     Musterer= token.AuthenticationSession.Person,
                     MusterStatus = musterSubmissions[person.Id].ToString(),
-                    Rank = person.Designation.Value,
+                    Paygrade = person.Designation.Value,
                     SubmitTime = token.CallTime
                 });
             }
@@ -370,11 +410,21 @@ namespace CommandCentral.Entities
                 return;
             }
 
+            //We need all the current muster records for today.
+            var persons = token.CommunicationSession.QueryOver<Person>()
+                .Fetch(x => x.CurrentMusterStatus).Eager
+                .Fetch(x => x.Command).Eager
+                .Fetch(x => x.Department).Eager
+                .Fetch(x => x.Division).Eager
+                .Fetch(x => x.UIC).Eager
+                .List();
+               
+
             //Now we need to know what the muster day is.
             int musterDayOfTheYear = MusterRecord.GetMusterDay(token.CallTime);
 
             //And now we need all of the muster records for today.
-            var todaysMusterRecords = token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == musterDayOfTheYear).List();
+            var todaysMusterRecords = token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == musterDayOfTheYear && x.MusterYear == token.CallTime.Year).List();
 
             //Now we need all those persons that have not yet been mustered.
             var remainingPersons = token.CommunicationSession.QueryOver<Person>().WhereRestrictionOn(x => x.Id).Not.IsIn(todaysMusterRecords.Select(x => x.Musteree.Id).ToList()).List();
@@ -408,7 +458,7 @@ namespace CommandCentral.Entities
                 References(x => x.Musterer).Not.Nullable();
                 References(x => x.Musteree).Not.Nullable();
 
-                Map(x => x.Rank).Not.Nullable().Length(10);
+                Map(x => x.Paygrade).Not.Nullable().Length(10);
                 Map(x => x.Division).Not.Nullable().Length(10);
                 Map(x => x.Department).Not.Nullable().Length(10);
                 Map(x => x.Command).Not.Nullable().Length(10);

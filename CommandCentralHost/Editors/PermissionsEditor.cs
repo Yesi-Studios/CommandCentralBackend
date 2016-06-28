@@ -130,6 +130,10 @@ namespace CommandCentralHost.Editors
                 "".WriteLine();
                 "Description:\n\t{0}".FormatS(group.Description).WriteLine();
                 "".WriteLine();
+                "Permission Level:\n\t{0}".FormatS(group.PermissionLevel).WriteLine();
+                "".WriteLine();
+                "Permission Track:\n\t{0}".FormatS(group.PermissionTrack).WriteLine();
+                "".WriteLine();
 
                 "1. Edit Name".WriteLine();
                 "2. Edit Description".WriteLine();
