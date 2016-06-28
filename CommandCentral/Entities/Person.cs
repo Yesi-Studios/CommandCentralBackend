@@ -1671,7 +1671,7 @@ namespace CommandCentral.Entities
                 References(x => x.CurrentMusterStatus).Not.Nullable().LazyLoad();
 
                 Map(x => x.DutyStatus).Not.Nullable();
-                Map(x => x.Paygrade).Not.Nullable();
+                Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>();
                 Map(x => x.Sex).Not.Nullable();
                 Map(x => x.LastName).Not.Nullable().Length(40);
                 Map(x => x.FirstName).Not.Nullable().Length(40).LazyLoad();
