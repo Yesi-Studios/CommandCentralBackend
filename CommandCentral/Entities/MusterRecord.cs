@@ -364,13 +364,14 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Before we do anything, make sure the client has permission to do muster.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.SubmitMuster))
+            //Before we do anything, make sure the client has permission to do muster.  As long as they are in a permission group in the Muster track, that'll be enough.
+            if (!token.AuthenticationSession.Person.IsInPermissionTrack(Authorization.PermissionTracks.Muster))
             {
                 token.AddErrorMessage("You are not authorized to submit muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
+            //Did we get what we needed?
             if (!token.Args.ContainsKey("mustersubmissions"))
             {
                 token.AddErrorMessage("You must send a 'mustersubmissions' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -378,7 +379,7 @@ namespace CommandCentral.Entities
             }
 
 
-            Dictionary<Guid, string> musterSubmissions = new Dictionary<Guid, string>();
+            Dictionary<Guid, string> musterSubmissions = null;
             //When we try to parse the JSON from the request, we'll do it in a try catch because there's no convenient, performant TryParse implementation for this.
             try
             {
@@ -398,55 +399,61 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  Fetch the command/dep/div so we can use it without lazy loading.
-            var persons = token.CommunicationSession.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys)
-                .Fetch(x => x.Department).Eager
-                .Fetch(x => x.Command).Eager
-                .Fetch(x => x.Division).Eager
-                .List();
-
-            //Ok we have all the persons, now we need to make sure the client is in their chains of command.  Every.  Single. One.  Oh boy.
-            if (persons.Any(x => !token.AuthenticationSession.Person.IsInChainOfCommandOf(x)))
+            //This is the session in which we're going to do our muster updates.  We do it separately in case something terrible happens to the currently logged in user.
+            //This means that if the currently logged in person updates their own muster then for the rest of this request, their muster will be invalid.  That's ok cause we shouldn't need it.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                //If any one person is not in the person's chain of command, the fail out of the whole thing.  We don't care who the person was or how many there were.  Fuck her.  Right in the pussy.
-                token.AddErrorMessage("You are not authorized to submit muster for one or more persons in your requested list.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                //Tell the session we'll handle commits through the transaction, otherwise every property update on the current muster status will result in an update.
+                session.CacheMode = NHibernate.CacheMode.Ignore;
+                session.FlushMode = NHibernate.FlushMode.Commit;
 
-            //Ok, the client is in their chains of command.  Now we can submit muster.
-            //First though, we need to find out what muster day we're on.  Looks like there's a method for that!
-            int musterDayOfYear = MusterRecord.GetMusterDay(token.CallTime);
+                //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  Fetch the command/dep/div so we can use it without lazy loading.
+                var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys)
+                    .Fetch(x => x.Department).Eager
+                    .Fetch(x => x.Command).Eager
+                    .Fetch(x => x.Division).Eager
+                    .List();
 
-            //Ok now we need to get all those people who have already had a muster record submitted for today.
-            var alreadyMusteredPersons = token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == musterDayOfYear).AndRestrictionOn(x => x.Musteree.Id).IsIn(musterSubmissions.Keys).Select(x => x.Musteree).List<Person>();
-
-            //Now we just need to make a new muster record for anyone not in the above list.
-            var personsToSubmit = persons.Except(alreadyMusteredPersons).ToList();
-            foreach (var person in personsToSubmit)
-            {
-                token.CommunicationSession.Save(new MusterRecord
+                //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
+                if (persons.Any(x => !CanClientMusterPerson(token.AuthenticationSession.Person, x)))
                 {
-                    Command = person.Command.Value,
-                    Department = person.Department.Value,
-                    Division = person.Department.Value,
-                    DutyStatus = person.DutyStatus.ToString(),
-                    MusterDayOfYear = musterDayOfYear,
-                    Musteree = person,
-                    Musterer= token.AuthenticationSession.Person,
-                    MusterStatus = musterSubmissions[person.Id].ToString(),
-                    Paygrade = person.Designation.Value,
-                    SubmitTime = token.CallTime
-                });
+                    token.AddErrorMessage("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                    return;
+                }
+
+                //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
+                for (int x = 0; x < persons.Count; x++)
+                {
+                    persons[x].CurrentMusterStatus.Command = persons[x].Command.Value;
+                    persons[x].CurrentMusterStatus.Department = persons[x].Department.Value;
+                    persons[x].CurrentMusterStatus.Division = persons[x].Division.Value;
+                    persons[x].CurrentMusterStatus.DutyStatus = persons[x].DutyStatus.ToString();
+                    persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
+                    persons[x].CurrentMusterStatus.MusterDayOfYear = GetMusterDay(token.CallTime);
+                    persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
+                    persons[x].CurrentMusterStatus.MusterStatus = musterSubmissions.ElementAt(x).Value;
+                    persons[x].CurrentMusterStatus.MusterYear = GetMusterYear(token.CallTime);
+                    persons[x].CurrentMusterStatus.Paygrade = persons[x].Paygrade.ToString();
+                    persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
+                    persons[x].CurrentMusterStatus.UIC = persons[x].UIC.Value;
+
+                    //And once we're done resetting their current muster status, let's update them.
+                    session.Update(persons[x]);
+                }
+
+                //And then commit the transaction if it all went well.
+                transaction.Commit();
             }
 
-            //Ok, well we're done!  Now we just need to tell the client that we finished and tell the client which muster records we inserted.
-            token.SetResult(personsToSubmit.Select(x => x.Id).ToList());
+            //Ok, well we're done!  Now we just need to tell the client that we finished and tell the client for whom we submitted muster records.  Because why not.
+            token.SetResult(musterSubmissions.Select(x => x.Key.ToString()).ToList());
         }
 
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Loads the current day's muster, returning all muster records for today, all persons who still need to be mustered, the current day, and a list of those persons who the client can muster.
+        /// Loads the current day's muster and returns to the client the current day and year, the roll over hours we used to determine the muster and all persons the client is allowed to muster.
         /// <para />
         /// Client Parameters: <para />
         ///     None
@@ -462,32 +469,73 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //We need all the current muster records for today.  Make sure to fetch any references we might need so we don't wind up with some select n+1 shit.
-            var results = token.CommunicationSession.QueryOver<Person>()
-                .Fetch(x => x.CurrentMusterStatus).Eager
-                .Fetch(x => x.Command).Eager
-                .Fetch(x => x.Department).Eager
-                .Fetch(x => x.Division).Eager
-                .Fetch(x => x.UIC).Eager
-                .List()
-                //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
-                //Because Atwood is a good code monkey. Oh yes he is.
-                .Select(x =>
+            //Where we're going to keep all the persons the client can muster.
+            List<Person> musterablePersons = new List<Person>();
+
+            Authorization.PermissionLevels highestLevel = token.AuthenticationSession.Person.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
+
+            //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
+            if (highestLevel == Authorization.PermissionLevels.None)
+            {
+                musterablePersons.Add(token.AuthenticationSession.Person);
+            }
+            else
+            {
+                //We need all the current muster records for today.  Make sure to fetch any references we might need so we don't wind up with some select n+1 shit.
+                //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
+                var queryOver = token.CommunicationSession.QueryOver<Person>()
+                    .Fetch(x => x.CurrentMusterStatus).Eager
+                    .Fetch(x => x.Command).Eager
+                    .Fetch(x => x.Department).Eager
+                    .Fetch(x => x.Division).Eager
+                    .Fetch(x => x.UIC).Eager;
+
+                switch (highestLevel)
                 {
-                    return new
-                    {
-                        Id = x.Id,
-                        FirstName = x.FirstName,
-                        MiddleName = x.MiddleName,
-                        LastName = x.LastName,
-                        Paygrade = x.Paygrade,
-                        Designation = x.Designation,
-                        FriendlyName = x.ToString(),
-                        CurrentMusterStatus = x.CurrentMusterStatus,
-                        CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
-                        HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
-                    };
-                });
+                    case Authorization.PermissionLevels.Command:
+                        {
+                            queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
+                            break;
+                        }
+                    case Authorization.PermissionLevels.Department:
+                        {
+                            queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
+                            break;
+                        }
+                    case Authorization.PermissionLevels.Division:
+                        {
+                            queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
+                            break;
+                        }
+                    default:
+                        {
+                            throw new Exception("The default case in the high level switch in the LoadTodaysMuster was reached with the following case: '{0}'!".FormatS(highestLevel));
+                        }
+                }
+
+                //Now we have the query populated with the conditions it needs, let's fire it off.
+                musterablePersons = queryOver.List().ToList();
+            }
+
+            
+            //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
+            //Because Atwood is a good code monkey. Oh yes he is.
+            var results = musterablePersons.Select(x =>
+            {
+                return new
+                {
+                    Id = x.Id,
+                    FirstName = x.FirstName,
+                    MiddleName = x.MiddleName,
+                    LastName = x.LastName,
+                    Paygrade = x.Paygrade,
+                    Designation = x.Designation,
+                    FriendlyName = x.ToString(),
+                    CurrentMusterStatus = x.CurrentMusterStatus,
+                    CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
+                    HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
+                };
+            });
 
             //And now build the final DTO that's going out the door.
             token.SetResult(new

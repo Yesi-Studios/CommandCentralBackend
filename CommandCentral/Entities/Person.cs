@@ -1338,6 +1338,25 @@ namespace CommandCentral.Entities
                                 queryOver = queryOver.Where(disjunction);
                                 break;
                             }
+                        case "CurrentMusterStatus":
+                            {
+                                //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
+                                foreach (string term in searchTerms)
+                                {
+                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
+                                    .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
+                                    .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == MusterRecord.GetMusterYear(token.CallTime))
+                                    .Select(x => x.Id)));
+                                }
+
+                                break;
+                            }
                         default:
                             {
                                 //If the client tried to search in something that isn't supported, then fuck em.
