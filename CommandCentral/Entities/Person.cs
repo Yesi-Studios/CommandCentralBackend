@@ -1405,7 +1405,7 @@ namespace CommandCentral.Entities
                     return;
                 }
 
-                //Get the validator we need.
+                //Get the authorizer we need.
                 var authorizer = new PersonAuthorizer();
 
                 //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
@@ -1623,6 +1623,9 @@ namespace CommandCentral.Entities
         /// </summary>
         public class PersonValidator : AbstractValidator<Person>
         {
+            /// <summary>
+            /// Validates a person object.
+            /// </summary>
             public PersonValidator()
             {
                 RuleFor(x => x.Id).NotEmpty();
@@ -1634,8 +1637,8 @@ namespace CommandCentral.Entities
                     .WithMessage("The middle name must not exceed 40 characters.");
                 RuleFor(x => x.Suffix).Length(0, 40)
                     .WithMessage("The suffix must not exceed 40 characters.");
-                RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}-(?!00)\d{2}-(?!0{4})\d{4}$"))
-                    .WithMessage("The SSN must be valid.");
+                RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
+                    .WithMessage("The SSN must be valid and contain only numbers.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
                 RuleFor(x => x.Sex).NotNull()
@@ -1769,6 +1772,15 @@ namespace CommandCentral.Entities
                     .WithMessage("The UIC was invalid.");
                 RuleFor(x => x.JobTitle).Length(0, 40)
                     .WithMessage("The job title may not be longer than 40 characters.");
+
+
+                //Set validations
+                RuleFor(x => x.EmailAddresses)
+                    .SetCollectionValidator(new EmailAddress.EmailAddressValidator());
+                RuleFor(x => x.PhoneNumbers)
+                    .SetCollectionValidator(new PhoneNumber.PhoneNumberValidator());
+                RuleFor(x => x.PhysicalAddresses)
+                    .SetCollectionValidator(new PhysicalAddress.PhysicalAddressValidator());
                
 
 

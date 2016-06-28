@@ -1,6 +1,7 @@
 ﻿using System;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities
 {
@@ -100,6 +101,15 @@ namespace CommandCentral.Entities
                 Map(x => x.Longitude).Nullable();
 
             }
+        }
+
+        public class PhysicalAddressValidator : AbstractValidator<PhysicalAddress>
+        {
+            public PhysicalAddressValidator()
+            {
+                //TODO
+            }
+
         }
 
     }

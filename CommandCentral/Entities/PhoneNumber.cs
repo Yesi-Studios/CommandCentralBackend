@@ -1,6 +1,8 @@
 ﻿using System;
 using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
+using FluentValidation;
+using System.Linq;
 
 namespace CommandCentral.Entities
 {
@@ -20,11 +22,6 @@ namespace CommandCentral.Entities
         /// The actual phone number of this phone number object.
         /// </summary>
         public virtual string Number { get; set; }
-
-        /// <summary>
-        /// The carrier of this phone number, eg.  Verizon, etc.
-        /// </summary>
-        public virtual PhoneCarrier Carrier { get; set; }
 
         /// <summary>
         /// Indicates whether or not the person who owns this phone number wants any contact to occur using it.
@@ -74,14 +71,22 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Carrier);
-
                 Map(x => x.Number).Not.Nullable().Length(15);
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
                 Map(x => x.PhoneType).Not.Nullable();
 
 
+            }
+        }
+
+        public class PhoneNumberValidator : AbstractValidator<PhoneNumber>
+        {
+            public PhoneNumberValidator()
+            {
+                RuleFor(x => x.Number).Length(0, 10)
+                    .Must(x => x.All(char.IsDigit))
+                    .WithMessage("Your phone number must only be 10 digits.");
             }
         }
 

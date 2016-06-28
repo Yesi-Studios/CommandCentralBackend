@@ -104,7 +104,6 @@
     <Compile Include="Entities\Errors.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
-    <Compile Include="Entities\PhoneCarrier.cs" />
     <Compile Include="Enums\ChangeEventLevelsEnum.cs" />
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />

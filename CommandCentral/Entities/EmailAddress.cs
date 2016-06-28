@@ -87,7 +87,6 @@ namespace CommandCentral.Entities
             public EmailAddressValidator()
             {
                 //TODO
-                throw new NotImplementedException();
             }
         }
 
