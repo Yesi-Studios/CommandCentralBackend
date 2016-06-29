@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace CommandCentral
+namespace CommandCentral.CronOperations
 {
     /// <summary>
     /// Provides support for chronologically running operations.
     /// </summary>
-    public static class CronOperations
+    public static class CronOperationsManager
     {
 
         private static ConcurrentBag<Action> _cronOperationsCache = new ConcurrentBag<Action>();

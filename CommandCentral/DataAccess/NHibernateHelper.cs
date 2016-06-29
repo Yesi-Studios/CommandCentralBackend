@@ -32,6 +32,9 @@ namespace CommandCentral.DataAccess
         /// <param name="settings"></param>
         public static void InitializeNHibernate(ConnectionSettings settings)
         {
+
+            FluentScheduler.JobManager.AddJob(() => Console.WriteLine("hello fucker"), s => s.ToRunEvery(5).Seconds());
+
             Configuration configuration = null;
             
             if (settings.VerboseLogging)

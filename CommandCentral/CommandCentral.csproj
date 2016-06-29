@@ -35,6 +35,10 @@
       <HintPath>..\packages\FluentNHibernate.2.0.3.0\lib\net40\FluentNHibernate.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="FluentScheduler, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b76503528a14ebd1, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentScheduler.4.1.1\lib\net40\FluentScheduler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FluentValidation, Version=6.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentValidation.6.2.1.0\lib\Net45\FluentValidation.dll</HintPath>
       <Private>True</Private>
@@ -94,7 +98,10 @@
     <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
     <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
-    <Compile Include="CronOperations.cs" />
+    <Compile Include="CronOperations\CronMethodAttribute.cs" />
+    <Compile Include="CronOperations\CronOperationsManager.cs" />
+    <Compile Include="CronOperations\CronOperationsRegistry.cs" />
+    <Compile Include="CronOperations\Time.cs" />
     <Compile Include="DataAccess\ConnectionSettings.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
@@ -206,6 +213,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

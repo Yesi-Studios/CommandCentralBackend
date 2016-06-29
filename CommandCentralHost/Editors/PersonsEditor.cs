@@ -50,6 +50,8 @@ namespace CommandCentralHost.Editors
                                         .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
                     };
 
+                    person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
                     session.SaveOrUpdate(person);
 
                     transaction.Commit();
@@ -96,8 +98,12 @@ namespace CommandCentralHost.Editors
                         Department = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
                                         .Departments.First(x => x.Value == "N0"),
                         Division = session.QueryOver<Command>().Where(x => x.Value == "NIOC Georgia").SingleOrDefault<Command>()
-                                        .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
+                                        .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0")
                     };
+
+
+
+                    person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                     session.SaveOrUpdate(person);
 

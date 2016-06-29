@@ -562,18 +562,19 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Musterer).Not.Nullable();
-                References(x => x.Musteree).Not.Nullable();
+                References(x => x.Musterer).Nullable();
+                References(x => x.Musteree).Nullable();
 
-                Map(x => x.Paygrade).Not.Nullable().Length(10);
-                Map(x => x.Division).Not.Nullable().Length(10);
-                Map(x => x.Department).Not.Nullable().Length(10);
-                Map(x => x.Command).Not.Nullable().Length(10);
-                Map(x => x.MusterStatus).Not.Nullable().Length(20);
-                Map(x => x.DutyStatus).Not.Nullable().Length(20);
-                Map(x => x.SubmitTime).Not.Nullable();
-                Map(x => x.MusterDayOfYear).Not.Nullable();
-                Map(x => x.HasBeenSubmitted).Not.Nullable();
+                Map(x => x.Paygrade).Nullable().Length(10);
+                Map(x => x.Division).Nullable().Length(10);
+                Map(x => x.Department).Nullable().Length(10);
+                Map(x => x.Command).Nullable().Length(10);
+                Map(x => x.MusterStatus).Nullable().Length(20);
+                Map(x => x.DutyStatus).Nullable().Length(20);
+                Map(x => x.SubmitTime).Nullable();
+                Map(x => x.MusterDayOfYear).Nullable();
+                Map(x => x.MusterYear).Not.Nullable();
+                Map(x => x.HasBeenSubmitted).Nullable();
             }
         }
 

@@ -125,6 +125,22 @@ namespace CommandCentralHost
                 OptionText = "Create the Atwood",
                 Method = PersonsEditor.CreateAtwood,
                 DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Fuck all persons",
+                Method = () =>
+                    {
+                        var session = CommandCentral.DataAccess.NHibernateHelper.CreateStatefulSession();
+
+                        session.QueryOver<CommandCentral.Entities.Person>().List().ToList().ForEach(x =>
+                            {
+                                session.Delete(x);
+                            });
+
+                        session.Flush();
+                    },
+                DisplayCriteria = () => true
             }
 
 

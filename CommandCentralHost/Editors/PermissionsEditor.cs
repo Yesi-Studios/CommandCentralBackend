@@ -102,7 +102,7 @@ namespace CommandCentralHost.Editors
                         else
                         {
                             //Client wants to make a new permission group.
-                            var item = new PermissionGroup { Name = input };
+                            var item = new PermissionGroup { Name = input, PermissionTrack = PermissionTracks.None };
                             session.Save(item);
                         }
 

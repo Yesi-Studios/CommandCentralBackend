@@ -1668,7 +1668,7 @@ namespace CommandCentral.Entities
                 References(x => x.Command).Nullable().LazyLoad();
                 References(x => x.Billet).Nullable().LazyLoad();
                 References(x => x.UIC).Nullable().LazyLoad();
-                References(x => x.CurrentMusterStatus).Not.Nullable().LazyLoad();
+                References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad();
 
                 Map(x => x.DutyStatus).Not.Nullable();
                 Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>();
