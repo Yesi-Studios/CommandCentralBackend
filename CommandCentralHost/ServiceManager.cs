@@ -5,7 +5,7 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.ServiceModel.Web;
 using CommandCentral;
-using CommandCentral.ClientAccess.Service;
+using CommandCentral.ServiceManagement.Service;
 
 namespace CommandCentralHost
 {
@@ -57,9 +57,6 @@ namespace CommandCentralHost
                         continue;
                     }
 
-                //Let's see what schema the client would like to connect to.
-                string schema = "test_default";
-
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(port))
                 {
@@ -74,7 +71,7 @@ namespace CommandCentralHost
                 }
 
                 //Ok, so now we have a valid port.  Let's set up the service.
-                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + port));
+                _host = new WebServiceHost(typeof( CommandCentralService), new Uri("http://localhost:" + port));
                 _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding(), "");
                 ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
                 stp.HttpHelpPageEnabled = false;
@@ -82,6 +79,9 @@ namespace CommandCentralHost
                 //Cool, that's done.  Let's also register with the communicator.
                 Communicator.InitializeCommunicator(Console.Out);
                 "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningTypes.Select(x => x.ToString()))).WriteLine();
+
+                //Tell the service to initialize itself.
+                CommandCentral.ServiceManagement.ServiceManager.InitializeService();
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;

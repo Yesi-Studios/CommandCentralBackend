@@ -14,8 +14,9 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.DataAccess;
 using System.Linq.Expressions;
+using CommandCentral.ClientAccess;
 
-namespace CommandCentral.ClientAccess.Service
+namespace CommandCentral.ServiceManagement.Service
 {
     /// <summary>
     /// Describes the service and its implementation of the endpoints.
@@ -25,58 +26,6 @@ namespace CommandCentral.ClientAccess.Service
     {
 
         #region Endpoints
-
-        #region ServiceManagement
-
-        /// <summary>
-        /// Gets the exposed endpoints.
-        /// </summary>
-        public static ConcurrentDictionary<string, ServiceEndpoint> EndpointDescriptions { get; private set; }
-
-        /// <summary>
-        /// Static constructor that builds the Endpoint Descriptions.
-        /// </summary>
-        static CommandCentralService()
-        {
-            EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(ScanForEndpoints());
-        }
-
-        /// <summary>
-        /// Scans the entire executing assembly for any service endpoint methods and reads them into a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        private static Dictionary<string, ServiceEndpoint> ScanForEndpoints()
-        {
-            return Assembly.GetExecutingAssembly().GetTypes()
-                    .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
-                    .Where(x => x.GetCustomAttribute<EndpointMethodAttribute>() != null)
-                    .Select(x =>
-                    {
-                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 1 || x.GetParameters()[0].ParameterType != typeof(MessageToken))
-                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of an endpoint method!".FormatS(x.Name, x.DeclaringType.Name));
-
-                        var parameters = x.GetParameters()
-                           .Select(p => Expression.Parameter(p.ParameterType, p.Name))
-                           .ToArray();
-                        var call = Expression.Call(null, x, parameters);
-                        var endpointMethod = (Action<MessageToken>)Expression.Lambda(call, parameters).Compile();
-
-                        var endpointMethodAttribute = x.GetCustomAttribute<EndpointMethodAttribute>();
-                        if (string.IsNullOrWhiteSpace(endpointMethodAttribute.EndpointName))
-                            endpointMethodAttribute.EndpointName = x.Name;
-
-                        return new ServiceEndpoint
-                        {
-                            EndpointMethod = endpointMethod,// lambda.Compile(),
-                            EndpointMethodAttribute = endpointMethodAttribute,
-                            ExampleOutput = "TODO",
-                            IsActive = true
-                        };
-                    }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
-        }
-
-        #endregion
-
 
         /// <summary>
         /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the _endpointDescriptions.
@@ -101,7 +50,7 @@ namespace CommandCentral.ClientAccess.Service
             {
                 //Get the endpoint
                 ServiceEndpoint description;
-                if (!EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                 {
                     token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                     WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
