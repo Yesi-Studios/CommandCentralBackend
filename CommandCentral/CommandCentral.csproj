@@ -100,8 +100,6 @@
     <Compile Include="Communicator.cs" />
     <Compile Include="CronOperations\CronMethodAttribute.cs" />
     <Compile Include="CronOperations\CronOperationsManager.cs" />
-    <Compile Include="CronOperations\CronOperationsRegistry.cs" />
-    <Compile Include="CronOperations\Time.cs" />
     <Compile Include="DataAccess\ConnectionSettings.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />

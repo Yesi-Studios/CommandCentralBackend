@@ -550,6 +550,12 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Cron Operations
+
+        //private static 
+
+        #endregion
+
         /// <summary>
         /// Maps a record to the database.
         /// </summary>

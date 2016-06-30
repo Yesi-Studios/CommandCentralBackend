@@ -90,7 +90,7 @@ namespace CommandCentral.ClientAccess.Service
             MessageToken token = new MessageToken() { CalledEndpoint = endpoint };
 
             //Tell the client we have a request.
-            Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
+            Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
             //Add the CORS headers to the request to allow the cross domain stuff.  We need to add this outside the try/catch block so that we can send responses to the client for an exception.
             Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
@@ -161,7 +161,7 @@ namespace CommandCentral.ClientAccess.Service
                 //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
                 token.State = MessageStates.Processed;
 
-                Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
                 //Ok, now we know that the request is valid let's see if we need to authenticate it.
                 if (description.EndpointMethodAttribute.RequiresAuthentication)
@@ -180,14 +180,14 @@ namespace CommandCentral.ClientAccess.Service
                     token.AuthenticationSession.LastUsedTime = DateTime.Now;
                     token.State = MessageStates.Authenticated;
 
-                    Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
+                    Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
                 }
 
                 //Invoke the data method to which the endpoint points.
                 description.EndpointMethod(token);
                 token.State = MessageStates.Invoked;
 
-                Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
                 //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
                 token.HandledTime = DateTime.Now;
@@ -203,7 +203,7 @@ namespace CommandCentral.ClientAccess.Service
                     token.CommunicationSession.Dispose();
                 }
 
-                Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Informational);
+                Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
                 //Return the final response.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -224,7 +224,7 @@ namespace CommandCentral.ClientAccess.Service
                 }
 
                 //Post to the host.
-                Communicator.PostMessageToHost(token.ToString(), Communicator.MessagePriority.Critical);
+                Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Critical);
 
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
                 return token.ConstructResponseString();

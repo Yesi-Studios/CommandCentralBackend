@@ -81,7 +81,7 @@ namespace CommandCentralHost
 
                 //Cool, that's done.  Let's also register with the communicator.
                 Communicator.InitializeCommunicator(Console.Out);
-                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningPriorities.Select(x => x.ToString()))).WriteLine();
+                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningTypes.Select(x => x.ToString()))).WriteLine();
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;
