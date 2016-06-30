@@ -530,7 +530,7 @@ namespace CommandCentral.Entities
                         //And update the person
                         token.CommunicationSession.SaveOrUpdate(person);
 
-                        token.SetResult(new { PersonID = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                        token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                     }
                 }
             }
@@ -923,6 +923,89 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Create
+
+        [EndpointMethod(EndpointName = "CreatePerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_CreatePerson(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to create a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //You have permission?
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.CreatePerson))
+            {
+                token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
+            //We need to know what those required fields are though...
+            List<string> requiredPropertyNames = new List<string>();
+
+            for (int x = 0; x < NHibernateHelper.GetEntityMetadata("Person").PropertyNames.Count(); x++)
+            {
+                if (!NHibernateHelper.GetEntityMetadata("Person").PropertyNullability[x])
+                {
+                    requiredPropertyNames.Add(NHibernateHelper.GetEntityMetadata("Person").PropertyNames[x]);
+                }
+            }
+
+            //Did we get all the fields we need?
+            if (!token.Args.ContainsKeys(requiredPropertyNames.ToArray()))
+            {
+                token.AddErrorMessage("You failed to send one or more required fields.  Those fields are: {0}".FormatS(String.Join(",", requiredPropertyNames)), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok, now let's try to cast the fields we were given
+            //I'm doing this in a switch because certain fields have special rules.  Let's also do validation as we get each fields.
+            Dictionary<string, object> values = new Dictionary<string, object>();
+            var errors = new List<string>();
+            foreach (var propertyName in requiredPropertyNames)
+            {
+                switch (propertyName.ToLower())
+                {
+                    case "dutystatus":
+                        {
+                            DutyStatuses dutyStatus;
+                            if (!Enum.TryParse<DutyStatuses>(token.Args[propertyName] as string, out dutyStatus))
+                            {
+                                errors.Add("The value, '{0}', could not be cast to a DutyStatus.".FormatS(token.Args[propertyName] as string));
+                            }
+                            else
+                            {
+                                values.Add(propertyName, dutyStatus);
+                            }
+                            break;
+                        }
+                    case "paygrade":
+                        {
+                            Paygrades paygrade;
+                            if (!Enum.TryParse<DutyStatuses>(token.Args[propertyName] as string, out paygrade))
+                            {
+                                errors.Add("The value, '{0}', could not be cast to a DutyStatus.".FormatS(token.Args[propertyName] as string));
+                            }
+                            else
+                            {
+                                values.Add(propertyName, dutyStatus);
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            throw new NotImplementedException("The validaiton switch in the CreatePerson endpoint fell to the default value in the case of '{0}'!".FormatS(propertyName));
+                        }
+                }
+            }
+
+        }
+
+        #endregion
+
         #region Get/Load/Select/Search
 
         /// <summary>
@@ -941,7 +1024,7 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to load persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 

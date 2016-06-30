@@ -17,12 +17,12 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The hour at which the muster will roll over, starting a new muster day, regardless of the current muster's status.
         /// </summary>
-        private static readonly int _rolloverHour = 16;
+        private static readonly Time _rolloverTime = new Time(16, 0, 0);
 
         /// <summary>
         /// The hour at which the muster _should_ be completed.  This governs when email are sent and their urgency.
         /// </summary>
-        private static readonly int _dueHour = 9;
+        private static readonly Time _dueTime = new Time(9, 30, 0);
 
         #region Properties
 
@@ -109,7 +109,7 @@ namespace CommandCentral.Entities
         {
             System.Globalization.JulianCalendar julCalendar = new System.Globalization.JulianCalendar();
 
-            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24 - _rolloverHour)), dateTime.Date.AddHours(_rolloverHour)))
+            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(_rolloverTime.GetSeconds())), dateTime.Date.AddSeconds(_rolloverTime.GetSeconds())))
                 return julCalendar.GetDayOfYear(dateTime);
             else
             {
@@ -131,7 +131,7 @@ namespace CommandCentral.Entities
         {
             System.Globalization.JulianCalendar julCalendar = new System.Globalization.JulianCalendar();
 
-            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24 - _rolloverHour)), dateTime.Date.AddHours(_rolloverHour)))
+            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(_rolloverTime.GetSeconds())), dateTime.Date.AddSeconds(_rolloverTime.GetSeconds())))
                 return julCalendar.GetYear(dateTime);
             else
             {
@@ -543,8 +543,8 @@ namespace CommandCentral.Entities
                 CurrentYear = GetMusterYear(token.CallTime),
                 CurrentDay = GetMusterDay(token.CallTime),
                 Musters = results,
-                RolloverHour = _rolloverHour,
-                ExpectedCompletionHour = _dueHour
+                RolloverHour = _rolloverTime.ToString(),
+                ExpectedCompletionHour = _dueTime.ToString()
             });
         }
 
@@ -552,7 +552,16 @@ namespace CommandCentral.Entities
 
         #region Cron Operations
 
-        //private static 
+        [ServiceManagement.StartMethod(Priority = 1)]
+        private static void RegisterRolloverMuster()
+        {
+            FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
+        }
+
+        private static void RolloverMuster()
+        {
+
+        }
 
         #endregion
 
