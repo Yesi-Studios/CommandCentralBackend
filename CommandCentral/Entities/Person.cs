@@ -589,86 +589,104 @@ namespace CommandCentral.Entities
         [EndpointMethod(EndpointName = "BeginRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_BeginRegistration(MessageToken token)
         {
-            //First we need the client's ssn.  This is the account they want to claim.
-            if (!token.Args.ContainsKey("ssn"))
+
+            //Let's do our work in a new session so that we don't affect the authentication information.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+
+                session.FlushMode = NHibernate.FlushMode.Commit;
+                session.CacheMode = NHibernate.CacheMode.Normal;
+
+                try
+                {
+
+                    //First we need the client's ssn.  This is the account they want to claim.
+                    if (!token.Args.ContainsKey("ssn"))
+                    {
+                        token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    string ssn = token.Args["ssn"] as string;
+
+                    //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                    //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
+                    var person = session.QueryOver<Person>()
+                        .Where(x => x.SSN == ssn)
+                        .SingleOrDefault<Person>();
+
+                    //If no result came back, this will be null
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok, so we have a single profile.  Let's see if it's already been claimed.
+                    if (person.IsClaimed)
+                    {
+                        //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
+                        //To do that, we need an email for this user.
+                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+
+                        if (address == null)
+                            throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
+
+                        //Now send that email.
+                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
+
+                        token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
+                                              "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
+                    var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
+                    if (dodEmailAddress == null)
+                    {
+                        token.AddErrorMessage("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
+                                              "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Let's see if there is already a pending account confirmation.
+                    var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
+                        .Where(x => x.Person.Id == person.Id)
+                        .List<PendingAccountConfirmation>();
+
+                    //If there are any (should only be one) then we're going to delete all of them.  
+                    //This would happen if the client tries to begin registration after already doing it.
+                    if (pendingAccountConfirmations.Any())
+                        pendingAccountConfirmations.ToList().ForEach(x => session.Delete(x));
+
+                    //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
+                    var pendingAccountConfirmation = new PendingAccountConfirmation
+                    {
+                        Person = person,
+                        Time = token.CallTime
+                    };
+
+                    //And then persist it.
+                    session.Save(pendingAccountConfirmation);
+
+                    //And then persist that by updating the person.
+                    session.Update(person);
+
+                    //Wait!  we're not even done yet.  Let's send the client the registration email now.
+                    EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
+
+                    //Ok, Jesus Christ.  I think we're finally done.
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
-            
-            string ssn = token.Args["ssn"] as string;
-            //TODO validate the ssn.
-
-            //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
-            //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
-            var person = token.CommunicationSession.QueryOver<Person>()
-                .Where(x => x.SSN == ssn)
-                .SingleOrDefault<Person>();
-
-            //If no result came back, this will be null
-            if (person == null)
-            {
-                token.AddErrorMessage("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Ok, so we have a single profile.  Let's see if it's already been claimed.
-            if (person.IsClaimed)
-            {
-                //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
-                //To do that, we need an email for this user.
-                EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
-
-                if (address == null)
-                    throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
-
-                //Now send that email.
-                EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
-
-                token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                      "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-
-                return;
-            }
-
-            //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
-            var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
-            if (dodEmailAddress == null)
-            {
-                token.AddErrorMessage("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
-                                      "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-
-                return;
-            }
-
-            //Let's see if there is already a pending account confirmation.
-            var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
-                .Where(x => x.Person.Id == person.Id)
-                .List<PendingAccountConfirmation>();
-
-            //If there are any (should only be one) then we're going to delete all of them.  
-            //This would happen if the client let one sit too long and it become invalid and then had to call begin registration again.
-            if (pendingAccountConfirmations.Any())
-                pendingAccountConfirmations.ToList().ForEach(x => token.CommunicationSession.Delete(x));
-
-            //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
-            var pendingAccountConfirmation = new PendingAccountConfirmation
-            {
-                Person = person,
-                Time = token.CallTime
-            };
-
-            //And then persist it.
-            token.CommunicationSession.Save(pendingAccountConfirmation);
-
-            //And then persist that by updating the person.
-            token.CommunicationSession.Update(person);
-
-            //Wait!  we're not even done yet.  Let's send the client the registration email now.
-            EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
-
-            //Ok, Jesus Christ.  I think we're finally done.
-            token.SetResult("Success");
         }
 
         /// <summary>
