@@ -425,18 +425,12 @@ namespace CommandCentral.Entities
                 //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
                 for (int x = 0; x < persons.Count; x++)
                 {
-                    persons[x].CurrentMusterStatus.Command = persons[x].Command.Value;
-                    persons[x].CurrentMusterStatus.Department = persons[x].Department.Value;
-                    persons[x].CurrentMusterStatus.Division = persons[x].Division.Value;
-                    persons[x].CurrentMusterStatus.DutyStatus = persons[x].DutyStatus.ToString();
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
                     persons[x].CurrentMusterStatus.MusterDayOfYear = GetMusterDay(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
                     persons[x].CurrentMusterStatus.MusterStatus = musterSubmissions.ElementAt(x).Value;
                     persons[x].CurrentMusterStatus.MusterYear = GetMusterYear(token.CallTime);
-                    persons[x].CurrentMusterStatus.Paygrade = persons[x].Paygrade.ToString();
                     persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
-                    persons[x].CurrentMusterStatus.UIC = persons[x].UIC.Value;
 
                     //And once we're done resetting their current muster status, let's update them.
                     session.Update(persons[x]);
@@ -530,6 +524,7 @@ namespace CommandCentral.Entities
                     LastName = x.LastName,
                     Paygrade = x.Paygrade,
                     Designation = x.Designation,
+                    UIC = x.UIC,
                     FriendlyName = x.ToString(),
                     CurrentMusterStatus = x.CurrentMusterStatus,
                     CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
@@ -550,7 +545,7 @@ namespace CommandCentral.Entities
 
         #endregion
 
-        #region Cron Operations
+        #region Startup Methods
 
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void RegisterRolloverMuster()
@@ -558,9 +553,42 @@ namespace CommandCentral.Entities
             FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
         }
 
+        #endregion
+
+        #region Cron Operations
+
+        /// <summary>
+        /// Rolls over the muster for the current day by taking all of the current muster records from all persons in the database, using them to build a report, sending an email report, and then resetting everyone's current muster record and then archiving the old ones.
+        /// <para />
+        /// Maybe not in that order :D
+        /// </summary>
         private static void RolloverMuster()
         {
+            //Alright, we've been instructed to rollover the muster.
+            //Here we go!
 
+            //First up, we need everyone and their muster records.  Actually we need a session first.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var persons = session.QueryOver<Person>()
+                                    .Fetch(x => x.CurrentMusterStatus).Eager
+                                    .List();
+
+                    //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
+
+
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+
+                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
+                }
+            }
         }
 
         #endregion
