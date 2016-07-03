@@ -943,64 +943,34 @@ namespace CommandCentral.Entities
             }
 
             //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
-            //We need to know what those required fields are though...
-            List<string> requiredPropertyNames = new List<string>();
-
-            for (int x = 0; x < NHibernateHelper.GetEntityMetadata("Person").PropertyNames.Count(); x++)
+            if (!token.Args.ContainsKey("person"))
             {
-                if (!NHibernateHelper.GetEntityMetadata("Person").PropertyNullability[x])
-                {
-                    requiredPropertyNames.Add(NHibernateHelper.GetEntityMetadata("Person").PropertyNames[x]);
-                }
-            }
-
-            //Did we get all the fields we need?
-            if (!token.Args.ContainsKeys(requiredPropertyNames.ToArray()))
-            {
-                token.AddErrorMessage("You failed to send one or more required fields.  Those fields are: {0}".FormatS(String.Join(",", requiredPropertyNames)), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("You failed to send a 'person' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
-            //Ok, now let's try to cast the fields we were given
-            //I'm doing this in a switch because certain fields have special rules.  Let's also do validation as we get each fields.
-            Dictionary<string, object> values = new Dictionary<string, object>();
-            var errors = new List<string>();
-            foreach (var propertyName in requiredPropertyNames)
+            var personFromClient = token.Args["person"].CastJToken<Person>();
+
+            //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
+            //The client may or may not have sent us a guid but we're not willing to trust the Id they sent us so let's reset it.
+            personFromClient.Id = Guid.NewGuid();
+
+            //Now for validation!
+            var results = new PersonValidator().Validate(personFromClient);
+
+            if (results.Errors.Any())
             {
-                switch (propertyName.ToLower())
-                {
-                    case "dutystatus":
-                        {
-                            DutyStatuses dutyStatus;
-                            if (!Enum.TryParse<DutyStatuses>(token.Args[propertyName] as string, out dutyStatus))
-                            {
-                                errors.Add("The value, '{0}', could not be cast to a DutyStatus.".FormatS(token.Args[propertyName] as string));
-                            }
-                            else
-                            {
-                                values.Add(propertyName, dutyStatus);
-                            }
-                            break;
-                        }
-                    case "paygrade":
-                        {
-                            Paygrades paygrade;
-                            if (!Enum.TryParse<DutyStatuses>(token.Args[propertyName] as string, out paygrade))
-                            {
-                                errors.Add("The value, '{0}', could not be cast to a DutyStatus.".FormatS(token.Args[propertyName] as string));
-                            }
-                            else
-                            {
-                                values.Add(propertyName, dutyStatus);
-                            }
-                            break;
-                        }
-                    default:
-                        {
-                            throw new NotImplementedException("The validaiton switch in the CreatePerson endpoint fell to the default value in the case of '{0}'!".FormatS(propertyName));
-                        }
-                }
+                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
             }
+
+            //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
+            //TODO: tell the client why their insertion failed.  For now, just let it fall to the generic handler.
+            token.CommunicationSession.Save(personFromClient);
+
+            //And now return the perosn's Id.
+            token.SetResult(personFromClient.Id);
+
 
         }
 
@@ -1759,7 +1729,7 @@ namespace CommandCentral.Entities
             /// </summary>
             public PersonMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Ethnicity).Nullable().LazyLoad();
                 References(x => x.ReligiousPreference).Nullable().LazyLoad();
