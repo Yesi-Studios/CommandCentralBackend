@@ -20,25 +20,13 @@ namespace CommandCentralHost
         {
             new DialogueOption
             {
-                OptionText = "Initialize Service",
-                Method = ServiceManager.InitializeService,
+                OptionText = "Launch Service",
+                Method = ServiceManager.LaunchService,
                 DisplayCriteria = () => ServiceManager.Host == null
             },
             new DialogueOption
             {
-                OptionText = "Release Service",
-                Method = ServiceManager.ReleaseService,
-                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State != CommunicationState.Opened
-            },
-            new DialogueOption
-            {
-                OptionText = "Start Service",
-                Method = ServiceManager.StartService,
-                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State != CommunicationState.Opened
-            },
-            new DialogueOption
-            {
-                OptionText = "Stop Service",
+                OptionText = "Shutdown Service",
                 Method = ServiceManager.StopService,
                 DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State == CommunicationState.Opened
             },
@@ -88,12 +76,6 @@ namespace CommandCentralHost
             {
                 OptionText = "Manage Permissions",
                 Method = PermissionsEditor.PermissionEditorEntry,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage Versions",
-                 Method = VersionEditor.EditVersions,
                 DisplayCriteria = () => true
             },
             new DialogueOption

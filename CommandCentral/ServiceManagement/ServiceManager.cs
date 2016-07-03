@@ -8,6 +8,7 @@ using CommandCentral.ClientAccess;
 using System.Reflection;
 using AtwoodUtils;
 using System.Linq.Expressions;
+using System.IO;
 
 namespace CommandCentral.ServiceManagement
 {
@@ -24,11 +25,15 @@ namespace CommandCentral.ServiceManagement
         /// <summary>
         /// Initializes the service.
         /// </summary>
-        public static void InitializeService()
+        /// <param name="writer">The text writer to which messages from the service should be written.</param>
+        public static void InitializeService(TextWriter writer)
         {
+            Communicator.InitializeCommunicator(writer);
+
             SetupEndpoints();
 
             RunStartupMethods();
+
         }
 
         /// <summary>

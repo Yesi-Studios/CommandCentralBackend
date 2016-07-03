@@ -34,7 +34,7 @@ namespace CommandCentralHost
         /// Initializes the service host.
         /// </summary>
         /// <returns></returns>
-        public static void InitializeService()
+        public static void LaunchService()
         {
             bool keepLooping = true;
 
@@ -76,18 +76,13 @@ namespace CommandCentralHost
                 ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
                 stp.HttpHelpPageEnabled = false;
 
-                //Cool, that's done.  Let's also register with the communicator.
-                Communicator.InitializeCommunicator(Console.Out);
-                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningTypes.Select(x => x.ToString()))).WriteLine();
-
                 //Tell the service to initialize itself.
-                CommandCentral.ServiceManagement.ServiceManager.InitializeService();
+                CommandCentral.ServiceManagement.ServiceManager.InitializeService(Console.Out);
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;
 
-                //Tell the client we're done.
-                "Service initialized.  Base address is '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
+                StartService();
 
                 keepLooping = false;
             }
@@ -103,7 +98,7 @@ namespace CommandCentralHost
             "The host has entered the faulted state.  Service re-initialization will now be started.  Press any key to continue...".WriteLine();
             Console.ReadKey();
             _host = null;
-            InitializeService();
+            LaunchService();
         }
 
         /// <summary>
@@ -167,6 +162,7 @@ namespace CommandCentralHost
                 {
                     _host.Close();
                     "Host has been closed.".WriteLine();
+                    ReleaseService();
                 }
             }
             else

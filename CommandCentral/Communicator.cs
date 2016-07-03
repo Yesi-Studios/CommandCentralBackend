@@ -59,24 +59,27 @@ namespace CommandCentral
         }
 
         /// <summary>
-        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  The priorities indicate to which messages the caller would like to listen.
+        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  The message Types indicates to which messages the caller would like to listen.
         /// </summary>
         /// <param name="textWriter"></param>
-        /// <param name="priorities"></param>
-        public static void InitializeCommunicator(TextWriter textWriter, List<MessageTypes> priorities)
+        /// <param name="messageTypes"></param>
+        public static void InitializeCommunicator(TextWriter textWriter, List<MessageTypes> messageTypes)
         {
             TextWriter = textWriter;
-            ListeningTypes = priorities;
+            ListeningTypes = messageTypes;
         }
 
         /// <summary>
-        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  Listens to all priorities.
+        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  Listens to all message types.
         /// </summary>
         /// <param name="textWriter"></param>
         public static void InitializeCommunicator(TextWriter textWriter)
         {
             TextWriter = textWriter;
             ListeningTypes = new List<MessageTypes> { MessageTypes.Critical, MessageTypes.Important, MessageTypes.Informational, MessageTypes.Warning, MessageTypes.CronOperation };
+
+            //Tell whoever is listening that we've set up the communicator.
+            PostMessageToHost("Communicator initialized and forwarding all message types.", MessageTypes.Informational);
         }
 
         /// <summary>
@@ -88,8 +91,7 @@ namespace CommandCentral
         {
             if (TextWriter != null && ListeningTypes.Contains(messageType) && !IsFrozen)
             {
-                TextWriter.WriteLine("{0} Service Message @ {1}:\n\t{2}", messageType, DateTime.Now, message);
-                TextWriter.WriteLine();
+                TextWriter.WriteLine("[{0} Service Message @ {1}]: {2}", messageType, DateTime.Now, message);
             }
         }
 

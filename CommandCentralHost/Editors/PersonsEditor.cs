@@ -23,6 +23,7 @@ namespace CommandCentralHost.Editors
 
                     var person = new Person()
                     {
+                        Id = Guid.NewGuid(),
                         LastName = "Atwood",
                         FirstName = "Daniel",
                         SSN = "525956681",
@@ -74,6 +75,7 @@ namespace CommandCentralHost.Editors
 
                     var person = new Person()
                     {
+                        Id = Guid.NewGuid(),
                         LastName = "McLean",
                         FirstName = "Angus",
                         SSN = "888888888",

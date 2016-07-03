@@ -95,6 +95,7 @@
     <Compile Include="Authorization\Rules\PermissionGroupSpecialRule.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
+    <Compile Include="Entities\MusterReport.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
@@ -135,7 +136,6 @@
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
-    <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="ClientAccess\PasswordHash.cs" />
     <Compile Include="Entities\PhoneNumber.cs" />
