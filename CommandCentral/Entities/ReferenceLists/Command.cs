@@ -3,6 +3,7 @@ using System.Linq;
 using FluentNHibernate.Mapping;
 using System;
 using System.Collections.Generic;
+using AtwoodUtils;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -96,6 +97,21 @@ namespace CommandCentral.Entities.ReferenceLists
         {
             //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
             token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>());
+        }
+
+        #endregion
+
+        #region Startup Methods
+
+        [ServiceManagement.StartMethod(Priority = 5)]
+        private static void ShowCommands()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var commands = session.QueryOver<Command>().List();
+
+                Communicator.PostMessageToHost("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))), Communicator.MessageTypes.Informational);
+            }
         }
 
         #endregion

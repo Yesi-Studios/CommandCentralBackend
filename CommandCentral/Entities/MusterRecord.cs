@@ -24,6 +24,13 @@ namespace CommandCentral.Entities
         /// </summary>
         private static readonly Time _dueTime = new Time(9, 30, 0);
 
+        /// <summary>
+        /// Tracks whether or not the muster has been finalized.  If it has been, no more muster records should be accepted.
+        /// <para />
+        /// This is used in situations where a client forces the muster to finalize prior to its rollover time.
+        /// </summary>
+        private static bool _isMusterFinalized = false;
+
         #region Properties
 
         /// <summary>
@@ -199,6 +206,45 @@ namespace CommandCentral.Entities
             return false;
         }
 
+        /// <summary>
+        /// Finalizes the muster for the current day by taking all of the current muster records from all persons in the database, 
+        /// using them to build a report, 
+        /// sending an email report, 
+        /// saving the report,
+        /// and then resetting everyone's current muster record and then archiving the old ones.
+        /// </summary>
+        /// <param name="person">The person who initiated the muster finalization.  If null, the system initiated it.</param>
+        private static void FinalizeMuster(Person person)
+        {
+            if (_isMusterFinalized)
+                throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
+
+            //First up, we need everyone and their muster records.  Actually we need a session first.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var persons = session.QueryOver<Person>()
+                                    .Fetch(x => x.CurrentMusterStatus).Eager
+                                    .List();
+
+                    //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
+
+                    //TODO build that report here after we talk with McLean.
+
+                    _isMusterFinalized = true;
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+
+                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
+                }
+            }
+        }
+
         #endregion
 
         #region Client Access
@@ -360,7 +406,7 @@ namespace CommandCentral.Entities
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to submit muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -543,6 +589,35 @@ namespace CommandCentral.Entities
             });
         }
 
+        [EndpointMethod(EndpointName = "FinalizeMuster", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_FinalizeMuster(MessageToken token)
+        {
+            //Let's make sure we have permission to finalize muster.  You can finalize muster if you're logged in (no shit) and a command level muster... person.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to finalize the muster.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionLevels.Command, Authorization.PermissionTracks.Muster))
+            {
+                token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Ok we have permission, let's make sure the muster hasn't already been finalized.
+            if (_isMusterFinalized)
+            {
+                token.AddErrorMessage("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //So we should be good to finalize the muster.
+            FinalizeMuster(token.AuthenticationSession.Person);
+
+
+        }
+
         #endregion
 
         #region Startup Methods
@@ -558,7 +633,7 @@ namespace CommandCentral.Entities
         #region Cron Operations
 
         /// <summary>
-        /// Rolls over the muster for the current day by taking all of the current muster records from all persons in the database, using them to build a report, sending an email report, and then resetting everyone's current muster record and then archiving the old ones.
+        /// 
         /// <para />
         /// Maybe not in that order :D
         /// </summary>
@@ -567,28 +642,10 @@ namespace CommandCentral.Entities
             //Alright, we've been instructed to rollover the muster.
             //Here we go!
 
-            //First up, we need everyone and their muster records.  Actually we need a session first.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-                    var persons = session.QueryOver<Person>()
-                                    .Fetch(x => x.CurrentMusterStatus).Eager
-                                    .List();
+            if (!_isMusterFinalized)
+                FinalizeMuster(null);
 
-                    //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
-
-
-                }
-                catch (Exception e)
-                {
-                    transaction.Rollback();
-                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
-
-                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
-                }
-            }
+            _isMusterFinalized = false;
         }
 
         #endregion

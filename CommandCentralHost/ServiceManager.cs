@@ -36,6 +36,10 @@ namespace CommandCentralHost
         /// <returns></returns>
         public static void LaunchService()
         {
+            if (!CommandCentral.DataAccess.NHibernateHelper.IsInitialized)
+                throw new Exception("Please select a database to connect to before starting the service.");
+
+
             bool keepLooping = true;
 
             while (keepLooping)

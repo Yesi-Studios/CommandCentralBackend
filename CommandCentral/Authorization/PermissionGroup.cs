@@ -334,6 +334,24 @@ namespace CommandCentral.Authorization
 
         #endregion Client Access
 
+        #region Startup Methods
+
+        /// <summary>
+        /// Reads all permission groups from the database and posts a message to the host with which permission groups were loaded.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 6)]
+        private static void ReadPermissionGroups()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var groups = session.QueryOver<PermissionGroup>().List();
+
+                Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(groups.Count, String.Join(",", groups.Select(x => x.Name))), Communicator.MessageTypes.Informational);
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a permission group to the database
         /// </summary>

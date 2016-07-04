@@ -283,18 +283,18 @@ namespace CommandCentral.Entities
         /// <param name="person"></param>
         /// <param name="track">The track in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person)
+        public virtual bool IsInChainOfCommandOf(Person person, PermissionTracks track)
         {
             if (Id == person.Id)
                 return false;
 
-            if (HasPermissionLevel(PermissionLevels.Command) && Command.Equals(person.Command))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command))
                 return true;
 
-            if (HasPermissionLevel(PermissionLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
                 return true;
 
-            if (HasPermissionLevel(PermissionLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
                 return true;
 
             return false;
@@ -320,9 +320,9 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="permissionLevel"></param>
         /// <returns></returns>
-        public virtual bool HasPermissionLevel(PermissionLevels permissionLevel)
+        public virtual bool HasPermissionLevelInTrack(PermissionLevels permissionLevel, PermissionTracks track)
         {
-            return PermissionGroups.Any(x => x.PermissionLevel == permissionLevel);
+            return PermissionGroups.Any(x => x.PermissionTrack == track && x.PermissionLevel == permissionLevel);
         }
 
         /// <summary>
@@ -1604,6 +1604,24 @@ namespace CommandCentral.Entities
         }
 
         #endregion
+
+        #endregion
+
+        #region Startup Methods
+
+        /// <summary>
+        /// Loads all persons from the database, thus initializing most of the 2nd level cache, and tells the host how many persons we have in the database.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 7)]
+        private static void ReadPersons()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var persons = session.QueryOver<Person>().List();
+
+                Communicator.PostMessageToHost("Found {0} persons.".FormatS(persons.Count), Communicator.MessageTypes.Informational);
+            }
+        }
 
         #endregion
 

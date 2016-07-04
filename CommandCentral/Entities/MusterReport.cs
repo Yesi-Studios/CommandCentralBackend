@@ -14,12 +14,54 @@ namespace CommandCentral.Entities
     /// </summary>
     public class MusterReport
     {
+        /// <summary>
+        /// The unique Id for this Muster Report
+        /// </summary>
         public virtual Guid Id { get; set; }
 
+        /// <summary>
+        /// The day of the year for which this muster report was created.
+        /// </summary>
         public virtual int MusterDayOfYear { get; set; }
 
+        /// <summary>
+        /// The year for which this muster report was created.
+        /// </summary>
         public virtual int MusterYear { get; set; }
 
+        /// <summary>
+        /// The time at which the muster was supposed to roll over.  
+        /// <para/>
+        /// Note: the muster can be forced to roll over prior to this time.
+        /// </summary>
+        public virtual AtwoodUtils.Time RolloverTime { get; set; }
+
+        /// <summary>
+        /// The person that caused this report to be created.  If null, then the system created the report at muster rollover otherwise, this value shows who forced a finalize event.
+        /// </summary>
+        public virtual Person ReportGeneratedBy { get; set; }
+
+        /// <summary>
+        /// Shows the date/time this report was generated.
+        /// </summary>
+        public virtual DateTime TimeGenerated { get; set; }
+
+        /// <summary>
+        /// Maps a muster report to the database.
+        /// </summary>
+        public class MusterReportMapping : ClassMap<MusterReport>
+        {
+            /// <summary>
+            /// Maps a muster report to the database.
+            /// </summary>
+            public MusterReportMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                Map(x => x.MusterDayOfYear);
+                Map(x => x.MusterYear);
+            }
+        }
 
 
     }

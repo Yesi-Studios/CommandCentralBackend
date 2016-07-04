@@ -24,7 +24,10 @@ namespace CommandCentral.DataAccess
 
         private static ConcurrentDictionary<string, IClassMetadata> _allClassMetadata;
 
-        private static bool isInitialized = false;
+        /// <summary>
+        /// Indicates that the NHibernateHelper has been initialized.
+        /// </summary>
+        public static bool IsInitialized { get; set; }
 
         /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.  Failure to call this method prior to DB interaction will cause all calls to fail.
@@ -79,7 +82,7 @@ namespace CommandCentral.DataAccess
                     })
                     .ToDictionary(x => x.Key, x => x.Value));
 
-            isInitialized = true;
+            IsInitialized = true;
         }
 
         /// <summary>
@@ -88,7 +91,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static ISession CreateStatefulSession()
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             return _sessionFactory.OpenSession();
@@ -100,7 +103,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IStatelessSession CreateStatelessSession()
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             return _sessionFactory.OpenStatelessSession();
@@ -111,7 +114,7 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void Release()
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             _sessionFactory.Close();
@@ -125,7 +128,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             return _allClassMetadata[entityName];
@@ -137,7 +140,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IDictionary<string, IClassMetadata> GetAllEntityMetadata()
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             return _allClassMetadata;
@@ -148,7 +151,7 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void CreateSchema(bool dropFirst)
         {
-            if (!isInitialized)
+            if (!IsInitialized)
                 throw new Exception("The NHibernate Helper has not yet been initialized.");
 
             System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;

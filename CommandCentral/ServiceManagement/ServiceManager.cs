@@ -28,6 +28,9 @@ namespace CommandCentral.ServiceManagement
         /// <param name="writer">The text writer to which messages from the service should be written.</param>
         public static void InitializeService(TextWriter writer)
         {
+            if (!DataAccess.NHibernateHelper.IsInitialized)
+                throw new Exception("Please select a database to connect to before starting the service.");
+
             Communicator.InitializeCommunicator(writer);
 
             SetupEndpoints();
