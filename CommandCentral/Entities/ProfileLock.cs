@@ -137,152 +137,100 @@ namespace CommandCentral.Entities
         [EndpointMethod(EndpointName = "TakeProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_TakeProfileLock(MessageToken token)
         {
-            if (token.AuthenticationSession == null)
+
+            //Do our work in a new session
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                session.FlushMode = NHibernate.FlushMode.Commit;
 
-            if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("The 'personid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Try to obtain a reference to the persistent person object.  If this returns null, then it's not a real person's id.
-            var person = token.CommunicationSession.Load<Person>(personId);
-
-            if (person == null)
-            {
-                token.AddErrorMessage("That person id does not correlate to a real person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            var profileLock = token.CommunicationSession.QueryOver<ProfileLock>().Where(x => x.LockedPerson == person).SingleOrDefault();
-
-            //If the profile lock is not null, then a lock is owned on this profile already.
-            if (profileLock != null)
-            {
-                //If the lock is owned by the logged in user, then they are trying to renew it.
-                if (profileLock.Owner == token.AuthenticationSession.Person)
+                try
                 {
-                    profileLock.SubmitTime = DateTime.Now;
-                    token.CommunicationSession.Update(profileLock);
-                    token.SetResult("Profile lock renewed.");
-                    return;
+                    if (token.AuthenticationSession == null)
+                    {
+                        token.AddErrorMessage("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                        return;
+                    }
+
+                    if (!token.Args.ContainsKey("personid"))
+                    {
+                        token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    Guid personId;
+                    if (!Guid.TryParse(token.Args["personid"] as string, out personId))
+                    {
+                        token.AddErrorMessage("The 'personid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    var person = session.Get<Person>(personId);
+
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That person id does not correlate to a real person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok so the person is real.  In that case, let's release all locks owned by the client.
+                    session.QueryOver<ProfileLock>().Where(x => x.Owner == token.AuthenticationSession.Person)
+                        .List()
+                        .ToList()
+                        .ForEach(x => session.Delete(x));
+
+                    //Now the client has no locks.  Let's also make sure the profile we're trying to lock isn't owned by someone else.
+                    var profileLock = session.QueryOver<ProfileLock>().Where(x => x.LockedPerson == person).SingleOrDefault();
+
+
+                    //If the profile lock is not null, then a lock is owned on this profile already.
+                    if (profileLock != null)
+                    {
+                        //If the lock is owned by the logged in user that's bad because we supposedly jsut deleted all their locks.  Let's throw an exception.
+                        if (profileLock.Owner == token.AuthenticationSession.Person)
+                        {
+                            throw new Exception("How did you get here cotton eye Joe?");
+                        }
+
+                        //If the lock is not owned by the client, let's see if it's aged off.
+                        if (DateTime.Now.Subtract(profileLock.SubmitTime) < _maxAge)
+                        {
+                            //Since the profile lock has aged off we can go ahead and delete it and then let this method continue on.
+                            session.Delete(profileLock);
+                        }
+                        else
+                        {
+                            //If we're here then there is a lock, it is owned by someone else, and the lock has not aged off.
+                            token.AddErrorMessage("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                            return;
+                        }
+                    }
+
+                    //Ok so there's no lock on this profile.  Let's see if the client can be given a lock.  This is determined by whether or not the client can edit a person.
+                    if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.EditPerson))
+                    {
+                        token.AddErrorMessage("You are not authorized to edit a person and can therefore not take a lock on this profile.", ErrorTypes.LockImpossible, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Now we just need to make a lock for this client on this person.
+                    session.Save(new ProfileLock
+                    {
+                        LockedPerson = person,
+                        Owner = token.AuthenticationSession.Person,
+                        SubmitTime = token.CallTime
+                    });
+
+                    token.SetResult("Profile Lock Obtained");
+
+                    transaction.Commit();
                 }
-                
-                //If the lock is not owned by the client, let's see if it's aged off.
-                if (DateTime.Now.Subtract(profileLock.SubmitTime) < _maxAge)
+                catch (Exception)
                 {
-                    //Since the profile lock has aged off we can go ahead and delete it and then let this method continue on.
-                    token.CommunicationSession.Delete(profileLock);
-                }
-                else
-                {
-                    //If we're here then there is a lock, it is owned by someone else, and the lock has not aged off.
-                    token.AddErrorMessage("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
-                    return;
+                    transaction.Rollback();
+                    throw;
                 }
             }
-
-            //Ok so there's no lock.  Let's see if the client can be given a lock.  This is determined by whether or not the client can edit a person.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.EditPerson))
-            {
-                token.AddErrorMessage("You are not authorized to edit a person and can therefore not take a lock on this profile.", ErrorTypes.LockImpossible, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
-
-            //Now we just need to make a lock for this client on this person.
-            token.CommunicationSession.Save(new ProfileLock
-                {
-                    LockedPerson = person,
-                    Owner = token.AuthenticationSession.Person,
-                    SubmitTime = token.CallTime
-                });
-
-            token.SetResult("Profile Lock Obtained");
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Given a person ID, attempts to release a lock on the given profile.  Locks may be released by their owners or by anyone after the max age.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     personid : the person for whom to attempt to release a lock.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "ReleaseProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_ReleaseProfileLock(MessageToken token)
-        {
-            //Stole most of this shit from the TakeProfileLock endpoint lololol.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("The 'personid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Try to obtain a reference to the persistent person object.  If this returns null, then it's not a real person's id.
-            var person = token.CommunicationSession.Get<Person>(personId);
-
-            if (person == null)
-            {
-                token.AddErrorMessage("That person id does not correlate to a real person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            var profileLock = token.CommunicationSession.QueryOver<ProfileLock>().Where(x => x.LockedPerson == person).SingleOrDefault();
-
-            //Now we need to find out who is trying to release the lock.  If the owner is trying to release the lock, this is allowed.
-            //Additionally, if the lock is older than the max age, then anyone can release it.
-            if (profileLock == null)
-            {
-                token.AddErrorMessage("No lock exists on this profile; therefore, no lock could be released.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //If the owner is the logged in user...
-            if (profileLock.Owner == token.AuthenticationSession.Person)
-            {
-                //Then delete the lock.
-                token.CommunicationSession.Delete(profileLock);
-                token.SetResult("Success");
-                return;
-            }
-
-            //If the lock has timed out, then just delete it.
-            if (DateTime.Now.Subtract(profileLock.SubmitTime) < _maxAge)
-            {
-                //Then delete the lock.
-                token.CommunicationSession.Delete(profileLock);
-                token.SetResult("Success");
-                return;
-            }
-
-            //If we get to here then we can't release the lock.
-            token.AddErrorMessage("A lock on this profile is currently owned by '{0}', who has this lock for another '{1}' minutes.".FormatS(profileLock.Owner.ToString(), DateTime.Now.Subtract(profileLock.SubmitTime).TotalMinutes), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
         }
 
         #endregion Client Access
