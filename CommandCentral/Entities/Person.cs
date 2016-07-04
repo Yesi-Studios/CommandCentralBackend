@@ -954,6 +954,9 @@ namespace CommandCentral.Entities
             //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
             //The client may or may not have sent us a guid but we're not willing to trust the Id they sent us so let's reset it.
             personFromClient.Id = Guid.NewGuid();
+            personFromClient.IsClaimed = false;
+
+            personFromClient.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(personFromClient, DateTime.Now);
 
             //Now for validation!
             var results = new PersonValidator().Validate(personFromClient);
@@ -1014,57 +1017,37 @@ namespace CommandCentral.Entities
             }
 
             //Now let's load the person and then set any fields the client isn't allowed to see to null.
-            //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
 
-            Person personReturn = null;
-
-            List<string> returnableFields = null;
-
-            //We need the metadata from the person class.
-            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
-
-            //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
-            if (person != null && personId != token.AuthenticationSession.Person.Id)
+            //If person is null then we need to stop here.
+            if (person == null)
             {
-                personReturn = new Person();
+                token.AddErrorMessage("The Id you sent appears to be invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
 
-                //Ok, now we need to set all the fields to null the client can't return.  First let's see what fields the client can return.
-                //This is going to go through all model permissions that target a Person, and get all the returnable fields.
-                returnableFields = token.AuthenticationSession.Person.PermissionGroups
-                                            .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == "Person")
-                                                .SelectMany(y => y.ReturnableFields))
-                                            .ToList();
+            Person personReturn = new Person();
 
-                //Now for every property not in the above list, let's set the property to null.
-                var allPropertyNames = personMetadata.PropertyNames;
+            List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
 
-                //Set the nulls if they're null.
-                foreach (var propertyName in allPropertyNames)
+            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
+            //Now just set the fields the client is allowed to see.
+            foreach (var propertyName in returnableFields)
+            {
+                //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
+                if (propertyName.ToLower() == "id")
+                {
+                    personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                }
+                else
                 {
                     personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
                 }
             }
-            else
-            {
-                personReturn = person;
-
-                returnableFields = personMetadata.PropertyNames.ToList();
-            }
-
-            //HACK
-            //For now, we're going to manually limit the account history events to the 5 most recent.  Note that this means we're still loading them but then cutting them off.  That's not good.
-            //Later we'll need to find out how to get NHibernate to limit children selects.
-            //personReturn.AccountHistory = personReturn.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList();
 
             //We also need to tell the client what they can edit.
-            //TODO evaluate property authorization.
-            List<string> editableFields = token.AuthenticationSession.Person.PermissionGroups
-                                            .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == "Person")
-                                                .SelectMany(y => y.EditableFields))
-                                            .ToList();
+            List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
 
             token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = editableFields, ReturnableFields = returnableFields });
         }
@@ -1164,7 +1147,7 @@ namespace CommandCentral.Entities
                     .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    .Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                    //.Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -1182,11 +1165,11 @@ namespace CommandCentral.Entities
                         x.MiddleName,
                         x.FirstName,
                         Paygrade = x.Paygrade,
-                        Designation = x.Designation.Value,
-                        UIC = x.UIC.Value,
-                        Command = x.Command.Value,
-                        Department = x.Department.Value,
-                        Division = x.Division.Value
+                        Designation = (x.Designation == null) ? "" : x.Designation.Value,
+                        UIC = (x.UIC == null) ? "" : x.UIC.Value,
+                        Command = (x.Command == null) ? "" : x.Command.Value,
+                        Department = (x.Department == null) ? "" : x.Department.Value,
+                        Division = (x.Division == null) ? "" : x.Division.Value
                     };
                 });
             token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }});
@@ -1775,7 +1758,7 @@ namespace CommandCentral.Entities
                 Map(x => x.WorkRemarks).Nullable().Length(150).LazyLoad();
                 Map(x => x.DateOfArrival).Not.Nullable().LazyLoad();
                 Map(x => x.JobTitle).Nullable().Length(40).LazyLoad();
-                Map(x => x.EAOS).Not.Nullable().LazyLoad();
+                Map(x => x.EAOS).Nullable().LazyLoad();
                 Map(x => x.DateOfDeparture).Nullable().LazyLoad();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150).LazyLoad();
                 Map(x => x.ContactRemarks).Nullable().Length(150).LazyLoad();
