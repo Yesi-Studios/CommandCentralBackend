@@ -161,6 +161,7 @@ namespace CommandCentral.Entities
         {
             return new MusterRecord
             {
+                Id = Guid.NewGuid(),
                 Command = null,
                 Department = null,
                 Division = null,
@@ -660,7 +661,7 @@ namespace CommandCentral.Entities
             /// </summary>
             public MusterRecordMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Musterer).Nullable();
                 References(x => x.Musteree).Nullable();
