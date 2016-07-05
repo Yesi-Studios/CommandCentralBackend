@@ -232,7 +232,15 @@ namespace CommandCentral.Entities
 
                     //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
 
-                    //TODO build that report here after we talk with McLean.
+                    //Build muster report using given information.
+                    var musterReport = new MusterReport();
+
+                    EmailHelper.SendMusterReportEmail(musterReport);
+
+                    //Save the muster report.
+                    //TODO save the muster report.
+
+                    //Now we just need to shut out the muster such that it can't be used until the roll over happens.
 
                     _isMusterFinalized = true;
                 }
@@ -515,79 +523,79 @@ namespace CommandCentral.Entities
 
             Authorization.PermissionLevels highestLevel = token.AuthenticationSession.Person.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
 
-            //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
-            if (highestLevel == Authorization.PermissionLevels.None)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                musterablePersons.Add(token.AuthenticationSession.Person);
-            }
-            else
-            {
-                //We need all the current muster records for today.  Make sure to fetch any references we might need so we don't wind up with some select n+1 shit.
-                //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
-                var queryOver = token.CommunicationSession.QueryOver<Person>()
-                    .Fetch(x => x.CurrentMusterStatus).Eager
-                    .Fetch(x => x.Command).Eager
-                    .Fetch(x => x.Department).Eager
-                    .Fetch(x => x.Division).Eager
-                    .Fetch(x => x.UIC).Eager;
-
-                switch (highestLevel)
+                //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
+                if (highestLevel == Authorization.PermissionLevels.None)
                 {
-                    case Authorization.PermissionLevels.Command:
-                        {
-                            queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
-                            break;
-                        }
-                    case Authorization.PermissionLevels.Department:
-                        {
-                            queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
-                            break;
-                        }
-                    case Authorization.PermissionLevels.Division:
-                        {
-                            queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
-                            break;
-                        }
-                    default:
-                        {
-                            throw new Exception("The default case in the high level switch in the LoadTodaysMuster was reached with the following case: '{0}'!".FormatS(highestLevel));
-                        }
+                    musterablePersons.Add(token.AuthenticationSession.Person);
+                }
+                else
+                {
+                    //We need all the current muster records for today.  Make sure to fetch any references we might need so we don't wind up with some select n+1 shit.
+                    //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
+                    var queryOver = session.QueryOver<Person>();
+
+                    switch (highestLevel)
+                    {
+                        case Authorization.PermissionLevels.Command:
+                            {
+                                queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
+                                break;
+                            }
+                        case Authorization.PermissionLevels.Department:
+                            {
+                                queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
+                                break;
+                            }
+                        case Authorization.PermissionLevels.Division:
+                            {
+                                queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
+                                break;
+                            }
+                        default:
+                            {
+                                throw new Exception("The default case in the high level switch in the LoadTodaysMuster was reached with the following case: '{0}'!".FormatS(highestLevel));
+                            }
+                    }
+
+                    //Now we have the query populated with the conditions it needs, let's fire it off.
+                    musterablePersons = queryOver.List().ToList();
                 }
 
-                //Now we have the query populated with the conditions it needs, let's fire it off.
-                musterablePersons = queryOver.List().ToList();
-            }
-
-            
-            //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
-            //Because Atwood is a good code monkey. Oh yes he is.
-            var results = musterablePersons.Select(x =>
-            {
-                return new
+                //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
+                //Because Atwood is a good code monkey. Oh yes he is.
+                var results = musterablePersons.Select(x =>
                 {
-                    Id = x.Id,
-                    FirstName = x.FirstName,
-                    MiddleName = x.MiddleName,
-                    LastName = x.LastName,
-                    Paygrade = x.Paygrade,
-                    Designation = x.Designation,
-                    UIC = x.UIC,
-                    FriendlyName = x.ToString(),
-                    CurrentMusterStatus = x.CurrentMusterStatus,
-                    CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
-                    HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
-                };
-            });
+                    return new
+                    {
+                        Id = x.Id,
+                        FirstName = x.FirstName,
+                        MiddleName = x.MiddleName,
+                        LastName = x.LastName,
+                        Paygrade = x.Paygrade,
+                        Designation = x.Designation.Value,
+                        Division = x.Division.Value,
+                        Department = x.Department.Value,
+                        Command = x.Command.Value,
+                        UIC = x.UIC.Value,
+                        FriendlyName = x.ToString(),
+                        CurrentMusterStatus = x.CurrentMusterStatus,
+                        CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
+                        HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
+                    };
+                });
 
-            //And now build the final DTO that's going out the door.
-            token.SetResult(new
-            {
-                CurrentYear = GetMusterYear(token.CallTime),
-                CurrentDay = GetMusterDay(token.CallTime),
-                Musters = results,
-                RolloverHour = _rolloverTime.ToString(),
-                ExpectedCompletionHour = _dueTime.ToString()
-            });
+                //And now build the final DTO that's going out the door.
+                token.SetResult(new
+                {
+                    CurrentYear = GetMusterYear(token.CallTime),
+                    CurrentDay = GetMusterDay(token.CallTime),
+                    Musters = results,
+                    RolloverTime = _rolloverTime.ToString(),
+                    ExpectedCompletionTime = _dueTime.ToString()
+                });
+            }
         }
 
         [EndpointMethod(EndpointName = "FinalizeMuster", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
@@ -645,6 +653,8 @@ namespace CommandCentral.Entities
 
             if (!_isMusterFinalized)
                 FinalizeMuster(null);
+
+            //Ok so the muster has been finalized either by the system or some person.
 
             _isMusterFinalized = false;
         }

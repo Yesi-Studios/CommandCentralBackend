@@ -131,7 +131,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
-                HasMany(x => x.Departments).Cascade.All();
+                HasMany(x => x.Departments).Cascade.All().Not.LazyLoad();
 
                 Cache.ReadWrite();
             }

@@ -402,46 +402,6 @@ namespace CommandCentral.Entities
             return true;
         }
 
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can return the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanReturnFields(string entityName = "Person", params string[] fields)
-        {
-            var returnableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.ReturnableFields);
-
-            foreach (var field in fields)
-                if (!returnableFields.Contains(field))
-                    return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can edit the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanEditFields(string entityName = "Person", params string[] fields)
-        {
-            var editableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.ReturnableFields);
-
-            foreach (var field in fields)
-                if (!editableFields.Contains(field))
-                    return false;
-
-            return true;
-        }
-
         #endregion
 
         #region Client Access
@@ -1119,15 +1079,8 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //And then make sure the client is allowed to search in these fields and return these fields.
-            if (!token.AuthenticationSession.Person.CanSearchFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division") ||
-                !token.AuthenticationSession.Person.CanReturnFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division"))
-            {
-                token.AddErrorMessage("In order to conduct a simple search you must be able to both search and return the following fields: {0}"
-                    .FormatS(String.Join(",", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division")), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
+            //If you can search persons then we'll assume you can search/return the required fields.
+            
             if (!token.Args.ContainsKey("searchterm"))
             {
                 token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -1227,12 +1180,7 @@ namespace CommandCentral.Entities
             }
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
-            //And make sure they can return it.
-            if (!token.AuthenticationSession.Person.CanReturnFields("Person", returnFields.ToArray()))
-            {
-                token.AddErrorMessage("You were not allowed to return on or more of the fields you asked to return.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+            //TODO implement authorization return fields check
 
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
@@ -1732,50 +1680,50 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Ethnicity).Nullable().LazyLoad();
-                References(x => x.ReligiousPreference).Nullable().LazyLoad();
-                References(x => x.Designation).Nullable().LazyLoad();
-                References(x => x.Division).Nullable().LazyLoad();
-                References(x => x.Department).Nullable().LazyLoad();
-                References(x => x.Command).Nullable().LazyLoad();
-                References(x => x.Billet).Nullable().LazyLoad();
-                References(x => x.UIC).Nullable().LazyLoad();
-                References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad();
+                References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False);
+                References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Designation).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Division).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Department).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Command).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Billet).Nullable().LazyLoad(Laziness.False);
+                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
+                References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
-                Map(x => x.DutyStatus).Not.Nullable();
-                Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>();
-                Map(x => x.Sex).Not.Nullable();
-                Map(x => x.LastName).Not.Nullable().Length(40);
-                Map(x => x.FirstName).Not.Nullable().Length(40).LazyLoad();
-                Map(x => x.MiddleName).Nullable().Length(40).LazyLoad();
-                Map(x => x.SSN).Not.Nullable().Length(40).Unique().LazyLoad();
-                Map(x => x.DateOfBirth).Not.Nullable().LazyLoad();
-                Map(x => x.Remarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.Supervisor).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkCenter).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkRoom).Nullable().Length(40).LazyLoad();
-                Map(x => x.Shift).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkRemarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.DateOfArrival).Not.Nullable().LazyLoad();
-                Map(x => x.JobTitle).Nullable().Length(40).LazyLoad();
-                Map(x => x.EAOS).Nullable().LazyLoad();
-                Map(x => x.DateOfDeparture).Nullable().LazyLoad();
-                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).LazyLoad();
-                Map(x => x.ContactRemarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).LazyLoad();
-                Map(x => x.Username).Nullable().Length(40).Unique().LazyLoad();
-                Map(x => x.PasswordHash).Nullable().Length(100).LazyLoad();
-                Map(x => x.Suffix).Nullable().Length(40).LazyLoad();
+                Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
+                Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>().Not.LazyLoad();
+                Map(x => x.Sex).Not.Nullable().Not.LazyLoad();
+                Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.FirstName).Not.Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.MiddleName).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.SSN).Not.Nullable().Length(40).Unique().Not.LazyLoad();
+                Map(x => x.DateOfBirth).Not.Nullable().Not.LazyLoad();
+                Map(x => x.Remarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.Supervisor).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkCenter).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkRoom).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.Shift).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkRemarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.DateOfArrival).Not.Nullable().Not.LazyLoad();
+                Map(x => x.JobTitle).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.EAOS).Nullable().Not.LazyLoad();
+                Map(x => x.DateOfDeparture).Nullable().Not.LazyLoad();
+                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.ContactRemarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).Not.LazyLoad();
+                Map(x => x.Username).Nullable().Length(40).Unique().Not.LazyLoad();
+                Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
+                Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
 
-                HasManyToMany(x => x.NECs).LazyLoad();
-                HasManyToMany(x => x.PermissionGroups).LazyLoad();
-                HasManyToMany(x => x.SubscribedChangeEvents).LazyLoad();
+                HasManyToMany(x => x.NECs).Not.LazyLoad();
+                HasManyToMany(x => x.PermissionGroups).Not.LazyLoad();
+                HasManyToMany(x => x.SubscribedChangeEvents).Not.LazyLoad();
 
-                HasMany(x => x.AccountHistory).LazyLoad().Cascade.All();
-                HasMany(x => x.Changes).LazyLoad().Cascade.All();
-                HasMany(x => x.EmailAddresses).LazyLoad().Cascade.All();
-                HasMany(x => x.PhoneNumbers).LazyLoad().Cascade.All();
-                HasMany(x => x.PhysicalAddresses).LazyLoad().Cascade.All();
+                HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.EmailAddresses).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
             }
         }
 

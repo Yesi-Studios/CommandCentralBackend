@@ -145,7 +145,7 @@ namespace CommandCentral.ServiceManagement.Service
                 //ALright it's all done so let's go ahead and save the token.
                 if (token.CommunicationSession != null)
                 {
-                    token.CommunicationSession.SaveOrUpdate(token);
+                    token.CommunicationSession.Save(token);
 
                     //Now we don't need the comm session anymore.
                     token.CommunicationSession.Flush();

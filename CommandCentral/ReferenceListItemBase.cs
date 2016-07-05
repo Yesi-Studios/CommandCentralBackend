@@ -122,7 +122,7 @@ namespace CommandCentral
 
             result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
             result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
-            result.Add("MusterStatuses", Enum.GetNames(typeof(DutyStatuses)));
+            result.Add("MusterStatuses", Enum.GetNames(typeof(MusterStatuses)));
             result.Add("Paygrades", Enum.GetNames(typeof(Paygrades)));
             result.Add("PhoneNumberTypes", Enum.GetNames(typeof(PhoneNumberTypes)));
             result.Add("Sexes", Enum.GetNames(typeof(Sexes)));

@@ -371,12 +371,14 @@ namespace CommandCentral.Authorization
 
                 HasMany(x => x.SpecialPermissions)
                     .KeyColumn("PermissionGroupId")
-                    .Element("SpecialPermission");
+                    .Element("SpecialPermission")
+                    .Not.LazyLoad();
 
-                HasManyToMany(x => x.ModelPermissions).Fetch.Select();
+                HasManyToMany(x => x.ModelPermissions).Not.LazyLoad();
                 HasManyToMany(x => x.SubordinatePermissionGroups)
                     .ParentKeyColumn("PermissionGroupID")
-                    .ChildKeyColumn("SubordinatePermissionGroupID");
+                    .ChildKeyColumn("SubordinatePermissionGroupID")
+                    .Not.LazyLoad();
 
             }
         }
