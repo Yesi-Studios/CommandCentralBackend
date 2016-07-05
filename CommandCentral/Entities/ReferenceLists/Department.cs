@@ -103,7 +103,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
-                HasMany(x => x.Divisions).Cascade.All();
+                HasMany(x => x.Divisions).Cascade.All().Not.LazyLoad();
 
                 References(x => x.Command);
 

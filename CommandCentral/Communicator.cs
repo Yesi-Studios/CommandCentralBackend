@@ -18,12 +18,12 @@ namespace CommandCentral
         /// <summary>
         /// Indicates which messages should be forwarded onto the host, and which messages should be silently assassinated.
         /// </summary>
-        public static List<MessagePriority> ListeningPriorities = new List<MessagePriority>();
+        public static List<MessageTypes> ListeningTypes = new List<MessageTypes>();
 
         /// <summary>
-        /// Describes message priorities so that the host can choose what messages it listens to.
+        /// Describes message types so that the host can choose what messages it listens to.
         /// </summary>
-        public enum MessagePriority
+        public enum MessageTypes
         {
             /// <summary>
             /// Informational messages alert the host of routine operations.
@@ -38,9 +38,13 @@ namespace CommandCentral
             /// </summary>
             Warning,
             /// <summary>
-            /// Critical messages alert the host to the fact that a fatal error has occurred in the service and that remediating action should be taken immediately.
+            /// Critical messages alert the host to the fact that a fatal error has occurred in the service and that re-mediating action should be taken immediately.
             /// </summary>
-            Critical
+            Critical,
+            /// <summary>
+            /// A cron operation message is a message from the Cron Operations Manager.
+            /// </summary>
+            CronOperation
         }
 
         /// <summary>
@@ -55,37 +59,39 @@ namespace CommandCentral
         }
 
         /// <summary>
-        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  The priorities indicate to which messages the caller would like to listen.
+        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  The message Types indicates to which messages the caller would like to listen.
         /// </summary>
         /// <param name="textWriter"></param>
-        /// <param name="priorities"></param>
-        public static void InitializeCommunicator(TextWriter textWriter, List<MessagePriority> priorities)
+        /// <param name="messageTypes"></param>
+        public static void InitializeCommunicator(TextWriter textWriter, List<MessageTypes> messageTypes)
         {
             TextWriter = textWriter;
-            ListeningPriorities = priorities;
+            ListeningTypes = messageTypes;
         }
 
         /// <summary>
-        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  Listens to all priorities.
+        /// Initializes the communications object.  The text writer should be a stream to which you want messages to be posted.  Listens to all message types.
         /// </summary>
         /// <param name="textWriter"></param>
         public static void InitializeCommunicator(TextWriter textWriter)
         {
             TextWriter = textWriter;
-            ListeningPriorities = new List<MessagePriority> { MessagePriority.Critical, MessagePriority.Important, MessagePriority.Informational, MessagePriority.Warning };
+            ListeningTypes = new List<MessageTypes> { MessageTypes.Critical, MessageTypes.Important, MessageTypes.Informational, MessageTypes.Warning, MessageTypes.CronOperation };
+
+            //Tell whoever is listening that we've set up the communicator.
+            PostMessageToHost("Communicator initialized and forwarding all message types.", MessageTypes.Informational);
         }
 
         /// <summary>
         /// Sends a message to the message stream if it has been set.  If it hasn't, nothing happens.
         /// </summary>
         /// <param name="message"></param>
-        /// <param name="priority"></param>
-        public static void PostMessageToHost(string message, MessagePriority priority)
+        /// <param name="messageType"></param>
+        public static void PostMessageToHost(string message, MessageTypes messageType)
         {
-            if (TextWriter != null && ListeningPriorities.Contains(priority) && !IsFrozen)
+            if (TextWriter != null && ListeningTypes.Contains(messageType) && !IsFrozen)
             {
-                TextWriter.WriteLine("{0} Service Message @ {1}:\n\t{2}", priority, DateTime.Now, message);
-                TextWriter.WriteLine();
+                TextWriter.WriteLine("[{0} Service Message @ {1}]: {2}", messageType, DateTime.Now, message);
             }
         }
 

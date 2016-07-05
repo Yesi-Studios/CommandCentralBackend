@@ -148,6 +148,20 @@ namespace CommandCentral
         }
 
         /// <summary>
+        /// Sends a muster report.
+        /// </summary>
+        /// <param name="report"></param>
+        public static void SendMusterReportEmail(Entities.MusterReport report)
+        {
+            MailMessage message = BuildStandardMessage();
+            message.To.Add(_emailSenderAddress);
+            message.Subject = "Muster Report";
+            message.Body = "Muster rolled over!";
+            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
+            client.Send(message);
+        }
+
+        /// <summary>
         /// Load an email template.
         /// </summary>
         /// <param name="fileName"></param>

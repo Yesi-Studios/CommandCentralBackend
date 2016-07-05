@@ -87,13 +87,16 @@ namespace CommandCentral.Authorization
                 Map(x => x.ModelName).Not.Nullable().Length(100);
                 HasMany(x => x.SearchableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Element("SearchableField");
+                    .Element("SearchableField")
+                    .Not.LazyLoad();
                 HasMany(x => x.ReturnableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Element("ReturnableField");
+                    .Element("ReturnableField")
+                    .Not.LazyLoad();
                 HasMany(x => x.EditableFields)
                     .KeyColumn("ModelPermissionID")
-                    .Element("EditableFields");
+                    .Element("EditableFields")
+                    .Not.LazyLoad();
             }
         }
 

@@ -8,6 +8,10 @@ using AtwoodUtils;
 
 namespace CommandCentral.Authorization
 {
+    /// <summary>
+    /// The generic rule builder for the given type.  Contains the Fluent-style chain.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class AuthorizationRuleBuilder<T>
     {
         public AuthorizationRuleCategoryEnum CurrentCategory { get; set; }

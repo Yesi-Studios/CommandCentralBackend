@@ -25,7 +25,6 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The person's unique Id.
         /// </summary>
-        //[Returnable(typeof(AuthorizationRules.Never))]
         public virtual Guid Id { get; set; }
 
         #region Main Properties
@@ -174,6 +173,11 @@ namespace CommandCentral.Entities
         /// </summary>
         public virtual DateTime? DateOfDeparture { get; set; }
 
+        /// <summary>
+        /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
+        /// </summary>
+        public virtual MusterRecord CurrentMusterStatus { get; set; }
+
         #endregion
 
         #region Contacts Properties
@@ -279,18 +283,18 @@ namespace CommandCentral.Entities
         /// <param name="person"></param>
         /// <param name="track">The track in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person)
+        public virtual bool IsInChainOfCommandOf(Person person, PermissionTracks track)
         {
             if (Id == person.Id)
                 return false;
 
-            if (HasPermissionLevel(PermissionLevels.Command) && Command.Equals(person.Command))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command))
                 return true;
 
-            if (HasPermissionLevel(PermissionLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
                 return true;
 
-            if (HasPermissionLevel(PermissionLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
                 return true;
 
             return false;
@@ -316,9 +320,66 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="permissionLevel"></param>
         /// <returns></returns>
-        public virtual bool HasPermissionLevel(PermissionLevels permissionLevel)
+        public virtual bool HasPermissionLevelInTrack(PermissionLevels permissionLevel, PermissionTracks track)
         {
-            return PermissionGroups.Any(x => x.PermissionLevel == permissionLevel);
+            return PermissionGroups.Any(x => x.PermissionTrack == track && x.PermissionLevel == permissionLevel);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating if this person is in a given permission track at any level.
+        /// </summary>
+        /// <param name="track"></param>
+        /// <returns></returns>
+        public virtual bool IsInPermissionTrack(PermissionTracks track)
+        {
+            return PermissionGroups.Any(x => x.PermissionTrack == track);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating if this person is in the same command as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameCommandAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating that this person is in the same command and department as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameDepartmentAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating that this person is in the same command, department, and division as the given person.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public virtual bool IsInSameDivisionAs(Person person)
+        {
+            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
+        }
+
+        /// <summary>
+        /// Returns a permission level indicating the highest level of permissions a person has in a given track.
+        /// <para/>
+        /// For example, if a person has two permission groups in the Muster track, one at the division level and one at the command level, their highest permissions in the Muster track are command level.
+        /// </summary>
+        /// <param name="track"></param>
+        /// <returns></returns>
+        public virtual PermissionLevels GetHighestLevelInTrack(PermissionTracks track)
+        {
+            var groups = PermissionGroups.Where(x => x.PermissionTrack == track);
+
+            if (!groups.Any())
+                return PermissionLevels.None;
+
+            return groups.Max(x => x.PermissionLevel);
         }
 
         /// <summary>
@@ -336,46 +397,6 @@ namespace CommandCentral.Entities
 
             foreach (var field in fields)
                 if (!searchableFields.Contains(field))
-                    return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can return the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanReturnFields(string entityName = "Person", params string[] fields)
-        {
-            var returnableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.ReturnableFields);
-
-            foreach (var field in fields)
-                if (!returnableFields.Contains(field))
-                    return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can edit the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanEditFields(string entityName = "Person", params string[] fields)
-        {
-            var editableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.ReturnableFields);
-
-            foreach (var field in fields)
-                if (!editableFields.Contains(field))
                     return false;
 
             return true;
@@ -528,86 +549,104 @@ namespace CommandCentral.Entities
         [EndpointMethod(EndpointName = "BeginRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_BeginRegistration(MessageToken token)
         {
-            //First we need the client's ssn.  This is the account they want to claim.
-            if (!token.Args.ContainsKey("ssn"))
+
+            //Let's do our work in a new session so that we don't affect the authentication information.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+
+                session.FlushMode = NHibernate.FlushMode.Commit;
+                session.CacheMode = NHibernate.CacheMode.Normal;
+
+                try
+                {
+
+                    //First we need the client's ssn.  This is the account they want to claim.
+                    if (!token.Args.ContainsKey("ssn"))
+                    {
+                        token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    string ssn = token.Args["ssn"] as string;
+
+                    //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                    //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
+                    var person = session.QueryOver<Person>()
+                        .Where(x => x.SSN == ssn)
+                        .SingleOrDefault<Person>();
+
+                    //If no result came back, this will be null
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok, so we have a single profile.  Let's see if it's already been claimed.
+                    if (person.IsClaimed)
+                    {
+                        //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
+                        //To do that, we need an email for this user.
+                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+
+                        if (address == null)
+                            throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
+
+                        //Now send that email.
+                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
+
+                        token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
+                                              "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
+                    var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
+                    if (dodEmailAddress == null)
+                    {
+                        token.AddErrorMessage("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
+                                              "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Let's see if there is already a pending account confirmation.
+                    var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
+                        .Where(x => x.Person.Id == person.Id)
+                        .List<PendingAccountConfirmation>();
+
+                    //If there are any (should only be one) then we're going to delete all of them.  
+                    //This would happen if the client tries to begin registration after already doing it.
+                    if (pendingAccountConfirmations.Any())
+                        pendingAccountConfirmations.ToList().ForEach(x => session.Delete(x));
+
+                    //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
+                    var pendingAccountConfirmation = new PendingAccountConfirmation
+                    {
+                        Person = person,
+                        Time = token.CallTime
+                    };
+
+                    //And then persist it.
+                    session.Save(pendingAccountConfirmation);
+
+                    //And then persist that by updating the person.
+                    session.Update(person);
+
+                    //Wait!  we're not even done yet.  Let's send the client the registration email now.
+                    EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
+
+                    //Ok, Jesus Christ.  I think we're finally done.
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
-            
-            string ssn = token.Args["ssn"] as string;
-            //TODO validate the ssn.
-
-            //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
-            //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
-            var person = token.CommunicationSession.QueryOver<Person>()
-                .Where(x => x.SSN == ssn)
-                .SingleOrDefault<Person>();
-
-            //If no result came back, this will be null
-            if (person == null)
-            {
-                token.AddErrorMessage("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Ok, so we have a single profile.  Let's see if it's already been claimed.
-            if (person.IsClaimed)
-            {
-                //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
-                //To do that, we need an email for this user.
-                EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
-
-                if (address == null)
-                    throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
-
-                //Now send that email.
-                EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
-
-                token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                      "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-
-                return;
-            }
-
-            //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
-            var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
-            if (dodEmailAddress == null)
-            {
-                token.AddErrorMessage("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
-                                      "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-
-                return;
-            }
-
-            //Let's see if there is already a pending account confirmation.
-            var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
-                .Where(x => x.Person.Id == person.Id)
-                .List<PendingAccountConfirmation>();
-
-            //If there are any (should only be one) then we're going to delete all of them.  
-            //This would happen if the client let one sit too long and it become invalid and then had to call begin registration again.
-            if (pendingAccountConfirmations.Any())
-                pendingAccountConfirmations.ToList().ForEach(x => token.CommunicationSession.Delete(x));
-
-            //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
-            var pendingAccountConfirmation = new PendingAccountConfirmation
-            {
-                Person = person,
-                Time = token.CallTime
-            };
-
-            //And then persist it.
-            token.CommunicationSession.Save(pendingAccountConfirmation);
-
-            //And then persist that by updating the person.
-            token.CommunicationSession.Update(person);
-
-            //Wait!  we're not even done yet.  Let's send the client the registration email now.
-            EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
-
-            //Ok, Jesus Christ.  I think we're finally done.
-            token.SetResult("Success");
         }
 
         /// <summary>
@@ -844,6 +883,62 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Create
+
+        [EndpointMethod(EndpointName = "CreatePerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_CreatePerson(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to create a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //You have permission?
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.CreatePerson))
+            {
+                token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
+            if (!token.Args.ContainsKey("person"))
+            {
+                token.AddErrorMessage("You failed to send a 'person' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var personFromClient = token.Args["person"].CastJToken<Person>();
+
+            //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
+            //The client may or may not have sent us a guid but we're not willing to trust the Id they sent us so let's reset it.
+            personFromClient.Id = Guid.NewGuid();
+            personFromClient.IsClaimed = false;
+
+            personFromClient.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(personFromClient, DateTime.Now);
+
+            //Now for validation!
+            var results = new PersonValidator().Validate(personFromClient);
+
+            if (results.Errors.Any())
+            {
+                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
+            //TODO: tell the client why their insertion failed.  For now, just let it fall to the generic handler.
+            token.CommunicationSession.Save(personFromClient);
+
+            //And now return the perosn's Id.
+            token.SetResult(personFromClient.Id);
+
+
+        }
+
+        #endregion
+
         #region Get/Load/Select/Search
 
         /// <summary>
@@ -862,7 +957,7 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to load persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -882,57 +977,37 @@ namespace CommandCentral.Entities
             }
 
             //Now let's load the person and then set any fields the client isn't allowed to see to null.
-            //We need the entire object so we're going to initialize it and then unproxy it.
             var person = token.CommunicationSession.Get<Person>(personId);
 
-            Person personReturn = null;
-
-            List<string> returnableFields = null;
-
-            //We need the metadata from the person class.
-            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
-
-            //Here we're going to ask if the person is not null (a person was returned) and that the person that was returned is not the person asking for a person. Person.
-            if (person != null && personId != token.AuthenticationSession.Person.Id)
+            //If person is null then we need to stop here.
+            if (person == null)
             {
-                personReturn = new Person();
+                token.AddErrorMessage("The Id you sent appears to be invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
 
-                //Ok, now we need to set all the fields to null the client can't return.  First let's see what fields the client can return.
-                //This is going to go through all model permissions that target a Person, and get all the returnable fields.
-                returnableFields = token.AuthenticationSession.Person.PermissionGroups
-                                            .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == "Person")
-                                                .SelectMany(y => y.ReturnableFields))
-                                            .ToList();
+            Person personReturn = new Person();
 
-                //Now for every property not in the above list, let's set the property to null.
-                var allPropertyNames = personMetadata.PropertyNames;
+            List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
 
-                //Set the nulls if they're null.
-                foreach (var propertyName in allPropertyNames)
+            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
+            //Now just set the fields the client is allowed to see.
+            foreach (var propertyName in returnableFields)
+            {
+                //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
+                if (propertyName.ToLower() == "id")
+                {
+                    personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                }
+                else
                 {
                     personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
                 }
             }
-            else
-            {
-                personReturn = person;
-
-                returnableFields = personMetadata.PropertyNames.ToList();
-            }
-
-            //HACK
-            //For now, we're going to manually limit the account history events to the 5 most recent.  Note that this means we're still loading them but then cutting them off.  That's not good.
-            //Later we'll need to find out how to get NHibernate to limit children selects.
-            //personReturn.AccountHistory = personReturn.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList();
 
             //We also need to tell the client what they can edit.
-            //TODO evaluate property authorization.
-            List<string> editableFields = token.AuthenticationSession.Person.PermissionGroups
-                                            .SelectMany(x => x.ModelPermissions
-                                                .Where(y => y.ModelName == "Person")
-                                                .SelectMany(y => y.EditableFields))
-                                            .ToList();
+            List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
 
             token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = editableFields, ReturnableFields = returnableFields });
         }
@@ -1004,15 +1079,8 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //And then make sure the client is allowed to search in these fields and return these fields.
-            if (!token.AuthenticationSession.Person.CanSearchFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division") ||
-                !token.AuthenticationSession.Person.CanReturnFields("Person", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division"))
-            {
-                token.AddErrorMessage("In order to conduct a simple search you must be able to both search and return the following fields: {0}"
-                    .FormatS(String.Join(",", "LastName", "MiddleName", "FirstName", "UIC", "Designation", "Paygrade", "Command", "Department", "Division")), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
+            //If you can search persons then we'll assume you can search/return the required fields.
+            
             if (!token.Args.ContainsKey("searchterm"))
             {
                 token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -1032,7 +1100,7 @@ namespace CommandCentral.Entities
                     .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                     .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    .Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                    //.Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                     .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -1050,11 +1118,11 @@ namespace CommandCentral.Entities
                         x.MiddleName,
                         x.FirstName,
                         Paygrade = x.Paygrade,
-                        Designation = x.Designation.Value,
-                        UIC = x.UIC.Value,
-                        Command = x.Command.Value,
-                        Department = x.Department.Value,
-                        Division = x.Division.Value
+                        Designation = (x.Designation == null) ? "" : x.Designation.Value,
+                        UIC = (x.UIC == null) ? "" : x.UIC.Value,
+                        Command = (x.Command == null) ? "" : x.Command.Value,
+                        Department = (x.Department == null) ? "" : x.Department.Value,
+                        Division = (x.Division == null) ? "" : x.Division.Value
                     };
                 });
             token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }});
@@ -1112,12 +1180,7 @@ namespace CommandCentral.Entities
             }
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
-            //And make sure they can return it.
-            if (!token.AuthenticationSession.Person.CanReturnFields("Person", returnFields.ToArray()))
-            {
-                token.AddErrorMessage("You were not allowed to return on or more of the fields you asked to return.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+            //TODO implement authorization return fields check
 
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
@@ -1275,6 +1338,25 @@ namespace CommandCentral.Entities
                                 foreach (var term in searchTerms)
                                     disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
                                 queryOver = queryOver.Where(disjunction);
+                                break;
+                            }
+                        case "CurrentMusterStatus":
+                            {
+                                //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
+                                foreach (string term in searchTerms)
+                                {
+                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
+                                    .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
+                                    .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == MusterRecord.GetMusterYear(token.CallTime))
+                                    .Select(x => x.Id)));
+                                }
+
                                 break;
                             }
                         default:
@@ -1456,8 +1538,32 @@ namespace CommandCentral.Entities
 
         #endregion
 
+        #region Startup Methods
+
+        /// <summary>
+        /// Loads all persons from the database, thus initializing most of the 2nd level cache, and tells the host how many persons we have in the database.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 7)]
+        private static void ReadPersons()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var persons = session.QueryOver<Person>().List();
+
+                Communicator.PostMessageToHost("Found {0} persons.".FormatS(persons.Count), Communicator.MessageTypes.Informational);
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
+        /// </summary>
         public class PersonAuthorizer : AbstractAuthorizer<Person>
         {
+            /// <summary>
+            /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
+            /// </summary>
             public PersonAuthorizer()
             {
                 RulesFor(x => x.Id).MakeIgnoreGenericEdits()
@@ -1466,9 +1572,11 @@ namespace CommandCentral.Entities
                     .Editable()
                         .Never();
 
+                //Properties in this group are updated by other endpoints and not the generic update endpoint.
                 RulesFor(x => x.IsClaimed).MakeIgnoreGenericEdits()
                 .AndFor(x => x.Changes)
                 .AndFor(x => x.AccountHistory)
+                .AndFor(x => x.CurrentMusterStatus)
                     .Returnable()
                         .IfGrantedByPermissionGroup()
                     .Editable()
@@ -1570,51 +1678,52 @@ namespace CommandCentral.Entities
             /// </summary>
             public PersonMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Ethnicity).Nullable().LazyLoad();
-                References(x => x.ReligiousPreference).Nullable().LazyLoad();
-                References(x => x.Designation).Nullable().LazyLoad();
-                References(x => x.Division).Nullable().LazyLoad();
-                References(x => x.Department).Nullable().LazyLoad();
-                References(x => x.Command).Nullable().LazyLoad();
-                References(x => x.Billet).Nullable().LazyLoad();
-                References(x => x.UIC).Nullable().LazyLoad();
+                References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False);
+                References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Designation).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Division).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Department).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Command).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Billet).Nullable().LazyLoad(Laziness.False);
+                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
+                References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
-                Map(x => x.DutyStatus).Not.Nullable();
-                Map(x => x.Paygrade).Not.Nullable();
-                Map(x => x.Sex).Not.Nullable();
-                Map(x => x.LastName).Not.Nullable().Length(40);
-                Map(x => x.FirstName).Not.Nullable().Length(40).LazyLoad();
-                Map(x => x.MiddleName).Nullable().Length(40).LazyLoad();
-                Map(x => x.SSN).Not.Nullable().Length(40).Unique().LazyLoad();
-                Map(x => x.DateOfBirth).Not.Nullable().LazyLoad();
-                Map(x => x.Remarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.Supervisor).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkCenter).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkRoom).Nullable().Length(40).LazyLoad();
-                Map(x => x.Shift).Nullable().Length(40).LazyLoad();
-                Map(x => x.WorkRemarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.DateOfArrival).Not.Nullable().LazyLoad();
-                Map(x => x.JobTitle).Nullable().Length(40).LazyLoad();
-                Map(x => x.EAOS).Not.Nullable().LazyLoad();
-                Map(x => x.DateOfDeparture).Nullable().LazyLoad();
-                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).LazyLoad();
-                Map(x => x.ContactRemarks).Nullable().Length(150).LazyLoad();
-                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).LazyLoad();
-                Map(x => x.Username).Nullable().Length(40).Unique().LazyLoad();
-                Map(x => x.PasswordHash).Nullable().Length(100).LazyLoad();
-                Map(x => x.Suffix).Nullable().Length(40).LazyLoad();
+                Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
+                Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>().Not.LazyLoad();
+                Map(x => x.Sex).Not.Nullable().Not.LazyLoad();
+                Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.FirstName).Not.Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.MiddleName).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.SSN).Not.Nullable().Length(40).Unique().Not.LazyLoad();
+                Map(x => x.DateOfBirth).Not.Nullable().Not.LazyLoad();
+                Map(x => x.Remarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.Supervisor).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkCenter).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkRoom).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.Shift).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.WorkRemarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.DateOfArrival).Not.Nullable().Not.LazyLoad();
+                Map(x => x.JobTitle).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.EAOS).Nullable().Not.LazyLoad();
+                Map(x => x.DateOfDeparture).Nullable().Not.LazyLoad();
+                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.ContactRemarks).Nullable().Length(150).Not.LazyLoad();
+                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).Not.LazyLoad();
+                Map(x => x.Username).Nullable().Length(40).Unique().Not.LazyLoad();
+                Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
+                Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
 
-                HasManyToMany(x => x.NECs).LazyLoad();
-                HasManyToMany(x => x.PermissionGroups).LazyLoad();
-                HasManyToMany(x => x.SubscribedChangeEvents).LazyLoad();
+                HasManyToMany(x => x.NECs).Not.LazyLoad();
+                HasManyToMany(x => x.PermissionGroups).Not.LazyLoad();
+                HasManyToMany(x => x.SubscribedChangeEvents).Not.LazyLoad();
 
-                HasMany(x => x.AccountHistory).LazyLoad().Cascade.All();
-                HasMany(x => x.Changes).LazyLoad().Cascade.All();
-                HasMany(x => x.EmailAddresses).LazyLoad().Cascade.All();
-                HasMany(x => x.PhoneNumbers).LazyLoad().Cascade.All();
-                HasMany(x => x.PhysicalAddresses).LazyLoad().Cascade.All();
+                HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.EmailAddresses).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
             }
         }
 

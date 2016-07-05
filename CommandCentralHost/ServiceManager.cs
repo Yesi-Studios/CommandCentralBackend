@@ -5,7 +5,7 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.ServiceModel.Web;
 using CommandCentral;
-using CommandCentral.ClientAccess.Service;
+using CommandCentral.ServiceManagement.Service;
 
 namespace CommandCentralHost
 {
@@ -34,8 +34,12 @@ namespace CommandCentralHost
         /// Initializes the service host.
         /// </summary>
         /// <returns></returns>
-        public static void InitializeService()
+        public static void LaunchService()
         {
+            if (!CommandCentral.DataAccess.NHibernateHelper.IsInitialized)
+                throw new Exception("Please select a database to connect to before starting the service.");
+
+
             bool keepLooping = true;
 
             while (keepLooping)
@@ -57,9 +61,6 @@ namespace CommandCentralHost
                         continue;
                     }
 
-                //Let's see what schema the client would like to connect to.
-                string schema = "test_default";
-
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(port))
                 {
@@ -74,20 +75,18 @@ namespace CommandCentralHost
                 }
 
                 //Ok, so now we have a valid port.  Let's set up the service.
-                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + port));
+                _host = new WebServiceHost(typeof( CommandCentralService), new Uri("http://localhost:" + port));
                 _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding(), "");
                 ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
                 stp.HttpHelpPageEnabled = false;
 
-                //Cool, that's done.  Let's also register with the communicator.
-                Communicator.InitializeCommunicator(Console.Out);
-                "Communicator Initialized.  Listening to these message priorities:\n\t{0}".FormatS(string.Join(",", Communicator.ListeningPriorities.Select(x => x.ToString()))).WriteLine();
+                //Tell the service to initialize itself.
+                CommandCentral.ServiceManagement.ServiceManager.InitializeService(Console.Out);
 
                 //Register a faulted event listener with the host.
                 _host.Faulted += _host_Faulted;
 
-                //Tell the client we're done.
-                "Service initialized.  Base address is '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri).WriteLine();
+                StartService();
 
                 keepLooping = false;
             }
@@ -103,7 +102,7 @@ namespace CommandCentralHost
             "The host has entered the faulted state.  Service re-initialization will now be started.  Press any key to continue...".WriteLine();
             Console.ReadKey();
             _host = null;
-            InitializeService();
+            LaunchService();
         }
 
         /// <summary>
@@ -167,6 +166,7 @@ namespace CommandCentralHost
                 {
                     _host.Close();
                     "Host has been closed.".WriteLine();
+                    ReleaseService();
                 }
             }
             else

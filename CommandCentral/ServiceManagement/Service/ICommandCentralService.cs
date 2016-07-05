@@ -3,7 +3,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
 
-namespace CommandCentral.ClientAccess.Service
+namespace CommandCentral.ServiceManagement.Service
 {
     /// <summary>
     /// Prototypes the endpoints for the service.

@@ -54,6 +54,19 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// A plural version of the dictionary's ContainsKey.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="dict"></param>
+        /// <param name="keys"></param>
+        /// <returns></returns>
+        public static bool ContainsKeys<TKey, TValue>(this IDictionary<TKey, TValue> dict, params TKey[] keys)
+        {
+            return keys.All(x => dict.ContainsKey(x));
+        }
+
+        /// <summary>
         /// Returns a boolean that indicates whether or not a list contains any duplicates.  This method uses hashsets for duplicate comparison and will fail at the first duplicate.
         /// </summary>
         /// <typeparam name="T"></typeparam>

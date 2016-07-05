@@ -16,7 +16,7 @@ namespace CommandCentralHost.Editors
 
             while (keepLooping)
             {
-                var endpoints = CommandCentral.ClientAccess.Service.CommandCentralService.EndpointDescriptions;
+                var endpoints = CommandCentral.ServiceManagement.ServiceManager.EndpointDescriptions;
 
                 Console.Clear();
                 "Welcome to the endpoints editor.".WriteLine();

@@ -45,6 +45,11 @@ namespace CommandCentral.Authorization
         public virtual PermissionLevels PermissionLevel { get; set; }
 
         /// <summary>
+        /// Indicates on which track this permission group lies.
+        /// </summary>
+        public virtual PermissionTracks PermissionTrack { get; set; }
+
+        /// <summary>
         /// A list of those permissions groups that are subordinate to this permission group.  This is used to determine which groups can promote people into which groups.
         /// </summary>
         public virtual IList<PermissionGroup> SubordinatePermissionGroups { get; set; }
@@ -329,6 +334,24 @@ namespace CommandCentral.Authorization
 
         #endregion Client Access
 
+        #region Startup Methods
+
+        /// <summary>
+        /// Reads all permission groups from the database and posts a message to the host with which permission groups were loaded.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 6)]
+        private static void ReadPermissionGroups()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var groups = session.QueryOver<PermissionGroup>().List();
+
+                Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(groups.Count, String.Join(",", groups.Select(x => x.Name))), Communicator.MessageTypes.Informational);
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a permission group to the database
         /// </summary>
@@ -344,15 +367,18 @@ namespace CommandCentral.Authorization
                 Map(x => x.Name).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
                 Map(x => x.PermissionLevel).Default("'{0}'".FormatS(PermissionLevels.None.ToString())).Not.Nullable(); //We have to tell it to put '' marks or else the SQL it makes is wrong.  :(
+                Map(x => x.PermissionTrack).Default("'{0}'".FormatS(PermissionTracks.None.ToString())).Not.Nullable(); //Same as above
 
                 HasMany(x => x.SpecialPermissions)
                     .KeyColumn("PermissionGroupId")
-                    .Element("SpecialPermission");
+                    .Element("SpecialPermission")
+                    .Not.LazyLoad();
 
-                HasManyToMany(x => x.ModelPermissions).Fetch.Select();
+                HasManyToMany(x => x.ModelPermissions).Not.LazyLoad();
                 HasManyToMany(x => x.SubordinatePermissionGroups)
                     .ParentKeyColumn("PermissionGroupID")
-                    .ChildKeyColumn("SubordinatePermissionGroupID");
+                    .ChildKeyColumn("SubordinatePermissionGroupID")
+                    .Not.LazyLoad();
 
             }
         }

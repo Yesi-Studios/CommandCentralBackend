@@ -35,6 +35,10 @@
       <HintPath>..\packages\FluentNHibernate.2.0.3.0\lib\net40\FluentNHibernate.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="FluentScheduler, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b76503528a14ebd1, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentScheduler.4.1.1\lib\net40\FluentScheduler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FluentValidation, Version=6.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentValidation.6.2.1.0\lib\Net45\FluentValidation.dll</HintPath>
       <Private>True</Private>
@@ -72,10 +76,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Authorization\AuthorizationEvaluationResult.cs" />
     <Compile Include="Authorization\AuthorizationRuleBase.cs" />
     <Compile Include="Authorization\AuthorizationRuleBuilder.cs" />
     <Compile Include="Authorization\AuthorizationRuleCategoryEnum.cs" />
+    <Compile Include="Authorization\PermissionTracksEnum.cs" />
     <Compile Include="Authorization\RuleDisjunction.cs" />
     <Compile Include="Authorization\RuleGroup.cs" />
     <Compile Include="Authorization\Rules\IfGrantedByPermissionGroupRule.cs" />
@@ -90,10 +94,11 @@
     <Compile Include="Authorization\Rules\PermissionGroupSpecialRule.cs" />
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
-    <Compile Include="ClientAccess\Service\CommandCentralService.cs" />
-    <Compile Include="ClientAccess\Service\ICommandCentralService.cs" />
+    <Compile Include="Entities\MusterReport.cs" />
+    <Compile Include="ServiceManagement\ServiceManager.cs" />
+    <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
+    <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
-    <Compile Include="CronOperations.cs" />
     <Compile Include="DataAccess\ConnectionSettings.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
@@ -130,7 +135,6 @@
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
-    <Compile Include="Entities\VersionInformation.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="ClientAccess\PasswordHash.cs" />
     <Compile Include="Entities\PhoneNumber.cs" />
@@ -138,6 +142,7 @@
     <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\Variance.cs" />
+    <Compile Include="ServiceManagement\StartMethodAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">
@@ -205,6 +210,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

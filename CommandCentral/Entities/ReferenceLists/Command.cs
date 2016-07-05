@@ -3,6 +3,7 @@ using System.Linq;
 using FluentNHibernate.Mapping;
 using System;
 using System.Collections.Generic;
+using AtwoodUtils;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -100,6 +101,21 @@ namespace CommandCentral.Entities.ReferenceLists
 
         #endregion
 
+        #region Startup Methods
+
+        [ServiceManagement.StartMethod(Priority = 5)]
+        private static void ShowCommands()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var commands = session.QueryOver<Command>().List();
+
+                Communicator.PostMessageToHost("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))), Communicator.MessageTypes.Informational);
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a command to the database.
         /// </summary>
@@ -115,7 +131,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
 
-                HasMany(x => x.Departments).Cascade.All();
+                HasMany(x => x.Departments).Cascade.All().Not.LazyLoad();
 
                 Cache.ReadWrite();
             }

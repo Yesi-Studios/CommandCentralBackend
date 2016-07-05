@@ -101,7 +101,8 @@ namespace CommandCentralHost.Editors
                         }
                         else
                         {
-                            var item = new PermissionGroup { Name = input };
+                            //Client wants to make a new permission group.
+                            var item = new PermissionGroup { Name = input, PermissionTrack = PermissionTracks.None };
                             session.Save(item);
                         }
 
@@ -130,6 +131,10 @@ namespace CommandCentralHost.Editors
                 "".WriteLine();
                 "Description:\n\t{0}".FormatS(group.Description).WriteLine();
                 "".WriteLine();
+                "Permission Level:\n\t{0}".FormatS(group.PermissionLevel).WriteLine();
+                "".WriteLine();
+                "Permission Track:\n\t{0}".FormatS(group.PermissionTrack).WriteLine();
+                "".WriteLine();
 
                 "1. Edit Name".WriteLine();
                 "2. Edit Description".WriteLine();
@@ -137,10 +142,11 @@ namespace CommandCentralHost.Editors
                 "4. View/Edit Special Permissions".WriteLine();
                 "5. View/Edit Subordinate Permission Groups".WriteLine();
                 "6. View/Edit Permission Level".WriteLine();
-                "7. Return".WriteLine();
+                "7. View/Edit Permission Track".WriteLine();
+                "8. Return".WriteLine();
 
                 int option;
-                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 7)
+                if (int.TryParse(Console.ReadLine(), out option) && option >= 1 && option <= 8)
                 {
                     switch (option)
                     {
@@ -203,6 +209,24 @@ namespace CommandCentralHost.Editors
                                 break;
                             }
                         case 7:
+                            {
+                                Console.Clear();
+                                "The current permission track is, '{0}'. Choose a new one from below.".FormatS(group.PermissionTrack).WriteLine();
+                                "".WriteLine();
+
+                                var names = Enum.GetNames(typeof(PermissionTracks));
+                                for (int x = 0; x < names.Length; x++)
+                                    "{0}. {1}".FormatS(x, names[x]).WriteLine();
+
+                                int levelOption = -1;
+                                if (int.TryParse(Console.ReadLine(), out levelOption) && levelOption >= 0 && levelOption < names.Length)
+                                {
+                                    group.PermissionTrack = (PermissionTracks)Enum.Parse(typeof(PermissionTracks), names[levelOption]);
+                                }
+
+                                break;
+                            }
+                        case 8:
                             {
                                 keepLooping = false;
 
@@ -462,7 +486,7 @@ namespace CommandCentralHost.Editors
                                 List<string[]> lines = new List<string[]> { new[] { "#", "Rate", "First Name", "Last Name" } };
                                 for (int x = 0; x < persons.Count; x++)
                                 {
-                                    lines.Add(new[] { x.ToString(), persons[x].Designation.Value, persons[x].FirstName, persons[x].LastName });
+                                    lines.Add(new[] { x.ToString(), persons[x].Designation == null ? "" : persons[x].Designation.Value, persons[x].FirstName, persons[x].LastName });
                                 }
                                 DisplayUtilities.PadElementsInLines(lines, 3).WriteLine();
 

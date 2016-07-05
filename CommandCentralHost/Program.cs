@@ -20,25 +20,13 @@ namespace CommandCentralHost
         {
             new DialogueOption
             {
-                OptionText = "Initialize Service",
-                Method = ServiceManager.InitializeService,
+                OptionText = "Launch Service",
+                Method = ServiceManager.LaunchService,
                 DisplayCriteria = () => ServiceManager.Host == null
             },
             new DialogueOption
             {
-                OptionText = "Release Service",
-                Method = ServiceManager.ReleaseService,
-                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State != CommunicationState.Opened
-            },
-            new DialogueOption
-            {
-                OptionText = "Start Service",
-                Method = ServiceManager.StartService,
-                DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State != CommunicationState.Opened
-            },
-            new DialogueOption
-            {
-                OptionText = "Stop Service",
+                OptionText = "Shutdown Service",
                 Method = ServiceManager.StopService,
                 DisplayCriteria = () => ServiceManager.Host != null && ServiceManager.Host.State == CommunicationState.Opened
             },
@@ -92,12 +80,6 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
-                OptionText = "Manage Versions",
-                 Method = VersionEditor.EditVersions,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
                 OptionText = "Manage Endpoints",
                 Method = EndpointEditor.EditEndpoints,
                 DisplayCriteria = () => true
@@ -124,6 +106,22 @@ namespace CommandCentralHost
             {
                 OptionText = "Create the Atwood",
                 Method = PersonsEditor.CreateAtwood,
+                DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Fuck all persons",
+                Method = () =>
+                    {
+                        var session = CommandCentral.DataAccess.NHibernateHelper.CreateStatefulSession();
+
+                        session.QueryOver<CommandCentral.Entities.Person>().List().ToList().ForEach(x =>
+                            {
+                                session.Delete(x);
+                            });
+
+                        session.Flush();
+                    },
                 DisplayCriteria = () => true
             }
 
