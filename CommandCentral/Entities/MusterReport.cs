@@ -14,6 +14,9 @@ namespace CommandCentral.Entities
     /// </summary>
     public class MusterReport
     {
+
+        #region Properties
+
         /// <summary>
         /// The unique Id for this Muster Report
         /// </summary>
@@ -45,6 +48,18 @@ namespace CommandCentral.Entities
         /// Shows the date/time this report was generated.
         /// </summary>
         public virtual DateTime TimeGenerated { get; set; }
+
+        #endregion
+
+        #region Helper Methods
+
+        public static MusterReport GenerateCurrentMusterReport()
+        {
+
+        }
+
+
+        #endregion
 
         /// <summary>
         /// Maps a muster report to the database.

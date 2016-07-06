@@ -29,7 +29,7 @@ namespace CommandCentral.Entities
         /// <para />
         /// This is used in situations where a client forces the muster to finalize prior to its rollover time.
         /// </summary>
-        private static bool _isMusterFinalized = false;
+        public static bool IsMusterFinalized { get; private set; }
 
         #region Properties
 
@@ -215,9 +215,9 @@ namespace CommandCentral.Entities
         /// and then resetting everyone's current muster record and then archiving the old ones.
         /// </summary>
         /// <param name="person">The person who initiated the muster finalization.  If null, the system initiated it.</param>
-        private static void FinalizeMuster(Person person)
+        public static void FinalizeMuster(Person person)
         {
-            if (_isMusterFinalized)
+            if (IsMusterFinalized)
                 throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
@@ -242,7 +242,7 @@ namespace CommandCentral.Entities
 
                     //Now we just need to shut out the muster such that it can't be used until the roll over happens.
 
-                    _isMusterFinalized = true;
+                    IsMusterFinalized = true;
                 }
                 catch (Exception e)
                 {
@@ -251,6 +251,35 @@ namespace CommandCentral.Entities
 
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
+            }
+        }
+
+        public static void RolloverMuster()
+        {
+
+        }
+
+        /// <summary>
+        /// Returns a list of those persons who are currently musterable.  Uses a given session to do the loading.
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        public static IList<Person> GetMusterablePersons(NHibernate.ISession session)
+        {
+            return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss).List();
+        }
+
+        /// <summary>
+        /// Returns a list of those persons who are currently musterable.  Uses a new session to do the loading then disposes it.
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        public static IList<Person> GetMusterablePersons()
+        {
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss).List();
             }
         }
 
@@ -615,7 +644,7 @@ namespace CommandCentral.Entities
             }
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
-            if (_isMusterFinalized)
+            if (IsMusterFinalized)
             {
                 token.AddErrorMessage("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
@@ -635,28 +664,6 @@ namespace CommandCentral.Entities
         private static void RegisterRolloverMuster()
         {
             FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
-        }
-
-        #endregion
-
-        #region Cron Operations
-
-        /// <summary>
-        /// 
-        /// <para />
-        /// Maybe not in that order :D
-        /// </summary>
-        private static void RolloverMuster()
-        {
-            //Alright, we've been instructed to rollover the muster.
-            //Here we go!
-
-            if (!_isMusterFinalized)
-                FinalizeMuster(null);
-
-            //Ok so the muster has been finalized either by the system or some person.
-
-            _isMusterFinalized = false;
         }
 
         #endregion

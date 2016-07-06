@@ -20,6 +20,10 @@
         /// <summary>
         /// Indicates that a person is a civilian.
         /// </summary>
-        Civilian
+        Civilian,
+        /// <summary>
+        /// Indicates a person has left the scope of the application either by leaving the Navy or moving to an unsupported command.
+        /// </summary>
+        Loss
     }
 }
