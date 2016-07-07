@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CommandCentral.Entities.Muster;
 
 
 namespace CommandCentralHost.Editors
@@ -73,7 +74,7 @@ namespace CommandCentralHost.Editors
             Console.Clear();
 
             //Before we even start let's make sure the muster hasn't already been finalized.
-            if (CommandCentral.Entities.MusterRecord.IsMusterFinalized)
+            if (MusterRecord.IsMusterFinalized)
             {
                 "You can't finalize the muster because it already has been.  A rollover must occur now.".WriteLine();
                 return;
@@ -84,7 +85,7 @@ namespace CommandCentralHost.Editors
 
             if (Console.ReadLine().ToLower() == "y")
             {
-                var persons = CommandCentral.Entities.MusterRecord.GetMusterablePersons();
+                var persons = MusterRecord.GetMusterablePersons();
 
                 //If there are any unmustered people let's ask the client if they're sure about finalizing the muster.
                 int unmustered = persons.Where(x => !x.CurrentMusterStatus.HasBeenSubmitted).Count();
@@ -105,7 +106,7 @@ namespace CommandCentralHost.Editors
                 if (continueWithFinalization)
                 {
                     //Ok we should be ready for finalization now.  Fire off the method.  The null argument tells it that the system is initiating the finalization.
-                    CommandCentral.Entities.MusterRecord.FinalizeMuster(null);
+                    MusterRecord.FinalizeMuster(null);
 
                     "Muster has been finalized!  A rollover must now occur before muster can be submitted for persons again.".WriteLine();
                 }
@@ -128,7 +129,7 @@ namespace CommandCentralHost.Editors
             Console.Clear();
 
             "Generating muster report...".WriteLine();
-            var musterReport = CommandCentral.Entities.MusterReport.GenerateCurrentMusterReport();
+            var musterReport = MusterReport.GenerateCurrentMusterReport(null);
             "Done".WriteLine();
 
 

@@ -6,7 +6,7 @@ using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
 
-namespace CommandCentral.Entities
+namespace CommandCentral.Entities.Muster
 {
     /// <summary>
     /// Describes a single muster record, intended to archive the fact that a person claimed that another person was in a given state at a given time.

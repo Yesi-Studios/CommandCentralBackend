@@ -151,7 +151,7 @@ namespace CommandCentral
         /// Sends a muster report.
         /// </summary>
         /// <param name="report"></param>
-        public static void SendMusterReportEmail(Entities.MusterReport report)
+        public static void SendMusterReportEmail(Entities.Muster.MusterReport report)
         {
             MailMessage message = BuildStandardMessage();
             message.To.Add(_emailSenderAddress);

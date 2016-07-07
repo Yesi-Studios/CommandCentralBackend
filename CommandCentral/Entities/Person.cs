@@ -176,7 +176,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
         /// </summary>
-        public virtual MusterRecord CurrentMusterStatus { get; set; }
+        public virtual Muster.MusterRecord CurrentMusterStatus { get; set; }
 
         #endregion
 
@@ -916,7 +916,7 @@ namespace CommandCentral.Entities
             personFromClient.Id = Guid.NewGuid();
             personFromClient.IsClaimed = false;
 
-            personFromClient.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(personFromClient, DateTime.Now);
+            personFromClient.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(personFromClient, DateTime.Now);
 
             //Now for validation!
             var results = new PersonValidator().Validate(personFromClient);
@@ -1345,15 +1345,15 @@ namespace CommandCentral.Entities
                                 //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
                                 foreach (string term in searchTerms)
                                 {
-                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
-                                    .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
-                                    .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == MusterRecord.GetMusterYear(token.CallTime))
+                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<Muster.MusterRecord>().Where(Restrictions.Disjunction()
+                                    .Add<Muster.MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                    .Add<Muster.MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
+                                    .And(x => x.MusterDayOfYear == Muster.MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == Muster.MusterRecord.GetMusterYear(token.CallTime))
                                     .Select(x => x.Id)));
                                 }
 

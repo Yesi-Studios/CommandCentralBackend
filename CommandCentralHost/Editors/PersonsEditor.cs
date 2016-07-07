@@ -51,7 +51,7 @@ namespace CommandCentralHost.Editors
                                         .Departments.First(x => x.Value == "N0").Divisions.First(x => x.Value == "N0"),
                     };
 
-                    person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                    person.CurrentMusterStatus = CommandCentral.Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                     session.SaveOrUpdate(person);
 
@@ -105,7 +105,7 @@ namespace CommandCentralHost.Editors
 
 
 
-                    person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                    person.CurrentMusterStatus = CommandCentral.Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                     session.SaveOrUpdate(person);
 
