@@ -912,14 +912,34 @@ namespace CommandCentral.Entities
             var personFromClient = token.Args["person"].CastJToken<Person>();
 
             //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
-            //The client may or may not have sent us a guid but we're not willing to trust the Id they sent us so let's reset it.
-            personFromClient.Id = Guid.NewGuid();
-            personFromClient.IsClaimed = false;
+            //For security we're going to take only the parameters that we need explicilty from the client.  All others will be thrown out. #whitelisting
+            Person newPerson = new Person
+            {
+                FirstName = personFromClient.FirstName,
+                MiddleName = personFromClient.MiddleName,
+                LastName = personFromClient.LastName,
+                Division = personFromClient.Division,
+                Department = personFromClient.Department,
+                Command = personFromClient.Command,
+                Paygrade = personFromClient.Paygrade,
+                UIC = personFromClient.UIC,
+                Designation = personFromClient.Designation,
+                Sex = personFromClient.Sex,
+                SSN = personFromClient.SSN,
+                DateOfBirth = personFromClient.DateOfBirth,
+                DateOfArrival = personFromClient.DateOfArrival,
+                Id = Guid.NewGuid(),
+                IsClaimed = false,
+                PermissionGroups = new List<PermissionGroup>()
+            };
 
-            personFromClient.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(personFromClient, DateTime.Now);
+            newPerson.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
+
+            //We're also going to add on the default permission group.
+            newPerson.PermissionGroups.Add(PermissionGroup.GetDefaultPermissionGroup());
 
             //Now for validation!
-            var results = new PersonValidator().Validate(personFromClient);
+            var results = new PersonValidator().Validate(newPerson);
 
             if (results.Errors.Any())
             {
@@ -929,10 +949,10 @@ namespace CommandCentral.Entities
 
             //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
             //TODO: tell the client why their insertion failed.  For now, just let it fall to the generic handler.
-            token.CommunicationSession.Save(personFromClient);
+            token.CommunicationSession.Save(newPerson);
 
             //And now return the perosn's Id.
-            token.SetResult(personFromClient.Id);
+            token.SetResult(newPerson.Id);
 
 
         }

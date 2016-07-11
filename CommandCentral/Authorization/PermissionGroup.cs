@@ -12,6 +12,18 @@ namespace CommandCentral.Authorization
     /// </summary>
     public class PermissionGroup
     {
+
+        /// <summary>
+        /// The name of the default group.
+        /// </summary>
+        public static string DefaultGroupName
+        {
+            get
+            {
+                return "Default";
+            }
+        }
+
         #region Properties
 
         /// <summary>
@@ -79,6 +91,29 @@ namespace CommandCentral.Authorization
             ModelPermissions = new List<ModelPermission>();
             SpecialPermissions = new List<SpecialPermissions>();
             SubordinatePermissionGroups = new List<PermissionGroup>();
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Returns the default permission group which is supposed to be applied to all users.
+        /// </summary>
+        /// <returns></returns>
+        public static PermissionGroup GetDefaultPermissionGroup()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+
+                var group = session.QueryOver<PermissionGroup>().Where(x => x.Name == DefaultGroupName).SingleOrDefault();
+
+
+                if (group == null)
+                    throw new NotImplementedException("An attempt was made to retrieve the default group, '{0}', which is to be applied to all users.  It was not found.".FormatS(DefaultGroupName));
+
+                return group;
+            }
         }
 
         #endregion
@@ -347,6 +382,21 @@ namespace CommandCentral.Authorization
                 var groups = session.QueryOver<PermissionGroup>().List();
 
                 Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(groups.Count, String.Join(",", groups.Select(x => x.Name))), Communicator.MessageTypes.Informational);
+            }
+        }
+
+        /// <summary>
+        /// Confirms that the default permission group exists.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 2)]
+        private static void ConfirmDefaultGroup()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                if (session.QueryOver<PermissionGroup>().Where(x => x.Name == DefaultGroupName).SingleOrDefault() == null)
+                {
+                    Communicator.PostMessageToHost("The default group, '{0}', which is to be applied to all users, was not found.  This is bad.  Attempts to load the permission group will fail.".FormatS(DefaultGroupName), Communicator.MessageTypes.Warning);
+                }
             }
         }
 
