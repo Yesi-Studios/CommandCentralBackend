@@ -885,6 +885,16 @@ namespace CommandCentral.Entities
 
         #region Create
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Creates a new person in the database by taking a person object from the client, picking out only the properties we want, and saving them.  Then it returns the Id we assigned to the person.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     person - a properly formatted, optionally partial, person object containing the necessary information.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [EndpointMethod(EndpointName = "CreatePerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_CreatePerson(MessageToken token)
         {
@@ -932,7 +942,6 @@ namespace CommandCentral.Entities
                 IsClaimed = false,
                 PermissionGroups = new List<PermissionGroup>()
             };
-
             newPerson.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
             //We're also going to add on the default permission group.
@@ -948,13 +957,10 @@ namespace CommandCentral.Entities
             }
 
             //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
-            //TODO: tell the client why their insertion failed.  For now, just let it fall to the generic handler.
             token.CommunicationSession.Save(newPerson);
 
             //And now return the perosn's Id.
             token.SetResult(newPerson.Id);
-
-
         }
 
         #endregion

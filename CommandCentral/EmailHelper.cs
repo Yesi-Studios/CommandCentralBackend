@@ -51,6 +51,9 @@ namespace CommandCentral
             get { return "mail.mil"; }
         }
 
+        /// <summary>
+        /// A list of the developers' emails.
+        /// </summary>
         private static readonly List<string> _developerEmailAddresses = new List<string>
         { 
             "daniel.k.atwood.mil@mail.mil", 
