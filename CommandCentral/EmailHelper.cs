@@ -36,7 +36,7 @@ namespace CommandCentral
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
         /// </summary>
-        private static readonly string _completeRegistrationPageLocation = @"147.51.62.19/CC/#/finishregistration/";
+        private static readonly string _completeRegistrationPageLocation = @"http://147.51.62.19/livebeta/#/finishregistration/";
 
         /// <summary>
         /// The template URI for where the reset password page can be found.
