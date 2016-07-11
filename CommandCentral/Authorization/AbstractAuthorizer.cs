@@ -51,17 +51,17 @@ namespace CommandCentral.Authorization
         /// Given a client and a person and a rule category, returns all properties the client can either edit or return.
         /// </summary>
         /// <param name="client"></param>
-        /// <param name="newPersonFromClient"></param>
+        /// <param name="person"></param>
         /// <param name="category"></param>
         /// <returns></returns>
-        public List<string> GetAuthorizedProperties(Entities.Person client, Entities.Person newPersonFromClient, AuthorizationRuleCategoryEnum category)
+        public List<string> GetAuthorizedProperties(Entities.Person client, Entities.Person person, AuthorizationRuleCategoryEnum category)
         {
             if (category == AuthorizationRuleCategoryEnum.Null)
                 throw new ArgumentException("Category can't be null.");
 
             List<string> properties = new List<string>();
 
-            AuthorizationToken authToken = new AuthorizationToken(client, newPersonFromClient);
+            AuthorizationToken authToken = new AuthorizationToken(client, person);
 
             foreach (var ruleGroup in _ruleGroups.Where(x => x.RuleBuilder.Disjunctions.Exists(y => y.Rules.First().ForCategory == category)))
             {

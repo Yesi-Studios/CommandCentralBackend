@@ -126,8 +126,8 @@ namespace CommandCentral.Authorization
         /// Gets all model permissions for the client and sorts those model permissions as a dictionary grouped by the model name.
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "GetModelPermissions", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_GetModelPermissions(MessageToken token)
+        [EndpointMethod(EndpointName = "GetPersonMetadata", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetPersonMetadata(MessageToken token)
         {
             //Make sure we're logged in.
             if (token.AuthenticationSession == null)
@@ -137,22 +137,11 @@ namespace CommandCentral.Authorization
             }
 
             //Now we're going to get all the client's model permissions, remove duplicates and then make it a dictionary where the key is the model name.
-            var result = token.AuthenticationSession.Person.PermissionGroups
-                            .SelectMany(x => x.ModelPermissions)
-                            .GroupBy(x => x.ModelName)
-                            .Select(x =>
-                            {
-                                ModelPermission flattenedModelPermission = new ModelPermission { Name = "Flattened Permissions", ModelName = x.Key, Id = Guid.Empty };
-                                flattenedModelPermission.ReturnableFields = x.SelectMany(y => y.ReturnableFields).Distinct().ToList();
-                                flattenedModelPermission.EditableFields = x.SelectMany(y => y.EditableFields).Distinct().ToList();
-                                flattenedModelPermission.SearchableFields = x.SelectMany(y => y.SearchableFields).Distinct().ToList();
-
-                                //Ok so now we have the flattened model permission.  Let's put it into a keyvalue pair.
-                                return new KeyValuePair<string, ModelPermission>(x.Key, flattenedModelPermission);
-                            }).ToDictionary(x => x.Key, x => x.Value);
-
+            var searchableFields = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.ModelPermissions).Where(x => x.ModelName == "Person").SelectMany(x => x.SearchableFields).ToList();
+            var returnableFields = DataAccess.NHibernateHelper.GetEntityMetadata("Person").PropertyNames;
+                            
             //And here's the result!
-            token.SetResult(result);
+            token.SetResult(new { SearchableFields = searchableFields, ReturnableFields = returnableFields });
         }
 
         /// <summary>

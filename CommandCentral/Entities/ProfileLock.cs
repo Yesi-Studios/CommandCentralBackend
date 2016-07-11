@@ -142,7 +142,7 @@ namespace CommandCentral.Entities
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
-                session.FlushMode = NHibernate.FlushMode.Commit;
+                session.FlushMode = NHibernate.FlushMode.Auto;
 
                 try
                 {

@@ -928,9 +928,9 @@ namespace CommandCentral.Entities
                 FirstName = personFromClient.FirstName,
                 MiddleName = personFromClient.MiddleName,
                 LastName = personFromClient.LastName,
-                Division = personFromClient.Division,
-                Department = personFromClient.Department,
-                Command = personFromClient.Command,
+                Division = token.AuthenticationSession.Person.Division,
+                Department = token.AuthenticationSession.Person.Department,
+                Command = token.AuthenticationSession.Person.Command,
                 Paygrade = personFromClient.Paygrade,
                 UIC = personFromClient.UIC,
                 Designation = personFromClient.Designation,
@@ -938,6 +938,7 @@ namespace CommandCentral.Entities
                 SSN = personFromClient.SSN,
                 DateOfBirth = personFromClient.DateOfBirth,
                 DateOfArrival = personFromClient.DateOfArrival,
+                DutyStatus = personFromClient.DutyStatus,
                 Id = Guid.NewGuid(),
                 IsClaimed = false,
                 PermissionGroups = new List<PermissionGroup>()
@@ -1114,6 +1115,13 @@ namespace CommandCentral.Entities
             }
 
             string searchTerm = token.Args["searchterm"] as string;
+
+            //Let's require a search term.  That's nice.
+            if (String.IsNullOrEmpty(searchTerm))
+            {
+                token.AddErrorMessage("You must send a search term. A blank term isn't valid. Sorry :(", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
             
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
@@ -1205,8 +1213,6 @@ namespace CommandCentral.Entities
                 return;
             }
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
-
-            //TODO implement authorization return fields check
 
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
@@ -1402,16 +1408,30 @@ namespace CommandCentral.Entities
                 }
             }
             
-            var result = queryOver.List().Select(x =>
+            //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
+            //Important note: the client expects every field to be a string.  We don't return object results.
+            var result = queryOver.List().Select(returnedPerson =>
                 {
+                    //We need to know the fields the client is allowed ot return for this client.
+                    var returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, returnedPerson, AuthorizationRuleCategoryEnum.Return);
+
                     var temp = new Dictionary<string, string>();
                     foreach (var returnField in returnFields)
                     {
-                        var value = personMetadata.GetPropertyValue(x, returnField, NHibernate.EntityMode.Poco);
-                        temp.Add(returnField, value == null ? "" : value.ToString());
+                        //if the client isn't allowed to return this field, replace its value with "redacted"
+                        if (returnableFields.Contains(returnField))
+                        {
+                            var value = personMetadata.GetPropertyValue(returnedPerson, returnField, NHibernate.EntityMode.Poco);
+                            temp.Add(returnField, value == null ? "" : value.ToString());
+                        }
+                        else
+                        {
+                            temp.Add(returnField, "REDACTED");
+                        }
+                        
                     }
                     //We're also going to append the Id onto every search result so that the client knows who this is.
-                    temp.Add("Id", personMetadata.GetIdentifier(x, NHibernate.EntityMode.Poco).ToString());
+                    temp.Add("Id", personMetadata.GetIdentifier(returnedPerson, NHibernate.EntityMode.Poco).ToString());
                     return temp;
                 });
             
@@ -1533,7 +1553,7 @@ namespace CommandCentral.Entities
                 var variances = session.GetDirtyProperties(personFromDB).ToList();
 
                 //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
-                var results = new PersonValidator().Validate(personFromClient);
+                var results = new PersonValidator().Validate(personFromDB);
 
                 //If there are any errors with the validation, let's throw those back to the client.
                 if (results.Errors.Any())
