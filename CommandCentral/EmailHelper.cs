@@ -41,7 +41,7 @@ namespace CommandCentral
         /// <summary>
         /// The template URI for where the reset password page can be found.
         /// </summary>
-        private static readonly string _passwordResetPageLocation = @"file:///E:/CommandDB Frontend/ResetPassword.html?ResetPasswordID=";
+        private static readonly string _passwordResetPageLocation = @"http://147.51.62.19/livebeta/#/finishreset/";
 
         /// <summary>
         /// The required "host" portion of an email address for an email address to be considered a DOD email address.
