@@ -231,7 +231,7 @@ namespace CommandCentral
                     token.APIKey.ApplicationName,
                     token.CallTime.ToUniversalTime(),
                     "TODO", //token.RawJSON, TODO
-                    token.Endpoint, 
+                    token.EndpointDescription, 
                     "TODO", // token.ResultJSON, TODO
                     token.State.ToString(), 
                     token.HandledTime.ToUniversalTime(),
@@ -264,7 +264,7 @@ namespace CommandCentral
                     token.APIKey.ApplicationName,
                     token.CallTime.ToUniversalTime(),
                     "TODO", //token.RawJSON, TODO
-                    token.Endpoint,
+                    token.EndpointDescription,
                     "TODO", // token.ResultJSON, TODO
                     token.State,
                     token.HandledTime.ToUniversalTime(),

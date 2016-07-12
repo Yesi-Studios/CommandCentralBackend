@@ -19,7 +19,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The unique Id assigned to this message interaction
         /// </summary>
-        public virtual Guid Id { get; protected set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The APIKey that the client used to access the API
@@ -29,7 +29,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The time at which the client called the API.
         /// </summary>
-        public virtual DateTime CallTime { get; protected set; }
+        public virtual DateTime CallTime { get; set; }
 
         /// <summary>
         /// The Arguments the client sent to the API.  This is the RawJSON transformed into a dictionary.  This is not mapped to the database.
@@ -39,7 +39,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The body of the request prior to processing.
         /// </summary>
-        public virtual string RawRequestBody { get; protected set; }
+        public virtual string RawRequestBody { get; set; }
 
         /// <summary>
         /// The endpoint that was called by the client.
@@ -49,12 +49,12 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The endpoint that was invoked by the client.
         /// </summary>
-        public virtual ServiceEndpoint Endpoint { get; set; }
+        public virtual ServiceEndpoint EndpointDescription { get; set; }
 
         /// <summary>
         /// Any error messages that occur during the request are pushed to this property.
         /// </summary>
-        public virtual IList<string> ErrorMessages { get; protected set; }
+        public virtual IList<string> ErrorMessages { get; set; }
 
         /// <summary>
         /// Indicates if any error messages are contained in the error message collection.
@@ -70,17 +70,17 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// Describes the error state, if any, that this message token is in.
         /// </summary>
-        public virtual ErrorTypes ErrorType { get; protected set; }
+        public virtual ErrorTypes ErrorType { get; set; }
 
         /// <summary>
         /// The status code that describes the message token's state.
         /// </summary>
-        public virtual System.Net.HttpStatusCode StatusCode { get; protected set; }
+        public virtual System.Net.HttpStatusCode StatusCode { get; set; }
 
         /// <summary>
         /// The resultant object.
         /// </summary>
-        public virtual object Result { get; protected set; }
+        public virtual object Result { get; set; }
 
         /// <summary>
         /// Gets raw response body of this request.  This is simple a property accessor to this.ConstructResponse() for logging purposes.
@@ -109,11 +109,6 @@ namespace CommandCentral.ClientAccess
         public virtual AuthenticationSession AuthenticationSession { get; set; }
 
         /// <summary>
-        /// The session that should be used throughout the lifetime of the request to interact with the database.
-        /// </summary>
-        public virtual ISession CommunicationSession { get; set; }
-
-        /// <summary>
         /// The IP address of the host that called the service.
         /// </summary>
         public virtual string HostAddress { get; set; }
@@ -130,7 +125,7 @@ namespace CommandCentral.ClientAccess
         {
             return "{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}\n\t\tError Code: {8}\n\t\tStatus Code: {9}\n\t\tMessages: {10}"
                 .FormatS(Id, 
-                Endpoint == null ? CalledEndpoint : Endpoint.EndpointMethodAttribute.EndpointName, 
+                CalledEndpoint, 
                 State, 
                 CallTime.ToString(CultureInfo.InvariantCulture), 
                 DateTime.Now.Subtract(CallTime).ToString(), 
