@@ -28,7 +28,15 @@ namespace CommandCentral.ServiceManagement.Service
         #region Endpoints
 
         /// <summary>
-        /// Allows for dynamic invocation of endpoints by using the EndpointsDescription dictionary to whitelist the _endpointDescriptions.
+        /// All endpoint calls get directed to this method where we read the endpoint the client is trying to call and then look for that endpoint to have been registered at start up.
+        /// <para />
+        /// The call is then decoded and the API key is validated.  Then, if the endpoint requires authentication to occur, we do that.
+        /// <para /> 
+        /// After authentication the call falls to the endpoint's data method where the token.Result is expected to be set.
+        /// <para /> 
+        /// At any point the message's state can be determined we insert it into the database (in the case of failure or success).
+        /// <para />
+        /// Finally, the message is released to the client using .Serialize().
         /// </summary>
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
@@ -36,7 +44,7 @@ namespace CommandCentral.ServiceManagement.Service
         public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
             //Create the new message token for this request.
-            MessageToken token = new MessageToken() { CalledEndpoint = endpoint };
+            MessageToken token = new MessageToken { CalledEndpoint = endpoint };
 
             //Tell the client we have a request.
             Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);

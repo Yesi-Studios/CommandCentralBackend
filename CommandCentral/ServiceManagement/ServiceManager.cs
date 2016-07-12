@@ -31,6 +31,7 @@ namespace CommandCentral.ServiceManagement
             if (!DataAccess.NHibernateHelper.IsInitialized)
                 throw new Exception("Please select a database to connect to before starting the service.");
 
+            //Initialize the communicator first so that everyone else can use it.
             Communicator.InitializeCommunicator(writer);
 
             SetupEndpoints();
