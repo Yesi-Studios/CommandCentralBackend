@@ -61,8 +61,11 @@ namespace CommandCentral.ClientAccess
         /// Determines if this session has expired given a max age of inactivity.
         /// </summary>
         /// <returns></returns>
-        public virtual bool IsExpired()
+        public virtual bool IsValid()
         {
+            if (!IsActive)
+                return false;
+
             if (DateTime.Now.Subtract(LastUsedTime) > maxAge)
                 return true;
 

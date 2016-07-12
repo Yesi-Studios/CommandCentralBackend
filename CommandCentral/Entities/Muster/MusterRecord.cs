@@ -319,7 +319,10 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.Get<MusterRecord>(musterRecordId));
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.Get<MusterRecord>(musterRecordId));
+            }
         }
 
         /// <summary>
@@ -354,8 +357,11 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            //Set the result.
-            token.SetResult(token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId));
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Set the result.
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId));
+            }
         }
 
         /// <summary>
@@ -390,8 +396,11 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            //Set the result.
-            token.SetResult(token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.Musterer.Id == mustererId));
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Set the result.
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musterer.Id == mustererId));
+            }
         }
 
         /// <summary>
@@ -426,7 +435,11 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List());
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Get all records where the day of the year is the given day's muster day and the year the same.
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List());
+            }
         }
 
         /// <summary>

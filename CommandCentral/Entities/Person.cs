@@ -440,57 +440,71 @@ namespace CommandCentral.Entities
 
             if (!token.HasError)
             {
-                string username = token.Args["username"] as string;
-                string password = token.Args["password"] as string;
 
-                //Validate the username and the password
-                //TODO that validation
-
-                //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
-                //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
-                var person = token.CommunicationSession.QueryOver<Person>()
-                    .Where(x => x.Username == username)
-                    .Fetch(x => x.PermissionGroups).Eager
-                    .SingleOrDefault<Person>();
-
-                if (person == null)
+                //If the token has no error then we need a session and a transaction
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                }
-                else
-                {
-                    if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
+                    try
                     {
-                        //A login to the client's account failed.  We need to send an email.
-                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+                        string username = token.Args["username"] as string;
+                        string password = token.Args["password"] as string;
 
-                        if (address == null)
-                            throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
+                        //Validate the username and the password
+                        //TODO that validation
 
-                        //Ok, so we have an email we can use to contact the person!
-                        EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
+                        //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
+                        //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
+                        var person = session.QueryOver<Person>()
+                            .Where(x => x.Username == username)
+                            .Fetch(x => x.PermissionGroups).Eager
+                            .SingleOrDefault<Person>();
 
-                        token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-
-                    }
-                    else
-                    {
-                        //Cool then we can make a new authentication session.
-                        AuthenticationSession ses = new AuthenticationSession
+                        if (person == null)
                         {
-                            IsActive = true,
-                            LastUsedTime = token.CallTime,
-                            LoginTime = token.CallTime,
-                            Person = person
-                        };
+                            token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                        }
+                        else
+                        {
+                            if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
+                            {
+                                //A login to the client's account failed.  We need to send an email.
+                                EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
-                        //Now insert it
-                        token.CommunicationSession.Save(ses);
+                                if (address == null)
+                                    throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
-                        //And update the person
-                        token.CommunicationSession.SaveOrUpdate(person);
+                                //Ok, so we have an email we can use to contact the person!
+                                EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
 
-                        token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                                token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+
+                            }
+                            else
+                            {
+                                //Cool then we can make a new authentication session.
+                                AuthenticationSession ses = new AuthenticationSession
+                                {
+                                    IsActive = true,
+                                    LastUsedTime = token.CallTime,
+                                    LoginTime = token.CallTime,
+                                    Person = person
+                                };
+
+                                //Now insert it
+                                session.Save(ses);
+
+                                token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch (Exception e)
+                    {
+                        transaction.Rollback();
+                        token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                        return;
                     }
                 }
             }
@@ -506,7 +520,6 @@ namespace CommandCentral.Entities
         [EndpointMethod(EndpointName = "Logout", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_Logout(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
@@ -514,16 +527,7 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Now update the person
-            token.CommunicationSession.SaveOrUpdate(token.AuthenticationSession.Person);
-
-            //Okey dokey, now let's delete the session.
-            token.CommunicationSession.Delete(token.AuthenticationSession);
-
-            //Remove the authentication session from the token because it has been deleted.
-            token.AuthenticationSession = null;
-
-            token.SetResult("Success");
+            token.AuthenticationSession.IsActive = false;
         }
 
         #endregion
@@ -554,10 +558,6 @@ namespace CommandCentral.Entities
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
-
-                session.FlushMode = NHibernate.FlushMode.Commit;
-                session.CacheMode = NHibernate.CacheMode.Normal;
-
                 try
                 {
 
@@ -611,7 +611,7 @@ namespace CommandCentral.Entities
                     }
 
                     //Let's see if there is already a pending account confirmation.
-                    var pendingAccountConfirmations = token.CommunicationSession.QueryOver<PendingAccountConfirmation>()
+                    var pendingAccountConfirmations = session.QueryOver<PendingAccountConfirmation>()
                         .Where(x => x.Person.Id == person.Id)
                         .List<PendingAccountConfirmation>();
 
@@ -694,41 +694,56 @@ namespace CommandCentral.Entities
             //Finally, we'll update the profile with an account history event.
             //Then return. ... fuck, ok, here we go.
 
-            var pendingAccountConfirmation = token.CommunicationSession.Get<PendingAccountConfirmation>(accountConfirmationId);
-            if (pendingAccountConfirmation == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                try
+                {
+                    var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationId);
+                    if (pendingAccountConfirmation == null)
+                    {
+                        token.AddErrorMessage("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Is the record valid?
+                    if (!pendingAccountConfirmation.IsValid())
+                    {
+                        //If not we need to delete the record and then tell the client to start over.
+                        session.Delete(pendingAccountConfirmation);
+
+                        token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Ok now that we know the record is valid, let's see if the person is already claimed.  This is exceptional.
+                    if (pendingAccountConfirmation.Person.IsClaimed)
+                        throw new Exception("During complete registration, a valid pending account registration object was created for an already claimed account.");
+
+                    //Alright, we're ready to update the person then!
+                    pendingAccountConfirmation.Person.Username = username;
+                    pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
+                    pendingAccountConfirmation.Person.IsClaimed = true;
+
+                    //Cool, so now just update the person object.
+                    session.Update(pendingAccountConfirmation.Person);
+
+                    //TODO send completion email.
+
+                    //Now delete the pending account confirmation.  We don't need it anymore.
+                    session.Delete(pendingAccountConfirmation);
+
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
             }
-            
-            //Is the record valid?
-            if (!pendingAccountConfirmation.IsValid())
-            {
-                //If not we need to delete the record and then tell the client to start over.
-                token.CommunicationSession.Delete(pendingAccountConfirmation);
-
-                token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
-
-            //Ok now that we know the record is valid, let's see if the person is already claimed.  This is exceptional.
-            if (pendingAccountConfirmation.Person.IsClaimed)
-                throw new Exception("During complete registration, a valid pending account registration object was created for an already claimed account.");
-
-            //Alright, we're ready to update the person then!
-            pendingAccountConfirmation.Person.Username = username;
-            pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
-            pendingAccountConfirmation.Person.IsClaimed = true;
-
-            //Cool, so now just update the person object.
-            token.CommunicationSession.Update(pendingAccountConfirmation.Person);
-
-            //TODO send completion email.
-
-            //Now delete the pending account confirmation.  We don't need it anymore.
-            token.CommunicationSession.Delete(pendingAccountConfirmation);
-
-            token.SetResult("Success");
         }
 
         #endregion
@@ -767,45 +782,64 @@ namespace CommandCentral.Entities
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
 
-            //Find the user who has the given email address and has the given ssn.
-            var person = token.CommunicationSession.QueryOver<Person>()
-                .Where(x => x.SSN == ssn)
-                .Fetch(x => x.EmailAddresses).Eager
-                .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
-                .Where(x => x.Address == email)
-                .TransformUsing(Transformers.DistinctRootEntity)
-                .SingleOrDefault<Person>();
-
-            if (person == null)
+            //Here we go
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                try
+                {
+                    //Find the user who has the given email address and has the given ssn.
+                    var person = session.QueryOver<Person>()
+                        .Where(x => x.SSN == ssn)
+                        .Fetch(x => x.EmailAddresses).Eager
+                        .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
+                        .Where(x => x.Address == email)
+                        .TransformUsing(Transformers.DistinctRootEntity)
+                        .SingleOrDefault<Person>();
+
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
+                    if (!person.IsClaimed)
+                    {
+                        token.AddErrorMessage("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Save the event
+                    session.Update(person);
+
+                    //Create the pending password reset thing.
+                    var pendingPasswordReset = new PendingPasswordReset
+                    {
+                        Person = person,
+                        Time = token.CallTime
+                    };
+
+                    //Save that.
+                    session.Save(pendingPasswordReset);
+
+                    //And then send the email.
+                    EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.Id, email).Wait();
+
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
             }
+
+
             
-            //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
-            if (!person.IsClaimed)
-            {
-                token.AddErrorMessage("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
-
-            //Save the event
-            token.CommunicationSession.Update(person);
-
-            //Create the pending password reset thing.
-            var pendingPasswordReset = new PendingPasswordReset
-            {
-                Person = person,
-                Time = token.CallTime
-            };
-
-            //Save that.
-            token.CommunicationSession.Save(pendingPasswordReset);
-
-            //And then send the email.
-            EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.Id, email).Wait();
-
-            token.SetResult("Success");
         }
 
         /// <summary>
@@ -848,37 +882,54 @@ namespace CommandCentral.Entities
             //If it is, we'll set the password and then send the user an email telling them that the password was reset.
             //We'll also log the event on the user's profile.
 
-            var pendingPasswordReset = token.CommunicationSession.Get<PendingPasswordReset>(passwordResetId);
-
-            if (pendingPasswordReset == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("That password reset Id does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+                try
+                {
+                    var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetId);
 
-            //Is the record still valid?
-            if (!pendingPasswordReset.IsValid())
-            {
-                //If not we need to delete the record and then tell the client to start over.
-                token.CommunicationSession.Delete(pendingPasswordReset);
-                
-                token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+                    if (pendingPasswordReset == null)
+                    {
+                        token.AddErrorMessage("That password reset Id does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
 
-            //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
-            pendingPasswordReset.Person.PasswordHash = passwordHash;
+                    //Is the record still valid?
+                    if (!pendingPasswordReset.IsValid())
+                    {
+                        //If not we need to delete the record and then tell the client to start over.
+                        session.Delete(pendingPasswordReset);
+
+                        token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
+                    pendingPasswordReset.Person.PasswordHash = passwordHash;
+
+
+                    //Update/save it.
+                    session.Update(pendingPasswordReset);
+
+                    //Finally we need to send an email before we delete the object.
+                    //TODO send that email.
+
+                    session.Delete(pendingPasswordReset);
+
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
+            }
 
             
-            //Update/save it.
-            token.CommunicationSession.Update(pendingPasswordReset);
-
-            //Finally we need to send an email before we delete the object.
-            //TODO send that email.
-
-            token.CommunicationSession.Delete(pendingPasswordReset);
-
-            token.SetResult("Success");
         }
 
         #endregion
@@ -957,11 +1008,26 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
-            token.CommunicationSession.Save(newPerson);
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
+                    session.Save(newPerson);
 
-            //And now return the perosn's Id.
-            token.SetResult(newPerson.Id);
+                    //And now return the perosn's Id.
+                    token.SetResult(newPerson.Id);
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
+            }
         }
 
         #endregion
@@ -1003,40 +1069,49 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Now let's load the person and then set any fields the client isn't allowed to see to null.
-            var person = token.CommunicationSession.Get<Person>(personId);
-
-            //If person is null then we need to stop here.
-            if (person == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                token.AddErrorMessage("The Id you sent appears to be invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                //Now let's load the person and then set any fields the client isn't allowed to see to null.
+                var person = session.Get<Person>(personId);
 
-            Person personReturn = new Person();
-
-            List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
-
-            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
-
-            //Now just set the fields the client is allowed to see.
-            foreach (var propertyName in returnableFields)
-            {
-                //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
-                if (propertyName.ToLower() == "id")
+                //If person is null then we need to stop here.
+                if (person == null)
                 {
-                    personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                    token.AddErrorMessage("The Id you sent appears to be invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
                 }
-                else
+
+                Person personReturn = new Person();
+
+                List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
+
+                var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+
+                //Now just set the fields the client is allowed to see.
+                foreach (var propertyName in returnableFields)
                 {
-                    personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                    //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
+                    if (propertyName.ToLower() == "id")
+                    {
+                        personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                    }
+                    else
+                    {
+                        personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                    }
                 }
+
+                //We also need to tell the client what they can edit.
+                List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
+
+                token.SetResult(new
+                {
+                    Person = personReturn,
+                    IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id,
+                    EditableFields = editableFields,
+                    ReturnableFields = returnableFields
+                });
             }
-
-            //We also need to tell the client what they can edit.
-            List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
-
-            token.SetResult(new { Person = personReturn, IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id, EditableFields = editableFields, ReturnableFields = returnableFields });
         }
 
         /// <summary>
@@ -1074,7 +1149,10 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.Get<Person>(personId).AccountHistory);
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.Get<Person>(personId).AccountHistory);
+            }
         }
 
         /// <summary>
@@ -1126,24 +1204,26 @@ namespace CommandCentral.Entities
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
 
-            //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
-            var queryOver = token.CommunicationSession.QueryOver<Person>();
-            foreach (string term in searchTerms)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                queryOver = queryOver.Where(Restrictions.Disjunction()
-                    .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                    //.Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                    .Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id))));
-            }
-            
-            //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
-            var results = queryOver.List().Select(x =>
+                //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
+                var queryOver = session.QueryOver<Person>();
+                foreach (string term in searchTerms)
+                {
+                    queryOver = queryOver.Where(Restrictions.Disjunction()
+                        .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                        .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                        .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
+                        //.Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id))));
+                }
+
+                //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
+                var results = queryOver.List().Select(x =>
                 {
                     return new
                     {
@@ -1159,7 +1239,13 @@ namespace CommandCentral.Entities
                         Division = (x.Division == null) ? "" : x.Division.Value
                     };
                 });
-            token.SetResult(new { Results = results, Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }});
+
+                token.SetResult(new 
+                { 
+                    Results = results,
+                    Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" } 
+                });
+            }
         }
 
         /// <summary>
@@ -1217,200 +1303,202 @@ namespace CommandCentral.Entities
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
 
-            //Ok the client can search and return everything.  Now we need to build the actual query.
-            //To do this we need to determine what type each property is and then add it to the query.
-            var queryOver = token.CommunicationSession.QueryOver<Person>();
-            foreach (var filter in filters)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var searchTerms = filter.Value.Split((char[])null);
-
-                var property = personMetadata.GetPropertyType(filter.Key);
-
-                //If it's any besides a basic type, then we need to declare the search strategy for each one.
-                if (property.IsAssociationType || property.IsCollectionType || property.IsComponentType)
+                //Ok the client can search and return everything.  Now we need to build the actual query.
+                //To do this we need to determine what type each property is and then add it to the query.
+                var queryOver = session.QueryOver<Person>();
+                foreach (var filter in filters)
                 {
-                    //For now we're going to provide options for every property and a default.
-                    switch (filter.Key)
+                    var searchTerms = filter.Value.Split((char[])null);
+
+                    var property = personMetadata.GetPropertyType(filter.Key);
+
+                    //If it's any besides a basic type, then we need to declare the search strategy for each one.
+                    if (property.IsAssociationType || property.IsCollectionType || property.IsComponentType)
                     {
-                        case "Designation":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "UIC":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Command":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Department":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Division":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Ethnicity":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "ReligiousPreference":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "Billet":
-                            {
-                                //If the client is searching in billet, then it's a simple search, meaning we have to split the search term.
-
-                                foreach (string term in searchTerms)
+                        //For now we're going to provide options for every property and a default.
+                        switch (filter.Key)
+                        {
+                            case "Designation":
                                 {
-                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.Billet.Id).In(QueryOver.Of<Billet>().Where(Restrictions.Disjunction()
-                                    .Add<Billet>(x => x.Designation.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Billet>(x => x.Funding.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Billet>(x => x.IdNumber.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Billet>(x => x.Remarks.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Billet>(x => x.SuffixCode.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Billet>(x => x.Title.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add(Subqueries.WhereProperty<Billet>(x => x.NEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                                    .Add(Subqueries.WhereProperty<Billet>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))).Select(x => x.Id)));
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
                                 }
-
-                                break;
-                            }
-                        case "NECs":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Restrictions.Where<Person>(x => x.NECs.Any(nec => nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "EmailAddresses":
-                            {
-                                EmailAddress addressAlias = null;
-                                queryOver = queryOver
-                                    .JoinAlias(x => x.EmailAddresses, () => addressAlias)
-                                    .Fetch(x => x.EmailAddresses).Eager;
-
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(() => addressAlias.Address.IsInsensitiveLike(term, MatchMode.Anywhere));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "PhysicalAddresses":
-                            {
-
-                                //Physical addresses allow a simple search across the object.
-
-                                foreach (string term in searchTerms)
+                            case "UIC":
                                 {
-                                    queryOver = queryOver.Where(x => 
-                                        x.PhysicalAddresses.Any(
-                                            physicalAddress =>
-                                                physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                physicalAddress.Country.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                physicalAddress.Route.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                physicalAddress.StreetNumber.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
                                 }
-                                
-                                break;
-                            }
-                        case "PhoneNumbers":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Restrictions.Where<Person>(x => x.PhoneNumbers.Any(phoneNumber => phoneNumber.Number.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "PermissionGroups":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Restrictions.Where<Person>(x => x.PermissionGroups.Any(perm => perm.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "SubscribedChangeEvents":
-                            {
-                                var disjunction = Restrictions.Disjunction();
-                                foreach (var term in searchTerms)
-                                    disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                queryOver = queryOver.Where(disjunction);
-                                break;
-                            }
-                        case "CurrentMusterStatus":
-                            {
-                                //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
-                                foreach (string term in searchTerms)
+                            case "Command":
                                 {
-                                    queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<Muster.MusterRecord>().Where(Restrictions.Disjunction()
-                                    .Add<Muster.MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                    .Add<Muster.MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
-                                    .And(x => x.MusterDayOfYear == Muster.MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == Muster.MusterRecord.GetMusterYear(token.CallTime))
-                                    .Select(x => x.Id)));
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
                                 }
+                            case "Department":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "Division":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "Ethnicity":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "ReligiousPreference":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "Billet":
+                                {
+                                    //If the client is searching in billet, then it's a simple search, meaning we have to split the search term.
 
-                                break;
-                            }
-                        default:
-                            {
-                                //If the client tried to search in something that isn't supported, then fuck em.
-                                token.AddErrorMessage("Your request to search in the field, '{0}', is not supported.  We do not currently provide a search strategy for this property.  If you think we should provide the ability to search in this property, please contact the development team with your suggestion.".FormatS(filter.Key), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                                    foreach (string term in searchTerms)
+                                    {
+                                        queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.Billet.Id).In(QueryOver.Of<Billet>().Where(Restrictions.Disjunction()
+                                        .Add<Billet>(x => x.Designation.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Billet>(x => x.Funding.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Billet>(x => x.IdNumber.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Billet>(x => x.Remarks.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Billet>(x => x.SuffixCode.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Billet>(x => x.Title.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add(Subqueries.WhereProperty<Billet>(x => x.NEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
+                                        .Add(Subqueries.WhereProperty<Billet>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))).Select(x => x.Id)));
+                                    }
+
+                                    break;
+                                }
+                            case "NECs":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Restrictions.Where<Person>(x => x.NECs.Any(nec => nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "EmailAddresses":
+                                {
+                                    EmailAddress addressAlias = null;
+                                    queryOver = queryOver
+                                        .JoinAlias(x => x.EmailAddresses, () => addressAlias)
+                                        .Fetch(x => x.EmailAddresses).Eager;
+
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(() => addressAlias.Address.IsInsensitiveLike(term, MatchMode.Anywhere));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "PhysicalAddresses":
+                                {
+
+                                    //Physical addresses allow a simple search across the object.
+
+                                    foreach (string term in searchTerms)
+                                    {
+                                        queryOver = queryOver.Where(x =>
+                                            x.PhysicalAddresses.Any(
+                                                physicalAddress =>
+                                                    physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.Country.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.Route.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.StreetNumber.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
+                                    }
+
+                                    break;
+                                }
+                            case "PhoneNumbers":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Restrictions.Where<Person>(x => x.PhoneNumbers.Any(phoneNumber => phoneNumber.Number.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "PermissionGroups":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Restrictions.Where<Person>(x => x.PermissionGroups.Any(perm => perm.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "SubscribedChangeEvents":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "CurrentMusterStatus":
+                                {
+                                    //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
+                                    foreach (string term in searchTerms)
+                                    {
+                                        queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<Muster.MusterRecord>().Where(Restrictions.Disjunction()
+                                        .Add<Muster.MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
+                                        .Add<Muster.MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
+                                        .And(x => x.MusterDayOfYear == Muster.MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == Muster.MusterRecord.GetMusterYear(token.CallTime))
+                                        .Select(x => x.Id)));
+                                    }
+
+                                    break;
+                                }
+                            default:
+                                {
+                                    //If the client tried to search in something that isn't supported, then fuck em.
+                                    token.AddErrorMessage("Your request to search in the field, '{0}', is not supported.  We do not currently provide a search strategy for this property.  If you think we should provide the ability to search in this property, please contact the development team with your suggestion.".FormatS(filter.Key), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                    return;
+                                }
+                        }
+                    }
+                    else
+                    {
+                        var disjunction = Restrictions.Disjunction();
+                        foreach (var term in searchTerms)
+                            disjunction.Add(Restrictions.InsensitiveLike(filter.Key, term, MatchMode.Anywhere));
+                        queryOver = queryOver.Where(disjunction);
                     }
                 }
-                else 
-                {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in searchTerms)
-                        disjunction.Add(Restrictions.InsensitiveLike(filter.Key, term, MatchMode.Anywhere));
-                    queryOver = queryOver.Where(disjunction);
-                }
-            }
-            
-            //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
-            //Important note: the client expects every field to be a string.  We don't return object results.
-            var result = queryOver.List().Select(returnedPerson =>
+
+                //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
+                //Important note: the client expects every field to be a string.  We don't return object results.
+                var result = queryOver.List().Select(returnedPerson =>
                 {
                     //We need to know the fields the client is allowed ot return for this client.
                     var returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, returnedPerson, AuthorizationRuleCategoryEnum.Return);
@@ -1428,14 +1516,18 @@ namespace CommandCentral.Entities
                         {
                             temp.Add(returnField, "REDACTED");
                         }
-                        
+
                     }
                     //We're also going to append the Id onto every search result so that the client knows who this is.
                     temp.Add("Id", personMetadata.GetIdentifier(returnedPerson, NHibernate.EntityMode.Poco).ToString());
                     return temp;
                 });
-            
-            token.SetResult(new { Results = result });
+
+                token.SetResult(new 
+                { 
+                    Results = result 
+                });
+            }
         }
 
         #endregion
@@ -1499,85 +1591,95 @@ namespace CommandCentral.Entities
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
-                //Configure the caching and commiting.
-                session.FlushMode = NHibernate.FlushMode.Commit;
-                session.CacheMode = NHibernate.CacheMode.Normal;
-
-                //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
-                ProfileLock profileLock = session.QueryOver<ProfileLock>()
-                                        .Where(x => x.LockedPerson.Id == personFromClient.Id)
-                                        .SingleOrDefault();
-
-
-                //If we got no profile lock, then bail
-                if (profileLock == null)
+                try
                 {
-                    token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+
+                    //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
+                    ProfileLock profileLock = session.QueryOver<ProfileLock>()
+                                            .Where(x => x.LockedPerson.Id == personFromClient.Id)
+                                            .SingleOrDefault();
+
+
+                    //If we got no profile lock, then bail
+                    if (profileLock == null)
+                    {
+                        token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
+                    if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
+                    {
+                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
+                    Person personFromDB = session.Get<Person>(personFromClient.Id);
+
+                    personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
+                    //session.Evict(personFromDB);
+
+
+                    //Did we get a person?  If not, the person the client gave us is bullshit.
+                    if (personFromDB == null)
+                    {
+                        token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Get the authorizer we need.
+                    var authorizer = new PersonAuthorizer();
+
+                    //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
+                    var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
+                    var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
+                    var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
+
+                    //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
+                    foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
+                    {
+                        var property = typeof(Person).GetProperty(field);
+
+                        property.SetValue(personFromDB, property.GetValue(personFromClient));
+                    }
+
+                    //Determine what changed.
+                    var variances = session.GetDirtyProperties(personFromDB).ToList();
+
+                    //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
+                    var results = new PersonValidator().Validate(personFromDB);
+
+                    //If there are any errors with the validation, let's throw those back to the client.
+                    if (results.Errors.Any())
+                    {
+                        token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
+                    var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
+                    if (unauthorizedEdits.Any())
+                    {
+                        token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
+                    //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
+                    session.Merge(personFromDB);
+
+                    //And then we're done!
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
                     return;
                 }
-
-                //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
-                if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
-                {
-                    token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
-                    return;
-                }
-
-                //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-                Person personFromDB = session.Get<Person>(personFromClient.Id);
-
-                //Did we get a person?  If not, the person the client gave us is bullshit.
-                if (personFromDB == null)
-                {
-                    token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                //Get the authorizer we need.
-                var authorizer = new PersonAuthorizer();
-
-                //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
-                var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
-                var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
-
-                //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
-                foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
-                {
-                    var property = typeof(Person).GetProperty(field);
-
-                    property.SetValue(personFromDB, property.GetValue(personFromClient));
-                }
-
-                //Determine what changed.
-                var variances = session.GetDirtyProperties(personFromDB).ToList();
-
-                //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
-                var results = new PersonValidator().Validate(personFromDB);
-
-                //If there are any errors with the validation, let's throw those back to the client.
-                if (results.Errors.Any())
-                {
-                    token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-                var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
-                if (unauthorizedEdits.Any())
-                {
-                    token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                    return;
-                }
-
-                //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
-                session.Update(personFromDB);
-
-                transaction.Commit();
             }
-
-            //And then we're done!
-            token.SetResult("Success");
         }
 
         #endregion

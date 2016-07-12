@@ -111,23 +111,26 @@ namespace CommandCentral
         [EndpointMethod(EndpointName = "LoadLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointName_LoadReferenceLists(MessageToken token)
         {
-            var result = new Dictionary<string, object>();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var result = new Dictionary<string, object>();
 
-            //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-            result = token.CommunicationSession.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
-                .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
-                {
-                    return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
-                }).ToDictionary(x => x.Key, x => (object)x.Value);
+                //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+                result = session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                    .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
+                    {
+                        return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
+                    }).ToDictionary(x => x.Key, x => (object)x.Value);
 
-            result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
-            result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
-            result.Add("MusterStatuses", Enum.GetNames(typeof(MusterStatuses)));
-            result.Add("Paygrades", Enum.GetNames(typeof(Paygrades)));
-            result.Add("PhoneNumberTypes", Enum.GetNames(typeof(PhoneNumberTypes)));
-            result.Add("Sexes", Enum.GetNames(typeof(Sexes)));
+                result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
+                result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
+                result.Add("MusterStatuses", Enum.GetNames(typeof(MusterStatuses)));
+                result.Add("Paygrades", Enum.GetNames(typeof(Paygrades)));
+                result.Add("PhoneNumberTypes", Enum.GetNames(typeof(PhoneNumberTypes)));
+                result.Add("Sexes", Enum.GetNames(typeof(Sexes)));
 
-            token.SetResult(result);
+                token.SetResult(result);
+            }
         }
 
         #endregion

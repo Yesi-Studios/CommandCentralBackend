@@ -160,7 +160,9 @@ namespace CommandCentral.Entities
 
         #region Client Access
 
-        /// <summary>
+        //I need to redesign how changes are being tracked on profiles.  Until then, this endpoint isn't a thing.
+        /*
+         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads all changes that have been made to a given object.  Non-returnable fields will have their values redacted.
@@ -207,6 +209,9 @@ namespace CommandCentral.Entities
 
             token.SetResult(changes);
         }
+         */
+
+
 
         #endregion
 

@@ -192,10 +192,19 @@ namespace CommandCentral.ServiceManagement.Service
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                        return token.ConstructResponseString();
+
+                        string finalResponse = token.ConstructResponseString();
+
+                        //Everything good?  Commit the transaction right before we release.
+                        transaction.Commit();
+
+                        return finalResponse;
                     }
                     catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                     {
+                        //If an issue occurred very first thing we do is roll anything back we may have done.  It shouldn't actually be anything unless we failed right at the end but whatever.
+                        transaction.Rollback();
+
                         //Add the error message
                         token.AddErrorMessage("A fatal occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
@@ -257,13 +266,13 @@ namespace CommandCentral.ServiceManagement.Service
                 else
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...
-                    var authenticationSession = token.CommunicationSession.Get<AuthenticationSession>(authenticationToken);
+                    var authenticationSession = session.Get<AuthenticationSession>(authenticationToken);
 
                     //Did we get a session and if so is it valid?
                     if (authenticationSession == null)
                         token.AddErrorMessage("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                    else if (authenticationSession.IsExpired())
-                        token.AddErrorMessage("The session has timed out.  Please sign back in.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                    else if (authenticationSession.IsValid())
+                        token.AddErrorMessage("The session has timed out or is no longer valid.  Please sign back in.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                     else
                         token.AuthenticationSession = authenticationSession;
                 }
