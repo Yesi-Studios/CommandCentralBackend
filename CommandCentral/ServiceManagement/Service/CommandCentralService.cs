@@ -158,7 +158,7 @@ namespace CommandCentral.ServiceManagement.Service
                         //Ok, now we know that the request is valid let's see if we need to authenticate it.
                         if (description.EndpointMethodAttribute.RequiresAuthentication)
                         {
-                            AuthenticateMessage(token);
+                            AuthenticateMessage(token, session);
 
                             //If the authentication token was wrong, then let's bail here.
                             if (token.HasError)
@@ -237,13 +237,12 @@ namespace CommandCentral.ServiceManagement.Service
         /// <summary>
         /// Authenticates the message by using the authentication token from the args list to retrieve the client's session.  
         /// <para />
-        /// This method also checks the client's permissions and sets them on the session parameter of the message token for later use.
-        /// <para />
         /// This method also ensures that the session has not become inactive
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="session">The session on which to do our authentication work.</param>
         /// <returns></returns>
-        private static void AuthenticateMessage(MessageToken token)
+        private static void AuthenticateMessage(MessageToken token, NHibernate.ISession session)
         {
 
             //Get the authenticationtoken.
