@@ -6,18 +6,39 @@ using System.Threading.Tasks;
 
 namespace CommandCentral.DataAccess
 {
+    /// <summary>
+    /// Declares a single connection's settings as well as a static dictionary of some pre-defined settings.
+    /// </summary>
     public class ConnectionSettings
     {
+        /// <summary>
+        /// The username to use to connect to the databaes.
+        /// </summary>
         public string Username { get; set; }
 
+        /// <summary>
+        /// The password to use for connection
+        /// </summary>
         public string Password { get; set; }
 
+        /// <summary>
+        /// The database within the server to connect to (the schema)
+        /// </summary>
         public string Database { get; set; }
 
+        /// <summary>
+        /// The database server's address
+        /// </summary>
         public string Server { get; set; }
 
+        /// <summary>
+        /// Whether or not to use verbose logging.  This will tell NHIbernate to print all SQL.
+        /// </summary>
         public bool VerboseLogging { get; set; }
 
+        /// <summary>
+        /// Some pre-defined connection settings.
+        /// </summary>
         public static Dictionary<string, ConnectionSettings> PredefinedConnectionSettings = new Dictionary<string, ConnectionSettings>()
         {
             { "Default NIPRNet Production", new ConnectionSettings
@@ -54,6 +75,9 @@ namespace CommandCentral.DataAccess
             }}
         };
 
+        /// <summary>
+        /// The current settings object being used by NHibernate.
+        /// </summary>
         public static string CurrentSettingsKey { get; set; }
     }
 }

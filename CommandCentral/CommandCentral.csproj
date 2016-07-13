@@ -95,6 +95,8 @@
     <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
+    <Compile Include="Config\ContactDetails.cs" />
+    <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />

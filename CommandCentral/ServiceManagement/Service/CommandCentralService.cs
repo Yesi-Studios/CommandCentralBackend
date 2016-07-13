@@ -29,13 +29,15 @@ namespace CommandCentral.ServiceManagement.Service
 
         /// <summary>
         /// Response to an options request.
+        /// <para />
+        /// An options request is a pre-flight request sent by browsers to ask what the service allows and doesn't allow.  Our response is simply our standard headers package.
         /// </summary>
         public void GetOptions()
         {
-            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
-            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
-            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
+            //Add the headers, this will adequately reply to the options request.
+            AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
+            //Tell the host we received a pre flight.
             Communicator.PostMessageToHost("Received Preflight Request", Communicator.MessageTypes.Informational);
         }
 
@@ -76,19 +78,15 @@ namespace CommandCentral.ServiceManagement.Service
                         //Tell the client we have a request.
                         Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
-                        //Add the CORS headers to the request to allow the cross domain stuff.  We need to add this outside the try/catch block so that we can send responses to the client for an exception.
-                        Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
-
-                        //TODO REVIEW abstract this
-                        WebOperationContext.Current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
+                        //Add the headers to the response.
+                        AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
                         //Get the endpoint
                         ServiceEndpoint description;
                         if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                         {
-                            //TODO REVIEW abstract the contact details
                             token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                "and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                                "and you've checked your spelling, yell at the developers.  For further issues, please call the developers at {0}.".FormatS(Config.ContactDetails.DEV_PHONE_NUMBER), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                             WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
                             return token.ConstructResponseString();
                         }
@@ -142,16 +140,15 @@ namespace CommandCentral.ServiceManagement.Service
 
                         #endregion
 
-                        //TODO REVIEW elevate api key name into configs
                         //Get the apikey.
-                        if (!token.Args.ContainsKey("apikey"))
-                            token.AddErrorMessage("You didn't send an 'apikey' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        if (!token.Args.ContainsKey(Config.ParamNames.API_KEY))
+                            token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS(Config.ParamNames.API_KEY), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         else
                         {
                             //Ok, so there is an apikey!  Is it legit?
                             Guid apiKey;
-                            if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
-                                token.AddErrorMessage("The apikey parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            if (!Guid.TryParse(token.Args[Config.ParamNames.API_KEY] as string, out apiKey))
+                                token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS(Config.ParamNames.API_KEY), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             else
                             {
                                 //Ok, well it's a GUID.   Do we have it in the database?...
@@ -210,10 +207,11 @@ namespace CommandCentral.ServiceManagement.Service
 
                         Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
+                        if (token.StatusCode != System.Net.HttpStatusCode.OK)
+                            throw new Exception("A request made it to the end of handling; however, its status was not OK.");
+
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-
-                        //TODO REVIEW Ensure that status is ok
 
                         string finalResponse = token.ConstructResponseString();
 
@@ -234,7 +232,6 @@ namespace CommandCentral.ServiceManagement.Service
                         //Save the token
                         session.Save(token);
 
-                        //TODO REVIEW: send an email to the devs with the error message.
                         EmailHelper.SendFatalErrorEmail(token, e);
 
                         //Tell the host what happened.
@@ -251,7 +248,6 @@ namespace CommandCentral.ServiceManagement.Service
                 //Give the token the error message and then release it.  Just like the above catch block. 
                 token.AddErrorMessage("An error occurred while trying to create a database session.  The database may be inaccessible right now.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
-                //TODO REVIEW: send an email to the devs with the error message.
                 EmailHelper.SendFatalErrorEmail(token, e);
 
                 //We can't save it cause we have no session so just post the message and then release.
@@ -268,6 +264,18 @@ namespace CommandCentral.ServiceManagement.Service
         #region Helper Methods
 
         /// <summary>
+        /// Adds any headers we want to the response.
+        /// </summary>
+        /// <param name="current"></param>
+        private static void AddHeadersToOutgoingResponse(WebOperationContext current)
+        {
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
+            current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
+        }
+
+        /// <summary>
         /// Authenticates the message by using the authentication token from the args list to retrieve the client's session.  
         /// <para />
         /// This method also ensures that the session has not become inactive
@@ -279,14 +287,14 @@ namespace CommandCentral.ServiceManagement.Service
         {
 
             //Get the authenticationtoken.
-            if (!token.Args.ContainsKey("authenticationtoken"))
-                token.AddErrorMessage("You didn't send an 'authenticationtoken' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+            if (!token.Args.ContainsKey(Config.ParamNames.AUTHENTICATION_TOKEN))
+                token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS(Config.ParamNames.AUTHENTICATION_TOKEN), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
             else
             {
                 //Ok, so there is an authenticationtoken!  Is it legit?
                 Guid authenticationToken;
-                if (!Guid.TryParse(token.Args["authenticationtoken"] as string, out authenticationToken))
-                    token.AddErrorMessage("The authenticationtoken parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                if (!Guid.TryParse(token.Args[Config.ParamNames.AUTHENTICATION_TOKEN] as string, out authenticationToken))
+                    token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS(Config.ParamNames.AUTHENTICATION_TOKEN), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 else
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...

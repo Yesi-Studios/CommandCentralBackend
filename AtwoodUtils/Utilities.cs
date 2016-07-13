@@ -173,18 +173,6 @@ namespace AtwoodUtils
             return name;
         }
 
-        /// <summary>
-        /// Adds the CORS headers to the outgoing response to enable cross domain requests.
-        /// </summary>
-        /// <param name="current"></param>
-        public static void AddCorsHeadersToResponse(WebOperationContext current)
-        {
-            //TODO REVIEW config this thing
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
-        }
-
         public static string BuildJoinStatement(IEnumerable<string> tableNames, string primaryKeyName)
         {
             var names = tableNames as IList<string> ?? tableNames.ToList();
