@@ -109,7 +109,7 @@ namespace CommandCentral.Authorization
         }
 
         /// <summary>
-        /// Calls the if self rule, indicating a person can only return or edit a field if it is their own.
+        /// Adds if self rule to the current disjunction, indicating a person can only return or edit a field if it is their own.
         /// </summary>
         /// <returns></returns>
         public AuthorizationRuleBuilder<T> IfSelf()
@@ -118,39 +118,64 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        /// <summary>
+        /// Adds a Never rule to the current disjunction which returns false at all times.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> Never()
         {
             CurrentDisjunction.Rules.Add(new Rules.NeverRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
+        /// <summary>
+        /// Adds the if in coc rule to the current disjunction.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> IfInChainOfCommand()
         {
             CurrentDisjunction.Rules.Add(new Rules.IfInChainOfCommandRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
+        /// <summary>
+        /// Adds the for everyone rule to the current disjunction.  This returns true at all times.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> ForEveryone()
         {
             CurrentDisjunction.Rules.Add(new Rules.ForEveryoneRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
+        /// <summary>
+        /// Adds the if in PG rule to the current disjunction.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> IfGrantedByPermissionGroup()
         {
             CurrentDisjunction.Rules.Add(new Rules.IfGrantedByPermissionGroupRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
+        /// <summary>
+        /// Adds the special permission rule to the current disjunction for the given special permission.
+        /// </summary>
+        /// <param name="specialPermission"></param>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> IfHasSpecialPermission(SpecialPermissions specialPermission)
         {
             CurrentDisjunction.Rules.Add(new Rules.IfHasSpecialPermissionRule(CurrentCategory, this.ParentRuleGroup.PropertyNames, specialPermission));
             return this;
         }
 
-        public AuthorizationRuleBuilder<T> IfSatisfiesPermissionGroupRule()
+        /// <summary>
+        /// Adds the If in coc and permission group rules as a conjunction to the current disjunction.
+        /// </summary>
+        /// <returns></returns>
+        public AuthorizationRuleBuilder<T> IfInCoCAndInPermissionGroup()
         {
-            CurrentDisjunction.Rules.Add(new Rules.PermissionGroupSpecialRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
+            CurrentDisjunction.Rules.Add(new Rules.IfCoCAndInPermissionGroupRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
             return this;
         }
 
