@@ -21,5 +21,9 @@ namespace CommandCentral.ServiceManagement.Service
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint);
 
+        [OperationContract]
+        [WebInvoke(Method = "OPTIONS", UriTemplate = "*")]
+        void GetOptions();
+
     }
 }

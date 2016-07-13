@@ -25,6 +25,22 @@ namespace CommandCentral.ServiceManagement.Service
     public class CommandCentralService : ICommandCentralService
     {
 
+        #region Options Request
+
+        /// <summary>
+        /// Response to an options request.
+        /// </summary>
+        public void GetOptions()
+        {
+            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
+            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
+            WebOperationContext.Current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
+
+            Communicator.PostMessageToHost("Received Preflight Request", Communicator.MessageTypes.Informational);
+        }
+
+        #endregion
+
         #region Endpoints
 
         /// <summary>

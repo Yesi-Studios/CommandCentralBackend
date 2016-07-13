@@ -181,8 +181,8 @@ namespace AtwoodUtils
         {
             //TODO REVIEW config this thing
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST");
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept");
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
         }
 
         public static string BuildJoinStatement(IEnumerable<string> tableNames, string primaryKeyName)
