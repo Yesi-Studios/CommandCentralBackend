@@ -7,13 +7,26 @@ using AtwoodUtils;
 
 namespace CommandCentral.Authorization.Rules
 {
+    /// <summary>
+    /// A rule to determine if the property names of this rule are editable/returnable by the client.
+    /// </summary>
     public class IfGrantedByPermissionGroupRule : AuthorizationRuleBase
     {
+        /// <summary>
+        /// Die Condtruuctor
+        /// </summary>
+        /// <param name="category"></param>
+        /// <param name="propertyNames"></param>
         public IfGrantedByPermissionGroupRule(AuthorizationRuleCategoryEnum category, List<string> propertyNames) 
             : base(category, propertyNames)
         {
         }
 
+        /// <summary>
+        /// A rule to determine if the property names of this rule are editable/returnable by the client.
+        /// </summary>
+        /// <param name="authToken"></param>
+        /// <returns></returns>
         public override bool AuthorizationOperation(AuthorizationToken authToken)
         {
             var fields = new List<string>();
