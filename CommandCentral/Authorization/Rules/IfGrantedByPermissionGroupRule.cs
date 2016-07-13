@@ -9,7 +9,8 @@ namespace CommandCentral.Authorization.Rules
 {
     public class IfGrantedByPermissionGroupRule : AuthorizationRuleBase
     {
-        public IfGrantedByPermissionGroupRule(AuthorizationRuleCategoryEnum category, List<string> propertyNames) : base(category, propertyNames)
+        public IfGrantedByPermissionGroupRule(AuthorizationRuleCategoryEnum category, List<string> propertyNames) 
+            : base(category, propertyNames)
         {
         }
 

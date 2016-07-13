@@ -82,6 +82,7 @@
     <Compile Include="Authorization\PermissionTracksEnum.cs" />
     <Compile Include="Authorization\RuleDisjunction.cs" />
     <Compile Include="Authorization\RuleGroup.cs" />
+    <Compile Include="Authorization\Rules\IfCoCAndInPermissionGroupRule.cs" />
     <Compile Include="Authorization\Rules\IfGrantedByPermissionGroupRule.cs" />
     <Compile Include="Authorization\Rules\IfHasSpecialPermissionRule.cs" />
     <Compile Include="Authorization\Rules\IfInChainOfCommandRule.cs" />
