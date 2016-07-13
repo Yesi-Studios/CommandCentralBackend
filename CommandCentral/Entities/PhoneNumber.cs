@@ -75,13 +75,17 @@ namespace CommandCentral.Entities
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
                 Map(x => x.PhoneType).Not.Nullable();
-
-
             }
         }
 
+        /// <summary>
+        /// Validates the phone number object.
+        /// </summary>
         public class PhoneNumberValidator : AbstractValidator<PhoneNumber>
         {
+            /// <summary>
+            /// Validates the phone number object.
+            /// </summary>
             public PhoneNumberValidator()
             {
                 RuleFor(x => x.Number).Length(0, 10)

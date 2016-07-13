@@ -95,8 +95,11 @@ namespace CommandCentral.Entities.ReferenceLists
         [EndpointMethod(EndpointName = "LoadCommands", AllowArgumentLogging = true, AllowResponseLogging =  true, RequiresAuthentication = false)]
         private static void EndpointMethod_LoadCommands(MessageToken token)
         {
-            //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-            token.SetResult(token.CommunicationSession.QueryOver<Command>().List<Command>());
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+                token.SetResult(session.QueryOver<Command>().List<Command>());
+            }
         }
 
         #endregion

@@ -86,7 +86,12 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.QueryOver<ProfileLock>().Where(x => x.Owner.Id == personId).SingleOrDefault());
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Get all profile locks whose owners are the given person's Id.  I use single or defualt so that it'll cause a crash if more than one exists. 
+                //For more than one to exist, we must have violated both our rules in logic and the database's foreign key rules.  So that's not good.
+                token.SetResult(session.QueryOver<ProfileLock>().Where(x => x.Owner.Id == personId).SingleOrDefault());
+            }
         }
 
         /// <summary>
@@ -121,7 +126,11 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            token.SetResult(token.CommunicationSession.QueryOver<ProfileLock>().Where(x => x.LockedPerson.Id == personId).SingleOrDefault());
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Get all profile locks where the locked person is the given Id.
+                token.SetResult(session.QueryOver<ProfileLock>().Where(x => x.LockedPerson.Id == personId).SingleOrDefault());
+            }
         }
 
         /// <summary>
@@ -142,8 +151,6 @@ namespace CommandCentral.Entities
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
-                session.FlushMode = NHibernate.FlushMode.Auto;
-
                 try
                 {
                     if (token.AuthenticationSession == null)

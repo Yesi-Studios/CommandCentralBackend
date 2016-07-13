@@ -80,8 +80,12 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok, well it's a GUID.   Do we have it in the database?...
-            token.SetResult(token.CommunicationSession.Get<NewsItem>(newsItemId));
+            //We passed validation, let's get a sesssion and do ze work.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Ok, well it's a GUID.   Do we have it in the database?...
+                token.SetResult(session.Get<NewsItem>(newsItemId));
+            }
         }
 
         /// <summary>
@@ -104,8 +108,14 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Set the result.
-            token.SetResult(token.CommunicationSession.QueryOver<NewsItem>().List());
+            //We passed validation, let's get a sesssion and do ze work.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Set the result.
+                token.SetResult(session.QueryOver<NewsItem>().List());
+            }
+
+            
         }
 
         /// <summary>
@@ -182,11 +192,28 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok, it's a good news item.  Let's... stick it in.
-            token.CommunicationSession.Save(newsItem);
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    //Ok, it's a good news item.  Let's... stick it in.
+                    session.Save(newsItem);
 
-            //Send the Id back to the client.
-            token.SetResult(newsItem.Id);
+                    //Send the Id back to the client.
+                    token.SetResult(newsItem.Id);
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
+            }
+
+            
         }
 
         /// <summary>
@@ -244,36 +271,53 @@ namespace CommandCentral.Entities
                 return;
             }
 
-
-            //Ok, it's a good news item so now we're going to compare it to the one in the database.
-            NewsItem newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemFromClient.Id);
-
-            if (newsItemFromDB == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                return;
+                try
+                {
+
+                    //Ok, it's a good news item so now we're going to compare it to the one in the database.
+                    NewsItem newsItemFromDB = session.Get<NewsItem>(newsItemFromClient.Id);
+
+                    if (newsItemFromDB == null)
+                    {
+                        token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        return;
+                    }
+
+                    //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
+                    //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
+                    var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x =>
+                        !x.PropertyName.SafeEquals("Creator") &&
+                        !x.PropertyName.SafeEquals("title") &&
+                        !x.PropertyName.SafeEquals("paragraphs"));
+
+                    if (unauthorizedVariances.Any())
+                    {
+                        var errors = unauthorizedVariances.Select(x => "You are not authorized to edit the '{0}' property.".FormatS(x.PropertyName));
+                        token.AddErrorMessages(errors, ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                    }
+                    else
+                    {
+                        newsItemFromDB.Title = newsItemFromClient.Title;
+                        newsItemFromDB.Paragraphs = newsItemFromClient.Paragraphs;
+                        //Ok so there's no unauthorized variances.  I guess we can... do the update then?
+                        session.Update(newsItemFromDB);
+                        token.SetResult("Success");
+                    }
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
             }
 
-            //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
-            //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
-            var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x => 
-                !x.PropertyName.SafeEquals("Creator") && 
-                !x.PropertyName.SafeEquals("title") && 
-                !x.PropertyName.SafeEquals("paragraphs"));
 
-            if (unauthorizedVariances.Any())
-            {
-                var errors = unauthorizedVariances.Select(x => "You are not authorized to edit the '{0}' property.".FormatS(x.PropertyName));
-                token.AddErrorMessages(errors, ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-            }
-            else
-            {
-                newsItemFromDB.Title = newsItemFromClient.Title;
-                newsItemFromDB.Paragraphs = newsItemFromClient.Paragraphs;
-                //Ok so there's no unauthorized variances.  I guess we can... do the update then?
-                token.CommunicationSession.Update(newsItemFromDB);
-                token.SetResult("Success");
-            }
         }
 
         /// <summary>
@@ -317,18 +361,33 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
-            var newsItemFromDB = token.CommunicationSession.Get<NewsItem>(newsItemId);
-
-            if (newsItemFromDB == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                return;
+                try
+                {
+                    //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
+                    var newsItemFromDB = session.Get<NewsItem>(newsItemId);
+
+                    if (newsItemFromDB == null)
+                    {
+                        token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        return;
+                    }
+
+                    session.Delete(newsItemFromDB);
+
+                    token.SetResult("Success");
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
             }
-
-            token.CommunicationSession.Delete(newsItemFromDB);
-
-            token.SetResult("Success");
         }
 
         #endregion
@@ -345,13 +404,14 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                References(x => x.Creator);
+                References(x => x.Creator).LazyLoad(Laziness.False);
 
-                Map(x => x.Title).Not.Nullable().Length(50);
+                Map(x => x.Title).Not.Nullable().Length(50).Not.LazyLoad();
                 HasMany(x => x.Paragraphs)
                     .KeyColumn("NewsItemID")
-                    .Element("Paragraph", x => x.Length(10000));
-                Map(x => x.CreationTime).Not.Nullable();
+                    .Element("Paragraph", x => x.Length(10000))
+                    .Not.LazyLoad();
+                Map(x => x.CreationTime).Not.Nullable().Not.LazyLoad();
             }
         }
 

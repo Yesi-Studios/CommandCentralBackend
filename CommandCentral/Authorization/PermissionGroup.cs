@@ -153,7 +153,10 @@ namespace CommandCentral.Authorization
         [EndpointMethod(EndpointName = "LoadPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_LoadPermissionGroups(MessageToken token)
         {
-            token.SetResult(token.CommunicationSession.QueryOver<PermissionGroup>().List());
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.QueryOver<PermissionGroup>().List());
+            }
         }
 
         /// <summary>
@@ -188,39 +191,50 @@ namespace CommandCentral.Authorization
                 return;
             }
 
-            //Get the person we were given and check to see if it's null.
-            Entities.Person person = token.CommunicationSession.Get<Entities.Person>(personId);
-
-            if (person == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                token.AddErrorMessage("The person Id you provided belongs to no person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadGateway);
-                return;
-            }
+                //Get the person we were given and check to see if it's null.
+                Entities.Person person = session.Get<Entities.Person>(personId);
 
-            var personPermissionGroups = person.PermissionGroups;
-            var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
-            var allPermissionGroups = token.CommunicationSession.QueryOver<PermissionGroup>().List();
+                if (person == null)
+                {
+                    token.AddErrorMessage("The person Id you provided belongs to no person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadGateway);
+                    return;
+                }
 
-            var editablePermissionGroups = new List<PermissionGroup>();
+                var personPermissionGroups = person.PermissionGroups;
+                var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
+                var allPermissionGroups = session.QueryOver<PermissionGroup>().List();
 
-            foreach (var group in allPermissionGroups)
-            {
-                if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                    clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
-                    editablePermissionGroups.Add(group);
-                else
-                    if (group.PermissionLevel == PermissionLevels.Department && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                        person.Department.Id == token.AuthenticationSession.Person.Department.Id && clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
+                var editablePermissionGroups = new List<PermissionGroup>();
+
+                foreach (var group in allPermissionGroups)
+                {
+                    if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
+                        clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
                         editablePermissionGroups.Add(group);
-                    else 
-                        if (group.PermissionLevel == PermissionLevels.Division && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                            person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
-                            clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
+                    else
+                        if (group.PermissionLevel == PermissionLevels.Department && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
+                            person.Department.Id == token.AuthenticationSession.Person.Department.Id && clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
                             editablePermissionGroups.Add(group);
-            }
+                        else
+                            if (group.PermissionLevel == PermissionLevels.Division && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
+                                person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
+                                clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
+                                editablePermissionGroups.Add(group);
+                }
 
-            token.SetResult(new { CurrentPermissionGroups = personPermissionGroups, AllPermissionGroups = allPermissionGroups, EditablePermissionGroups = editablePermissionGroups,
-                ForFunsies = false, SuperSerious = true, TrollMode = "Kappa", FriendlyName = person.ToString() });
+                token.SetResult(new
+                {
+                    CurrentPermissionGroups = personPermissionGroups,
+                    AllPermissionGroups = allPermissionGroups,
+                    EditablePermissionGroups = editablePermissionGroups,
+                    ForFunsies = false,
+                    SuperSerious = true,
+                    TrollMode = "Kappa",
+                    FriendlyName = person.ToString()
+                });
+            }
         }
 
         /// <summary>
@@ -258,102 +272,117 @@ namespace CommandCentral.Authorization
                 return;
             }
 
-            //More validate that shit
-            Entities.Person person = token.CommunicationSession.Get<Entities.Person>(personId);
-
-            if (person == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                token.AddErrorMessage("That person Id is not a real person's Id.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //now the permissions list.
-            if (!token.Args.ContainsKey("permissionslist"))
-            {
-                token.AddErrorMessage("You failed to send a ", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Get that shit.
-            var permissionsGroupsFromClient = new List<PermissionGroup>();
-
-            //foreach that shit and make sure each one is some real shit and not some fake shit. 
-            foreach (var id in token.Args["permissionslist"].CastJToken<List<string>>())
-            {
-                Guid permId;
-                if (!Guid.TryParse(id, out permId))
+                try
                 {
-                    token.AddErrorMessage("One or more Ids were in an invalid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                    //More validate that shit
+                    Entities.Person person = session.Get<Entities.Person>(personId);
 
-                var group = token.CommunicationSession.Get<PermissionGroup>(permId);
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That person Id is not a real person's Id.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
 
-                if (group == null)
-                {
-                    token.AddErrorMessage("One or more Ids were not real Ids.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                    //now the permissions list.
+                    if (!token.Args.ContainsKey("permissionslist"))
+                    {
+                        token.AddErrorMessage("You failed to send a ", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
 
-                //if we got here, then it's a legit permission group's Id.
-                permissionsGroupsFromClient.Add(group);
-            }
+                    //Get that shit.
+                    var permissionsGroupsFromClient = new List<PermissionGroup>();
 
-            //Ok, so we have all legit things, now let's find out what the client added or removed.
-            var changedGroups = new List<Guid>();
+                    //foreach that shit and make sure each one is some real shit and not some fake shit. 
+                    foreach (var id in token.Args["permissionslist"].CastJToken<List<string>>())
+                    {
+                        Guid permId;
+                        if (!Guid.TryParse(id, out permId))
+                        {
+                            token.AddErrorMessage("One or more Ids were in an invalid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
 
-            var permissionListFromDB = person.PermissionGroups.Select(x => x.Id).ToList();
+                        var group = session.Get<PermissionGroup>(permId);
 
-            foreach (var id in permissionsGroupsFromClient.Select(x => x.Id).ToList())
-            {
-                if (!permissionListFromDB.Contains(id))
-                    changedGroups.Add(id);
-            }
+                        if (group == null)
+                        {
+                            token.AddErrorMessage("One or more Ids were not real Ids.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
 
-            foreach (var id in permissionListFromDB)
-            {
-                if (!permissionsGroupsFromClient.Exists(x => x.Id == id))
-                    changedGroups.Add(id);
-            }
+                        //if we got here, then it's a legit permission group's Id.
+                        permissionsGroupsFromClient.Add(group);
+                    }
 
-            //Ok, now we know what changed, let's find out what the client was allowed to change. 
-            //Instead of finding all the editable groups, we could find only those the client edited, but whatever, this is easy.
-            var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
-            var allPermissionGroups = token.CommunicationSession.QueryOver<PermissionGroup>().List();
+                    //Ok, so we have all legit things, now let's find out what the client added or removed.
+                    var changedGroups = new List<Guid>();
 
-            var editablePermissionGroups = new List<PermissionGroup>();
+                    var permissionListFromDB = person.PermissionGroups.Select(x => x.Id).ToList();
 
-            foreach (var group in allPermissionGroups)
-            {
-                if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                    clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
-                    editablePermissionGroups.Add(group);
-                else
-                    if (group.PermissionLevel == PermissionLevels.Department && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                        person.Department.Id == token.AuthenticationSession.Person.Department.Id && clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
-                    editablePermissionGroups.Add(group);
-                else
-                        if (group.PermissionLevel == PermissionLevels.Division && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
-                            person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
+                    foreach (var id in permissionsGroupsFromClient.Select(x => x.Id).ToList())
+                    {
+                        if (!permissionListFromDB.Contains(id))
+                            changedGroups.Add(id);
+                    }
+
+                    foreach (var id in permissionListFromDB)
+                    {
+                        if (!permissionsGroupsFromClient.Exists(x => x.Id == id))
+                            changedGroups.Add(id);
+                    }
+
+                    //Ok, now we know what changed, let's find out what the client was allowed to change. 
+                    //Instead of finding all the editable groups, we could find only those the client edited, but whatever, this is easy.
+                    var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
+                    var allPermissionGroups = session.QueryOver<PermissionGroup>().List();
+
+                    var editablePermissionGroups = new List<PermissionGroup>();
+
+                    foreach (var group in allPermissionGroups)
+                    {
+                        if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
                             clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
-                    editablePermissionGroups.Add(group);
+                            editablePermissionGroups.Add(group);
+                        else
+                            if (group.PermissionLevel == PermissionLevels.Department && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
+                                person.Department.Id == token.AuthenticationSession.Person.Department.Id && clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
+                                editablePermissionGroups.Add(group);
+                            else
+                                if (group.PermissionLevel == PermissionLevels.Division && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
+                                    person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
+                                    clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
+                                    editablePermissionGroups.Add(group);
+                    }
+
+                    var unauthorizedEdits = changedGroups.Where(x => !editablePermissionGroups.Select(y => y.Id).ToList().Contains(x)).ToList();
+
+                    if (unauthorizedEdits.Any())
+                    {
+                        token.AddErrorMessage("You were not allowed to edit one or more of the permission groups' membership that you tried to edit.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                        return;
+                    }
+
+                    //ALright this means the client's permission groups list is ok.  Now jsut set it and update it.
+                    person.PermissionGroups = permissionsGroupsFromClient;
+
+                    session.Update(person);
+
+                    //If we get here, then success.
+                    token.SetResult(new { WasSelf = person.Id == token.AuthenticationSession.Person.Id });
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                    return;
+                }
             }
-
-            var unauthorizedEdits = changedGroups.Where(x => !editablePermissionGroups.Select(y => y.Id).ToList().Contains(x)).ToList();
-
-            if (unauthorizedEdits.Any())
-            {
-                token.AddErrorMessage("You were not allowed to edit one or more of the permission groups' membership that you tried to edit.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //ALright this means the client's permission groups list is ok.  Now jsut set it and update it.
-            person.PermissionGroups = permissionsGroupsFromClient;
-
-            token.CommunicationSession.Update(person);
-
-            //If we get here, then success.
-            token.SetResult(new { WasSelf = person.Id == token.AuthenticationSession.Person.Id });
         }
 
         #endregion Client Access
