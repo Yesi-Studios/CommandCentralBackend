@@ -179,6 +179,7 @@ namespace AtwoodUtils
         /// <param name="current"></param>
         public static void AddCorsHeadersToResponse(WebOperationContext current)
         {
+            //TODO REVIEW config this thing
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept");

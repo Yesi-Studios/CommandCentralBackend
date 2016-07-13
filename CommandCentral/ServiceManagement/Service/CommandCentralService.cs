@@ -51,6 +51,7 @@ namespace CommandCentral.ServiceManagement.Service
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
+
                     try
                     {
                         //Create the new message token for this request.
@@ -62,12 +63,14 @@ namespace CommandCentral.ServiceManagement.Service
                         //Add the CORS headers to the request to allow the cross domain stuff.  We need to add this outside the try/catch block so that we can send responses to the client for an exception.
                         Utilities.AddCorsHeadersToResponse(WebOperationContext.Current);
 
+                        //TODO REVIEW abstract this
                         WebOperationContext.Current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
 
                         //Get the endpoint
                         ServiceEndpoint description;
                         if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                         {
+                            //TODO REVIEW abstract the contact details
                             token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                 "and you've checked your spelling, yell at Atwood.  For further issues, please call Atwood at 505-401-7252.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                             WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -123,6 +126,7 @@ namespace CommandCentral.ServiceManagement.Service
 
                         #endregion
 
+                        //TODO REVIEW elevate api key name into configs
                         //Get the apikey.
                         if (!token.Args.ContainsKey("apikey"))
                             token.AddErrorMessage("You didn't send an 'apikey' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -169,7 +173,7 @@ namespace CommandCentral.ServiceManagement.Service
 
                             //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
                             //at least the client tried to use the session.
-                            token.AuthenticationSession.LastUsedTime = DateTime.Now;
+                            token.AuthenticationSession.LastUsedTime = token.CallTime;
                             token.State = MessageStates.Authenticated;
 
                             Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
@@ -185,13 +189,15 @@ namespace CommandCentral.ServiceManagement.Service
                         token.HandledTime = DateTime.Now;
                         token.State = MessageStates.Handled;
 
-                        //ALright it's all done so let's go ahead and save the token.
+                        //Alright it's all done so let's go ahead and save the token.
                         session.Save(token);
 
                         Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+
+                        //TODO REVIEW Ensure that status is ok
 
                         string finalResponse = token.ConstructResponseString();
 
@@ -207,12 +213,13 @@ namespace CommandCentral.ServiceManagement.Service
 
                         //Add the error message
                         token.AddErrorMessage("A fatal occurred within the backend service.  We are extremely sorry for this inconvenience." +
-                            "  The developers have been alerted and a trained monkey has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+                            "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
                         //Save the token
                         session.Save(token);
 
-                        //TODO: send an email to the devs with the error message.
+                        //TODO REVIEW: send an email to the devs with the error message.
+                        EmailHelper.SendFatalErrorEmail(token, e);
 
                         //Tell the host what happened.
                         Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Critical);
@@ -228,7 +235,8 @@ namespace CommandCentral.ServiceManagement.Service
                 //Give the token the error message and then release it.  Just like the above catch block. 
                 token.AddErrorMessage("An error occurred while trying to create a database session.  The database may be inaccessible right now.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
-                //TODO: send an email to the devs with the error message.
+                //TODO REVIEW: send an email to the devs with the error message.
+                EmailHelper.SendFatalErrorEmail(token, e);
 
                 //We can't save it cause we have no session so just post the message and then release.
                 Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Critical);
