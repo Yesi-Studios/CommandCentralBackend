@@ -1766,13 +1766,9 @@ namespace CommandCentral.Entities
 
                 RulesFor(x => x.SSN)
                     .Returnable()
-                        .IfSelf().Or().IfInChainOfCommand()
-                        .And()
-                        .IfGrantedByPermissionGroup()
+                        .IfSelf().Or().IfInCoCAndInPermissionGroup()
                     .Editable()
-                        .IfSelf().Or().IfInChainOfCommand()
-                        .And()
-                        .IfGrantedByPermissionGroup();
+                        .IfSelf().Or().IfInCoCAndInPermissionGroup();
 
                 RulesFor(x => x.Paygrade)
                 .AndFor(x => x.Division)
