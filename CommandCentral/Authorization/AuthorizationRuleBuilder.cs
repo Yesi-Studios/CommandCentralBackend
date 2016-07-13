@@ -34,6 +34,12 @@ namespace CommandCentral.Authorization
             Disjunctions = new List<RuleDisjunction>();
         }
 
+        /// <summary>
+        /// Adds a new property to the rule's property names collection.
+        /// </summary>
+        /// <typeparam name="PropertyT"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> AndFor<PropertyT>(Expression<Func<T, PropertyT>> expression)
         {
             this.ParentRuleGroup.PropertyNames.Add(expression.GetPropertyName());
@@ -41,7 +47,10 @@ namespace CommandCentral.Authorization
             return this;
         }
              
-
+        /// <summary>
+        /// Creates a new disjunction and adds it to the disjunctions.  THe current disjunction becomes this new one.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> And()
         {
             CurrentDisjunction = new RuleDisjunction();
@@ -50,6 +59,10 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        /// <summary>
+        /// Does nothing.  Syntatic sugar only.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> Or()
         {
             return this;
@@ -69,6 +82,10 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        /// <summary>
+        /// Switches the current category to Return such that all rules coming after this call are rules about who can return a field.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> Returnable()
         {
             CurrentCategory = AuthorizationRuleCategoryEnum.Return;
@@ -78,6 +95,10 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        /// <summary>
+        /// Switches the current category to Edit such that all rules coming after this call are rules about who can edit a field.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> Editable()
         {
             CurrentCategory = AuthorizationRuleCategoryEnum.Edit;
@@ -87,6 +108,10 @@ namespace CommandCentral.Authorization
             return this;
         }
 
+        /// <summary>
+        /// Calls the if self rule, indicating a person can only return or edit a field if it is their own.
+        /// </summary>
+        /// <returns></returns>
         public AuthorizationRuleBuilder<T> IfSelf()
         {
             CurrentDisjunction.Rules.Add(new Rules.IfSelfRule(CurrentCategory, this.ParentRuleGroup.PropertyNames));
