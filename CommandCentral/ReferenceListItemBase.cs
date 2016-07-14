@@ -133,6 +133,66 @@ namespace CommandCentral
             }
         }
 
+        private static void EndpointName_AddListItem(MessageToken token)
+        {
+
+            //First we need to know if the client is logged in and is a client.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to add a list item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            {
+                token.AddErrorMessage("Only developers may add list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Now we need to know to which list the client wants to add a list item.
+            if (!token.Args.ContainsKey("listname"))
+            {
+                token.AddErrorMessage("You must send a 'list' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    string listName = token.Args["listname"] as string;
+
+                    if (!DataAccess.NHibernateHelper.GetAllEntityMetadata().ContainsKey(listName))
+                    {
+                        token.AddErrorMessage("That list name is not a reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    var type = DataAccess.NHibernateHelper.GetEntityMetadata(listName).GetMappedClass(NHibernate.EntityMode.Poco);
+
+                    //Now let's make sure the type the client is asking about is actually a reference list.
+                    if (!)
+
+                    if (classMetadata == null)
+                    {
+                        token.AddErrorMessage("", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
         #endregion
 
     }

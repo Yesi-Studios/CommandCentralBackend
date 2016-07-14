@@ -80,7 +80,7 @@ namespace CommandCentral.DataAccess
                             x.Key.Split('.').Last(),
                             x.Value);
                     })
-                    .ToDictionary(x => x.Key, x => x.Value));
+                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase));
 
             IsInitialized = true;
         }
