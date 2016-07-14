@@ -51,6 +51,11 @@ namespace CommandCentral.Entities
         /// </summary>
         public virtual bool IsHandled { get; set; }
 
+        /// <summary>
+        /// A comment attached to the error.
+        /// </summary>
+        public virtual string Comment { get; set; }
+
         #endregion
 
         #region ctors
@@ -110,12 +115,12 @@ namespace CommandCentral.Entities
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Marks a given error as handled.
+        /// Attempts to update the ishandled and the comment property for the given error.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "MarkErrorHandled", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_MarkErrorHandled(MessageToken token)
+        [EndpointMethod(EndpointName = "UpdateError", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_UpdateError(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -160,8 +165,26 @@ namespace CommandCentral.Entities
                         return;
                     }
 
-                    //So we got an error :D  Now just set the handled to true.
-                    error.IsHandled = true;
+                    //if the client sent us a is handled then let's validate it and set it.
+                    if (token.Args.ContainsKey("ishandled"))
+                    {
+                        bool isHandled;
+                        if (!Boolean.TryParse(token.Args["ishandled"] as string, out isHandled))
+                        {
+                            token.AddErrorMessage("Your 'ishandled' parameter could not be cast to a boolean.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                        else
+                        {
+                            error.IsHandled = isHandled;
+                        }
+                    }
+
+                    //if the client sent a comment, set it.
+                    if (token.Args.ContainsKey("comment"))
+                    {
+                        error.Comment = token.Args["comment"] as string;
+                    }
 
                     session.Merge(error);
 
@@ -193,6 +216,7 @@ namespace CommandCentral.Entities
                 Map(x => x.StackTrace).Not.Nullable().Length(10000);
                 Map(x => x.InnerException).Not.Nullable().Length(10000);
                 Map(x => x.TargetSite).Not.Nullable().Length(10000);
+                Map(x => x.Comment).Nullable().Length(10000);
                 Map(x => x.Time).Not.Nullable();
                 Map(x => x.IsHandled).Not.Nullable();
 
