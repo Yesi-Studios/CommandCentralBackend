@@ -229,7 +229,7 @@ namespace CommandCentral.ServiceManagement.Service
                         token.State = MessageStates.FatalError;
 
                         //Add the error message
-                        token.AddErrorMessage("A fatal occurred within the backend service.  We are extremely sorry for this inconvenience." +
+                        token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
                         //In order to save things we need to do it in a new session because this one has been rolled back.
