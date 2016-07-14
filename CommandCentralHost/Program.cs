@@ -5,8 +5,6 @@ using System.Linq;
 using System.ServiceModel;
 using CommandCentralHost.Editors;
 using System.Runtime.InteropServices;
-using CommandCentral.Entities;
-using NHibernate.Criterion;
 
 namespace CommandCentralHost
 {
@@ -153,35 +151,7 @@ namespace CommandCentralHost
 
             try
             {
-
-                string version = "launchy mclaunch face";
-                /*bool isDebug = System.Diagnostics.Debugger.IsAttached;
-
-                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
-                {
-                    version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
-                }
-                else
-                {
-
-                    string repoPath = LibGit2Sharp.Repository.Discover(System.IO.Directory.GetCurrentDirectory());
-
-                    try
-                    {
-                        using (var repo = new LibGit2Sharp.Repository(repoPath))
-                        {
-                            var currentBranch = repo.Head;
-                            version = "{0} @ {1}".FormatS(currentBranch.FriendlyName, String.Concat(currentBranch.Tip.Id.ToString().Take(7)));
-                        }
-
-                    }
-                    catch
-                    {
-                        version = "Debug";
-                    }
-
-                }*/
-
+                string version = CommandCentral.Config.Version.GetVersion();
 
                 Console.Title = "Command Central Backend Service | version {0}".FormatS(version);
 
