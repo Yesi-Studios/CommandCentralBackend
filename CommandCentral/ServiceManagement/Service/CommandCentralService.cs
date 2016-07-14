@@ -232,7 +232,7 @@ namespace CommandCentral.ServiceManagement.Service
                         token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
-                        //In order to save things we need to do it in a new session because this one has been rolled back.
+                        //In order to save things we need to do it in a new session because the old one has been rolled back.
                         using (var errorSession = NHibernateHelper.CreateStatefulSession())
                         using (var errorTransaction = errorSession.BeginTransaction())
                         {
