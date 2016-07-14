@@ -77,6 +77,13 @@ namespace CommandCentral.Entities
             this.Token = token;
         }
 
+        /// <summary>
+        /// This empty constructor is only here for NHibernate to use.  Please use the other one when making an error explicitly.
+        /// </summary>
+        public Error()
+        {
+        }
+
         #endregion
 
         #region Client Access
@@ -203,7 +210,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// Maps an error to the database
         /// </summary>
-        private class ErrorMapping : ClassMap<Error>
+        public class ErrorMapping : ClassMap<Error>
         {
             /// <summary>
             /// Maps an error to the database
@@ -220,7 +227,7 @@ namespace CommandCentral.Entities
                 Map(x => x.Time).Not.Nullable();
                 Map(x => x.IsHandled).Not.Nullable();
 
-                References(x => x.Token);
+                References(x => x.Token).LazyLoad(Laziness.False);
             }
         }
 

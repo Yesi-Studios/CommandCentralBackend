@@ -273,8 +273,8 @@ namespace CommandCentral.ClientAccess
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.APIKey);
-                References(x => x.AuthenticationSession);
+                References(x => x.APIKey).LazyLoad(Laziness.False);
+                References(x => x.AuthenticationSession).LazyLoad(Laziness.False);
 
                 Map(x => x.CallTime);
                 Map(x => x.RawRequestBody).Length(10000);
@@ -289,7 +289,8 @@ namespace CommandCentral.ClientAccess
 
                 HasMany(x => x.ErrorMessages)
                     .KeyColumn("MessageTokenId")
-                    .Element("ErrorMessage");
+                    .Element("ErrorMessage")
+                    .Not.LazyLoad();
 
             }
         }

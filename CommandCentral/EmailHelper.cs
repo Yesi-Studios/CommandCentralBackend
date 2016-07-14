@@ -30,8 +30,8 @@ namespace CommandCentral
         /// <summary>
         /// The SMTP server to use to send our emails.
         /// </summary>
-        //public static readonly string SmtpHost = "localhost";
-        public static readonly string SmtpHost = "smtp.gordon.army.mil";
+        public static readonly string SmtpHost = "localhost";
+        //public static readonly string SmtpHost = "smtp.gordon.army.mil";
 
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
@@ -217,71 +217,80 @@ namespace CommandCentral
         /// <returns></returns>
         public static void SendFatalErrorEmail(MessageToken token, Exception e)
         {
-            var message = BuildStandardMessage();
 
-            message.Subject = "CC Backend Fatal Error Report";
+            try
+            {
+                var message = BuildStandardMessage();
 
-            if (token.AuthenticationSession == null)
-            {
-                message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
-                    DateTime.Now.ToUniversalTime(),
-                    "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
-                    token.Id, 
-                    token.APIKey.Id,
-                    token.APIKey.ApplicationName,
-                    token.CallTime.ToUniversalTime(),
-                    "TODO", //token.RawJSON, TODO
-                    token.EndpointDescription, 
-                    "TODO", // token.ResultJSON, TODO
-                    token.State.ToString(), 
-                    token.HandledTime.ToUniversalTime(),
-                    token.HostAddress,
-                    e.Message,
-                    (e.InnerException == null) ? "NULL" : e.InnerException.Message,
-                    e.StackTrace,
-                    e.Source,
-                    e.TargetSite);
-            }
-            else
-            {
-                string permissionGroupIds = "";
-                foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
+                message.Subject = "CC Backend Fatal Error Report";
+
+                if (token.AuthenticationSession == null)
                 {
-                    permissionGroupIds += group.Id + "|"; 
+                    message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
+                        DateTime.Now.ToUniversalTime(),
+                        "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
+                        token.Id,
+                        token.APIKey.Id,
+                        token.APIKey.ApplicationName,
+                        token.CallTime.ToUniversalTime(),
+                        "TODO", //token.RawJSON, TODO
+                        token.EndpointDescription,
+                        "TODO", // token.ResultJSON, TODO
+                        token.State.ToString(),
+                        token.HandledTime.ToUniversalTime(),
+                        token.HostAddress,
+                        e.Message,
+                        (e.InnerException == null) ? "NULL" : e.InnerException.Message,
+                        e.StackTrace,
+                        e.Source,
+                        e.TargetSite);
+                }
+                else
+                {
+                    string permissionGroupIds = "";
+                    foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
+                    {
+                        permissionGroupIds += group.Id + "|";
+                    }
+
+                    message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
+                        DateTime.Now.ToUniversalTime(),
+                        token.AuthenticationSession.Id,
+                        token.AuthenticationSession.LoginTime.ToUniversalTime(),
+                        token.AuthenticationSession.Person.Id,
+                        token.AuthenticationSession.LogoutTime.ToUniversalTime(),
+                        token.AuthenticationSession.IsActive,
+                        permissionGroupIds,
+                        token.AuthenticationSession.LastUsedTime.ToUniversalTime(),
+                        token.Id,
+                        token.APIKey.Id,
+                        token.APIKey.ApplicationName,
+                        token.CallTime.ToUniversalTime(),
+                        "TODO", //token.RawJSON, TODO
+                        token.EndpointDescription,
+                        "TODO", // token.ResultJSON, TODO
+                        token.State,
+                        token.HandledTime.ToUniversalTime(),
+                        token.HostAddress,
+                        e.Message,
+                        (e.InnerException == null) ? "NULL" : e.InnerException.Message,
+                        e.StackTrace,
+                        e.Source,
+                        e.TargetSite);
                 }
 
-                message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
-                    DateTime.Now.ToUniversalTime(),
-                    token.AuthenticationSession.Id,
-                    token.AuthenticationSession.LoginTime.ToUniversalTime(),
-                    token.AuthenticationSession.Person.Id,
-                    token.AuthenticationSession.LogoutTime.ToUniversalTime(),
-                    token.AuthenticationSession.IsActive,
-                    permissionGroupIds,
-                    token.AuthenticationSession.LastUsedTime.ToUniversalTime(),
-                    token.Id,
-                    token.APIKey.Id,
-                    token.APIKey.ApplicationName,
-                    token.CallTime.ToUniversalTime(),
-                    "TODO", //token.RawJSON, TODO
-                    token.EndpointDescription,
-                    "TODO", // token.ResultJSON, TODO
-                    token.State,
-                    token.HandledTime.ToUniversalTime(),
-                    token.HostAddress,
-                    e.Message,
-                    (e.InnerException == null) ? "NULL" : e.InnerException.Message,
-                    e.StackTrace,
-                    e.Source,
-                    e.TargetSite);
+
+                _developerEmailAddresses.ForEach(x => message.To.Add(x));
+
+                SmtpClient client = new SmtpClient(SmtpHost);
+                client.DeliveryMethod = SmtpDeliveryMethod.Network;
+                client.Send(message);
             }
-
-
-            _developerEmailAddresses.ForEach(x => message.To.Add(x));
-
-            SmtpClient client = new SmtpClient(SmtpHost);
-            client.DeliveryMethod = SmtpDeliveryMethod.Network;
-            client.Send(message);
+            catch
+            {
+                //TODO
+            }
+            
         }
 
     }
