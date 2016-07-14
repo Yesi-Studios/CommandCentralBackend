@@ -249,11 +249,18 @@ namespace CommandCentral.Entities.Muster
                     transaction.Rollback();
                     Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
 
+                    EmailHelper.SendFatalErrorEmail(null, e);
+
+                    session.Save(new Error(e, DateTime.Now, null));
+
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
             }
         }
 
+        /// <summary>
+        /// Rolls over the muster.
+        /// </summary>
         public static void RolloverMuster()
         {
 

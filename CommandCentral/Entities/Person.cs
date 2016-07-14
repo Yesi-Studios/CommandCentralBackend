@@ -501,11 +501,10 @@ namespace CommandCentral.Entities
 
                         transaction.Commit();
                     }
-                    catch (Exception e)
+                    catch
                     {
                         transaction.Rollback();
-                        token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                        return;
+                        throw;
                     }
                 }
             }
@@ -738,11 +737,10 @@ namespace CommandCentral.Entities
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                    throw;
                 }
             }
         }
@@ -831,11 +829,10 @@ namespace CommandCentral.Entities
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                    throw;
                 }
             }
 
@@ -922,11 +919,10 @@ namespace CommandCentral.Entities
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                    throw;
                 }
             }
 
@@ -1022,11 +1018,10 @@ namespace CommandCentral.Entities
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                    throw;
                 }
             }
         }
@@ -1674,11 +1669,10 @@ namespace CommandCentral.Entities
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                    throw;
                 }
             }
         }

@@ -225,6 +225,9 @@ namespace CommandCentral.ServiceManagement.Service
                         //If an issue occurred very first thing we do is roll anything back we may have done.  It shouldn't actually be anything unless we failed right at the end but whatever.
                         transaction.Rollback();
 
+                        //Set the message state
+                        token.State = MessageStates.FatalError;
+
                         //Add the error message
                         token.AddErrorMessage("A fatal occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
@@ -232,6 +235,10 @@ namespace CommandCentral.ServiceManagement.Service
                         //Save the token
                         session.Save(token);
 
+                        //We also need to save the error to the database.
+                        session.Save(new Entities.Error(e, token.CallTime, token));
+
+                        //And send an email.
                         EmailHelper.SendFatalErrorEmail(token, e);
 
                         //Tell the host what happened.
@@ -247,6 +254,9 @@ namespace CommandCentral.ServiceManagement.Service
             {
                 //Give the token the error message and then release it.  Just like the above catch block. 
                 token.AddErrorMessage("An error occurred while trying to create a database session.  The database may be inaccessible right now.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+
+                //We can't save anything to the database.  :(
+                token.State = MessageStates.FatalError;
 
                 EmailHelper.SendFatalErrorEmail(token, e);
 
