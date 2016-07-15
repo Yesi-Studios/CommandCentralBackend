@@ -121,7 +121,7 @@ namespace CommandCentral
                     {
                         return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
                     }).ToDictionary(x => x.Key, x => (object)x.Value);
-
+                //TODO REVIEW go through the enum namespace
                 result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
                 result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
                 result.Add("MusterStatuses", Enum.GetNames(typeof(MusterStatuses)));
@@ -133,7 +133,7 @@ namespace CommandCentral
             }
         }
 
-        private static void EndpointName_AddListItem(MessageToken token)
+        /*private static void EndpointName_AddListItem(MessageToken token)
         {
 
             //First we need to know if the client is logged in and is a client.
@@ -174,7 +174,7 @@ namespace CommandCentral
                     var type = DataAccess.NHibernateHelper.GetEntityMetadata(listName).GetMappedClass(NHibernate.EntityMode.Poco);
 
                     //Now let's make sure the type the client is asking about is actually a reference list.
-                    if (!)
+                    //if (!)
 
                     if (classMetadata == null)
                     {
@@ -191,7 +191,7 @@ namespace CommandCentral
                     throw;
                 }
             }
-        }
+        }*/
 
         #endregion
 

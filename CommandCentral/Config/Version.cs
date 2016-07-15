@@ -12,37 +12,6 @@ namespace CommandCentral.Config
     /// </summary>
     public static class Version
     {
-        private const string RELEASE_VERSION = "0.9.2.0";
-
-        /// <summary>
-        /// Gets the current version of the application.
-        /// </summary>
-        /// <returns></returns>
-        public static string GetVersion()
-        {
-            bool isDebug = System.Diagnostics.Debugger.IsAttached;
-
-            if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
-            {
-                return RELEASE_VERSION;
-            }
-            else
-            {
-                string repoPath = LibGit2Sharp.Repository.Discover(System.IO.Directory.GetCurrentDirectory());
-
-                try
-                {
-                    using (var repo = new LibGit2Sharp.Repository(repoPath))
-                    {
-                        var currentBranch = repo.Head;
-                        return "{0} @ {1}".FormatS(currentBranch.FriendlyName, String.Concat(currentBranch.Tip.Id.ToString().Take(7)));
-                    }
-                }
-                catch
-                {
-                    return "Unspecified Repo - Debug Mode";
-                }
-            }
-        }
+        public const string RELEASE_VERSION = "0.9.2.0";
     }
 }

@@ -70,7 +70,6 @@ namespace CommandCentral.ServiceManagement
                         {
                             EndpointMethod = endpointMethod,// lambda.Compile(),
                             EndpointMethodAttribute = endpointMethodAttribute,
-                            ExampleOutput = "TODO",
                             IsActive = true
                         };
                     }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);

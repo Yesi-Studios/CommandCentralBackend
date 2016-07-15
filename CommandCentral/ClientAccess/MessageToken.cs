@@ -208,7 +208,7 @@ namespace CommandCentral.ClientAccess
         public virtual void AddErrorMessages(IEnumerable<string> messages, ErrorTypes error, System.Net.HttpStatusCode status)
         {
             if (Result != null)
-                throw new Exception("You can not set a error message on a message token that has already been assigned a return value.  You get one or the other.");
+                throw new Exception("You cannot set a error message on a message token that has already been assigned a return value.  You get one or the other.");
 
             messages.ToList().ForEach(x => ErrorMessages.Add(x));
             this.ErrorType = error;

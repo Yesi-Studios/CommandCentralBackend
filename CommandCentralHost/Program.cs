@@ -151,7 +151,7 @@ namespace CommandCentralHost
 
             try
             {
-                string version = CommandCentral.Config.Version.GetVersion();
+                string version = CommandCentral.Config.Version.RELEASE_VERSION;
 
                 Console.Title = "Command Central Backend Service | version {0}".FormatS(version);
 

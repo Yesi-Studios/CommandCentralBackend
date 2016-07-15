@@ -11,6 +11,7 @@ namespace CommandCentral.ServiceManagement.Service
     [ServiceContract]
     public interface ICommandCentralService
     {
+        //TODO REVIEW name me somethign else
         /// <summary>
         /// The endpoint through which all calls reach the service.  
         /// </summary>
@@ -21,6 +22,7 @@ namespace CommandCentral.ServiceManagement.Service
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint);
 
+        //TODO REVIEW comment me
         [OperationContract]
         [WebInvoke(Method = "OPTIONS", UriTemplate = "*")]
         void GetOptions();

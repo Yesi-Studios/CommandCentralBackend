@@ -20,8 +20,5 @@ namespace CommandCentral.Config
         /// The devs' phone number.
         /// </summary>
         public const string DEV_PHONE_NUMBER = "505-401-7252";
-
-
-
     }
 }

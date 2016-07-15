@@ -9,6 +9,7 @@
         Leave,
         SIQ,
         UA,
-        Dead
+        Dead,
+        Transferred
     }
 }

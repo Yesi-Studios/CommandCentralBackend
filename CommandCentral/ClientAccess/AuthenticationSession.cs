@@ -14,7 +14,7 @@ namespace CommandCentral.ClientAccess
         /// <summary>
         /// The max age after which a session will have expired and it will become invalid.
         /// </summary>
-        private static readonly TimeSpan maxAge = TimeSpan.FromMinutes(20);
+        private static readonly TimeSpan _maxAge = TimeSpan.FromMinutes(20);
 
         #region Properties
 
@@ -66,7 +66,7 @@ namespace CommandCentral.ClientAccess
             if (!IsActive)
                 return false;
 
-            if (DateTime.Now.Subtract(LastUsedTime) > maxAge)
+            if (DateTime.Now.Subtract(LastUsedTime) >= _maxAge)
                 return true;
 
             return false;
@@ -90,7 +90,7 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.LogoutTime).Nullable();
                 Map(x => x.IsActive).Not.Nullable();
                 Map(x => x.LastUsedTime);
-                References(x => x.Person);
+                References(x => x.Person).LazyLoad(Laziness.False);
                 HasMany(x => x.MessageTokens).Inverse().Cascade.All();
 
                 Cache.ReadWrite();

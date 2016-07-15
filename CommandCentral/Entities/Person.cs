@@ -1721,7 +1721,7 @@ namespace CommandCentral.Entities
                 .AndFor(x => x.AccountHistory)
                 .AndFor(x => x.CurrentMusterStatus)
                     .Returnable()
-                        .IfGrantedByPermissionGroup()
+                        .IfGrantedByPermissionGroup().Or().IfSelf()
                     .Editable()
                         .Never();
 
@@ -1753,11 +1753,9 @@ namespace CommandCentral.Entities
                 .AndFor(x => x.PhysicalAddresses)
                 .AndFor(x => x.ContactRemarks)
                     .Returnable()
-                        .IfGrantedByPermissionGroup()
+                        .IfSelf().Or().IfGrantedByPermissionGroup()
                     .Editable()
-                        .IfSelf().Or().IfInChainOfCommand()
-                        .And()
-                        .IfGrantedByPermissionGroup();
+                        .IfSelf().Or().IfInCoCAndInPermissionGroup();
 
                 RulesFor(x => x.SSN)
                     .Returnable()
@@ -1765,16 +1763,15 @@ namespace CommandCentral.Entities
                     .Editable()
                         .IfSelf().Or().IfInCoCAndInPermissionGroup();
 
+
                 RulesFor(x => x.Paygrade)
                 .AndFor(x => x.Division)
                 .AndFor(x => x.Department)
                 .AndFor(x => x.Command)
                     .Returnable()
-                        .IfGrantedByPermissionGroup()
+                        .IfSelf().Or().IfGrantedByPermissionGroup()
                     .Editable()
-                        .IfInChainOfCommand()
-                        .And()
-                        .IfGrantedByPermissionGroup();
+                        .IfInCoCAndInPermissionGroup();
 
                 RulesFor(x => x.Billet)
                 .AndFor(x => x.NECs)

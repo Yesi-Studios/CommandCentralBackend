@@ -161,8 +161,5 @@ namespace CommandCentral.DataAccess
 
             _schema.Create(writer, true);
         }
-        
-
-
     }
 }

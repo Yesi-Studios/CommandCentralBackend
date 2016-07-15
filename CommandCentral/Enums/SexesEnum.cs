@@ -12,10 +12,6 @@
         /// <summary>
         /// A dudette
         /// </summary>
-        Female,
-        /// <summary>
-        /// Anything else.
-        /// </summary>
-        LittleColumnALittleColumnB
+        Female
     }
 }

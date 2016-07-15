@@ -17,11 +17,6 @@ namespace CommandCentral.ClientAccess
         /// Indicates whether or not calls to the endpoint should be allowed.  This will allow us to disable endpoints for maintenance if needed.
         /// </summary>
         public bool IsActive { get; set; }
-
-        /// <summary>
-        /// A method that, when run, produces a string that mimics expected output from the service for this endpoint.
-        /// </summary>
-        public string ExampleOutput { get; set; }
         
         /// <summary>
         /// The endpoint method's attribute which describes information about it.

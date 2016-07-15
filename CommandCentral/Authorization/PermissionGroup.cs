@@ -206,9 +206,9 @@ namespace CommandCentral.Authorization
                 var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
                 var allPermissionGroups = session.QueryOver<PermissionGroup>().List();
 
-                var editablePermissionGroups = new List<PermissionGroup>();
+                var editablePermissionGroups = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.SubordinatePermissionGroups);
 
-                foreach (var group in allPermissionGroups)
+                /* (var group in allPermissionGroups)
                 {
                     if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
                         clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
@@ -222,7 +222,7 @@ namespace CommandCentral.Authorization
                                 person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
                                 clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
                                 editablePermissionGroups.Add(group);
-                }
+                }*/
 
                 token.SetResult(new
                 {
@@ -340,9 +340,9 @@ namespace CommandCentral.Authorization
                     var clientPermissionGroups = token.AuthenticationSession.Person.PermissionGroups;
                     var allPermissionGroups = session.QueryOver<PermissionGroup>().List();
 
-                    var editablePermissionGroups = new List<PermissionGroup>();
+                    var editablePermissionGroups = token.AuthenticationSession.Person.PermissionGroups.SelectMany(x => x.SubordinatePermissionGroups);
 
-                    foreach (var group in allPermissionGroups)
+                    /*foreach (var group in allPermissionGroups)
                     {
                         if (group.PermissionLevel == PermissionLevels.Command && person.Command.Id == token.AuthenticationSession.Person.Command.Id &&
                             clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
@@ -356,7 +356,7 @@ namespace CommandCentral.Authorization
                                     person.Department.Id == token.AuthenticationSession.Person.Department.Id && person.Division.Id == token.AuthenticationSession.Person.Division.Id &&
                                     clientPermissionGroups.SelectMany(x => x.SubordinatePermissionGroups).Contains(group))
                                     editablePermissionGroups.Add(group);
-                    }
+                    }*/
 
                     var unauthorizedEdits = changedGroups.Where(x => !editablePermissionGroups.Select(y => y.Id).ToList().Contains(x)).ToList();
 

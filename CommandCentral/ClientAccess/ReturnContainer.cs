@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 
 namespace CommandCentral.ClientAccess
 {
+    //TODO REVIEW Why do we use WCF service things here?
     /// <summary>
     /// Describes the container that is used to return data to the client. This object provides a reliable structure of data so that the client knows what to expect while allowing us to return exception data as well.
     /// </summary>

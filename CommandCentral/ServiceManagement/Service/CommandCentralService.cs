@@ -207,9 +207,6 @@ namespace CommandCentral.ServiceManagement.Service
 
                         Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
 
-                        if (token.StatusCode != System.Net.HttpStatusCode.OK)
-                            throw new Exception("A request made it to the end of handling; however, its status was not OK.");
-
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
 
