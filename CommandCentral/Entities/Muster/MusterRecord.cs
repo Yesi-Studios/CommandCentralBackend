@@ -226,21 +226,10 @@ namespace CommandCentral.Entities.Muster
             {
                 try
                 {
-                    var persons = session.QueryOver<Person>()
-                                    .Fetch(x => x.CurrentMusterStatus).Eager
-                                    .List();
-
+                    var persons = session.QueryOver<Person>();
+                    
                     //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
 
-                    //Build muster report using given information.
-                    var musterReport = new MusterReport();
-
-                    EmailHelper.SendMusterReportEmail(musterReport);
-
-                    //Save the muster report.
-                    //TODO save the muster report.
-
-                    //Now we just need to shut out the muster such that it can't be used until the roll over happens.
 
                     IsMusterFinalized = true;
                 }
@@ -445,7 +434,8 @@ namespace CommandCentral.Entities.Muster
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Get all records where the day of the year is the given day's muster day and the year the same.
-                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List());
+                var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List();
+                token.SetResult(MusterReport.BuildReport(records, token.AuthenticationSession.Person));
             }
         }
 
@@ -513,11 +503,7 @@ namespace CommandCentral.Entities.Muster
                 session.FlushMode = NHibernate.FlushMode.Commit;
 
                 //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  Fetch the command/dep/div so we can use it without lazy loading.
-                var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys)
-                    .Fetch(x => x.Department).Eager
-                    .Fetch(x => x.Command).Eager
-                    .Fetch(x => x.Division).Eager
-                    .List();
+                var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys).List();
 
                 //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
                 if (persons.Any(x => !CanClientMusterPerson(token.AuthenticationSession.Person, x)))
@@ -558,7 +544,7 @@ namespace CommandCentral.Entities.Muster
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadTodaysMuster", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        [EndpointMethod(EndpointName = "LoadMusterablePersonsForToday", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_LoadTodaysMuster(MessageToken token)
         {
             if (token.AuthenticationSession == null)
@@ -581,7 +567,6 @@ namespace CommandCentral.Entities.Muster
                 }
                 else
                 {
-                    //We need all the current muster records for today.  Make sure to fetch any references we might need so we don't wind up with some select n+1 shit.
                     //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
                     var queryOver = session.QueryOver<Person>();
 
@@ -604,7 +589,7 @@ namespace CommandCentral.Entities.Muster
                             }
                         default:
                             {
-                                throw new Exception("The default case in the high level switch in the LoadTodaysMuster was reached with the following case: '{0}'!".FormatS(highestLevel));
+                                throw new Exception("The default case in the highest level switch in the LoadMusterablePersonForToday endpoint was reached with the following case: '{0}'!".FormatS(highestLevel));
                             }
                     }
 
@@ -672,8 +657,6 @@ namespace CommandCentral.Entities.Muster
 
             //So we should be good to finalize the muster.
             FinalizeMuster(token.AuthenticationSession.Person);
-
-
         }
 
         #endregion
@@ -700,8 +683,8 @@ namespace CommandCentral.Entities.Muster
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Musterer).Nullable();
-                References(x => x.Musteree).Nullable();
+                References(x => x.Musterer).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Musteree).Nullable().LazyLoad(Laziness.False);
 
                 Map(x => x.Paygrade).Nullable().Length(10);
                 Map(x => x.Division).Nullable().Length(10);
