@@ -266,6 +266,19 @@ namespace CommandCentral.Entities
         #endregion
 
         #region Helper Methods
+
+        /// <summary>
+        /// Returns an object containing two properties: this object's Id and this object's .ToString in a parameter called FriendlyName.  Intended for use with DTOs.
+        /// </summary>
+        /// <returns></returns>
+        public virtual object ToBasicPerson()
+        {
+            return new
+            {
+                Id = this.Id,
+                FriendlyName = this.ToString()
+            };
+        }
         
         /// <summary>
         /// Returns a boolean indicating whether or not this person is in the chain of command of a given person.

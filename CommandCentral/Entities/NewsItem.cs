@@ -98,7 +98,7 @@ namespace CommandCentral.Entities
                     {
                         newsItem.Id,
                         newsItem.CreationTime,
-                        Creator = newsItem.Creator.ToString(),
+                        Creator = newsItem.Creator.ToBasicPerson(),
                         newsItem.Paragraphs,
                         newsItem.Title
                     });
@@ -135,7 +135,8 @@ namespace CommandCentral.Entities
                         {
                             x.Id,
                             x.CreationTime,
-                            Creator = x.Creator.ToString(),
+                            Creator = x.Creator.ToBasicPerson(),
+                            CreatorId = x.Creator.Id,
                             x.Paragraphs,
                             x.Title
                         };

@@ -317,7 +317,32 @@ namespace CommandCentral.Entities.Muster
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                token.SetResult(session.Get<MusterRecord>(musterRecordId));
+                var musterRecord = session.Get<MusterRecord>(musterRecordId);
+
+                if (musterRecord == null)
+                {
+                    token.SetResult(null);
+                    return;
+                }
+
+                //Create a DTO for the client.
+                token.SetResult(new
+                    {
+                        musterRecord.Command,
+                        musterRecord.Department,
+                        musterRecord.Division,
+                        musterRecord.DutyStatus,
+                        musterRecord.HasBeenSubmitted,
+                        musterRecord.Id,
+                        musterRecord.MusterDayOfYear,
+                        Musteree = musterRecord.Musteree.ToBasicPerson(),
+                        Musterer = musterRecord.Musterer.ToBasicPerson(),
+                        musterRecord.MusterStatus,
+                        musterRecord.MusterYear,
+                        musterRecord.Paygrade,
+                        musterRecord.SubmitTime,
+                        musterRecord.UIC
+                    });
             }
         }
 
@@ -356,7 +381,23 @@ namespace CommandCentral.Entities.Muster
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Set the result.
-                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId));
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId).List().Select(x => new
+                    {
+                        x.Command,
+                        x.Department,
+                        x.Division,
+                        x.DutyStatus,
+                        x.HasBeenSubmitted,
+                        x.Id,
+                        x.MusterDayOfYear,
+                        Musteree = x.Musteree.ToBasicPerson(),
+                        Musterer = x.Musterer.ToBasicPerson(),
+                        x.MusterStatus,
+                        x.MusterYear,
+                        x.Paygrade,
+                        x.SubmitTime,
+                        x.UIC
+                    }));
             }
         }
 
@@ -395,7 +436,23 @@ namespace CommandCentral.Entities.Muster
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Set the result.
-                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musterer.Id == mustererId));
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musterer.Id == mustererId).List().Select(x => new
+                {
+                    x.Command,
+                    x.Department,
+                    x.Division,
+                    x.DutyStatus,
+                    x.HasBeenSubmitted,
+                    x.Id,
+                    x.MusterDayOfYear,
+                    Musteree = x.Musteree.ToBasicPerson(),
+                    Musterer = x.Musterer.ToBasicPerson(),
+                    x.MusterStatus,
+                    x.MusterYear,
+                    x.Paygrade,
+                    x.SubmitTime,
+                    x.UIC
+                }));
             }
         }
 
@@ -435,7 +492,23 @@ namespace CommandCentral.Entities.Muster
             {
                 //Get all records where the day of the year is the given day's muster day and the year the same.
                 var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List();
-                token.SetResult(MusterReport.BuildReport(records, token.AuthenticationSession.Person));
+                token.SetResult(records.Select(x => new
+                {
+                    x.Command,
+                    x.Department,
+                    x.Division,
+                    x.DutyStatus,
+                    x.HasBeenSubmitted,
+                    x.Id,
+                    x.MusterDayOfYear,
+                    Musteree = x.Musteree.ToBasicPerson(),
+                    Musterer = x.Musterer.ToBasicPerson(),
+                    x.MusterStatus,
+                    x.MusterYear,
+                    x.Paygrade,
+                    x.SubmitTime,
+                    x.UIC
+                }));
             }
         }
 
@@ -529,9 +602,6 @@ namespace CommandCentral.Entities.Muster
                 //And then commit the transaction if it all went well.
                 transaction.Commit();
             }
-
-            //Ok, well we're done!  Now we just need to tell the client that we finished and tell the client for whom we submitted muster records.  Because why not.
-            token.SetResult(musterSubmissions.Select(x => x.Key.ToString()).ToList());
         }
 
         /// <summary>
