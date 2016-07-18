@@ -121,12 +121,6 @@ namespace CommandCentralHost
                         session.Flush();
                     },
                 DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Finalize Muster",
-                Method = MusterManager.MusterManagerEntryPoint,
-                DisplayCriteria = () => true
             }
 
 

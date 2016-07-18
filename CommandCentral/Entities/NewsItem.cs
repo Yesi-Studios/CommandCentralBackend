@@ -84,7 +84,24 @@ namespace CommandCentral.Entities
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Ok, well it's a GUID.   Do we have it in the database?...
-                token.SetResult(session.Get<NewsItem>(newsItemId));
+                var newsItem = session.Get<NewsItem>(newsItemId);
+
+                //If we have no news item, then give them null.
+                if (newsItemId == null)
+                {
+                    token.SetResult(null);
+                    return;
+                }
+
+                //If we got a news item, then we need a DTO.
+                token.SetResult(new
+                    {
+                        newsItem.Id,
+                        newsItem.CreationTime,
+                        Creator = newsItem.Creator.ToBasicPerson(),
+                        newsItem.Paragraphs,
+                        newsItem.Title
+                    });
             }
         }
 
@@ -112,7 +129,18 @@ namespace CommandCentral.Entities
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Set the result.
-                token.SetResult(session.QueryOver<NewsItem>().List());
+                token.SetResult(session.QueryOver<NewsItem>().List().Select(x =>
+                    {
+                        return new
+                        {
+                            x.Id,
+                            x.CreationTime,
+                            Creator = x.Creator.ToBasicPerson(),
+                            CreatorId = x.Creator.Id,
+                            x.Paragraphs,
+                            x.Title
+                        };
+                    }));
             }
 
             
@@ -243,34 +271,30 @@ namespace CommandCentral.Entities
             }
 
             //Let's see if the parameters are here.
-            if (!token.Args.ContainsKey("newsitem"))
+            if (!token.Args.ContainsKey("newsitemid"))
             {
-                token.AddErrorMessage("You didn't send a 'newsitem' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
-            //Get the news item from the client.
-            NewsItem newsItemFromClient = null;
-            try
+            //Get the news item id from the client.
+            Guid newsItemId;
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
             {
-                newsItemFromClient = token.Args["newsitem"].CastJToken<NewsItem>();
-            }
-            catch (Exception e)
-            {
-                token.AddErrorMessage("There was an error while casting your newsitem parameter's value into a news item.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-                
-            //Before we even compare it to the database, let's ensure its validity. 
-            NewsItemValidator validator = new NewsItemValidator();
-            var results = validator.Validate(newsItemFromClient);
-            if (!results.IsValid)
-            {
-                //Send back the error messages.
-                token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("The news item id you sent was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
+            //Before we go get the news item from the database, let's get the title and the paragraphs from the client.  Both are optional.
+            string title = null;
+            if (token.Args.ContainsKey("title"))
+                title = token.Args["title"] as string;
+
+            List<string> paragraphs = null;
+            if (token.Args.ContainsKey("paragraphs"))
+                paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
+
+            //Now we can go load the news item.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
@@ -278,34 +302,31 @@ namespace CommandCentral.Entities
                 {
 
                     //Ok, it's a good news item so now we're going to compare it to the one in the database.
-                    NewsItem newsItemFromDB = session.Get<NewsItem>(newsItemFromClient.Id);
+                    NewsItem newsItem = session.Get<NewsItem>(newsItemId);
 
-                    if (newsItemFromDB == null)
+                    if (newsItem == null)
                     {
-                        token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        token.AddErrorMessage("A news item with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                         return;
                     }
 
-                    //Ok, so it's not null and we have what it looks like.  Cool.  Now do the comparisons. 
-                    //Then we're going to select out the unauthorized variations.  Those are anything but the title and the paragraphs.
-                    var unauthorizedVariances = newsItemFromClient.DetailedCompare(newsItemFromDB).Where(x =>
-                        !x.PropertyName.SafeEquals("Creator") &&
-                        !x.PropertyName.SafeEquals("title") &&
-                        !x.PropertyName.SafeEquals("paragraphs"));
+                    //Ok, now let's put the values into the news item and then ask if it's valid.
+                    if (!string.IsNullOrEmpty(title))
+                        newsItem.Title = title;
 
-                    if (unauthorizedVariances.Any())
+                    if (paragraphs != null)
+                        newsItem.Paragraphs = paragraphs;
+
+                    var errors = new NewsItemValidator().Validate(newsItem).Errors;
+
+                    if (errors.Any())
                     {
-                        var errors = unauthorizedVariances.Select(x => "You are not authorized to edit the '{0}' property.".FormatS(x.PropertyName));
-                        token.AddErrorMessages(errors, ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                        token.AddErrorMessages(errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
                     }
-                    else
-                    {
-                        newsItemFromDB.Title = newsItemFromClient.Title;
-                        newsItemFromDB.Paragraphs = newsItemFromClient.Paragraphs;
-                        //Ok so there's no unauthorized variances.  I guess we can... do the update then?
-                        session.Update(newsItemFromDB);
-                        token.SetResult("Success");
-                    }
+
+                    //Ok, so it's valid.  Now let's save it.
+                    session.Update(newsItem);
 
                     transaction.Commit();
                 }
@@ -316,7 +337,6 @@ namespace CommandCentral.Entities
                     return;
                 }
             }
-
 
         }
 
@@ -376,8 +396,6 @@ namespace CommandCentral.Entities
                     }
 
                     session.Delete(newsItemFromDB);
-
-                    token.SetResult("Success");
 
                     transaction.Commit();
                 }
