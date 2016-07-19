@@ -97,6 +97,12 @@ namespace CommandCentral
             return item;
         }
 
+        /// <summary>
+        /// A validation method that all consumers must implement.  Returns a validation result from FluentValidation.
+        /// </summary>
+        /// <returns></returns>
+        public abstract FluentValidation.Results.ValidationResult Validate();
+
         #endregion
 
         #region Client Access Methods
@@ -132,6 +138,13 @@ namespace CommandCentral
             }
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Adds a list item to the given list for a given value and description and then runs that list's validation.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "AddListItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointName_AddListItem(MessageToken token)
         {
 
@@ -151,11 +164,9 @@ namespace CommandCentral
             //Now we need to know to which list the client wants to add a list item.
             if (!token.Args.ContainsKey("listname"))
             {
-                token.AddErrorMessage("You must send a 'list' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("You must send a 'listname' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
-
-
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -173,14 +184,51 @@ namespace CommandCentral
                     var type = DataAccess.NHibernateHelper.GetEntityMetadata(listName).GetMappedClass(NHibernate.EntityMode.Poco);
 
                     //Now let's make sure the type the client is asking about is actually a reference list.
-                    if (!type.IsAssignableFrom(typeof(ReferenceListItemBase)))
+                    if (!type.IsSubclassOf(typeof(ReferenceListItemBase)))
                     {
                         token.AddErrorMessage("That list name is not a reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
                     
                     //Okey dokey.  So we have the list the client wants to add to.  Now let's get the value and the description the client wants to add.
+                    if (!token.Args.ContainsKey("value"))
+                    {
+                        token.AddErrorMessage("You didn't send a 'value' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+                    string value = token.Args["value"] as string;
 
+                    //Now we need the description from the client.  It is optional.
+                    string description = "";
+                    if (token.Args.ContainsKey("description"))
+                        description = token.Args["description"] as string;
+
+                    //Now put it in the object and then validate it.
+                    var listItem = Activator.CreateInstance(type) as ReferenceListItemBase;
+                    listItem.Description = description;
+                    listItem.Value = value;
+
+                    //Validate it.
+                    var validationResult = listItem.Validate();
+
+                    if (validationResult.Errors.Any())
+                    {
+                        token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Are we about to try to create a duplicate list?
+                    if (session.CreateCriteria(type.Name).Add(NHibernate.Criterion.Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    {
+                        token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //The list item is now valid. We can insert it.  It doens't need an Id because the mappings should handle that.
+                    session.Save(listItem);
+
+                    //Now we need all list items for this type to give back to the client.
+                    token.SetResult(session.CreateCriteria(type.Name).List());
 
                     transaction.Commit();
                 }

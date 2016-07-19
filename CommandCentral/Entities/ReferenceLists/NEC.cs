@@ -1,4 +1,5 @@
 ﻿using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -7,6 +8,16 @@ namespace CommandCentral.Entities.ReferenceLists
     /// </summary>
     public class NEC : ReferenceListItemBase
     {
+        /// <summary>
+        /// Validates an NEC.  Weeee.
+        /// </summary>
+        /// <returns></returns>
+        public override FluentValidation.Results.ValidationResult Validate()
+        {
+            return new NECValidator().Validate(this);
+        }
+
+
         /// <summary>
         /// Maps an NEC to the database.
         /// </summary>
@@ -23,6 +34,23 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Description).Nullable().Length(40);
 
                 Cache.ReadWrite();
+            }
+        }
+
+        /// <summary>
+        /// Validates an NEC
+        /// </summary>
+        public class NECValidator : AbstractValidator<NEC>
+        {
+            /// <summary>
+            /// Validates an NEC
+            /// </summary>
+            public NECValidator()
+            {
+                RuleFor(x => x.Description).Length(0, 40)
+                    .WithMessage("The description of an NEC can be no more than 40 characters.");
+                RuleFor(x => x.Value).Length(1, 10)
+                    .WithMessage("The value of an NEC must be between one and ten characters.");
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -7,6 +8,15 @@ namespace CommandCentral.Entities.ReferenceLists
     /// </summary>
     public class Designation : ReferenceListItemBase
     {
+        /// <summary>
+        /// Validates this designation.
+        /// </summary>
+        /// <returns></returns>
+        public override FluentValidation.Results.ValidationResult Validate()
+        {
+            return new DesignationValidator().Validate(this);
+        }
+
         /// <summary>
         /// Maps a Designation to the database.
         /// </summary>
@@ -23,6 +33,23 @@ namespace CommandCentral.Entities.ReferenceLists
                 Map(x => x.Description).Nullable().Length(40);
 
                 Cache.ReadWrite();
+            }
+        }
+
+        /// <summary>
+        /// Validates a designation.
+        /// </summary>
+        public class DesignationValidator : AbstractValidator<Designation>
+        {
+            /// <summary>
+            /// Validates a designation.
+            /// </summary>
+            public DesignationValidator()
+            {
+                RuleFor(x => x.Description).Length(0, 40)
+                    .WithMessage("The description of a designation can be no more than 40 characters.");
+                RuleFor(x => x.Value).Length(1, 10)
+                    .WithMessage("The value of a designation must be between one and ten characters.");
             }
         }
     }

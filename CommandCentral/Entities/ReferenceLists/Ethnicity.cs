@@ -1,4 +1,5 @@
 ﻿using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -7,6 +8,15 @@ namespace CommandCentral.Entities.ReferenceLists
     /// </summary>
     public class Ethnicity : ReferenceListItemBase
     {
+        /// <summary>
+        /// Validates this ethnicity.
+        /// </summary>
+        /// <returns></returns>
+        public override FluentValidation.Results.ValidationResult Validate()
+        {
+            return new EthnicityValidator().Validate(this);
+        }
+
         /// <summary>
         /// Maps an ethnicity to the database.
         /// </summary>
@@ -25,5 +35,23 @@ namespace CommandCentral.Entities.ReferenceLists
                 Cache.ReadWrite();
             }
         }
+
+        /// <summary>
+        /// Validates an ethnicity.
+        /// </summary>
+        public class EthnicityValidator : AbstractValidator<Ethnicity>
+        {
+            /// <summary>
+            /// Validates an ethnicity.
+            /// </summary>
+            public EthnicityValidator()
+            {
+                RuleFor(x => x.Description).Length(0, 40)
+                    .WithMessage("The description of an ethnicity may be no more than 40 characters.");
+                RuleFor(x => x.Value).Length(1, 15)
+                    .WithMessage("The value of an ethnicity must be between 1 and 15 characters.");
+            }
+        }
     }
+
 }
