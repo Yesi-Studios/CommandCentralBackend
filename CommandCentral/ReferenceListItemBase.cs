@@ -12,7 +12,6 @@ namespace CommandCentral
     /// </summary>
     public abstract class ReferenceListItemBase
     {
-
         #region Properties
 
         /// <summary>
@@ -133,7 +132,7 @@ namespace CommandCentral
             }
         }
 
-        /*private static void EndpointName_AddListItem(MessageToken token)
+        private static void EndpointName_AddListItem(MessageToken token)
         {
 
             //First we need to know if the client is logged in and is a client.
@@ -174,13 +173,13 @@ namespace CommandCentral
                     var type = DataAccess.NHibernateHelper.GetEntityMetadata(listName).GetMappedClass(NHibernate.EntityMode.Poco);
 
                     //Now let's make sure the type the client is asking about is actually a reference list.
-                    //if (!)
-
-                    if (classMetadata == null)
+                    if (!type.IsAssignableFrom(typeof(ReferenceListItemBase)))
                     {
-                        token.AddErrorMessage("", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        token.AddErrorMessage("That list name is not a reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
+                    
+                    //Okey dokey.  So we have the list the client wants to add to.  Now let's get the value and the description the client wants to add.
 
 
                     transaction.Commit();
@@ -191,7 +190,7 @@ namespace CommandCentral
                     throw;
                 }
             }
-        }*/
+        }
 
         #endregion
 

@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using CommandCentral.ClientAccess;
 using AtwoodUtils;
 
-
-
 namespace CommandCentral
 {
     /// <summary>
