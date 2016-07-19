@@ -240,6 +240,92 @@ namespace CommandCentral
             }
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Edits a given line item with the give value and description assuming both pass validation.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "EditListItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_EditListItem(MessageToken token)
+        {
+            //First we need to know if the client is logged in and is a client.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to edit a list item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            {
+                token.AddErrorMessage("Only developers may edit list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Now we need the params from the client.  First up is the Id.
+            if (!token.Args.ContainsKey("listitemid"))
+            {
+                token.AddErrorMessage("You didn't send a 'listitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid listItemId;
+            if (!Guid.TryParse(token.Args["listitemid"] as string, out listItemId))
+            {
+                token.AddErrorMessage("The list item Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Let's load the list item and make sure it's real.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var listItem = session.Get<ReferenceListItemBase>(listItemId);
+
+                    if (listItem == null)
+                    {
+                        token.AddErrorMessage("The list item id that you provided did not resolve to a real list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok, so we have the list.  Now let's put the client's values in and ask if they're valid.
+                    if (token.Args.ContainsKey("value"))
+                        listItem.Value = token.Args["value"] as string;
+                    if (token.Args.ContainsKey("description"))
+                        listItem.Description = token.Args["description"] as string;
+
+                    //Validation
+                    var result = listItem.Validate();
+
+                    if (!result.IsValid)
+                    {
+                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok that's all good.  Let's update the list.
+                    session.Update(listItem);
+
+                    //Then, we're going to set the result to the list of all list items from this list. List.
+                    token.SetResult(session.CreateCriteria(listItem.GetType().Name).List());
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+            //Now we need the Value and the Description from the client.  Both are optional.
+
+
+        }
+
+
         #endregion
 
     }
