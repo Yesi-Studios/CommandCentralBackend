@@ -101,6 +101,7 @@
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
+    <Compile Include="FileProvider.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
@@ -184,6 +185,9 @@
     <None Include="app.config" />
     <Compile Include="Entities\Person.cs" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Resources\Files\Never.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AtwoodUtils\AtwoodUtils.csproj">

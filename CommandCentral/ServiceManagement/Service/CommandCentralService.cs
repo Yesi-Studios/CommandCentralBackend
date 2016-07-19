@@ -43,7 +43,7 @@ namespace CommandCentral.ServiceManagement.Service
 
         #endregion
 
-        #region Endpoints
+        #region Main Endpoint / Client Entry Point
 
         /// <summary>
         /// All endpoint calls get directed to this method where we read the endpoint the client is trying to call and then look for that endpoint to have been registered at start up.
@@ -275,6 +275,23 @@ namespace CommandCentral.ServiceManagement.Service
 
         #endregion
 
+        #region File Service
+
+        /// <summary>
+        /// Serves a given file by its file name.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public Stream DownloadFile(string fileName)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string resourceName = string.Format("CommandCentral.Resources.Files.{0}", fileName);
+
+            return assembly.GetManifestResourceStream(resourceName);
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -284,7 +301,7 @@ namespace CommandCentral.ServiceManagement.Service
         private static void AddHeadersToOutgoingResponse(WebOperationContext current)
         {
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
-            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
+            current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
             current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
         }
