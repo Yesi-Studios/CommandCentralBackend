@@ -325,6 +325,54 @@ namespace CommandCentral
 
         }
 
+        [EndpointMethod(EndpointName = "DeleteListItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_DeleteListItem(MessageToken token)
+        {
+            //First we need to know if the client is logged in and is a client.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to delete a list item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            {
+                token.AddErrorMessage("Only developers may delete list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Now we need the params from the client.  First up is the Id.
+            if (!token.Args.ContainsKey("listitemid"))
+            {
+                token.AddErrorMessage("You didn't send a 'listitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid listItemId;
+            if (!Guid.TryParse(token.Args["listitemid"] as string, out listItemId))
+            {
+                token.AddErrorMessage("The list item Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now we delete it.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    session.Delete(listItemId);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
 
         #endregion
 
