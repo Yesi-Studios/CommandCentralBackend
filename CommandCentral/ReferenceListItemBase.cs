@@ -361,7 +361,17 @@ namespace CommandCentral
             {
                 try
                 {
-                    session.Delete(listItemId);
+
+                    var listItem = session.QueryOver<ReferenceListItemBase>().Where(x => x.Id == listItemId).SingleOrDefault();
+
+                    if (listItem == null)
+                    {
+                        token.AddErrorMessage("The list item id provided matched no list items.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Since we found a list item let's go ahead and delete it.
+                    session.Delete(listItem);
 
                     transaction.Commit();
                 }
