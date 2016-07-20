@@ -226,17 +226,40 @@ namespace CommandCentral.Entities.Muster
             {
                 try
                 {
-                    var persons = session.QueryOver<Person>();
+                    //Set it to true to prevent anyone else trying to finalize the muster while we're processing.
+                    IsMusterFinalized = true;
+
+                    var persons = GetMusterablePersons(session);
                     
                     //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
+                    foreach (Person per in persons)
+                    {
+                        per.CurrentMusterStatus.Command = per.Command.Value;
+                        per.CurrentMusterStatus.Department = per.Department.Value;
+                        per.CurrentMusterStatus.Division = per.Division.Value;
+                        per.CurrentMusterStatus.DutyStatus = per.DutyStatus.ToString();
+                        if (!per.CurrentMusterStatus.HasBeenSubmitted)
+                        {
+                            per.CurrentMusterStatus.MusterStatus = CommandCentral.MusterStatuses.UA.ToString();
+                            per.CurrentMusterStatus.SubmitTime = DateTime.Now;
+                        }
+                        per.CurrentMusterStatus.HasBeenSubmitted = true;
+                        per.CurrentMusterStatus.Paygrade = per.Paygrade.ToString();
+                        per.CurrentMusterStatus.UIC = per.UIC == null ? "" : per.UIC.Value;
 
+                        session.Save(per);
+                    }
 
-                    IsMusterFinalized = true;
+                    transaction.Commit();
                 }
                 catch (Exception e)
                 {
                     transaction.Rollback();
-                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+
+                    //Set to false becaues we rolled back our changes.
+                    IsMusterFinalized = false;
+
+                    Communicator.PostMessageToHost("The finalize muster method failed!  All changes were rolled back. The muster was not finalized! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
 
                     EmailHelper.SendFatalErrorEmail(null, e);
 
@@ -482,10 +505,15 @@ namespace CommandCentral.Entities.Muster
             }
 
             DateTime musterDate;
-            if (!DateTime.TryParse(token.Args["musterdate"] as string, out musterDate))
+            if (!(token.Args["musterdate"] is DateTime))
             {
                 token.AddErrorMessage("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
+            }
+            else
+            {
+                //Here we set the date time to .Date.  This strips off the time component.
+                musterDate = ((DateTime)token.Args["musterdate"]).Date;
             }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -502,7 +530,7 @@ namespace CommandCentral.Entities.Muster
                     x.Id,
                     x.MusterDayOfYear,
                     Musteree = x.Musteree.ToBasicPerson(),
-                    Musterer = x.Musterer.ToBasicPerson(),
+                    Musterer = x.Musterer == null ? null : x.Musterer.ToBasicPerson(),
                     x.MusterStatus,
                     x.MusterYear,
                     x.Paygrade,
@@ -684,7 +712,23 @@ namespace CommandCentral.Entities.Muster
                         Command = x.Command.Value,
                         UIC = x.UIC == null ? "" : x.UIC.Value, //As can UIC
                         FriendlyName = x.ToString(),
-                        CurrentMusterStatus = x.CurrentMusterStatus,
+                        CurrentMusterStatus = new
+                        {
+                            x.CurrentMusterStatus.Command,
+                            x.CurrentMusterStatus.Department,
+                            x.CurrentMusterStatus.Division,
+                            x.CurrentMusterStatus.DutyStatus,
+                            x.CurrentMusterStatus.HasBeenSubmitted,
+                            x.CurrentMusterStatus.Id,
+                            x.CurrentMusterStatus.MusterDayOfYear,
+                            Musteree = x.CurrentMusterStatus.Musteree.ToBasicPerson(),
+                            Musterer = x.CurrentMusterStatus.Musterer == null ? null : x.CurrentMusterStatus.Musterer.ToBasicPerson(),
+                            x.CurrentMusterStatus.MusterStatus,
+                            x.CurrentMusterStatus.MusterYear,
+                            x.CurrentMusterStatus.Paygrade,
+                            x.CurrentMusterStatus.SubmitTime,
+                            x.CurrentMusterStatus.UIC
+                        },
                         CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
                         HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
                     };
@@ -756,12 +800,12 @@ namespace CommandCentral.Entities.Muster
                 References(x => x.Musterer).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Musteree).Nullable().LazyLoad(Laziness.False);
 
-                Map(x => x.Paygrade).Nullable().Length(10);
-                Map(x => x.Division).Nullable().Length(10);
-                Map(x => x.Department).Nullable().Length(10);
-                Map(x => x.Command).Nullable().Length(10);
-                Map(x => x.MusterStatus).Nullable().Length(20);
-                Map(x => x.DutyStatus).Nullable().Length(20);
+                Map(x => x.Paygrade).Nullable().Length(40);
+                Map(x => x.Division).Nullable().Length(40);
+                Map(x => x.Department).Nullable().Length(40);
+                Map(x => x.Command).Nullable().Length(40);
+                Map(x => x.MusterStatus).Nullable().Length(40);
+                Map(x => x.DutyStatus).Nullable().Length(40);
                 Map(x => x.SubmitTime).Nullable();
                 Map(x => x.MusterDayOfYear).Nullable();
                 Map(x => x.MusterYear).Not.Nullable();

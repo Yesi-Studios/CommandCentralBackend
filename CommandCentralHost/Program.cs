@@ -108,17 +108,10 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
-                OptionText = "Fuck all persons",
+                OptionText = "Finalize Muster",
                 Method = () =>
                     {
-                        var session = CommandCentral.DataAccess.NHibernateHelper.CreateStatefulSession();
-
-                        session.QueryOver<CommandCentral.Entities.Person>().List().ToList().ForEach(x =>
-                            {
-                                session.Delete(x);
-                            });
-
-                        session.Flush();
+                        CommandCentral.Entities.Muster.MusterRecord.FinalizeMuster(null);
                     },
                 DisplayCriteria = () => true
             }
