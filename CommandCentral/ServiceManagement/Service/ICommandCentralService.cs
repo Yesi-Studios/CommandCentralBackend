@@ -35,7 +35,7 @@ namespace CommandCentral.ServiceManagement.Service
         /// <param name="fileName"></param>
         /// <returns></returns>
         [OperationContract]
-        [WebGet(UriTemplate = "File/{fileName}")]
+        [WebGet(UriTemplate = "Files/{fileName}")]
         Stream DownloadFile(string fileName);
 
     }
