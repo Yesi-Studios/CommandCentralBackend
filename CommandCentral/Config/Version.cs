@@ -12,7 +12,9 @@ namespace CommandCentral.Config
     /// </summary>
     public static class Version
     {
-        //The version
-        public const string RELEASE_VERSION = "0.9.3.0";
+        /// <summary>
+        /// The version.
+        /// </summary>
+        public const string RELEASE_VERSION = "0.9.5.1";
     }
 }

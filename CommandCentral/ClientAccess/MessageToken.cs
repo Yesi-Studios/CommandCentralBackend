@@ -89,7 +89,7 @@ namespace CommandCentral.ClientAccess
         {
             get
             {
-                return ConstructResponseString();
+                return ConstructResponseString().Truncate(10000);
             }
         }
 

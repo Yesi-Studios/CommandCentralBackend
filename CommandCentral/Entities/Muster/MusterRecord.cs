@@ -678,11 +678,11 @@ namespace CommandCentral.Entities.Muster
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
                         Paygrade = x.Paygrade,
-                        Designation = x.Designation.Value,
+                        Designation = x.Designation == null ? "" : x.Designation.Value, //Designation can be bull.
                         Division = x.Division.Value,
                         Department = x.Department.Value,
                         Command = x.Command.Value,
-                        UIC = x.UIC.Value,
+                        UIC = x.UIC == null ? "" : x.UIC.Value, //As can UIC
                         FriendlyName = x.ToString(),
                         CurrentMusterStatus = x.CurrentMusterStatus,
                         CanMuster = CanClientMusterPerson(token.AuthenticationSession.Person, x),
