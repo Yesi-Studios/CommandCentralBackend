@@ -178,7 +178,7 @@ namespace CommandCentral.ServiceManagement
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "SwitchEndpoint", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        [EndpointMethod(EndpointName = "SwitchEndpoint", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_SwitchEndpoint(MessageToken token)
         {
             //Just make sure the client is logged in.
