@@ -275,7 +275,41 @@ namespace CommandCentral.Entities.Muster
         /// </summary>
         public static void RolloverMuster()
         {
+            if (!IsMusterFinalized)
+                throw new Exception("You can't rollover the muster until it has been finalized.");
 
+            //First up, we need everyone and their muster records.  Actually we need a session first.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var persons = GetMusterablePersons(session);
+
+                    //Now we need to go through each person and reset their current muster status.
+                    foreach (var person in persons)
+                    {
+                        person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        session.Save(person);
+                    }
+
+                    IsMusterFinalized = false;
+
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+
+                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+
+                    EmailHelper.SendFatalErrorEmail(null, e);
+
+                    session.Save(new Error(e, DateTime.Now, null));
+
+                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
+                }
+            }
         }
 
         /// <summary>

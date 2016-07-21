@@ -114,6 +114,15 @@ namespace CommandCentralHost
                         CommandCentral.Entities.Muster.MusterRecord.FinalizeMuster(null);
                     },
                 DisplayCriteria = () => true
+            },
+            new DialogueOption
+            {
+                OptionText = "Rollover Muster",
+                Method = () =>
+                    {
+                        CommandCentral.Entities.Muster.MusterRecord.RolloverMuster();
+                    },
+                DisplayCriteria = () => true
             }
 
 
