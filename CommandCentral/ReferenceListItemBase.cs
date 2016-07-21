@@ -319,12 +319,14 @@ namespace CommandCentral
                     throw;
                 }
             }
-
-            //Now we need the Value and the Description from the client.  Both are optional.
-
-
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Deletes a given list item given an Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
         [EndpointMethod(EndpointName = "DeleteListItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_DeleteListItem(MessageToken token)
         {
@@ -383,8 +385,6 @@ namespace CommandCentral
             }
         }
 
-
         #endregion
-
     }
 }
