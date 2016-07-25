@@ -190,18 +190,18 @@ namespace CommandCentral.Entities.Muster
                 return true;
 
             //What is the highest permission level this person has.
-            Authorization.PermissionLevels highestLevel = client.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
+            Authorization.PermissionGroupLevels highestLevel = client.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
 
             //If none, then return false;
-            if (highestLevel == Authorization.PermissionLevels.None)
+            if (highestLevel == Authorization.PermissionGroupLevels.None)
                 return false;
 
             //Alright, now go through the CoC checks.
-            if (highestLevel == Authorization.PermissionLevels.Command && client.IsInSameCommandAs(person))
+            if (highestLevel == Authorization.PermissionGroupLevels.Command && client.IsInSameCommandAs(person))
                 return true;
-            if (highestLevel == Authorization.PermissionLevels.Department && client.IsInSameDepartmentAs(person))
+            if (highestLevel == Authorization.PermissionGroupLevels.Department && client.IsInSameDepartmentAs(person))
                 return true;
-            if (highestLevel == Authorization.PermissionLevels.Division && client.IsInSameDivisionAs(person))
+            if (highestLevel == Authorization.PermissionGroupLevels.Division && client.IsInSameDivisionAs(person))
                 return true;
 
             return false;
@@ -688,12 +688,12 @@ namespace CommandCentral.Entities.Muster
             //Where we're going to keep all the persons the client can muster.
             List<Person> musterablePersons = new List<Person>();
 
-            Authorization.PermissionLevels highestLevel = token.AuthenticationSession.Person.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
+            Authorization.PermissionGroupLevels highestLevel = token.AuthenticationSession.Person.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
-                if (highestLevel == Authorization.PermissionLevels.None)
+                if (highestLevel == Authorization.PermissionGroupLevels.None)
                 {
                     musterablePersons.Add(token.AuthenticationSession.Person);
                 }
@@ -704,17 +704,17 @@ namespace CommandCentral.Entities.Muster
 
                     switch (highestLevel)
                     {
-                        case Authorization.PermissionLevels.Command:
+                        case Authorization.PermissionGroupLevels.Command:
                             {
                                 queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
                                 break;
                             }
-                        case Authorization.PermissionLevels.Department:
+                        case Authorization.PermissionGroupLevels.Department:
                             {
                                 queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
                                 break;
                             }
-                        case Authorization.PermissionLevels.Division:
+                        case Authorization.PermissionGroupLevels.Division:
                             {
                                 queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
                                 break;
@@ -790,7 +790,7 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionLevels.Command, Authorization.PermissionTracks.Muster))
+            if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionGroupLevels.Command, Authorization.PermissionTracks.Muster))
             {
                 token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;

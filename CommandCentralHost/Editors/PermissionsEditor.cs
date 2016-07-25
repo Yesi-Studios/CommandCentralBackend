@@ -196,14 +196,14 @@ namespace CommandCentralHost.Editors
                                 "The current permission level is, '{0}'. Choose a new one from below.".FormatS(group.PermissionLevel).WriteLine();
                                 "".WriteLine();
 
-                                var names = Enum.GetNames(typeof(PermissionLevels));
+                                var names = Enum.GetNames(typeof(PermissionGroupLevels));
                                 for (int x = 0; x < names.Length; x++)
                                     "{0}. {1}".FormatS(x, names[x]).WriteLine();
 
                                 int levelOption = -1;
                                 if (int.TryParse(Console.ReadLine(), out levelOption) && levelOption >= 0 && levelOption < names.Length)
                                 {
-                                    group.PermissionLevel = (PermissionLevels)Enum.Parse(typeof(PermissionLevels), names[levelOption]);
+                                    group.PermissionLevel = (PermissionGroupLevels)Enum.Parse(typeof(PermissionGroupLevels), names[levelOption]);
                                 }
 
                                 break;

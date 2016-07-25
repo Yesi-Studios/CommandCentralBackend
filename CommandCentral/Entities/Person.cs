@@ -301,13 +301,13 @@ namespace CommandCentral.Entities
             if (Id == person.Id)
                 return false;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command))
+            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
+            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
                 return true;
 
             return false;
@@ -333,7 +333,7 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="permissionLevel"></param>
         /// <returns></returns>
-        public virtual bool HasPermissionLevelInTrack(PermissionLevels permissionLevel, PermissionTracks track)
+        public virtual bool HasPermissionLevelInTrack(PermissionGroupLevels permissionLevel, PermissionTracks track)
         {
             return PermissionGroups.Any(x => x.PermissionTrack == track && x.PermissionLevel == permissionLevel);
         }
@@ -385,12 +385,12 @@ namespace CommandCentral.Entities
         /// </summary>
         /// <param name="track"></param>
         /// <returns></returns>
-        public virtual PermissionLevels GetHighestLevelInTrack(PermissionTracks track)
+        public virtual PermissionGroupLevels GetHighestLevelInTrack(PermissionTracks track)
         {
             var groups = PermissionGroups.Where(x => x.PermissionTrack == track);
 
             if (!groups.Any())
-                return PermissionLevels.None;
+                return PermissionGroupLevels.None;
 
             return groups.Max(x => x.PermissionLevel);
         }

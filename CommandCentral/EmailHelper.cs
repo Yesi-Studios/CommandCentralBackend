@@ -28,8 +28,8 @@ namespace CommandCentral
         /// <summary>
         /// The SMTP server to use to send our emails.
         /// </summary>
-        //public static readonly string SmtpHost = "localhost";
-        public static readonly string SmtpHost = "smtp.gordon.army.mil";
+        public static readonly string SmtpHost = "localhost";
+        //public static readonly string SmtpHost = "smtp.gordon.army.mil";
 
         /// <summary>
         /// The template URI for where the complete registration page can be found. 147.51.62.19
