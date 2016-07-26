@@ -10,7 +10,7 @@ namespace AtwoodUtils
         {
             Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
             ContractResolver = new NHibernateContractResolver(),
-            PreserveReferencesHandling = PreserveReferencesHandling.None,
+            PreserveReferencesHandling = PreserveReferencesHandling.All,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.Indented
         };

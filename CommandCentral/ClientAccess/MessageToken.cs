@@ -36,10 +36,21 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         public virtual Dictionary<string, object> Args { get; set; }
 
+        private string _rawRequestBody = "";
         /// <summary>
-        /// The body of the request prior to processing.
+        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters.
         /// </summary>
-        public virtual string RawRequestBody { get; set; }
+        public virtual string RawRequestBody
+        {
+            get
+            {
+                return _rawRequestBody.Truncate(10000);
+            }
+            set
+            {
+                _rawRequestBody = value;
+            }
+        }
 
         /// <summary>
         /// The endpoint that was called by the client.
@@ -172,7 +183,7 @@ namespace CommandCentral.ClientAccess
             {
                 try
                 {
-                    var dict = RawRequestBody.Deserialize<Dictionary<string, object>>();
+                    var dict = body.Deserialize<Dictionary<string, object>>();
                     Args = new Dictionary<string, object>(dict, StringComparer.OrdinalIgnoreCase);
                 }
                 catch
