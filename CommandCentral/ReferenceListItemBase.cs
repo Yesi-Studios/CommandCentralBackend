@@ -110,7 +110,7 @@ namespace CommandCentral
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
-        /// Returns all reference lists to the client.  Reference lists are ordered by their type.
+        /// Returns all reference lists and enums to the client.  Reference lists are ordered by their type.
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
@@ -133,6 +133,30 @@ namespace CommandCentral
                 result.Add("Paygrades", Enum.GetNames(typeof(Paygrades)));
                 result.Add("PhoneNumberTypes", Enum.GetNames(typeof(PhoneNumberTypes)));
                 result.Add("Sexes", Enum.GetNames(typeof(Sexes)));
+
+                token.SetResult(result);
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Returns all reference lists and only reference lists to the client.  Reference lists are ordered by their type.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadEditableLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadEditableLists(MessageToken token)
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var result = new Dictionary<string, object>();
+
+                //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+                result = session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                    .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
+                    {
+                        return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
+                    }).ToDictionary(x => x.Key, x => (object)x.Value);
 
                 token.SetResult(result);
             }
