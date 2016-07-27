@@ -251,9 +251,6 @@ namespace CommandCentral
                     //The list item is now valid. We can insert it.  It doens't need an Id because the mappings should handle that.
                     session.Save(listItem);
 
-                    //Now we need all list items for this type to give back to the client.
-                    token.SetResult(session.CreateCriteria(type.Name).List());
-
                     transaction.Commit();
                 }
                 catch
@@ -300,13 +297,29 @@ namespace CommandCentral
                 return;
             }
 
+            if (!token.Args.ContainsKey("listname"))
+            {
+                token.AddErrorMessage("You must send a list name parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var listName = token.Args["listname"] as string;
+
+            //Make sure that list name is real.
+            if (!DataAccess.NHibernateHelper.GetAllEntityMetadata().ContainsKey(listName))
+            {
+                token.AddErrorMessage("That list name is not a reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
             //Let's load the list item and make sure it's real.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    var listItem = session.Get<ReferenceListItemBase>(listItemId);
+                    var listItem = session.Get(listName, listItemId) as ReferenceListItemBase;
 
                     if (listItem == null)
                     {
@@ -331,9 +344,6 @@ namespace CommandCentral
 
                     //Ok that's all good.  Let's update the list.
                     session.Update(listItem);
-
-                    //Then, we're going to set the result to the list of all list items from this list. List.
-                    token.SetResult(session.CreateCriteria(listItem.GetType().Name).List());
 
                     transaction.Commit();
                 }
