@@ -1090,7 +1090,7 @@ namespace CommandCentral.Entities
                     return;
                 }
 
-                Person personReturn = new Person();
+                Dictionary<string, object> returnData = new Dictionary<string, object>();
 
                 List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
 
@@ -1102,11 +1102,31 @@ namespace CommandCentral.Entities
                     //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
                     if (propertyName.ToLower() == "id")
                     {
-                        personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                        returnData.Add("Id", personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco));
                     }
                     else
                     {
-                        personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                        bool wasSet = false;
+
+                        switch (propertyName.ToLower())
+                        {
+                            case "command":
+                            case "department":
+                            case "division":
+                                {
+                                    returnData.Add(propertyName, NHibernateHelper.GetIdentifier(personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco)));
+
+                                    wasSet = true;
+                                    break;
+                                }
+
+                        }
+
+                        if (!wasSet)
+                        {
+                            returnData.Add(propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco));
+                        }
+
                     }
                 }
 
@@ -1115,8 +1135,8 @@ namespace CommandCentral.Entities
 
                 token.SetResult(new
                 {
-                    Person = personReturn,
-                    IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id,
+                    Person = returnData,
+                    IsMyProfile = token.AuthenticationSession.Person.Id == person.Id,
                     EditableFields = editableFields,
                     ReturnableFields = returnableFields
                 });

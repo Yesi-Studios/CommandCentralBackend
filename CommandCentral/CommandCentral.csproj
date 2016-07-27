@@ -120,7 +120,7 @@
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Enums\MusterStatusesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\Rate.cs" />
+    <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />
