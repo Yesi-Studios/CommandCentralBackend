@@ -14,7 +14,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <returns></returns>
         public override FluentValidation.Results.ValidationResult Validate()
         {
-            throw new System.NotImplementedException();
+            return new ReligiousPreferenceValidator().Validate(this);
         }
         /// <summary>
         /// Maps a Religious Preference to the database.
