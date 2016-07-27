@@ -109,6 +109,11 @@ namespace CommandCentral.DataAccess
             return _sessionFactory.OpenStatelessSession();
         }
 
+        public static object GetIdentifier(object entity, string identifierPropertyName = "Id")
+        {
+            return entity.GetType().GetProperty(identifierPropertyName).GetValue(entity);
+        }
+
         /// <summary>
         /// Released the session factory and disposes its resources.
         /// </summary>
