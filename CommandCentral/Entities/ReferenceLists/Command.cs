@@ -104,7 +104,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
-        /// Loads all commands and their corresponding departments/divisions from the database.cache.
+        /// Loads all commands and their corresponding departments/divisions from the database.
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadCommands", AllowArgumentLogging = true, AllowResponseLogging =  true, RequiresAuthentication = false)]
@@ -112,7 +112,7 @@ namespace CommandCentral.Entities.ReferenceLists
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+                //Very easily we're just going to throw back all the commands.
                 token.SetResult(session.QueryOver<Command>().List<Command>());
             }
         }
@@ -388,9 +388,9 @@ namespace CommandCentral.Entities.ReferenceLists
             public CommandValidator()
             {
                 RuleFor(x => x.Description).Length(0, 40)
-                    .WithMessage("The description of a UIC must be no more than 40 characters.");
+                    .WithMessage("The description of a Command must be no more than 40 characters.");
                 RuleFor(x => x.Value).Length(1, 15)
-                    .WithMessage("The value of a UIC must be between one and ten characters.");
+                    .WithMessage("The value of a Command must be between one and ten characters.");
             }
         }
 
