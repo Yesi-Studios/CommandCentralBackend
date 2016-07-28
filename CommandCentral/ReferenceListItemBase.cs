@@ -4,13 +4,15 @@ using System.Linq;
 using System.Collections.Generic;
 using CommandCentral.ClientAccess;
 using AtwoodUtils;
+using FluentValidation.Results;
+using NHibernate.Criterion;
 
 namespace CommandCentral
 {
     /// <summary>
     /// Provides abstracted access to a reference list such as Ranks or Rates.
     /// </summary>
-    public abstract class ReferenceListItemBase
+    public abstract class ReferenceListItemBase : IValidatable
     {
         #region Properties
 
@@ -98,10 +100,10 @@ namespace CommandCentral
         }
 
         /// <summary>
-        /// A validation method that all consumers must implement.  Returns a validation result from FluentValidation.
+        /// Projected from the IValidatable interface.
         /// </summary>
         /// <returns></returns>
-        public abstract FluentValidation.Results.ValidationResult Validate();
+        public abstract ValidationResult Validate();
 
         #endregion
 
@@ -242,7 +244,7 @@ namespace CommandCentral
                     }
 
                     //Are we about to try to create a duplicate list?
-                    if (session.CreateCriteria(type.Name).Add(NHibernate.Criterion.Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    if (session.CreateCriteria(type.Name).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
                     {
                         token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
@@ -342,6 +344,13 @@ namespace CommandCentral
                         return;
                     }
 
+                    //Also make sure no list has this value.
+                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    {
+                        token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
                     //Ok that's all good.  Let's update the list.
                     session.Update(listItem);
 
@@ -418,6 +427,7 @@ namespace CommandCentral
                 }
             }
         }
+
 
         #endregion
     }
