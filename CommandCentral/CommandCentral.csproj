@@ -102,6 +102,7 @@
     <Compile Include="Config\Version.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
     <Compile Include="FileProvider.cs" />
+    <Compile Include="IValidatable.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />

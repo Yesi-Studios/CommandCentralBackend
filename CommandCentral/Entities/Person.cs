@@ -1849,14 +1849,14 @@ namespace CommandCentral.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False);
-                References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Designation).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False).Cascade.All();
+                References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False).Cascade.All();
+                References(x => x.Designation).Nullable().LazyLoad(Laziness.False).Cascade.All();
+                References(x => x.UIC).Nullable().LazyLoad(Laziness.False).Cascade.All();
                 References(x => x.Division).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Department).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Command).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Billet).Nullable().LazyLoad(Laziness.False);
-                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
                 Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
