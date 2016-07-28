@@ -92,7 +92,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// Validates this command object.
         /// </summary>
         /// <returns></returns>
-        public FluentValidation.Results.ValidationResult Validate()
+        public virtual FluentValidation.Results.ValidationResult Validate()
         {
             return new CommandValidator().Validate(this);
         }
