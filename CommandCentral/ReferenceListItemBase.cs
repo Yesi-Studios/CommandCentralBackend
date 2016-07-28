@@ -244,7 +244,7 @@ namespace CommandCentral
                     }
 
                     //Are we about to try to create a duplicate list?
-                    if (session.CreateCriteria(type.Name).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any(x => x.Id != listItem.Id))
                     {
                         token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
@@ -345,7 +345,7 @@ namespace CommandCentral
                     }
 
                     //Also make sure no list has this value.
-                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any(x => x.Id != listItem.Id))
                     {
                         token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
@@ -415,7 +415,62 @@ namespace CommandCentral
                         return;
                     }
 
-                    //Since we found a list item let's go ahead and delete it.
+                    //Does the client want us to delete things? (default = false)
+                    var forceDelete = false;
+                    if (token.Args.ContainsKey("forcedelete"))
+                    {
+                        forceDelete = (bool)token.Args["forcedelete"];
+                    }
+
+                    //Now that we have a list item, let's see if it's referenced anywhere...
+                    //First we need all objects that reference our type in the database.
+                    var referencingTypes = DataAccess.NHibernateHelper.GetAllEntityMetadata().Values
+                        .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco))
+                        .Where(x => x.GetProperties().Any(y => y.PropertyType != null && y.PropertyType == listItem.GetType()));
+
+                    List<IList> containingObjects = new List<IList>();
+
+                    foreach (var type in referencingTypes)
+                    {
+                        var query = session.CreateCriteria(type.Name);
+                        foreach (var property in type.GetProperties().Where(x => x.PropertyType == listItem.GetType()))
+                        {
+                            query.Add(Expression.Eq(property.Name, listItem));
+                        }
+
+                        containingObjects.Add(query.List());
+                    }
+
+                    //If we got any objects containing our thing, then delete them.
+                    if (containingObjects.SelectMany(x => x as IList<object>).Any())
+                    {
+                        if (!forceDelete)
+                        {
+                            var referencingEntityNames = containingObjects.SelectMany(x => x as IList<object>).Select(x => x.GetType().Name).Distinct().ToList();
+
+                            token.AddErrorMessage("The {0} you tried to delete is still referenced in {1} place(s) on {2} entities: {3}.  In order to delete this item, you must force the deletion or remove the reference to this item from all entities."
+                                .FormatS(listItem.GetType().Name, containingObjects.Sum(x => x.Count), referencingEntityNames.Count, String.Join(",", referencingEntityNames)),
+                                ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                        else
+                        {
+                            //There are references but the client wants us to delete them.  Let's do that.
+                            foreach (var obj in containingObjects.SelectMany(x => x as List<object>))
+                            {
+                                //Now we need to set the properties with our reference type to null
+                                foreach (var property in obj.GetType().GetProperties().Where(x => x.PropertyType == listItem.GetType()))
+                                {
+                                    property.SetValue(obj, null);
+                                }
+
+                                //Now save the object.
+                                session.Save(obj);
+                            }
+                        }
+                    }
+
+                    //Since we found a list item let's go ahead and delete it.  All references to it should be removed now.
                     session.Delete(listItem);
 
                     transaction.Commit();
