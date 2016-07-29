@@ -122,12 +122,20 @@ namespace CommandCentral
             {
                 var result = new Dictionary<string, object>();
 
+                //Add the reference lists.  We have to do it first. And then load the values into them.
+                result = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Values.Where(x => x.GetMappedClass(NHibernate.EntityMode.Poco).IsSubclassOf(typeof(ReferenceListItemBase)))
+                    .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco).Name).ToDictionary(x => x, x => new object());
+
                 //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-                result = session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
                     .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
                     {
                         return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
-                    }).ToDictionary(x => x.Key, x => (object)x.Value);
+                    }).ToList().ForEach(x =>
+                        {
+                            result[x.Key] = x.Value;
+                        });
                 //TODO REVIEW go through the enum namespace
                 result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
                 result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
@@ -153,12 +161,20 @@ namespace CommandCentral
             {
                 var result = new Dictionary<string, object>();
 
+                //Add the reference lists.  We have to do it first. And then load the values into them.
+                result = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Values.Where(x => x.GetMappedClass(NHibernate.EntityMode.Poco).IsSubclassOf(typeof(ReferenceListItemBase)))
+                    .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco).Name).ToDictionary(x => x, x => new object());
+
                 //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-                result = session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
                     .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
                     {
                         return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
-                    }).ToDictionary(x => x.Key, x => (object)x.Value);
+                    }).ToList().ForEach(x =>
+                    {
+                        result[x.Key] = x.Value;
+                    });
 
                 token.SetResult(result);
             }
