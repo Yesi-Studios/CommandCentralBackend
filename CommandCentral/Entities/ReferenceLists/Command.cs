@@ -222,7 +222,7 @@ namespace CommandCentral.Entities.ReferenceLists
             Guid commandId;
             if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
             {
-                token.AddErrorMessage("The list item Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("The command Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -256,13 +256,13 @@ namespace CommandCentral.Entities.ReferenceLists
                     }
 
                     //Also make sure no command has this value.
-                    if (session.CreateCriteria<Command>().Add(Expression.Like("Value", command.Value)).List<ReferenceListItemBase>().Any())
+                    if (session.CreateCriteria<Command>().Add(Expression.Like("Value", command.Value)).List<Command>().Any())
                     {
                         token.AddErrorMessage("A command with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
-                    //Ok that's all good.  Let's update the list.
+                    //Ok that's all good.  Let's update the command.
                     session.Update(command);
 
                     transaction.Commit();

@@ -249,6 +249,91 @@ namespace CommandCentral.Entities.ReferenceLists
             }
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Edits a given department's value and description. for a given department Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "EditDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_EditDepartment(MessageToken token)
+        {
+            //First we need to know if the client is logged in and is a client.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to edit a department.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            {
+                token.AddErrorMessage("Only developers may edit departments.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Now we need the params from the client.  First up is the Id.
+            if (!token.Args.ContainsKey("departmentid"))
+            {
+                token.AddErrorMessage("You didn't send a 'departmentid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid departmentId;
+            if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
+            {
+                token.AddErrorMessage("The department Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Let's load the department and make sure it's real.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var department = session.Get<Command>(departmentId);
+
+                    if (department == null)
+                    {
+                        token.AddErrorMessage("The department id that you provided did not resolve to a real department.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok, so we have the list.  Now let's put the client's values in and ask if they're valid.
+                    if (token.Args.ContainsKey("value"))
+                        department.Value = token.Args["value"] as string;
+                    if (token.Args.ContainsKey("description"))
+                        department.Description = token.Args["description"] as string;
+
+                    //Validation
+                    var result = department.Validate();
+
+                    if (!result.IsValid)
+                    {
+                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Also make sure no command has this value.
+                    if (session.CreateCriteria<Department>().Add(Expression.Like("Value", department.Value)).List<Department>().Any())
+                    {
+                        token.AddErrorMessage("A department with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Ok that's all good.  Let's update the department.
+                    session.Update(department);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
         
 
         #endregion
