@@ -256,7 +256,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     }
 
                     //Also make sure no command has this value.
-                    if (session.CreateCriteria<Command>().Add(Expression.Like("Value", command.Value)).List<Command>().Any())
+                    if (session.CreateCriteria<Command>().Add(Expression.Like("Value", command.Value)).List<Command>().Any(x => x.Id != command.Id))
                     {
                         token.AddErrorMessage("A command with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;

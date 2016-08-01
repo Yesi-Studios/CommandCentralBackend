@@ -315,7 +315,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     }
 
                     //Also make sure no command has this value.
-                    if (session.CreateCriteria<Department>().Add(Expression.Like("Value", department.Value)).List<Department>().Any())
+                    if (session.CreateCriteria<Department>().Add(Expression.Like("Value", department.Value)).List<Department>().Any(x => x.Id != department.Id))
                     {
                         token.AddErrorMessage("A department with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
