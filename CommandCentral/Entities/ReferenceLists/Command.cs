@@ -104,6 +104,34 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Loads a single command given the command's Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadCommand", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadCommand(MessageToken token)
+        {
+            if (!token.Args.ContainsKey("commandid"))
+            {
+                token.AddErrorMessage("You failed to send a 'commandid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid commandId;
+            if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
+            {
+                token.AddErrorMessage("Your 'commandid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.Get<Command>(commandId));
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
         /// Loads all commands and their corresponding departments/divisions from the database.
         /// <param name="token"></param>
         /// <returns></returns>

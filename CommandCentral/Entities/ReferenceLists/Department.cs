@@ -110,6 +110,34 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Loads a single department given the department's Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadDepartment(MessageToken token)
+        {
+            if (!token.Args.ContainsKey("departmentid"))
+            {
+                token.AddErrorMessage("You failed to send a 'departmentid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid departmentId;
+            if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
+            {
+                token.AddErrorMessage("Your 'departmentid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.Get<Department>(departmentId));
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
         /// Loads all departments and their corresponding divisions from the database.
         /// <param name="token"></param>
         /// <returns></returns>

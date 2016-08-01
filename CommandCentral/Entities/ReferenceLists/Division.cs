@@ -86,6 +86,35 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
+        /// Loads a single division given the division's Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadDivision", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadDivision(MessageToken token)
+        {
+            if (!token.Args.ContainsKey("divisionid"))
+            {
+                token.AddErrorMessage("You failed to send a 'divisionid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid divisionId;
+            if (!Guid.TryParse(token.Args["divisionid"] as string, out divisionId))
+            {
+                token.AddErrorMessage("Your 'divisionid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                token.SetResult(session.Get<Division>(divisionId));
+            }
+        }
+
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
         /// Loads all divisions.
         /// <param name="token"></param>
         /// <returns></returns>
