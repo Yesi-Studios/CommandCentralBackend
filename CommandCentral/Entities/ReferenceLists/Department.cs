@@ -381,7 +381,7 @@ namespace CommandCentral.Entities.ReferenceLists
 
                 HasMany(x => x.Divisions).Cascade.All().Not.LazyLoad();
 
-                References(x => x.Command);
+                References(x => x.Command).LazyLoad(Laziness.False);
 
                 Cache.ReadWrite();
             }
