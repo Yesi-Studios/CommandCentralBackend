@@ -1,6 +1,7 @@
 ﻿using System;
-
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -80,6 +81,59 @@ namespace CommandCentral.Entities.ReferenceLists
 
         #endregion
 
+        #region Client Access
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Loads all divisions.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadDivisions", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadDivisions(MessageToken token)
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Very easily we're just going to throw back all the divisions.
+                token.SetResult(session.QueryOver<Division>().List<Division>());
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Loads all divisions for a given department's Id.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadDivisionsByDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadDivisionsByDepartment(MessageToken token)
+        {
+
+            if (!token.Args.ContainsKey("departmentid"))
+            {
+                token.AddErrorMessage("You failed to send a 'departmentid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid departmentId;
+            if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
+            {
+                token.AddErrorMessage("The 'departmentid' parameter that you sent was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //We don't need to validate that this department is valid.  Just load all divisions by this department.  If we get none because the Id is bad, sucks to suck.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                //Very easily we're just going to throw back all the divisions.
+                token.SetResult(session.QueryOver<Division>().Where(x => x.Department.Id == departmentId).List<Department>());
+            }
+        }
+
+        
+
+        #endregion
+
         /// <summary>
         /// Maps a division to the database.
         /// </summary>
@@ -98,6 +152,23 @@ namespace CommandCentral.Entities.ReferenceLists
                 References(x => x.Department);
 
                 Cache.ReadWrite();
+            }
+        }
+
+        /// <summary>
+        /// Validates le division.
+        /// </summary>
+        public class DivisionValidator : AbstractValidator<Division>
+        {
+            /// <summary>
+            /// Validates the division.
+            /// </summary>
+            public DivisionValidator()
+            {
+                RuleFor(x => x.Description).Length(0, 40)
+                    .WithMessage("The description of a Department must be no more than 40 characters.");
+                RuleFor(x => x.Value).Length(1, 15)
+                    .WithMessage("The value of a Department must be between one and ten characters.");
             }
         }
     }
