@@ -15,11 +15,29 @@ namespace CommandCentral.Authorization.Groups
 
         #region Properties
 
+        /// <summary>
+        /// The name of the permission group
+        /// </summary>
         public string Name { get; set; }
 
-        public List<>
+        /// <summary>
+        /// Indicates that this permission group is the default. Default : false
+        /// </summary>
+        public bool IsDefault { get; set; }
 
+        /// <summary>
+        /// The list of module permissions in this permission group.
+        /// </summary>
+        public List<ModulePermission> ModulePermissions { get; set; }
+        
+        #endregion
 
+        #region ctors
+
+        public PermissionGroup()
+        {
+            IsDefault = false;
+        }
 
         #endregion
 

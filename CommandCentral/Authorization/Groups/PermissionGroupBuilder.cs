@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace CommandCentral.Authorization.Groups
 {
+    /// <summary>
+    /// Builds the permission groups.
+    /// </summary>
     public class PermissionGroupBuilder
     {
         private PermissionGroup _permissionGroup = new PermissionGroup();
 
-        private string _currentModule = "";
+        private ModulePermission _currentModule;
 
         /// <summary>
         /// This method starts off the builder chain.
@@ -24,9 +27,21 @@ namespace CommandCentral.Authorization.Groups
             return builder;
         }
 
+        /// <summary>
+        /// Sets the resulting permission group to be default.
+        /// </summary>
+        /// <returns></returns>
+        public PermissionGroupBuilder IsDefault()
+        {
+            _permissionGroup.IsDefault = true;
+            return this;
+        }
+
         public PermissionGroupBuilder CanAccessModule(string moduleName)
         {
-            _currentModule = moduleName;
+            _currentModule = new ModulePermission(moduleName);
+            _permissionGroup.ModulePermissions.Add(_currentModule);
+            return this;
         }
 
 
