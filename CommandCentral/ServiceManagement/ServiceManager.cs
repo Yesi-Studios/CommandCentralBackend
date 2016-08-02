@@ -23,6 +23,11 @@ namespace CommandCentral.ServiceManagement
         public static ConcurrentDictionary<string, ServiceEndpoint> EndpointDescriptions { get; private set; }
 
         /// <summary>
+        /// All of the permission groups.
+        /// </summary>
+        public static ConcurrentBag<Authorization.Groups.PermissionGroup> AllPermissionGroups { get; set; }
+
+        /// <summary>
         /// Initializes the service.
         /// </summary>
         /// <param name="writer">The text writer to which messages from the service should be written.</param>
@@ -34,6 +39,8 @@ namespace CommandCentral.ServiceManagement
             //Initialize the communicator first so that everyone else can use it.
             Communicator.InitializeCommunicator(writer);
 
+            CollectPermissions();
+
             SetupEndpoints();
 
             RunStartupMethods();
@@ -41,6 +48,25 @@ namespace CommandCentral.ServiceManagement
         }
 
         #region Setup Methods
+
+        /// <summary>
+        /// Scans the entire assembly looking for any types that implement permission groups, creates an instance of them, and then saves them.
+        /// <para />
+        /// Validates that no two permission groups have the same name.
+        /// </summary>
+        private static void CollectPermissions()
+        {
+            Communicator.PostMessageToHost("Scanning for permissions.", Communicator.MessageTypes.Informational);
+
+            var groups = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(x => x.IsSubclassOf(typeof(Authorization.Groups.PermissionGroup)))
+                        .Select(x => (Authorization.Groups.PermissionGroup)Activator.CreateInstance(x));
+
+            if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+                throw new Exception("No two groups may have the same name.");
+
+            AllPermissionGroups = new ConcurrentBag<Authorization.Groups.PermissionGroup>(groups);
+        }
 
         /// <summary>
         /// Scans the entire executing assembly for any service endpoint methods and reads them into a dictionary.
@@ -158,7 +184,9 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups
+                .Any(x => x.AccessibleSubModules
+                    .Any(y => y.SafeEquals(Authorization.SubModules.AdminTools.ToString()))))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -189,7 +217,9 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups
+                .Any(x => x.AccessibleSubModules
+                    .Any(y => y.SafeEquals(Authorization.SubModules.AdminTools.ToString()))))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
