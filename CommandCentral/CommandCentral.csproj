@@ -84,7 +84,6 @@
     <Compile Include="Authorization\Rules\AuthorizationRuleBase.cs" />
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
-    <Compile Include="Authorization\Groups\PermissionGroupPart.cs" />
     <Compile Include="Authorization\Groups\PropertyGroupPart.cs" />
     <Compile Include="Authorization\Rules\RuleDisjunction.cs" />
     <Compile Include="Authorization\Rules\IfInChainOfCommandRule.cs" />

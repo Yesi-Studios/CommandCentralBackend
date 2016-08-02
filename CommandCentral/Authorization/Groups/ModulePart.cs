@@ -24,6 +24,8 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         public PermissionGroupLevels Level { get; set; }
 
+        private bool wasLevelSet = false;
+
         /// <summary>
         /// Creates a new module with the given name.
         /// </summary>
@@ -40,7 +42,13 @@ namespace CommandCentral.Authorization.Groups
         /// <returns></returns>
         public ModulePart AtLevel(PermissionGroupLevels level)
         {
+            if (wasLevelSet)
+                throw new Exception("You may not set the level of a module more than once.");
+
             Level = level;
+            
+            wasLevelSet = true;
+
             return this;
         }
 

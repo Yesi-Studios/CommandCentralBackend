@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
 
 namespace CommandCentral.Authorization.Groups
 {
@@ -66,6 +67,9 @@ namespace CommandCentral.Authorization.Groups
         /// <returns></returns>
         public ModulePart CanAccessModule(string moduleName)
         {
+            if (Modules.Any(x => x.ModuleName.SafeEquals(moduleName)))
+                throw new Exception("You may not declare access to a module more than once for the same permission group.");
+
             Modules.Add(new ModulePart(moduleName));
             return Modules.Last();
         }
