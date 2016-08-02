@@ -243,7 +243,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         return;
                     }
 
-                    //Ok, let's try to load this command.
+                    //Ok, let's try to load this department.
                     var department = session.Get<Department>(departmentId);
                     if (department == null)
                     {
@@ -252,7 +252,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     }
 
                     //Well, conveniently, we now have the department here with all its divisions.  Let's see if the value is a duplicate.
-                    if (department.Divisions.Any(x => x.Value.SafeEquals(department.Value)))
+                    if (department.Divisions.Any(x => x.Value.SafeEquals(division.Value)))
                     {
                         token.AddErrorMessage("The department, '{0}', already has a division named, '{1}'.".FormatS(department.Value, division.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
