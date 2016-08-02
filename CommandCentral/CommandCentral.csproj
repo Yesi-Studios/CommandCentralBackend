@@ -123,7 +123,6 @@
     <Compile Include="Enums\MusterStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
-    <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />

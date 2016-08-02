@@ -264,8 +264,11 @@ namespace CommandCentral.Entities.ReferenceLists
                         return;
                     }
 
+                    //Ok so this is all ok, let's tell the department how owns it and then add it.
+                    department.Command = command;
+
                     //Omg, I think we're ready to actually save the department.
-                    session.Save(command);
+                    session.Save(department);
 
                     transaction.Commit();
                 }
@@ -319,7 +322,7 @@ namespace CommandCentral.Entities.ReferenceLists
             {
                 try
                 {
-                    var department = session.Get<Command>(departmentId);
+                    var department = session.Get<Department>(departmentId);
 
                     if (department == null)
                     {
@@ -342,7 +345,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         return;
                     }
 
-                    //Also make sure no command has this value.
+                    //Also make sure no department has this value.
                     if (session.CreateCriteria<Department>().Add(Expression.Like("Value", department.Value)).List<Department>().Any(x => x.Id != department.Id))
                     {
                         token.AddErrorMessage("A department with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
