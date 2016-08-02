@@ -229,12 +229,7 @@ namespace CommandCentral.Entities
         /// <summary>
         /// The list of the person's permissions.
         /// </summary>
-        public virtual IList<PermissionGroup> PermissionGroups { get; set; }
-
-        /// <summary>
-        /// The list of change events to which the person is subscribed.
-        /// </summary>
-        public virtual IList<ChangeEvent> SubscribedChangeEvents { get; set; }
+        public virtual IList<Authorization.Groups.PermissionGroup> PermissionGroups { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things like login, password reset, etc.
@@ -291,61 +286,29 @@ namespace CommandCentral.Entities
         /// <para />
         /// A and B have the same command and department and division and Person A has a division-level permission.
         /// <para />
-        /// Note: No person may be in his/her own chain of command.  Developers are in everyone's chain of command.
+        /// Note: No person may be in his/her own chain of command.
         /// </summary>
         /// <param name="person"></param>
-        /// <param name="track">The track in which to look for the chain of command.</param>
+        /// <param name="track">The module in which to look for the chain of command.</param>
         /// <returns></returns>
         public virtual bool IsInChainOfCommandOf(Person person, string module)
         {
             if (Id == person.Id)
                 return false;
 
-            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command))
+            //First get all the module permissions for the module in question.
+            var modules = this.PermissionGroups.SelectMany(x => x.Modules.Where(y => y.ModuleName.SafeEquals(module)));
+
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Command) && Command.Equals(person.Command))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionGroupLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
                 return true;
 
             return false;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating if this person has all of the special permissions passed.
-        /// </summary>
-        /// <param name="permissions"></param>
-        /// <returns></returns>
-        public virtual bool HasSpecialPermissions(params SpecialPermissions[] permissions)
-        {
-            var userPermissions = PermissionGroups.SelectMany(x => x.SpecialPermissions);
-            foreach (var perm in permissions)
-                if (!userPermissions.Contains(perm))
-                    return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person has a permission that grants him/her the given permission level.
-        /// </summary>
-        /// <param name="permissionLevel"></param>
-        /// <returns></returns>
-        public virtual bool HasPermissionLevelInTrack(PermissionGroupLevels permissionLevel, PermissionTracks track)
-        {
-            return PermissionGroups.Any(x => x.PermissionTrack == track && x.PermissionLevel == permissionLevel);
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating if this person is in a given permission track at any level.
-        /// </summary>
-        /// <param name="track"></param>
-        /// <returns></returns>
-        public virtual bool IsInPermissionTrack(PermissionTracks track)
-        {
-            return PermissionGroups.Any(x => x.PermissionTrack == track);
         }
 
         /// <summary>
@@ -376,43 +339,6 @@ namespace CommandCentral.Entities
         public virtual bool IsInSameDivisionAs(Person person)
         {
             return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
-        }
-
-        /// <summary>
-        /// Returns a permission level indicating the highest level of permissions a person has in a given track.
-        /// <para/>
-        /// For example, if a person has two permission groups in the Muster track, one at the division level and one at the command level, their highest permissions in the Muster track are command level.
-        /// </summary>
-        /// <param name="track"></param>
-        /// <returns></returns>
-        public virtual PermissionGroupLevels GetHighestLevelInTrack(PermissionTracks track)
-        {
-            var groups = PermissionGroups.Where(x => x.PermissionTrack == track);
-
-            if (!groups.Any())
-                return PermissionGroupLevels.None;
-
-            return groups.Max(x => x.PermissionLevel);
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can search in the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanSearchFields(string entityName = "Person", params string[] fields)
-        {
-            var searchableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.SearchableFields);
-
-            foreach (var field in fields)
-                if (!searchableFields.Contains(field))
-                    return false;
-
-            return true;
         }
 
         #endregion
@@ -966,7 +892,7 @@ namespace CommandCentral.Entities
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.CreatePerson))
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase)))
             {
                 token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -1000,13 +926,12 @@ namespace CommandCentral.Entities
                 DateOfArrival = personFromClient.DateOfArrival,
                 DutyStatus = personFromClient.DutyStatus,
                 Id = Guid.NewGuid(),
-                IsClaimed = false,
-                PermissionGroups = new List<PermissionGroup>()
+                IsClaimed = false
             };
             newPerson.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
-            //We're also going to add on the default permission group.
-            newPerson.PermissionGroups.Add(PermissionGroup.GetDefaultPermissionGroup());
+            //We're also going to add on the default permission groups.
+            newPerson.PermissionGroups = ServiceManagement.ServiceManager.AllPermissionGroups.Where(x => x.IsDefault).ToList();
 
             //Now for validation!
             var results = new PersonValidator().Validate(newPerson);
@@ -1186,13 +1111,6 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Make sure the client has permission to search persons.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
-            {
-                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
             //If you can search persons then we'll assume you can search/return the required fields.
             
             if (!token.Args.ContainsKey("searchterm"))
@@ -1279,13 +1197,6 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            //Make sure the client has permission to search persons.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
-            {
-                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
             //Let's find which fields the client wants to search in.  This should be a dictionary.
             if (!token.Args.ContainsKey("filters"))
             {
@@ -1293,13 +1204,6 @@ namespace CommandCentral.Entities
                 return;
             }
             Dictionary<string, string> filters = token.Args["filters"].CastJToken<Dictionary<string, string>>();
-
-            //Alright, now let's make sure the client is allowed to search in all of these fields.
-            if (!token.AuthenticationSession.Person.CanSearchFields("Person", filters.Select(x => x.Key).ToArray()))
-            {
-                token.AddErrorMessage("You were not allowed to search in one or more of the fields you asked to search in.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
 
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
@@ -1453,22 +1357,6 @@ namespace CommandCentral.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "PermissionGroups":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.PermissionGroups.Any(perm => perm.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "SubscribedChangeEvents":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
                             case "CurrentMusterStatus":
                                 {
                                     //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
@@ -1561,13 +1449,6 @@ namespace CommandCentral.Entities
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to edit a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Now make sure we have permission to edit users.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.EditPerson))
-            {
-                token.AddErrorMessage("You must have permission to edit a person in order to edit a person. lol.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                 return;
             }
 
@@ -1761,7 +1642,6 @@ namespace CommandCentral.Entities
 
                 HasManyToMany(x => x.NECs).Not.LazyLoad();
                 HasManyToMany(x => x.PermissionGroups).Not.LazyLoad();
-                HasManyToMany(x => x.SubscribedChangeEvents).Not.LazyLoad();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
