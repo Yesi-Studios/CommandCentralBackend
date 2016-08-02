@@ -46,6 +46,11 @@ namespace AtwoodUtils
             return ((MemberExpression)expression.Body).Member.Name;
         }
 
+        public static MemberInfo GetProperty<T, TReturn>(this Expression<Func<T, TReturn>> expression)
+        {
+            return ((MemberExpression)expression.Body).Member;
+        }
+
         /// <summary>
         /// Determines whether or not a type is assignable to a generic type.
         /// </summary>

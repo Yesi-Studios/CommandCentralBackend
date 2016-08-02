@@ -14,7 +14,7 @@ namespace CommandCentral.Authorization.Rules
 
         public override bool AuthorizationOperation(AuthorizationToken authToken)
         {
-            return authToken.Client.Id == authToken.NewPersonFromClient.Id;
+            return authToken.Client.Id == authToken.PersonFromClient.Id;
         }
     }
 }

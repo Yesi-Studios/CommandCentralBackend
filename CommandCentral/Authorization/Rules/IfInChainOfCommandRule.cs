@@ -14,7 +14,7 @@ namespace CommandCentral.Authorization.Rules
 
         public override bool AuthorizationOperation(AuthorizationToken authToken)
         {
-            return authToken.Client.IsInChainOfCommandOf(authToken.NewPersonFromClient, PermissionTracks.Main);
+            return authToken.Client.IsInChainOfCommandOf(authToken.PersonFromClient, PermissionTracks.Main);
         }
     }
 }

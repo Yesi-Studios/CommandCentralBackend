@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
+using System.Linq.Expressions;
 
 namespace CommandCentral.Authorization.Groups
 {
@@ -11,9 +13,8 @@ namespace CommandCentral.Authorization.Groups
     /// </summary>
     public class PermissionGroupBuilder
     {
-        private PermissionGroup _permissionGroup = new PermissionGroup();
+        public string GroupName { get; set; }
 
-        private ModulePermission _currentModule;
 
         /// <summary>
         /// This method starts off the builder chain.
@@ -22,27 +23,19 @@ namespace CommandCentral.Authorization.Groups
         /// <returns></returns>
         public static PermissionGroupBuilder NewPermissionGroup(string name)
         {
-            var builder = new PermissionGroupBuilder();
-            builder._permissionGroup.Name = name;
-            return builder;
+            return new PermissionGroupBuilder(name);
         }
 
-        /// <summary>
-        /// Sets the resulting permission group to be default.
-        /// </summary>
-        /// <returns></returns>
-        public PermissionGroupBuilder IsDefault()
+        public PermissionGroupBuilder(string name)
         {
-            _permissionGroup.IsDefault = true;
-            return this;
+            GroupName = name;
         }
 
-        public PermissionGroupBuilder CanAccessModule(string moduleName)
-        {
-            _currentModule = new ModulePermission(moduleName);
-            _permissionGroup.ModulePermissions.Add(_currentModule);
-            return this;
-        }
+        
+
+        
+
+        
 
 
     }

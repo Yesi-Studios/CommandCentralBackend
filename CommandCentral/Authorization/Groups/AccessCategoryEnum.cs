@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommandCentral.Authorization
+namespace CommandCentral.Authorization.Groups
 {
-    public enum AuthorizationRuleCategoryEnum
+    /// <summary>
+    /// Defines different types of access.
+    /// </summary>
+    public enum AccessCategories
     {
         Return,
         Edit,
