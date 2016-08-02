@@ -296,7 +296,7 @@ namespace CommandCentral.Entities
         /// <param name="person"></param>
         /// <param name="track">The track in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person, PermissionTracks track)
+        public virtual bool IsInChainOfCommandOf(Person person, string module)
         {
             if (Id == person.Id)
                 return false;

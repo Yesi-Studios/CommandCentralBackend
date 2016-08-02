@@ -9,19 +9,19 @@ namespace CommandCentral.Authorization.Rules
     /// <summary>
     /// Indicates a rule disjunction.
     /// </summary>
-    public class RuleDisjunction<T>
+    public class RuleDisjunction
     {
         /// <summary>
         /// The rules that are included in this Disjunction.
         /// </summary>
-        public List<AuthorizationRuleBase<T>> Rules { get; set; }
+        public List<AuthorizationRuleBase> Rules { get; set; }
 
         /// <summary>
         /// Creates a new disjunction.
         /// </summary>
         public RuleDisjunction()
         {
-            Rules = new List<AuthorizationRuleBase<T>>();
+            Rules = new List<AuthorizationRuleBase>();
         }
 
         /// <summary>

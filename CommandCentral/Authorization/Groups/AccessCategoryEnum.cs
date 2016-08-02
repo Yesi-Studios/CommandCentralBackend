@@ -11,6 +11,9 @@ namespace CommandCentral.Authorization.Groups
     /// </summary>
     public enum AccessCategories
     {
+        /// <summary>
+        /// The return category
+        /// </summary>
         Return,
         Edit,
         Null
