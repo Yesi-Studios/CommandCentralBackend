@@ -72,12 +72,6 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
-                OptionText = "Manage Permissions",
-                Method = PermissionsEditor.PermissionEditorEntry,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
                 OptionText = "Manage Endpoints",
                 Method = EndpointEditor.EditEndpoints,
                 DisplayCriteria = () => true

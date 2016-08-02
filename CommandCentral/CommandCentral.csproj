@@ -91,6 +91,7 @@
     <Compile Include="Authorization\Rules\IfSelfRule.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\Groups\PermissionGroupLevelEnum.cs" />
+    <Compile Include="Authorization\SubModulesEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
     <Compile Include="Config\ContactDetails.cs" />
@@ -118,7 +119,6 @@
     <Compile Include="Entities\ReferenceLists\Rate.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Entities\Billet.cs" />
-    <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
