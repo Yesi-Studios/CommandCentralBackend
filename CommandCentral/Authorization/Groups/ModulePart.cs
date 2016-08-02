@@ -60,5 +60,21 @@ namespace CommandCentral.Authorization.Groups
             };
         }
 
+        /// <summary>
+        /// Creates a new property group with the given properties and with the access category set to return.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="PropertyT"></typeparam>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        public PropertyGroupPart CanReturn(params List<MemberInfo>[] members)
+        {
+            return new PropertyGroupPart(this)
+            {
+                AccessCategory = AccessCategories.Return,
+                Properties = members.SelectMany(x => x).ToList()
+            };
+        }
+
     }
 }
