@@ -32,14 +32,14 @@ namespace CommandCentral.Authorization
         public Guid PersonId { get; set; }
 
         /// <summary>
-        /// The list of editable fields, broken down by what module they belong to.  The key is case insensitive.
+        /// The list of editable fields, broken down by what module and type they belong to.  The key is case insensitive.
         /// </summary>
-        public Dictionary<string, List<string>> EditableFields { get; set; }
+        public Dictionary<string, Dictionary<string, List<string>>> EditableFields { get; set; }
 
         /// <summary>
-        /// The list of returnable fields, broken down by what module they belong to.  The key is case insensitive.
+        /// The list of returnable fields, broken down by what module and type they belong to.  The key is case insensitive.
         /// </summary>
-        public Dictionary<string, List<string>> ReturnableFields { get; set; }
+        public Dictionary<string, Dictionary<string, List<string>>> ReturnableFields { get; set; }
 
         /// <summary>
         /// THe highest levels in each of the modules that this client has.  The key is case insensitive.
@@ -62,8 +62,8 @@ namespace CommandCentral.Authorization
         public ResolvedPermissions()
         {
             AccessibleSubmodules = new List<string>();
-            EditableFields = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            ReturnableFields = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            EditableFields = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
+            ReturnableFields = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
             HighestLevels = new Dictionary<string, Groups.PermissionGroupLevels>(StringComparer.OrdinalIgnoreCase);
             EditablePermissionGroups = new List<string>();
         }

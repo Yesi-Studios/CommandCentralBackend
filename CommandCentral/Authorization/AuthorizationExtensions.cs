@@ -61,8 +61,19 @@ namespace CommandCentral.Authorization
                         if (resolvedPermissions.HighestLevels[module.ModuleName] < module.Level)
                             resolvedPermissions.HighestLevels[module.ModuleName] = module.Level;
 
-                    //And now for editable fields.
+                    //And now for editable fields.  First get or add them.
+                    Dictionary<string, List<string>> editableFieldsByType;
+                    if (resolvedPermissions.EditableFields.ContainsKey(module.ModuleName))
+                    {
+                        editableFieldsByType = resolvedPermissions.EditableFields[module.ModuleName];
+                    }
+                    else
+                    {
+                        editableFieldsByType = new Dictionary<string, List<string>>();
+                        resolvedPermissions.EditableFields.Add(module.ModuleName, editableFieldsByType);
+                    }
 
+                    //Now let's go through this module and the types and see who passes the tests.
 
 
                 }
