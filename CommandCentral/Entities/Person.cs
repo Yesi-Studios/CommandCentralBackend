@@ -227,9 +227,14 @@ namespace CommandCentral.Entities
         public virtual string PasswordHash { get; set; }
 
         /// <summary>
-        /// The list of the person's permissions.
+        /// The list of the person's permissions.  This is not persisted in the database.  Only the names are.
         /// </summary>
-        public virtual IList<Authorization.Groups.PermissionGroup> PermissionGroups { get; set; }
+        public virtual List<Authorization.Groups.PermissionGroup> PermissionGroups { get; set; }
+
+        /// <summary>
+        /// The list of the person's permissions as they are stored in the database.
+        /// </summary>
+        public virtual IList<string> PermissionGroupNames { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things like login, password reset, etc.
@@ -240,8 +245,6 @@ namespace CommandCentral.Entities
         /// A list containing all changes that have every occurred to the profile.
         /// </summary>
         public virtual IList<Change> Changes { get; set; }
-
-
 
         #endregion
 
@@ -1015,9 +1018,12 @@ namespace CommandCentral.Entities
                     return;
                 }
 
+                //Now that we have the person back, let's resolve the permissions for this person.
+                var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+
                 Person personReturn = new Person();
 
-                List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
+                List<string> returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
                 var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
 
@@ -1035,15 +1041,11 @@ namespace CommandCentral.Entities
                     }
                 }
 
-                //We also need to tell the client what they can edit.
-                List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
-
                 token.SetResult(new
                 {
                     Person = personReturn,
                     IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id,
-                    EditableFields = editableFields,
-                    ReturnableFields = returnableFields
+                    ResolvedPermissions = resolvedPermissions
                 });
             }
         }
@@ -1398,7 +1400,7 @@ namespace CommandCentral.Entities
                 var result = queryOver.List().Select(returnedPerson =>
                 {
                     //We need to know the fields the client is allowed ot return for this client.
-                    var returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, returnedPerson, AuthorizationRuleCategoryEnum.Return);
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, returnedPerson).ReturnableFields["Main"]["Person"];
 
                     var temp = new Dictionary<string, string>();
                     foreach (var returnField in returnFields)
@@ -1518,16 +1520,14 @@ namespace CommandCentral.Entities
                         return;
                     }
 
-                    //Get the authorizer we need.
-                    var authorizer = new PersonAuthorizer();
+                    var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                    var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
-                    var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
-                    var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
+                    var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
+                    var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
                     //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
-                    foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
+                    foreach (var field in returnableFields)
                     {
                         var property = typeof(Person).GetProperty(field);
 
@@ -1648,6 +1648,8 @@ namespace CommandCentral.Entities
                 HasMany(x => x.EmailAddresses).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
+
+                HasMany(x => x.PermissionGroupNames).Not.LazyLoad();
             }
         }
 

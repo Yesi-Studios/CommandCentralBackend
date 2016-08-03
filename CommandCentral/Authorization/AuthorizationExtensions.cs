@@ -32,7 +32,7 @@ namespace CommandCentral.Authorization
         /// <param name="client"></param>
         /// <param name="groups"></param>
         /// <returns></returns>
-        public static ResolvedPermissions Resolve(this List<Groups.PermissionGroup> groups, Entities.Person client, Entities.Person person)
+        public static ResolvedPermissions Resolve(this IEnumerable<Groups.PermissionGroup> groups, Entities.Person client, Entities.Person person)
         {
             var resolvedPermissions = new ResolvedPermissions();
             resolvedPermissions.TimeResolved = DateTime.Now;
@@ -42,6 +42,9 @@ namespace CommandCentral.Authorization
             //Now we need to start iterating.
             foreach (var group in groups)
             {
+                //Add the names to the permission group names so the client knows who permission groups we used.
+                resolvedPermissions.PermissionGroupNames.Add(group.GroupName);
+
                 //Add the editable permission groups.
                 foreach (var editPermissionGroup in group.GroupsCanEditMembershipOf)
                     if (!resolvedPermissions.EditablePermissionGroups.Contains(editPermissionGroup.GroupName))

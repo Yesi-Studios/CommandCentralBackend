@@ -116,30 +116,6 @@ namespace CommandCentral.ServiceManagement.Service
                             return token.ConstructResponseString();
                         }
 
-                        //Ok so the message still needs to go through some validation but that validation requires database stuff.  
-                        //So at this point I'm going to create the session.
-
-                        #region A message to future wayward souls
-
-                        //This session is used in this scope only to do authentication work on the state of the message, NOT THE REQUEST ITSELF.
-                        //Please good god DO NOT pass this session into the endpoint methods.  The caching issues are truly amazing and the concurrency concerns... will make you concerned.
-                        //No really, please god don't do it.  Every method gets its own session.
-                        //Do you think it would be a good idea to pass a session on the message token into the request and use that as your unit of work?
-                        //Cute, I did too.  I promise you it doesn't work.  But if you want to try it, knock your socks off - long hair don't care.  Actually I do.  Turn back now.  If you keep going, read this:
-                        /*
-                         * Through me you go to the grief wracked city;
-                         * Through me you go to everlasting pain;
-                         * Through me you go a pass among lost souls.
-                         * Abandon all hope - Ye who enter here.
-                         */
-                        //As an aside, creating sessions from the factory is very cheap, in case that helps inform your decision not to waste your life.
-
-                        //As a security note: this session should always be segragated from the operations the client is asking for. 
-                        //For example, if a client wants their permissions changed, those permissions will change at the end of the request because this session will still hold the old permissions.
-                        //Sorry I went on so long - this has been the bane of my existence for months.
-
-                        #endregion
-
                         //Get the apikey.
                         if (!token.Args.ContainsKey(Config.ParamNames.API_KEY))
                             token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS(Config.ParamNames.API_KEY), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -337,7 +313,24 @@ namespace CommandCentral.ServiceManagement.Service
                     else if (authenticationSession.IsValid())
                         token.AddErrorMessage("The session has timed out or is no longer valid.  Please sign back in.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                     else
+                    {
                         token.AuthenticationSession = authenticationSession;
+
+                        //Since the authentication session was valid, let's get the client's permission groups.
+                        foreach (var groupName in token.AuthenticationSession.Person.PermissionGroupNames)
+                        {
+                            var group = ServiceManager.AllPermissionGroups.FirstOrDefault(x => x.GroupName.SafeEquals(groupName));
+
+                            if (group == null)
+                                throw new Exception("The group name, '{0}', was not valid.".FormatS(groupName));
+
+                            token.AuthenticationSession.Person.PermissionGroups.Add(group);
+                        }
+
+                        //Now add all the default permission groups.
+                        token.AuthenticationSession.Person.PermissionGroups.AddRange(ServiceManager.AllPermissionGroups.Where(x => x.IsDefault));
+
+                    }
                 }
             }
         }

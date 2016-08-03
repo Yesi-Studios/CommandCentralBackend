@@ -7,6 +7,9 @@ using AtwoodUtils;
 
 namespace CommandCentral.Authorization.Groups
 {
+    /// <summary>
+    /// All permission grups must inherit from this in order to be included into the permissions system.
+    /// </summary>
     public abstract class PermissionGroup
     {
         /// <summary>

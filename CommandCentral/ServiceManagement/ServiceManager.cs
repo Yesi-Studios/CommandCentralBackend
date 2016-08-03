@@ -9,6 +9,7 @@ using System.Reflection;
 using AtwoodUtils;
 using System.Linq.Expressions;
 using System.IO;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.ServiceManagement
 {
@@ -184,9 +185,7 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups
-                .Any(x => x.AccessibleSubModules
-                    .Any(y => y.SafeEquals(Authorization.SubModules.AdminTools.ToString()))))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -217,9 +216,7 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups
-                .Any(x => x.AccessibleSubModules
-                    .Any(y => y.SafeEquals(Authorization.SubModules.AdminTools.ToString()))))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;

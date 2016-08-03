@@ -14,7 +14,7 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The list of permission groups' names that went into this resolved permission.
         /// </summary>
-        public string PermissionGroupNames { get; set; }
+        public List<string> PermissionGroupNames { get; set; }
 
         /// <summary>
         /// The time at which this resolved permission was built.

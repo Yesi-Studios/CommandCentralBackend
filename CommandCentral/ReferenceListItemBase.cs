@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using CommandCentral.ClientAccess;
 using AtwoodUtils;
+using CommandCentral.Authorization;
 
 namespace CommandCentral
 {
@@ -155,7 +156,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may add list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -256,7 +257,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may edit list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -337,7 +338,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may delete list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;

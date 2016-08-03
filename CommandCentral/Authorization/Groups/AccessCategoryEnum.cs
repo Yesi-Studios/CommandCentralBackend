@@ -15,7 +15,9 @@ namespace CommandCentral.Authorization.Groups
         /// The return category
         /// </summary>
         Return,
-        Edit,
-        Null
+        /// <summary>
+        /// The edit category.
+        /// </summary>
+        Edit
     }
 }
