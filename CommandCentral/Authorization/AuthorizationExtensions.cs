@@ -73,9 +73,49 @@ namespace CommandCentral.Authorization
                         resolvedPermissions.EditableFields.Add(module.ModuleName, editableFieldsByType);
                     }
 
-                    //Now let's go through this module and the types and see who passes the tests.
+                    //Now let's go through this module and the types and see who passes the tests.  Editable first.
+                    module.PropertyGroups
+                        .Where(x => x.AccessCategory == Groups.AccessCategories.Edit &&
+                               x.Disjunctions
+                                    .All(y => y.Rules
+                                        .Any(z => z.AuthorizationOperation(new AuthorizationToken(client, person)))))
+                        .SelectMany(x => x.Properties)
+                        .ToList()
+                        .ForEach(x =>
+                        {
+                            if (!editableFieldsByType.ContainsKey(x.DeclaringType.Name))
+                                editableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
+                            else
+                                editableFieldsByType[x.DeclaringType.Name].Add(x.Name);
+                        });
 
+                    //And now the returnable fields.
+                    Dictionary<string, List<string>> returnableFieldsByType;
+                    if (resolvedPermissions.ReturnableFields.ContainsKey(module.ModuleName))
+                    {
+                        returnableFieldsByType = resolvedPermissions.ReturnableFields[module.ModuleName];
+                    }
+                    else
+                    {
+                        returnableFieldsByType = new Dictionary<string, List<string>>();
+                        resolvedPermissions.ReturnableFields.Add(module.ModuleName, returnableFieldsByType);
+                    }
 
+                    //Now let's go through this module and the types and see who passes the tests.  Now returnable!
+                    module.PropertyGroups
+                        .Where(x => x.AccessCategory == Groups.AccessCategories.Return &&
+                               x.Disjunctions
+                                    .All(y => y.Rules
+                                        .Any(z => z.AuthorizationOperation(new AuthorizationToken(client, person)))))
+                        .SelectMany(x => x.Properties)
+                        .ToList()
+                        .ForEach(x =>
+                        {
+                            if (!returnableFieldsByType.ContainsKey(x.DeclaringType.Name))
+                                returnableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
+                            else
+                                returnableFieldsByType[x.DeclaringType.Name].Add(x.Name);
+                        });
                 }
 
             }

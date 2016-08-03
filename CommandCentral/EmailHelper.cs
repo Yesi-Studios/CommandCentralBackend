@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using CommandCentral.ClientAccess;
 using AtwoodUtils;
+using System.Linq;
 
 namespace CommandCentral
 {
@@ -245,11 +246,7 @@ namespace CommandCentral
                 }
                 else
                 {
-                    string permissionGroupIds = "";
-                    foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
-                    {
-                        permissionGroupIds += group.Id + "|";
-                    }
+                    string permissionGroupNames = String.Join(",", token.AuthenticationSession.Person.PermissionGroups.Select(x => x.GroupName));
 
                     message.Body = LoadEmailResource("FatalError.html").Result.FormatS(
                         DateTime.Now.ToUniversalTime(),
@@ -258,15 +255,15 @@ namespace CommandCentral
                         token.AuthenticationSession.Person.Id,
                         token.AuthenticationSession.LogoutTime.ToUniversalTime(),
                         token.AuthenticationSession.IsActive,
-                        permissionGroupIds,
+                        permissionGroupNames,
                         token.AuthenticationSession.LastUsedTime.ToUniversalTime(),
                         token.Id,
                         token.APIKey.Id,
                         token.APIKey.ApplicationName,
                         token.CallTime.ToUniversalTime(),
-                        "TODO", //token.RawJSON, TODO
+                        token.RawRequestBody, //token.RawJSON, TODO
                         token.EndpointDescription,
-                        "TODO", // token.ResultJSON, TODO
+                        token.RawResponseBody, // token.ResultJSON, TODO
                         token.State,
                         token.HandledTime.ToUniversalTime(),
                         token.HostAddress,

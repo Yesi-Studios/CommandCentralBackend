@@ -24,6 +24,11 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         public PermissionGroupLevels Level { get; set; }
 
+        /// <summary>
+        /// The list of property groups in this module.
+        /// </summary>
+        public List<PropertyGroupPart> PropertyGroups { get; set; }
+
         private bool wasLevelSet = false;
 
         /// <summary>
@@ -55,33 +60,31 @@ namespace CommandCentral.Authorization.Groups
         /// <summary>
         /// Creates a new property group with the given properties and with the access category set to edit.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="PropertyT"></typeparam>
-        /// <param name="properties"></param>
+        /// <param name="members"></param>
         /// <returns></returns>
         public PropertyGroupPart CanEdit(params List<MemberInfo>[] members)
         {
-            return new PropertyGroupPart(this) 
-            { 
-                AccessCategory = AccessCategories.Edit, 
+            PropertyGroups.Add(new PropertyGroupPart(this)
+            {
+                AccessCategory = AccessCategories.Edit,
                 Properties = members.SelectMany(x => x).ToList()
-            };
+            });
+            return PropertyGroups.Last();
         }
 
         /// <summary>
         /// Creates a new property group with the given properties and with the access category set to return.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="PropertyT"></typeparam>
-        /// <param name="properties"></param>
+        /// <param name="members"></param>
         /// <returns></returns>
         public PropertyGroupPart CanReturn(params List<MemberInfo>[] members)
         {
-            return new PropertyGroupPart(this)
+            PropertyGroups.Add(new PropertyGroupPart(this)
             {
                 AccessCategory = AccessCategories.Return,
                 Properties = members.SelectMany(x => x).ToList()
-            };
+            });
+            return PropertyGroups.Last();
         }
 
     }
