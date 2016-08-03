@@ -23,7 +23,7 @@ namespace CommandCentral.Authorization.Groups.Definitions
             CanEditMembershipOf();
 
             CanAccessModule("Main")
-                .AtLevel(PermissionGroupLevels.Division)
+                .AtLevel(PermissionGroupLevels.None)
                 .CanReturn(PropertySelector.Properties<Entities.Person, Guid>(
                     x => x.Id), PropertySelector.Properties<Entities.Person, string>(
                     x => x.LastName,
