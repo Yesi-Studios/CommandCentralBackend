@@ -78,9 +78,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
     <Compile Include="Authorization\Groups\PropertySelector.cs" />
+    <Compile Include="Authorization\ResolvedPermissions.cs" />
     <Compile Include="Authorization\Rules\AuthorizationRuleBase.cs" />
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
