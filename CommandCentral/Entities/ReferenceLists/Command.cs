@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using AtwoodUtils;
 using FluentValidation;
 using NHibernate.Criterion;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.Entities.ReferenceLists
 {
@@ -161,7 +162,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may add commands.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -234,7 +235,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may edit commands.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -319,7 +320,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may delete commands.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
