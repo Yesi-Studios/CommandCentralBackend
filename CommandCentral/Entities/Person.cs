@@ -1527,8 +1527,6 @@ namespace CommandCentral.Entities
                     Person personFromDB = session.Get<Person>(personFromClient.Id);
 
                     personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
-                    //session.Evict(personFromDB);
-
 
                     //Did we get a person?  If not, the person the client gave us is bullshit.
                     if (personFromDB == null)
