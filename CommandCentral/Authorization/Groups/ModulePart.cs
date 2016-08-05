@@ -38,6 +38,7 @@ namespace CommandCentral.Authorization.Groups
         public ModulePart(string moduleName)
         {
             ModuleName = moduleName;
+            PropertyGroups = new List<PropertyGroupPart>();
         }
 
         /// <summary>

@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
+    <Compile Include="Authorization\AuthorizationUtilities.cs" />
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
     <Compile Include="Authorization\Groups\PropertySelector.cs" />

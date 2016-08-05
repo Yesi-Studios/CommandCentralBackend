@@ -24,12 +24,12 @@ namespace CommandCentral.Authorization
         /// <summary>
         /// The Id of the client for whom this resolved permission was made.
         /// </summary>
-        public Guid ClientId { get; set; }
+        public string ClientId { get; set; }
 
         /// <summary>
         /// The person against which these permissions were resolved.
         /// </summary>
-        public Guid PersonId { get; set; }
+        public string PersonId { get; set; }
 
         /// <summary>
         /// The list of editable fields, broken down by what module and type they belong to.  The key is case insensitive.
@@ -66,6 +66,8 @@ namespace CommandCentral.Authorization
             ReturnableFields = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
             HighestLevels = new Dictionary<string, Groups.PermissionGroupLevels>(StringComparer.OrdinalIgnoreCase);
             EditablePermissionGroups = new List<string>();
+
+            PermissionGroupNames = new List<string>();
         }
 
     }

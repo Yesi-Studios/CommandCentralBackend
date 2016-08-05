@@ -11,6 +11,7 @@ using NHibernate.Transform;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 using AtwoodUtils;
+using CommandCentral.ServiceManagement;
 
 namespace CommandCentral.Entities
 {
@@ -287,7 +288,7 @@ namespace CommandCentral.Entities
         /// Note: No person may be in his/her own chain of command.
         /// </summary>
         /// <param name="person"></param>
-        /// <param name="track">The module in which to look for the chain of command.</param>
+        /// <param name="module">The module in which to look for the chain of command.</param>
         /// <returns></returns>
         public virtual bool IsInChainOfCommandOf(Person person, string module)
         {
@@ -394,7 +395,6 @@ namespace CommandCentral.Entities
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                         var person = session.QueryOver<Person>()
                             .Where(x => x.Username == username)
-                            .Fetch(x => x.PermissionGroups).Eager
                             .SingleOrDefault<Person>();
 
                         if (person == null)
@@ -431,7 +431,8 @@ namespace CommandCentral.Entities
                                 //Now insert it
                                 session.Save(ses);
 
-                                token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                                //We need to get the client's permission groups, add the defaults, and then tell the client their permissions.
+                                token.SetResult(new { PersonId = person.Id, ResolvedPermissions = AuthorizationUtilities.GetPermissionGroupsFromNames(person.PermissionGroupNames, true).Resolve(person, null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                             }
                         }
 
@@ -1655,7 +1656,6 @@ namespace CommandCentral.Entities
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
 
                 HasManyToMany(x => x.NECs).Not.LazyLoad();
-                HasManyToMany(x => x.PermissionGroups).Not.LazyLoad();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
@@ -1663,7 +1663,10 @@ namespace CommandCentral.Entities
                 HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
 
-                HasMany(x => x.PermissionGroupNames).Not.LazyLoad();
+                HasMany(x => x.PermissionGroupNames)
+                    .KeyColumn("PersonId")
+                    .Element("PermissionGroupName")
+                    .Not.LazyLoad();
             }
         }
 

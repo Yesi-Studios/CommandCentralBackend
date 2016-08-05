@@ -300,18 +300,7 @@ namespace CommandCentral.ServiceManagement.Service
                         token.AuthenticationSession = authenticationSession;
 
                         //Since the authentication session was valid, let's get the client's permission groups.
-                        foreach (var groupName in token.AuthenticationSession.Person.PermissionGroupNames)
-                        {
-                            var group = ServiceManager.AllPermissionGroups.FirstOrDefault(x => x.GroupName.SafeEquals(groupName));
-
-                            if (group == null)
-                                throw new Exception("The group name, '{0}', was not valid.".FormatS(groupName));
-
-                            token.AuthenticationSession.Person.PermissionGroups.Add(group);
-                        }
-
-                        //Now add all the default permission groups.
-                        token.AuthenticationSession.Person.PermissionGroups.AddRange(ServiceManager.AllPermissionGroups.Where(x => x.IsDefault));
+                        token.AuthenticationSession.Person.PermissionGroups = Authorization.AuthorizationUtilities.GetPermissionGroupsFromNames(token.AuthenticationSession.Person.PermissionGroupNames, true);
 
                     }
                 }

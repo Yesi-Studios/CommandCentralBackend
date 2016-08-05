@@ -43,6 +43,9 @@ namespace CommandCentral.Authorization.Groups
         public PermissionGroup()
         {
             GroupName = this.GetType().Name;
+            Modules = new List<ModulePart>();
+            AccessibleSubModules = new List<string>();
+            GroupsCanEditMembershipOf = new List<PermissionGroup>();
         }
 
         /// <summary>

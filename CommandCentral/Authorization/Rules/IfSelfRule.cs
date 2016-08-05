@@ -19,6 +19,10 @@ namespace CommandCentral.Authorization.Rules
         /// <returns></returns>
         public override bool AuthorizationOperation(AuthorizationToken authToken)
         {
+            //If the client person is null, then return false.
+            if (authToken.PersonFromClient == null)
+                return false;
+
             return authToken.Client.Id == authToken.PersonFromClient.Id;
         }
     }

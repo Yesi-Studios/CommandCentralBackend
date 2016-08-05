@@ -34,10 +34,14 @@ namespace CommandCentral.Authorization
         /// <returns></returns>
         public static ResolvedPermissions Resolve(this IEnumerable<Groups.PermissionGroup> groups, Entities.Person client, Entities.Person person)
         {
+            //Ensure that the client isn't null.
+            if (client == null)
+                throw new ArgumentException("The client may not be null");
+
             var resolvedPermissions = new ResolvedPermissions();
             resolvedPermissions.TimeResolved = DateTime.Now;
-            resolvedPermissions.ClientId = client.Id;
-            resolvedPermissions.PersonId = person.Id;
+            resolvedPermissions.ClientId = client.Id.ToString();
+            resolvedPermissions.PersonId = person == null ? null : person.Id.ToString();
 
             //Now we need to start iterating.
             foreach (var group in groups)

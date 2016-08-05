@@ -19,6 +19,9 @@ namespace CommandCentral.Authorization.Rules
         /// <returns></returns>
         public override bool AuthorizationOperation(AuthorizationToken authToken)
         {
+            if (authToken.PersonFromClient == null)
+                return false;
+
             return authToken.Client.IsInChainOfCommandOf(authToken.PersonFromClient, this.ParentPropertyGroup.ParentModule.ModuleName);
         }
     }

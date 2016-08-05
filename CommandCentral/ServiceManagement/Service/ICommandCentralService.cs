@@ -11,7 +11,6 @@ namespace CommandCentral.ServiceManagement.Service
     [ServiceContract]
     public interface ICommandCentralService
     {
-        //TODO REVIEW name me somethign else
         /// <summary>
         /// The endpoint through which all calls reach the service.  
         /// </summary>
