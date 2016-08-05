@@ -24,8 +24,8 @@ namespace CommandCentral.Authorization.Groups.Definitions
 
             CanAccessModule("Main")
                 .AtLevel(PermissionGroupLevels.None)
-                .CanReturn(PropertySelector.Properties<Entities.Person, Guid>(
-                    x => x.Id), PropertySelector.Properties<Entities.Person, string>(
+                .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
+                    x => x.Id,
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
@@ -34,10 +34,10 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     x => x.Supervisor,
                     x => x.WorkCenter,
                     x => x.WorkRoom))
-                .And.CanReturn(PropertySelector.Properties<Entities.Person, string>(
+                .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.SSN))
                     .IfSelf()
-                .And.CanEdit(PropertySelector.Properties<Entities.Person, string>(
+                .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.FirstName,
                     x => x.LastName,
                     x => x.MiddleName))

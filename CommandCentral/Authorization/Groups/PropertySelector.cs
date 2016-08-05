@@ -21,7 +21,7 @@ namespace CommandCentral.Authorization.Groups
         /// <typeparam name="PropertyT"></typeparam>
         /// <param name="expressions"></param>
         /// <returns></returns>
-        public static List<MemberInfo> Properties<T, PropertyT>(params Expression<Func<T, PropertyT>>[] expressions)
+        public static List<MemberInfo> SelectPropertiesFrom<T>(params Expression<Func<T, object>>[] expressions)
         {
             return expressions.Select(x => x.GetProperty()).ToList();
         }
