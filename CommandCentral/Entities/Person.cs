@@ -1231,7 +1231,7 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -1252,9 +1252,9 @@ namespace CommandCentral.Entities
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
             //We're going to need the person object's metadata for the rest of this.
-            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Ok the client can search and return everything.  Now we need to build the actual query.
                 //To do this we need to determine what type each property is and then add it to the query.
@@ -1416,7 +1416,7 @@ namespace CommandCentral.Entities
                 //Important note: the client expects every field to be a string.  We don't return object results.
                 var result = queryOver.List().Select(returnedPerson =>
                 {
-                    //We need to know the fields the client is allowed ot return for this client.
+                    //We need to know the fields the client is allowed to return for this client.
                     var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, returnedPerson).ReturnableFields["Main"]["Person"];
 
                     var temp = new Dictionary<string, string>();
