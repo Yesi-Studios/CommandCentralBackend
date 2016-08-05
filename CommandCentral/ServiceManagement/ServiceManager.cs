@@ -67,6 +67,9 @@ namespace CommandCentral.ServiceManagement
                 throw new Exception("No two groups may have the same name.");
 
             AllPermissionGroups = new ConcurrentBag<Authorization.Groups.PermissionGroup>(groups);
+
+            Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
+
         }
 
         /// <summary>
@@ -158,8 +161,8 @@ namespace CommandCentral.ServiceManagement
                 //We can say first because we know there's only one.
                 var info = group.ToList().First();
 
+                Communicator.PostMessageToHost("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
                 info.Method();
-                Communicator.PostMessageToHost("Executed startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
             }
         }
 
