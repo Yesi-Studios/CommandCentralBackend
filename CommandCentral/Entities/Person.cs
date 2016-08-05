@@ -109,11 +109,6 @@ namespace CommandCentral.Entities
         #region Work Properties
 
         /// <summary>
-        ///The person's billet.
-        /// </summary>
-        public virtual Billet Billet { get; set; }
-
-        /// <summary>
         /// The NECs of the person.
         /// </summary>
         public virtual IList<NEC> NECs { get; set; }
@@ -1291,25 +1286,6 @@ namespace CommandCentral.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "Billet":
-                                {
-                                    //If the client is searching in billet, then it's a simple search, meaning we have to split the search term.
-
-                                    foreach (string term in searchTerms)
-                                    {
-                                        queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.Billet.Id).In(QueryOver.Of<Billet>().Where(Restrictions.Disjunction()
-                                        .Add<Billet>(x => x.Designation.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<Billet>(x => x.Funding.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<Billet>(x => x.IdNumber.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<Billet>(x => x.Remarks.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<Billet>(x => x.SuffixCode.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<Billet>(x => x.Title.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add(Subqueries.WhereProperty<Billet>(x => x.NEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                                        .Add(Subqueries.WhereProperty<Billet>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))).Select(x => x.Id)));
-                                    }
-
-                                    break;
-                                }
                             case "NECs":
                                 {
                                     var disjunction = Restrictions.Disjunction();
@@ -1611,7 +1587,6 @@ namespace CommandCentral.Entities
                 References(x => x.Division).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Department).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Command).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Billet).Nullable().LazyLoad(Laziness.False);
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
@@ -1758,18 +1733,6 @@ namespace CommandCentral.Entities
                         return command.Equals(x);
                     })
                     .WithMessage("The command was invalid.");
-                RuleFor(x => x.Billet).Must(x =>
-                    {
-                        if (x == null)
-                            return true;
-
-                        Billet billet = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Billet>(x.Id);
-
-                        if (billet == null)
-                            return false;
-
-                        return billet.Equals(x);
-                    });
                 RuleForEach(x => x.NECs).Must(x =>
                     {
                         if (x == null)
