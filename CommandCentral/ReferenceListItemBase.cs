@@ -4,14 +4,15 @@ using System.Linq;
 using System.Collections.Generic;
 using CommandCentral.ClientAccess;
 using AtwoodUtils;
-using CommandCentral.Authorization;
+using FluentValidation.Results;
+using NHibernate.Criterion;
 
 namespace CommandCentral
 {
     /// <summary>
     /// Provides abstracted access to a reference list such as Ranks or Rates.
     /// </summary>
-    public abstract class ReferenceListItemBase
+    public abstract class ReferenceListItemBase : IValidatable
     {
         #region Properties
 
@@ -99,10 +100,10 @@ namespace CommandCentral
         }
 
         /// <summary>
-        /// A validation method that all consumers must implement.  Returns a validation result from FluentValidation.
+        /// Projected from the IValidatable interface.
         /// </summary>
         /// <returns></returns>
-        public abstract FluentValidation.Results.ValidationResult Validate();
+        public abstract ValidationResult Validate();
 
         #endregion
 
@@ -111,7 +112,7 @@ namespace CommandCentral
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// </summary>
-        /// Returns all reference lists to the client.  Reference lists are ordered by their type.
+        /// Returns all reference lists and enums to the client.  Reference lists are ordered by their type.
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
@@ -121,12 +122,20 @@ namespace CommandCentral
             {
                 var result = new Dictionary<string, object>();
 
+                //Add the reference lists.  We have to do it first. And then load the values into them.
+                result = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Values.Where(x => x.GetMappedClass(NHibernate.EntityMode.Poco).IsSubclassOf(typeof(ReferenceListItemBase)))
+                    .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco).Name).ToDictionary(x => x, x => new object());
+
                 //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
-                result = session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
                     .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
                     {
                         return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
-                    }).ToDictionary(x => x.Key, x => (object)x.Value);
+                    }).ToList().ForEach(x =>
+                        {
+                            result[x.Key] = x.Value;
+                        });
                 //TODO REVIEW go through the enum namespace
                 result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
                 result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
@@ -134,6 +143,38 @@ namespace CommandCentral
                 result.Add("Paygrades", Enum.GetNames(typeof(Paygrades)));
                 result.Add("PhoneNumberTypes", Enum.GetNames(typeof(PhoneNumberTypes)));
                 result.Add("Sexes", Enum.GetNames(typeof(Sexes)));
+
+                token.SetResult(result);
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// </summary>
+        /// Returns all reference lists and only reference lists to the client.  Reference lists are ordered by their type.
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadEditableLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_LoadEditableLists(MessageToken token)
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var result = new Dictionary<string, object>();
+
+                //Add the reference lists.  We have to do it first. And then load the values into them.
+                result = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Values.Where(x => x.GetMappedClass(NHibernate.EntityMode.Poco).IsSubclassOf(typeof(ReferenceListItemBase)))
+                    .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco).Name).ToDictionary(x => x, x => new object());
+
+                //Very easily we're just going to throw back all the lists.  Easy day.  We're going to group the lists by name so that it looks nice for the client.
+                session.QueryOver<ReferenceListItemBase>().CacheMode(NHibernate.CacheMode.Get)
+                    .List<ReferenceListItemBase>().GroupBy(x => x.GetType().Name).Select(x =>
+                    {
+                        return new KeyValuePair<string, List<ReferenceListItemBase>>(x.Key, x.ToList());
+                    }).ToList().ForEach(x =>
+                    {
+                        result[x.Key] = x.Value;
+                    });
 
                 token.SetResult(result);
             }
@@ -156,7 +197,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
             {
                 token.AddErrorMessage("Only developers may add list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -219,7 +260,7 @@ namespace CommandCentral
                     }
 
                     //Are we about to try to create a duplicate list?
-                    if (session.CreateCriteria(type.Name).Add(NHibernate.Criterion.Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any())
+                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any(x => x.Id != listItem.Id))
                     {
                         token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
@@ -227,9 +268,6 @@ namespace CommandCentral
 
                     //The list item is now valid. We can insert it.  It doens't need an Id because the mappings should handle that.
                     session.Save(listItem);
-
-                    //Now we need all list items for this type to give back to the client.
-                    token.SetResult(session.CreateCriteria(type.Name).List());
 
                     transaction.Commit();
                 }
@@ -257,7 +295,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
             {
                 token.AddErrorMessage("Only developers may edit list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -277,13 +315,29 @@ namespace CommandCentral
                 return;
             }
 
+            if (!token.Args.ContainsKey("listname"))
+            {
+                token.AddErrorMessage("You must send a list name parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var listName = token.Args["listname"] as string;
+
+            //Make sure that list name is real.
+            if (!DataAccess.NHibernateHelper.GetAllEntityMetadata().ContainsKey(listName))
+            {
+                token.AddErrorMessage("That list name is not a reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
             //Let's load the list item and make sure it's real.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    var listItem = session.Get<ReferenceListItemBase>(listItemId);
+                    var listItem = session.Get(listName, listItemId) as ReferenceListItemBase;
 
                     if (listItem == null)
                     {
@@ -306,11 +360,15 @@ namespace CommandCentral
                         return;
                     }
 
+                    //Also make sure no list has this value.
+                    if (session.CreateCriteria(listName).Add(Expression.Like("Value", listItem.Value)).List<ReferenceListItemBase>().Any(x => x.Id != listItem.Id))
+                    {
+                        token.AddErrorMessage("A list item with that value already exists in this list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
                     //Ok that's all good.  Let's update the list.
                     session.Update(listItem);
-
-                    //Then, we're going to set the result to the list of all list items from this list. List.
-                    token.SetResult(session.CreateCriteria(listItem.GetType().Name).List());
 
                     transaction.Commit();
                 }
@@ -338,7 +396,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
+            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
             {
                 token.AddErrorMessage("Only developers may delete list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -373,7 +431,62 @@ namespace CommandCentral
                         return;
                     }
 
-                    //Since we found a list item let's go ahead and delete it.
+                    //Does the client want us to delete things? (default = false)
+                    var forceDelete = false;
+                    if (token.Args.ContainsKey("forcedelete"))
+                    {
+                        forceDelete = (bool)token.Args["forcedelete"];
+                    }
+
+                    //Now that we have a list item, let's see if it's referenced anywhere...
+                    //First we need all objects that reference our type in the database.
+                    var referencingTypes = DataAccess.NHibernateHelper.GetAllEntityMetadata().Values
+                        .Select(x => x.GetMappedClass(NHibernate.EntityMode.Poco))
+                        .Where(x => x.GetProperties().Any(y => y.PropertyType != null && y.PropertyType == listItem.GetType()));
+
+                    List<IList> containingObjects = new List<IList>();
+
+                    foreach (var type in referencingTypes)
+                    {
+                        var query = session.CreateCriteria(type.Name);
+                        foreach (var property in type.GetProperties().Where(x => x.PropertyType == listItem.GetType()))
+                        {
+                            query.Add(Expression.Eq(property.Name, listItem));
+                        }
+
+                        containingObjects.Add(query.List());
+                    }
+
+                    //If we got any objects containing our thing, then delete them.
+                    if (containingObjects.SelectMany(x => x as IList<object>).Any())
+                    {
+                        if (!forceDelete)
+                        {
+                            var referencingEntityNames = containingObjects.SelectMany(x => x as IList<object>).Select(x => x.GetType().Name).Distinct().ToList();
+
+                            token.AddErrorMessage("The {0} you tried to delete is still referenced in {1} place(s) on {2} entities: {3}.  In order to delete this item, you must force the deletion or remove the reference to this item from all entities."
+                                .FormatS(listItem.GetType().Name, containingObjects.Sum(x => x.Count), referencingEntityNames.Count, String.Join(",", referencingEntityNames)),
+                                ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                        else
+                        {
+                            //There are references but the client wants us to delete them.  Let's do that.
+                            foreach (var obj in containingObjects.SelectMany(x => x as List<object>))
+                            {
+                                //Now we need to set the properties with our reference type to null
+                                foreach (var property in obj.GetType().GetProperties().Where(x => x.PropertyType == listItem.GetType()))
+                                {
+                                    property.SetValue(obj, null);
+                                }
+
+                                //Now save the object.
+                                session.Save(obj);
+                            }
+                        }
+                    }
+
+                    //Since we found a list item let's go ahead and delete it.  All references to it should be removed now.
                     session.Delete(listItem);
 
                     transaction.Commit();
@@ -385,6 +498,7 @@ namespace CommandCentral
                 }
             }
         }
+
 
         #endregion
     }
