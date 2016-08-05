@@ -1087,12 +1087,11 @@ namespace CommandCentral.Entities
 
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
+            {
                 token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
                 return;
-
+            }
+            
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
@@ -1100,8 +1099,27 @@ namespace CommandCentral.Entities
                 return;
             }
 
+            //Let's load the person we were given.  We need the object for the permissions check.
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
+                Person person = session.Get<Person>(personId);
+
+                if (person == null)
+                {
+                    token.AddErrorMessage("The person Id you sent did not resolve to an actual person. :(", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+
+                //Now let's get permissions and see if the client is allowed to view AccountHistory.
+                bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
+                    .ReturnableFields["Main"]["Person"].Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(x => x.AccountHistory).First().Name);
+
+                if (!canView)
+                {
+                    token.AddErrorMessage("You don't have permission to view the account history for this person's profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+
                 token.SetResult(session.Get<Person>(personId).AccountHistory);
             }
         }
@@ -1124,12 +1142,11 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //If you can search persons then we'll assume you can search/return the required fields.
-            
             if (!token.Args.ContainsKey("searchterm"))
             {
                 token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -1169,18 +1186,22 @@ namespace CommandCentral.Entities
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
                 var results = queryOver.List().Select(x =>
                 {
+
+                    //Do our permissions check here for each person.
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, x).ReturnableFields["Main"]["Person"];
+
                     return new
                     {
                         x.Id,
-                        x.LastName,
-                        x.MiddleName,
-                        x.FirstName,
-                        Paygrade = x.Paygrade,
-                        Designation = (x.Designation == null) ? "" : x.Designation.Value,
-                        UIC = (x.UIC == null) ? "" : x.UIC.Value,
-                        Command = (x.Command == null) ? "" : x.Command.Value,
-                        Department = (x.Department == null) ? "" : x.Department.Value,
-                        Division = (x.Division == null) ? "" : x.Division.Value
+                        LastName = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.LastName).First().Name) ? x.LastName : "REDACTED",
+                        MiddleName = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.MiddleName).First().Name) ? x.MiddleName : "REDACTED",
+                        FirstName = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.FirstName).First().Name) ? x.FirstName : "REDACTED",
+                        Paygrade = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.Paygrade).First().Name) ? x.Paygrade.ToString() : "REDACTED",
+                        Designation = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.Designation).First().Name) ? ((x.Designation == null) ? "" : x.Designation.Value) : "REDACTED",
+                        UIC = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.UIC).First().Name) ? ((x.UIC == null) ? "" : x.UIC.Value) : "REDACTED",
+                        Command = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.Command).First().Name) ? ((x.Command == null) ? "" : x.Command.Value) : "REDACTED",
+                        Department = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.Department).First().Name) ? ((x.Department == null) ? "" : x.Department.Value) : "REDACTED",
+                        Division = returnableFields.Contains(Authorization.Groups.PropertySelector.Properties<Person, object>(y => y.Division).First().Name) ? ((x.Division == null) ? "" : x.Division.Value) : "REDACTED"
                     };
                 });
 
