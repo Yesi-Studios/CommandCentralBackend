@@ -102,7 +102,6 @@
     <Compile Include="Editors\EndpointEditor.cs" />
     <Compile Include="Editors\ListEditor.cs" />
     <Compile Include="Editors\MetadataViewer.cs" />
-    <Compile Include="Editors\PermissionsEditor.cs" />
     <Compile Include="Editors\PersonsEditor.cs" />
     <Compile Include="Editors\SchemaEditor.cs" />
     <Compile Include="Program.cs" />

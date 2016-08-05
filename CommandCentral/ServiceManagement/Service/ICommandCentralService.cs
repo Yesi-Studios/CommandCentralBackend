@@ -11,7 +11,6 @@ namespace CommandCentral.ServiceManagement.Service
     [ServiceContract]
     public interface ICommandCentralService
     {
-        //TODO REVIEW name me somethign else
         /// <summary>
         /// The endpoint through which all calls reach the service.  
         /// </summary>
@@ -28,15 +27,6 @@ namespace CommandCentral.ServiceManagement.Service
         [OperationContract]
         [WebInvoke(Method = "OPTIONS", UriTemplate = "*")]
         void GetOptions();
-
-        /// <summary>
-        /// Serves a given file by its file name.
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        [OperationContract]
-        [WebGet(UriTemplate = "Files/{fileName}")]
-        Stream DownloadFile(string fileName);
 
     }
 }

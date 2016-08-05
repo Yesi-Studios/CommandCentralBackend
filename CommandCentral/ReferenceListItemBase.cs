@@ -6,6 +6,7 @@ using CommandCentral.ClientAccess;
 using AtwoodUtils;
 using FluentValidation.Results;
 using NHibernate.Criterion;
+using CommandCentral.Authorization;
 
 namespace CommandCentral
 {
@@ -197,7 +198,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may add list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -266,7 +267,7 @@ namespace CommandCentral
                         return;
                     }
 
-                    //The list item is now valid. We can insert it.  It doens't need an Id because the mappings should handle that.
+                    //The list item is now valid. We can insert it.  It doesn't need an Id because the mappings should handle that.
                     session.Save(listItem);
 
                     transaction.Commit();
@@ -295,7 +296,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may edit list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -396,7 +397,7 @@ namespace CommandCentral
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may delete list items.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;

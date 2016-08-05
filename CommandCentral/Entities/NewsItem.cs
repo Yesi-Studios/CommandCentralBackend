@@ -5,6 +5,7 @@ using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using AtwoodUtils;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.Entities
 {
@@ -169,7 +170,7 @@ namespace CommandCentral.Entities
             }
 
             //Make sure the client has permission to manage the news.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
                 token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
@@ -265,7 +266,7 @@ namespace CommandCentral.Entities
             }
 
             //Make sure the client has permission to manage the news.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
                 token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
@@ -361,7 +362,7 @@ namespace CommandCentral.Entities
             }
 
             //Make sure the client has permission to manage the news.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.ManageNews))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
                 token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }

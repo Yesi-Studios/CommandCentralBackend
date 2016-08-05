@@ -134,13 +134,6 @@ namespace CommandCentral.Entities
                         }
                     }
 
-                    //Ok so there's no lock on this profile.  Let's see if the client can be given a lock.  This is determined by whether or not the client can edit a person.
-                    if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.EditPerson))
-                    {
-                        token.AddErrorMessage("You are not authorized to edit a person and can therefore not take a lock on this profile.", ErrorTypes.LockImpossible, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
-
                     //Now we just need to make a lock for this client on this person.
                     session.Save(new ProfileLock
                     {

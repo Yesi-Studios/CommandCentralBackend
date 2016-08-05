@@ -1,6 +1,7 @@
 ﻿using System;
 using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.Entities
 {
@@ -106,7 +107,7 @@ namespace CommandCentral.Entities
             }
 
             //Is the client a developer?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers are allowed to view errors.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                 return;
@@ -137,7 +138,7 @@ namespace CommandCentral.Entities
             }
 
             //Is the client a developer?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers are allowed to edit errors.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                 return;

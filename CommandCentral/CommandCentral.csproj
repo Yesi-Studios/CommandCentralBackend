@@ -78,29 +78,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Authorization\AuthorizationRuleBase.cs" />
-    <Compile Include="Authorization\AuthorizationRuleBuilder.cs" />
-    <Compile Include="Authorization\AuthorizationRuleCategoryEnum.cs" />
-    <Compile Include="Authorization\PermissionTracksEnum.cs" />
-    <Compile Include="Authorization\RuleDisjunction.cs" />
-    <Compile Include="Authorization\RuleGroup.cs" />
-    <Compile Include="Authorization\Rules\IfCoCAndInPermissionGroupRule.cs" />
-    <Compile Include="Authorization\Rules\IfGrantedByPermissionGroupRule.cs" />
-    <Compile Include="Authorization\Rules\IfHasSpecialPermissionRule.cs" />
+    <Compile Include="Authorization\AuthorizationExtensions.cs" />
+    <Compile Include="Authorization\AuthorizationUtilities.cs" />
+    <Compile Include="Authorization\Groups\Definitions\Users.cs" />
+    <Compile Include="Authorization\Groups\PermissionGroup.cs" />
+    <Compile Include="Authorization\Groups\PropertySelector.cs" />
+    <Compile Include="Authorization\ResolvedPermissions.cs" />
+    <Compile Include="Authorization\Rules\AuthorizationRuleBase.cs" />
+    <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
+    <Compile Include="Authorization\Groups\ModulePart.cs" />
+    <Compile Include="Authorization\Groups\PropertyGroupPart.cs" />
+    <Compile Include="Authorization\Rules\RuleDisjunction.cs" />
     <Compile Include="Authorization\Rules\IfInChainOfCommandRule.cs" />
     <Compile Include="Authorization\Rules\IfSelfRule.cs" />
-    <Compile Include="Authorization\Rules\NeverRule.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
-    <Compile Include="Authorization\Rules\ForEveryoneRule.cs" />
-    <Compile Include="Authorization\PermissionLevelEnum.cs" />
-    <Compile Include="Authorization\AbstractAuthorizer.cs" />
-    <Compile Include="Authorization\SpecialPermissionsEnum.cs" />
+    <Compile Include="Authorization\Groups\PermissionGroupLevelEnum.cs" />
+    <Compile Include="Authorization\SubModulesEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
+    <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="FileProvider.cs" />
     <Compile Include="IValidatable.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
@@ -110,8 +110,6 @@
     <Compile Include="DataAccess\ConnectionSettings.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
-    <Compile Include="Authorization\PermissionGroup.cs" />
-    <Compile Include="Authorization\ModelPermission.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="Entities\Error.cs" />
@@ -121,9 +119,7 @@
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Enums\MusterStatusesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
-    <Compile Include="Entities\ChangeEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
@@ -207,9 +203,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\Files\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

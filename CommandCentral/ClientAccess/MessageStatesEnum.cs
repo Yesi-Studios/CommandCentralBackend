@@ -22,7 +22,7 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         Processed,
         /// <summary>
-        /// Inidicates a message has been successfully authenticated prior to method invocation but after message processing.
+        /// Indicates a message has been successfully authenticated prior to method invocation but after message processing.
         /// </summary>
         Authenticated,
         /// <summary>

@@ -11,6 +11,7 @@ using NHibernate.Transform;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 using AtwoodUtils;
+using CommandCentral.ServiceManagement;
 
 namespace CommandCentral.Entities
 {
@@ -222,14 +223,14 @@ namespace CommandCentral.Entities
         public virtual string PasswordHash { get; set; }
 
         /// <summary>
-        /// The list of the person's permissions.
+        /// The list of the person's permissions.  This is not persisted in the database.  Only the names are.
         /// </summary>
-        public virtual IList<PermissionGroup> PermissionGroups { get; set; }
+        public virtual List<Authorization.Groups.PermissionGroup> PermissionGroups { get; set; }
 
         /// <summary>
-        /// The list of change events to which the person is subscribed.
+        /// The list of the person's permissions as they are stored in the database.
         /// </summary>
-        public virtual IList<ChangeEvent> SubscribedChangeEvents { get; set; }
+        public virtual IList<string> PermissionGroupNames { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things like login, password reset, etc.
@@ -240,8 +241,6 @@ namespace CommandCentral.Entities
         /// A list containing all changes that have every occurred to the profile.
         /// </summary>
         public virtual IList<Change> Changes { get; set; }
-
-
 
         #endregion
 
@@ -286,61 +285,29 @@ namespace CommandCentral.Entities
         /// <para />
         /// A and B have the same command and department and division and Person A has a division-level permission.
         /// <para />
-        /// Note: No person may be in his/her own chain of command.  Developers are in everyone's chain of command.
+        /// Note: No person may be in his/her own chain of command.
         /// </summary>
         /// <param name="person"></param>
-        /// <param name="track">The track in which to look for the chain of command.</param>
+        /// <param name="module">The module in which to look for the chain of command.</param>
         /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person, PermissionTracks track)
+        public virtual bool IsInChainOfCommandOf(Person person, string module)
         {
             if (Id == person.Id)
                 return false;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command))
+            //First get all the module permissions for the module in question.
+            var modules = this.PermissionGroups.SelectMany(x => x.Modules.Where(y => y.ModuleName.SafeEquals(module)));
+
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Command) && Command.Equals(person.Command))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department))
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
                 return true;
 
-            if (HasPermissionLevelInTrack(PermissionLevels.Command, track) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
+            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
                 return true;
 
             return false;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating if this person has all of the special permissions passed.
-        /// </summary>
-        /// <param name="permissions"></param>
-        /// <returns></returns>
-        public virtual bool HasSpecialPermissions(params SpecialPermissions[] permissions)
-        {
-            var userPermissions = PermissionGroups.SelectMany(x => x.SpecialPermissions);
-            foreach (var perm in permissions)
-                if (!userPermissions.Contains(perm))
-                    return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person has a permission that grants him/her the given permission level.
-        /// </summary>
-        /// <param name="permissionLevel"></param>
-        /// <returns></returns>
-        public virtual bool HasPermissionLevelInTrack(PermissionLevels permissionLevel, PermissionTracks track)
-        {
-            return PermissionGroups.Any(x => x.PermissionTrack == track && x.PermissionLevel == permissionLevel);
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating if this person is in a given permission track at any level.
-        /// </summary>
-        /// <param name="track"></param>
-        /// <returns></returns>
-        public virtual bool IsInPermissionTrack(PermissionTracks track)
-        {
-            return PermissionGroups.Any(x => x.PermissionTrack == track);
         }
 
         /// <summary>
@@ -371,43 +338,6 @@ namespace CommandCentral.Entities
         public virtual bool IsInSameDivisionAs(Person person)
         {
             return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
-        }
-
-        /// <summary>
-        /// Returns a permission level indicating the highest level of permissions a person has in a given track.
-        /// <para/>
-        /// For example, if a person has two permission groups in the Muster track, one at the division level and one at the command level, their highest permissions in the Muster track are command level.
-        /// </summary>
-        /// <param name="track"></param>
-        /// <returns></returns>
-        public virtual PermissionLevels GetHighestLevelInTrack(PermissionTracks track)
-        {
-            var groups = PermissionGroups.Where(x => x.PermissionTrack == track);
-
-            if (!groups.Any())
-                return PermissionLevels.None;
-
-            return groups.Max(x => x.PermissionLevel);
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether or not this person can search in the given fields.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public virtual bool CanSearchFields(string entityName = "Person", params string[] fields)
-        {
-            var searchableFields = PermissionGroups
-                .SelectMany(x => x.ModelPermissions)
-                .Where(x => x.ModelName == "Person")
-                .SelectMany(x => x.SearchableFields);
-
-            foreach (var field in fields)
-                if (!searchableFields.Contains(field))
-                    return false;
-
-            return true;
         }
 
         #endregion
@@ -465,7 +395,6 @@ namespace CommandCentral.Entities
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                         var person = session.QueryOver<Person>()
                             .Where(x => x.Username == username)
-                            .Fetch(x => x.PermissionGroups).Eager
                             .SingleOrDefault<Person>();
 
                         if (person == null)
@@ -502,7 +431,8 @@ namespace CommandCentral.Entities
                                 //Now insert it
                                 session.Save(ses);
 
-                                token.SetResult(new { PersonId = person.Id, person.PermissionGroups, AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                                //We need to get the client's permission groups, add the defaults, and then tell the client their permissions.
+                                token.SetResult(new { PersonId = person.Id, ResolvedPermissions = AuthorizationUtilities.GetPermissionGroupsFromNames(person.PermissionGroupNames, true).Resolve(person, null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                             }
                         }
 
@@ -961,7 +891,7 @@ namespace CommandCentral.Entities
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.CreatePerson))
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase)))
             {
                 token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -995,13 +925,12 @@ namespace CommandCentral.Entities
                 DateOfArrival = personFromClient.DateOfArrival,
                 DutyStatus = personFromClient.DutyStatus,
                 Id = Guid.NewGuid(),
-                IsClaimed = false,
-                PermissionGroups = new List<PermissionGroup>()
+                IsClaimed = false
             };
             newPerson.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
-            //We're also going to add on the default permission group.
-            newPerson.PermissionGroups.Add(PermissionGroup.GetDefaultPermissionGroup());
+            //We're also going to add on the default permission groups.
+            newPerson.PermissionGroups = ServiceManagement.ServiceManager.AllPermissionGroups.Where(x => x.IsDefault).ToList();
 
             //Now for validation!
             var results = new PersonValidator().Validate(newPerson);
@@ -1069,7 +998,7 @@ namespace CommandCentral.Entities
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
-                token.AddErrorMessage("The person ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("The person Id you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -1085,9 +1014,12 @@ namespace CommandCentral.Entities
                     return;
                 }
 
+                //Now that we have the person back, let's resolve the permissions for this person.
+                var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+
                 Dictionary<string, object> returnData = new Dictionary<string, object>();
 
-                List<string> returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Return);
+                List<string> returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
                 var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
 
@@ -1125,15 +1057,11 @@ namespace CommandCentral.Entities
                     }
                 }
 
-                //We also need to tell the client what they can edit.
-                List<string> editableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, person, AuthorizationRuleCategoryEnum.Edit);
-
                 token.SetResult(new
                 {
                     Person = returnData,
                     IsMyProfile = token.AuthenticationSession.Person.Id == person.Id,
-                    EditableFields = editableFields,
-                    ReturnableFields = returnableFields
+                    ResolvedPermissions = resolvedPermissions
                 });
             }
         }
@@ -1160,12 +1088,11 @@ namespace CommandCentral.Entities
 
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
+            {
                 token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
                 return;
-
+            }
+            
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
@@ -1173,8 +1100,27 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            //Let's load the person we were given.  We need the object for the permissions check.
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
+                Person person = session.Get<Person>(personId);
+
+                if (person == null)
+                {
+                    token.AddErrorMessage("The person Id you sent did not resolve to an actual person. :(", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+
+                //Now let's get permissions and see if the client is allowed to view AccountHistory.
+                bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
+                    .ReturnableFields["Main"]["Person"].Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
+
+                if (!canView)
+                {
+                    token.AddErrorMessage("You don't have permission to view the account history for this person's profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+
                 token.SetResult(session.Get<Person>(personId).AccountHistory);
             }
         }
@@ -1197,19 +1143,11 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Make sure the client has permission to search persons.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
-            {
-                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //If you can search persons then we'll assume you can search/return the required fields.
-            
             if (!token.Args.ContainsKey("searchterm"))
             {
                 token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -1228,7 +1166,7 @@ namespace CommandCentral.Entities
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
                 var queryOver = session.QueryOver<Person>();
@@ -1249,18 +1187,22 @@ namespace CommandCentral.Entities
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
                 var results = queryOver.List().Select(x =>
                 {
+
+                    //Do our permissions check here for each person.
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, x).ReturnableFields["Main"]["Person"];
+
                     return new
                     {
                         x.Id,
-                        x.LastName,
-                        x.MiddleName,
-                        x.FirstName,
-                        Paygrade = x.Paygrade,
-                        Designation = (x.Designation == null) ? "" : x.Designation.Value,
-                        UIC = (x.UIC == null) ? "" : x.UIC.Value,
-                        Command = (x.Command == null) ? "" : x.Command.Value,
-                        Department = (x.Department == null) ? "" : x.Department.Value,
-                        Division = (x.Division == null) ? "" : x.Division.Value
+                        LastName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name) ? x.LastName : "REDACTED",
+                        MiddleName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name) ? x.MiddleName : "REDACTED",
+                        FirstName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name) ? x.FirstName : "REDACTED",
+                        Paygrade = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Paygrade).First().Name) ? x.Paygrade.ToString() : "REDACTED",
+                        Designation = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Designation).First().Name) ? ((x.Designation == null) ? "" : x.Designation.Value) : "REDACTED",
+                        UIC = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.UIC).First().Name) ? ((x.UIC == null) ? "" : x.UIC.Value) : "REDACTED",
+                        Command = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Command).First().Name) ? ((x.Command == null) ? "" : x.Command.Value) : "REDACTED",
+                        Department = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Department).First().Name) ? ((x.Department == null) ? "" : x.Department.Value) : "REDACTED",
+                        Division = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Division).First().Name) ? ((x.Division == null) ? "" : x.Division.Value) : "REDACTED"
                     };
                 });
 
@@ -1290,14 +1232,7 @@ namespace CommandCentral.Entities
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Make sure the client has permission to search persons.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.SearchPersons))
-            {
-                token.AddErrorMessage("You do not have permission to search persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -1309,13 +1244,6 @@ namespace CommandCentral.Entities
             }
             Dictionary<string, string> filters = token.Args["filters"].CastJToken<Dictionary<string, string>>();
 
-            //Alright, now let's make sure the client is allowed to search in all of these fields.
-            if (!token.AuthenticationSession.Person.CanSearchFields("Person", filters.Select(x => x.Key).ToArray()))
-            {
-                token.AddErrorMessage("You were not allowed to search in one or more of the fields you asked to search in.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
             {
@@ -1325,9 +1253,9 @@ namespace CommandCentral.Entities
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
             //We're going to need the person object's metadata for the rest of this.
-            var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Ok the client can search and return everything.  Now we need to build the actual query.
                 //To do this we need to determine what type each property is and then add it to the query.
@@ -1449,22 +1377,6 @@ namespace CommandCentral.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "PermissionGroups":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.PermissionGroups.Any(perm => perm.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "SubscribedChangeEvents":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.SubscribedChangeEvents.Any(changeEvent => changeEvent.Name.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
                             case "CurrentMusterStatus":
                                 {
                                     //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
@@ -1505,8 +1417,8 @@ namespace CommandCentral.Entities
                 //Important note: the client expects every field to be a string.  We don't return object results.
                 var result = queryOver.List().Select(returnedPerson =>
                 {
-                    //We need to know the fields the client is allowed ot return for this client.
-                    var returnableFields = new PersonAuthorizer().GetAuthorizedProperties(token.AuthenticationSession.Person, returnedPerson, AuthorizationRuleCategoryEnum.Return);
+                    //We need to know the fields the client is allowed to return for this client.
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, returnedPerson).ReturnableFields["Main"]["Person"];
 
                     var temp = new Dictionary<string, string>();
                     foreach (var returnField in returnFields)
@@ -1557,13 +1469,6 @@ namespace CommandCentral.Entities
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to edit a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Now make sure we have permission to edit users.
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(SpecialPermissions.EditPerson))
-            {
-                token.AddErrorMessage("You must have permission to edit a person in order to edit a person. lol.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                 return;
             }
 
@@ -1623,8 +1528,6 @@ namespace CommandCentral.Entities
                     Person personFromDB = session.Get<Person>(personFromClient.Id);
 
                     personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
-                    //session.Evict(personFromDB);
-
 
                     //Did we get a person?  If not, the person the client gave us is bullshit.
                     if (personFromDB == null)
@@ -1633,16 +1536,14 @@ namespace CommandCentral.Entities
                         return;
                     }
 
-                    //Get the authorizer we need.
-                    var authorizer = new PersonAuthorizer();
+                    var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                    var editableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Edit);
-                    var returnableFields = authorizer.GetAuthorizedProperties(token.AuthenticationSession.Person, personFromClient, AuthorizationRuleCategoryEnum.Return);
-                    var propertiesThatIgnoreEdit = authorizer.GetPropertiesThatIgnoreEdit();
+                    var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
+                    var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
                     //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
-                    foreach (var field in returnableFields.Where(x => !propertiesThatIgnoreEdit.Contains(x)).ToList())
+                    foreach (var field in returnableFields)
                     {
                         var property = typeof(Person).GetProperty(field);
 
@@ -1709,110 +1610,6 @@ namespace CommandCentral.Entities
         #endregion
 
         /// <summary>
-        /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
-        /// </summary>
-        public class PersonAuthorizer : AbstractAuthorizer<Person>
-        {
-            /// <summary>
-            /// Declares authorization rules for the person object and its returnable and editable fields.  Used in conjunction with permission groups, defines unified rules for access to a person object.
-            /// </summary>
-            public PersonAuthorizer()
-            {
-                RulesFor(x => x.Id).MakeIgnoreGenericEdits()
-                    .Returnable()
-                        .ForEveryone()
-                    .Editable()
-                        .Never();
-
-                //Properties in this group are updated by other endpoints and not the generic update endpoint.
-                RulesFor(x => x.IsClaimed).MakeIgnoreGenericEdits()
-                .AndFor(x => x.Changes)
-                .AndFor(x => x.AccountHistory)
-                .AndFor(x => x.CurrentMusterStatus)
-                    .Returnable()
-                        .IfGrantedByPermissionGroup().Or().IfSelf()
-                    .Editable()
-                        .Never();
-
-                RulesFor(x => x.PasswordHash)
-                    .Returnable()
-                        .Never()
-                    .Editable()
-                        .IfSelf();
-
-                RulesFor(x => x.FirstName)
-                .AndFor(x => x.LastName)
-                .AndFor(x => x.MiddleName)
-                .AndFor(x => x.DateOfBirth)
-                .AndFor(x => x.Sex)
-                .AndFor(x => x.Remarks)
-                .AndFor(x => x.Ethnicity)
-                .AndFor(x => x.ReligiousPreference)
-                .AndFor(x => x.Suffix)
-                .AndFor(x => x.Designation)
-                .AndFor(x => x.Supervisor)
-                .AndFor(x => x.WorkCenter)
-                .AndFor(x => x.WorkRoom)
-                .AndFor(x => x.Shift)
-                .AndFor(x => x.WorkRemarks)
-                .AndFor(x => x.DateOfArrival)
-                .AndFor(x => x.JobTitle)
-                .AndFor(x => x.EmailAddresses)
-                .AndFor(x => x.PhoneNumbers)
-                .AndFor(x => x.PhysicalAddresses)
-                .AndFor(x => x.ContactRemarks)
-                    .Returnable()
-                        .IfSelf().Or().IfGrantedByPermissionGroup()
-                    .Editable()
-                        .IfSelf().Or().IfInCoCAndInPermissionGroup();
-
-                RulesFor(x => x.SSN)
-                    .Returnable()
-                        .IfSelf().Or().IfInCoCAndInPermissionGroup()
-                    .Editable()
-                        .IfSelf().Or().IfInCoCAndInPermissionGroup();
-
-
-                RulesFor(x => x.Paygrade)
-                .AndFor(x => x.Division)
-                .AndFor(x => x.Department)
-                .AndFor(x => x.Command)
-                    .Returnable()
-                        .IfSelf().Or().IfGrantedByPermissionGroup()
-                    .Editable()
-                        .IfInCoCAndInPermissionGroup();
-
-                RulesFor(x => x.NECs)
-                .AndFor(x => x.DutyStatus)
-                .AndFor(x => x.UIC)
-                .AndFor(x => x.EAOS)
-                .AndFor(x => x.DateOfDeparture)
-                    .Returnable()
-                        .IfGrantedByPermissionGroup()
-                    .Editable()
-                        .IfHasSpecialPermission(SpecialPermissions.ManPowerAdmin)
-                        .And()
-                        .IfGrantedByPermissionGroup();
-
-                RulesFor(x => x.EmergencyContactInstructions)
-                .AndFor(x => x.Username)
-                .AndFor(x => x.SubscribedChangeEvents)
-                    .Returnable()
-                        .IfGrantedByPermissionGroup()
-                    .Editable()
-                        .IfSelf()
-                        .And()
-                        .IfGrantedByPermissionGroup();
-
-                RulesFor(x => x.PermissionGroups).MakeIgnoreGenericEdits()
-                    .Returnable()
-                        .IfGrantedByPermissionGroup()
-                    .Editable()
-                        .Never();
-            }
-        }
-
-        /// <summary>
         /// Maps a person to the database.
         /// </summary>
         public class PersonMapping : ClassMap<Person>
@@ -1827,10 +1624,10 @@ namespace CommandCentral.Entities
                 References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False);
                 References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Designation).Nullable().LazyLoad(Laziness.False);
-                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Division).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Department).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Command).Nullable().LazyLoad(Laziness.False);
+                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
                 Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
@@ -1859,14 +1656,17 @@ namespace CommandCentral.Entities
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
 
                 HasManyToMany(x => x.NECs).Not.LazyLoad();
-                HasManyToMany(x => x.PermissionGroups).Not.LazyLoad();
-                HasManyToMany(x => x.SubscribedChangeEvents).Not.LazyLoad();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.EmailAddresses).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
+
+                HasMany(x => x.PermissionGroupNames)
+                    .KeyColumn("PersonId")
+                    .Element("PermissionGroupName")
+                    .Not.LazyLoad();
             }
         }
 
