@@ -251,23 +251,6 @@ namespace CommandCentral.ServiceManagement.Service
 
         #endregion
 
-        #region File Service
-
-        /// <summary>
-        /// Serves a given file by its file name.
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        public Stream DownloadFile(string fileName)
-        {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            string resourceName = string.Format("CommandCentral.Resources.Files.{0}", fileName);
-
-            return assembly.GetManifestResourceStream(resourceName);
-        }
-
-        #endregion
-
         #region Helper Methods
 
         /// <summary>
