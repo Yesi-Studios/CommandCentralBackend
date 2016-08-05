@@ -99,7 +99,9 @@
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
+    <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="FileProvider.cs" />
+    <Compile Include="IValidatable.cs" />
     <Compile Include="ServiceManagement\PluginModule.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
@@ -117,9 +119,7 @@
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Enums\MusterStatusesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\Rate.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
-    <Compile Include="Entities\Billet.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
