@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommandCentral.Authorization.Groups;
 
-namespace CommandCentral.Authorization
+namespace CommandCentral.Authorization.Rules
 {
     /// <summary>
     /// The base class for all authorization rules.  All authorization rules that inherit from this type are responsible for declaring their own operation by overriding the AuthorizationOperation method.
@@ -12,14 +13,9 @@ namespace CommandCentral.Authorization
     public abstract class AuthorizationRuleBase
     {
         /// <summary>
-        /// The list of properties to which this rulre will apply.
+        /// The parents of this rule.  This is where you can go to get the property names and the category.
         /// </summary>
-        public List<string> PropertyNames { get; set; }
-
-        /// <summary>
-        /// For what category is this rule created?
-        /// </summary>
-        public AuthorizationRuleCategoryEnum ForCategory { get; set; }
+        public PropertyGroupPart ParentPropertyGroup { get; set; }
 
         /// <summary>
         /// The method that should be called to determine if anything violated this rule.
@@ -29,17 +25,12 @@ namespace CommandCentral.Authorization
         public abstract bool AuthorizationOperation(AuthorizationToken authToken);
 
         /// <summary>
-        /// Creates a new AuthorizationRuleBase with the given category and the list of property names.
+        /// Creates a new AuthorizationRuleBase.
         /// </summary>
         /// <param name="category"></param>
         /// <param name="propertyNames"></param>
-        public AuthorizationRuleBase(AuthorizationRuleCategoryEnum category, List<string> propertyNames)
+        public AuthorizationRuleBase()
         {
-            if (category == AuthorizationRuleCategoryEnum.Null)
-                throw new ArgumentException("Category mustn't be null.");
-
-            this.ForCategory = category;
-            this.PropertyNames = propertyNames.ToList();
         }
     }
 }

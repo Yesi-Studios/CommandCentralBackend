@@ -9,6 +9,7 @@ using System.Reflection;
 using AtwoodUtils;
 using System.Linq.Expressions;
 using System.IO;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.ServiceManagement
 {
@@ -23,6 +24,11 @@ namespace CommandCentral.ServiceManagement
         public static ConcurrentDictionary<string, ServiceEndpoint> EndpointDescriptions { get; private set; }
 
         /// <summary>
+        /// All of the permission groups.
+        /// </summary>
+        public static ConcurrentBag<Authorization.Groups.PermissionGroup> AllPermissionGroups { get; set; }
+
+        /// <summary>
         /// Initializes the service.
         /// </summary>
         /// <param name="writer">The text writer to which messages from the service should be written.</param>
@@ -34,6 +40,8 @@ namespace CommandCentral.ServiceManagement
             //Initialize the communicator first so that everyone else can use it.
             Communicator.InitializeCommunicator(writer);
 
+            CollectPermissions();
+
             SetupEndpoints();
 
             RunStartupMethods();
@@ -41,6 +49,28 @@ namespace CommandCentral.ServiceManagement
         }
 
         #region Setup Methods
+
+        /// <summary>
+        /// Scans the entire assembly looking for any types that implement permission groups, creates an instance of them, and then saves them.
+        /// <para />
+        /// Validates that no two permission groups have the same name.
+        /// </summary>
+        private static void CollectPermissions()
+        {
+            Communicator.PostMessageToHost("Scanning for permissions.", Communicator.MessageTypes.Informational);
+
+            var groups = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(x => x.IsSubclassOf(typeof(Authorization.Groups.PermissionGroup)))
+                        .Select(x => (Authorization.Groups.PermissionGroup)Activator.CreateInstance(x));
+
+            if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+                throw new Exception("No two groups may have the same name.");
+
+            AllPermissionGroups = new ConcurrentBag<Authorization.Groups.PermissionGroup>(groups);
+
+            Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
+
+        }
 
         /// <summary>
         /// Scans the entire executing assembly for any service endpoint methods and reads them into a dictionary.
@@ -131,8 +161,8 @@ namespace CommandCentral.ServiceManagement
                 //We can say first because we know there's only one.
                 var info = group.ToList().First();
 
+                Communicator.PostMessageToHost("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
                 info.Method();
-                Communicator.PostMessageToHost("Executed startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
             }
         }
 
@@ -158,7 +188,7 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -189,7 +219,7 @@ namespace CommandCentral.ServiceManagement
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;

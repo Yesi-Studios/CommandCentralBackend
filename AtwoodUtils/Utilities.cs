@@ -41,9 +41,39 @@ namespace AtwoodUtils
             return (radians);
         }
 
-        public static string GetPropertyName<T, TReturn>(this Expression<Func<T, TReturn>> expression)
+        /// <summary>
+        /// For the given property of the given type, returns the name of that property.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static string GetPropertyName<T>(this Expression<Func<T, object>> expression)
         {
-            return ((MemberExpression)expression.Body).Member.Name;
+            return GetProperty(expression).Name;
+        }
+
+        /// <summary>
+        /// For the given property of a given type, returned the member info of that property.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static MemberInfo GetProperty<T>(this Expression<Func<T, object>> expression)
+        {
+            MemberExpression memberExp = expression.Body as MemberExpression;
+            if (memberExp != null)
+                return memberExp.Member;
+
+            // for unary types like datetime or guid
+            UnaryExpression unaryExp = expression.Body as UnaryExpression;
+            if (unaryExp != null)
+            {
+                memberExp = unaryExp.Operand as MemberExpression;
+                if (memberExp != null)
+                    return memberExp.Member;
+            }
+
+            throw new ArgumentException("'expression' should be a member expression or a method call expression.", "expression");
         }
 
         /// <summary>

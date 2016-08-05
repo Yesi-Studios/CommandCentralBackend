@@ -12,7 +12,7 @@ namespace CommandCentral.DataAccess
     public class ConnectionSettings
     {
         /// <summary>
-        /// The username to use to connect to the databaes.
+        /// The username to use to connect to the database.
         /// </summary>
         public string Username { get; set; }
 
@@ -71,6 +71,14 @@ namespace CommandCentral.DataAccess
                 Password = "douglas0678",
                 Server = "localhost",
                 Username = "xanneth",
+                VerboseLogging = false
+            }},
+            { "McLean's Home Machine", new ConnectionSettings
+            {
+                Database = "command_central",
+                Password = "password",
+                Server = "localhost",
+                Username = "anguslmm",
                 VerboseLogging = false
             }}
         };

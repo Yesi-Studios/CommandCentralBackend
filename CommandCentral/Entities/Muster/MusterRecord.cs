@@ -5,6 +5,7 @@ using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
+using CommandCentral.Authorization;
 
 namespace CommandCentral.Entities.Muster
 {
@@ -185,26 +186,9 @@ namespace CommandCentral.Entities.Muster
         /// <returns></returns>
         public static bool CanClientMusterPerson(Person client, Person person)
         {
-            //Clients are allowed to muster themselves.
-            if (client.Id == person.Id)
-                return true;
+            //TODO: rewrite the chain of command check here.
 
-            //What is the highest permission level this person has.
-            Authorization.PermissionLevels highestLevel = client.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
-
-            //If none, then return false;
-            if (highestLevel == Authorization.PermissionLevels.None)
-                return false;
-
-            //Alright, now go through the CoC checks.
-            if (highestLevel == Authorization.PermissionLevels.Command && client.IsInSameCommandAs(person))
-                return true;
-            if (highestLevel == Authorization.PermissionLevels.Department && client.IsInSameDepartmentAs(person))
-                return true;
-            if (highestLevel == Authorization.PermissionLevels.Division && client.IsInSameDivisionAs(person))
-                return true;
-
-            return false;
+            return true;
         }
 
         /// <summary>
@@ -594,7 +578,7 @@ namespace CommandCentral.Entities.Muster
             }
 
             //Before we do anything, make sure the client has permission to do muster.  As long as they are in a permission group in the Muster track, that'll be enough.
-            if (!token.AuthenticationSession.Person.IsInPermissionTrack(Authorization.PermissionTracks.Muster))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.Muster.ToString()))
             {
                 token.AddErrorMessage("You are not authorized to submit muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -688,12 +672,16 @@ namespace CommandCentral.Entities.Muster
             //Where we're going to keep all the persons the client can muster.
             List<Person> musterablePersons = new List<Person>();
 
-            Authorization.PermissionLevels highestLevel = token.AuthenticationSession.Person.GetHighestLevelInTrack(Authorization.PermissionTracks.Muster);
+            //TODO fix this in muster.
+            Authorization.Groups.PermissionGroupLevels highestLevel = Authorization.Groups.PermissionGroupLevels.Command;
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
+
+                //TODO fix the logic that determines who we can muster.  Mustering yourself should have an element of permissions in it.
+
                 //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
-                if (highestLevel == Authorization.PermissionLevels.None)
+                /*if (highestLevel == Authorization.PermissionGroupLevels.None)
                 {
                     musterablePersons.Add(token.AuthenticationSession.Person);
                 }
@@ -704,17 +692,17 @@ namespace CommandCentral.Entities.Muster
 
                     switch (highestLevel)
                     {
-                        case Authorization.PermissionLevels.Command:
+                        case Authorization.PermissionGroupLevels.Command:
                             {
                                 queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
                                 break;
                             }
-                        case Authorization.PermissionLevels.Department:
+                        case Authorization.PermissionGroupLevels.Department:
                             {
                                 queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
                                 break;
                             }
-                        case Authorization.PermissionLevels.Division:
+                        case Authorization.PermissionGroupLevels.Division:
                             {
                                 queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
                                 break;
@@ -727,7 +715,7 @@ namespace CommandCentral.Entities.Muster
 
                     //Now we have the query populated with the conditions it needs, let's fire it off.
                     musterablePersons = queryOver.List().ToList();
-                }
+                }*/
 
                 //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
                 //Because Atwood is a good code monkey. Oh yes he is.
@@ -790,11 +778,12 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionLevels.Command, Authorization.PermissionTracks.Muster))
+            //TODO fix this muster shit
+            /*if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionGroupLevels.Command, Authorization.PermissionTracks.Muster))
             {
                 token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }
+            }*/
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
             if (IsMusterFinalized)

@@ -3,9 +3,11 @@ using System.Runtime.Serialization;
 
 namespace CommandCentral.ClientAccess
 {
-    //TODO REVIEW Why do we use WCF service things here?
     /// <summary>
     /// Describes the container that is used to return data to the client. This object provides a reliable structure of data so that the client knows what to expect while allowing us to return exception data as well.
+    /// <para/>
+    /// We use WCF data element tags here to tell WCF how to handle this object. That being said, we serialize the object before it leaves so we don't even need to do this stuff; however, in case we wanted to send this object 
+    /// directly over the wire, I included the tags.
     /// </summary>
     [DataContract]
     public class ReturnContainer
