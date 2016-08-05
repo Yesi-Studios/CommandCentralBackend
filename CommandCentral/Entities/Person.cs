@@ -997,7 +997,7 @@ namespace CommandCentral.Entities
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
-                token.AddErrorMessage("The person ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("The person Id you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -1016,7 +1016,7 @@ namespace CommandCentral.Entities
                 //Now that we have the person back, let's resolve the permissions for this person.
                 var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
 
-                Person personReturn = new Person();
+                Dictionary<string, object> returnData = new Dictionary<string, object>();
 
                 List<string> returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
@@ -1028,18 +1028,38 @@ namespace CommandCentral.Entities
                     //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
                     if (propertyName.ToLower() == "id")
                     {
-                        personMetadata.SetIdentifier(personReturn, personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                        returnData.Add("Id", personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco));
                     }
                     else
                     {
-                        personMetadata.SetPropertyValue(personReturn, propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco), NHibernate.EntityMode.Poco);
+                        bool wasSet = false;
+
+                        switch (propertyName.ToLower())
+                        {
+                            case "command":
+                            case "department":
+                            case "division":
+                                {
+                                    returnData.Add(propertyName, NHibernateHelper.GetIdentifier(personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco)));
+
+                                    wasSet = true;
+                                    break;
+                                }
+
+                        }
+
+                        if (!wasSet)
+                        {
+                            returnData.Add(propertyName, personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco));
+                        }
+
                     }
                 }
 
                 token.SetResult(new
                 {
-                    Person = personReturn,
-                    IsMyProfile = token.AuthenticationSession.Person.Id == personReturn.Id,
+                    Person = returnData,
+                    IsMyProfile = token.AuthenticationSession.Person.Id == person.Id,
                     ResolvedPermissions = resolvedPermissions
                 });
             }
@@ -1080,7 +1100,7 @@ namespace CommandCentral.Entities
                 return;
             }
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 token.SetResult(session.Get<Person>(personId).AccountHistory);
             }
@@ -1128,7 +1148,7 @@ namespace CommandCentral.Entities
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
                 var queryOver = session.QueryOver<Person>();
