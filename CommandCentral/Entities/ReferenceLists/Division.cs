@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AtwoodUtils;
+using CommandCentral.Authorization;
 using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
@@ -192,7 +193,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may add divisions.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
@@ -290,7 +291,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 return;
             }
 
-            if (!token.AuthenticationSession.Person.HasSpecialPermissions(Authorization.SpecialPermissions.Developer))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("Only developers may edit divisions.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
