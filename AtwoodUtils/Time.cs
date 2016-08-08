@@ -31,6 +31,10 @@ namespace AtwoodUtils
             Seconds = dt.Second;
         }
 
+        /// <summary>
+        /// Returns a string formatting it like so : "{0:00}:{1:00}:{2:00}"
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return String.Format(
