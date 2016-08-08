@@ -33,15 +33,12 @@ namespace CommandCentral.DataAccess
         public static bool IsInitialized { get; set; }
 
         /// <summary>
-        /// Initializes the NHibernate Helper with the given connection settings.  Failure to call this method prior to DB interaction will cause all calls to fail.
+        /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
         /// <param name="settings"></param>
-        public static void InitializeNHibernate(ConnectionSettings settings)
+        private static void ConfigureNHibernate(ConnectionSettings settings)
         {
-
-            if (settings.VerboseLogging)
-            {
-                config = Fluently.Configure().Database(
+            config = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
                     builder => builder.Database(settings.Database)
                         .Username(settings.Username)
@@ -52,24 +49,17 @@ namespace CommandCentral.DataAccess
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();
-            }
-            else
-            {
-                config = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database(settings.Database)
-                        .Username(settings.Username)
-                        .Password(settings.Password)
-                        .Server(settings.Server)))
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
-            }
+
 
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
+        }
 
+        /// <summary>
+        /// Builds the session factory and extracts the class metadata. Sets the IsInitialized flag to true.
+        /// </summary>
+        private static void FinishNHibernateSetup()
+        {
             _sessionFactory = config.BuildSessionFactory();
 
             _allClassMetadata = new ConcurrentDictionary<string, IClassMetadata>(
@@ -85,6 +75,8 @@ namespace CommandCentral.DataAccess
 
             IsInitialized = true;
         }
+
+
 
         #region Helper Methods
 
@@ -186,9 +178,9 @@ namespace CommandCentral.DataAccess
         /// If it doesn't, we'll make it.  Then since we just had to make it, we'll then run the schema generation script.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 100)]
-        private static void ConfirmDatabaseIntegrity()
+        private static void SetupDatabaseAndNHibernate()
         {
-            var currentSettings = ConnectionSettings.CurrentConnection;
+            var currentSettings = ConnectionSettings.CurrentConnectionSettings;
 
             Communicator.PostMessage("Beginning database integrity check...", Communicator.MessageTypes.Informational);
 
@@ -217,7 +209,12 @@ namespace CommandCentral.DataAccess
                         if (exists)
                         {
                             Communicator.PostMessage("Database schema found.", Communicator.MessageTypes.Informational);
-                            Communicator.PostMessage("Scanning for tables...", Communicator.MessageTypes.Informational);
+
+                            Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
+                            ConfigureNHibernate(ConnectionSettings.CurrentConnectionSettings);
+                            Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
+
+                            Communicator.PostMessage("Scanning for associated tables...", Communicator.MessageTypes.Informational);
 
                             List<string> nonexistantTables = new List<string>();
 
@@ -255,14 +252,24 @@ namespace CommandCentral.DataAccess
 
                             command.ExecuteNonQuery();
 
-                            Communicator.PostMessage("Database schema created.", Communicator.MessageTypes.Warning);
+                            Communicator.PostMessage("Database created.", Communicator.MessageTypes.Warning);
+
+                            Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
+                            ConfigureNHibernate(ConnectionSettings.CurrentConnectionSettings);
+                            Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
 
                             //Since the database was just created, let's go ahead and populate it.
+                            Communicator.PostMessage("Populating database schema with NHibernate expected schema...", Communicator.MessageTypes.Informational);
                             CreateSchema(true);
+                            Communicator.PostMessage("Schema created.", Communicator.MessageTypes.Informational);
                         }
                     }
                 }
 
+                //If we got down here, then we're ready to initialize the factory.
+                Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
+                FinishNHibernateSetup();
+                Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
             }
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {
@@ -280,7 +287,7 @@ namespace CommandCentral.DataAccess
                         }
                     default:
                         {
-                            Communicator.PostMessage("An unexpected error occured while connecting to the database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
+                            Communicator.PostMessage("An unexpected error occurred while connecting to the database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
                             throw ex;
                         }
                 }

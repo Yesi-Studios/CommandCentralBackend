@@ -11,8 +11,10 @@ namespace CommandCentral.DataAccess
     /// </summary>
     public class ConnectionSettings
     {
-
-        public static ConnectionSettings CurrentConnection { get; set; }
+        /// <summary>
+        /// An object that stores the current connection settings.
+        /// </summary>
+        public static ConnectionSettings CurrentConnectionSettings { get; set; }
 
         #region Properties
 
