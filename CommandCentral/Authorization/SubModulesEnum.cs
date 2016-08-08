@@ -15,7 +15,6 @@ namespace CommandCentral.Authorization
     {
         CreatePerson,
         AdminTools,
-        EditNews,
-        Muster
+        EditNews
     }
 }

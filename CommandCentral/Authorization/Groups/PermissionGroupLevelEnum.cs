@@ -16,6 +16,10 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         None,
         /// <summary>
+        /// A permission with this level may be execrecised on the person's self only.
+        /// </summary>
+        Self,
+        /// <summary>
         /// A permission with this permission level may be exercised by a person on all other person's in his/her same division.
         /// </summary>
         Division,
