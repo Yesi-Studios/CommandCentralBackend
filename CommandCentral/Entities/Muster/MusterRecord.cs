@@ -243,7 +243,7 @@ namespace CommandCentral.Entities.Muster
                     //Set to false becaues we rolled back our changes.
                     IsMusterFinalized = false;
 
-                    Communicator.PostMessageToHost("The finalize muster method failed!  All changes were rolled back. The muster was not finalized! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+                    Communicator.PostMessage("The finalize muster method failed!  All changes were rolled back. The muster was not finalized! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
 
                     EmailHelper.SendFatalErrorEmail(null, e);
 
@@ -285,7 +285,7 @@ namespace CommandCentral.Entities.Muster
                 {
                     transaction.Rollback();
 
-                    Communicator.PostMessageToHost("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
+                    Communicator.PostMessage("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
 
                     EmailHelper.SendFatalErrorEmail(null, e);
 
@@ -577,13 +577,6 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            //Before we do anything, make sure the client has permission to do muster.  As long as they are in a permission group in the Muster track, that'll be enough.
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.Muster.ToString()))
-            {
-                token.AddErrorMessage("You are not authorized to submit muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
             //Did we get what we needed?
             if (!token.Args.ContainsKey("mustersubmissions"))
             {
@@ -672,50 +665,52 @@ namespace CommandCentral.Entities.Muster
             //Where we're going to keep all the persons the client can muster.
             List<Person> musterablePersons = new List<Person>();
 
-            //TODO fix this in muster.
-            Authorization.Groups.PermissionGroupLevels highestLevel = Authorization.Groups.PermissionGroupLevels.Command;
+            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
+            var highestLevelInMuster = resolvedPermissions.HighestLevels["Muster"];
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
 
-                //TODO fix the logic that determines who we can muster.  Mustering yourself should have an element of permissions in it.
+                //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
+                var queryOver = session.QueryOver<Person>();
 
-                //If they aren't in the muster track, they can at least muster themselves, else we need a query to find out everyone else they can muster.
-                /*if (highestLevel == Authorization.PermissionGroupLevels.None)
+                //Switch on the highest level in muster and then add the query accordingly.
+                switch (highestLevelInMuster)
                 {
-                    musterablePersons.Add(token.AuthenticationSession.Person);
+                    case Authorization.Groups.PermissionGroupLevels.Command:
+                        {
+                            queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
+                            musterablePersons = queryOver.List().ToList();
+                            break;
+                        }
+                    case Authorization.Groups.PermissionGroupLevels.Department:
+                        {
+                            queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
+                            musterablePersons = queryOver.List().ToList();
+                            break;
+                        }
+                    case Authorization.Groups.PermissionGroupLevels.Division:
+                        {
+                            queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
+                            musterablePersons = queryOver.List().ToList();
+                            break;
+                        }
+                    case Authorization.Groups.PermissionGroupLevels.Self:
+                        {
+                            //If the client's highest level is 'Self' then they can only muster themselves.
+                            musterablePersons.Add(token.AuthenticationSession.Person);
+                            break;
+                        }
+                    case Authorization.Groups.PermissionGroupLevels.None:
+                        {
+                            //If the client's highest level is none, then they basically got their permissions taken away.
+                            break;
+                        }
+                    default:
+                        {
+                            throw new Exception("The default case in the highest level switch in the LoadMusterablePersonForToday endpoint was reached with the following case: '{0}'!".FormatS(highestLevelInMuster));
+                        }
                 }
-                else
-                {
-                    //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
-                    var queryOver = session.QueryOver<Person>();
-
-                    switch (highestLevel)
-                    {
-                        case Authorization.PermissionGroupLevels.Command:
-                            {
-                                queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
-                                break;
-                            }
-                        case Authorization.PermissionGroupLevels.Department:
-                            {
-                                queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
-                                break;
-                            }
-                        case Authorization.PermissionGroupLevels.Division:
-                            {
-                                queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
-                                break;
-                            }
-                        default:
-                            {
-                                throw new Exception("The default case in the highest level switch in the LoadMusterablePersonForToday endpoint was reached with the following case: '{0}'!".FormatS(highestLevel));
-                            }
-                    }
-
-                    //Now we have the query populated with the conditions it needs, let's fire it off.
-                    musterablePersons = queryOver.List().ToList();
-                }*/
 
                 //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
                 //Because Atwood is a good code monkey. Oh yes he is.
@@ -728,11 +723,11 @@ namespace CommandCentral.Entities.Muster
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
                         Paygrade = x.Paygrade,
-                        Designation = x.Designation == null ? "" : x.Designation.Value, //Designation can be bull.
+                        Designation = x.Designation == null ? "" : x.Designation.Value, //Designation can be null.
                         Division = x.Division.Value,
                         Department = x.Department.Value,
                         Command = x.Command.Value,
-                        UIC = x.UIC == null ? "" : x.UIC.Value, //As can UIC
+                        UIC = x.UIC == null ? "" : x.UIC.Value, //UIC can also be null.
                         FriendlyName = x.ToString(),
                         CurrentMusterStatus = new
                         {
@@ -768,6 +763,16 @@ namespace CommandCentral.Entities.Muster
             }
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Finalized the current muster, which sets a flag and prevents all any more muster submissions.
+        /// <para />
+        /// Client Parameters: <para />
+        ///     None
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [EndpointMethod(EndpointName = "FinalizeMuster", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_FinalizeMuster(MessageToken token)
         {
@@ -778,12 +783,11 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-            //TODO fix this muster shit
-            /*if (!token.AuthenticationSession.Person.HasPermissionLevelInTrack(Authorization.PermissionGroupLevels.Command, Authorization.PermissionTracks.Muster))
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
                 token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }*/
+            }
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
             if (IsMusterFinalized)
@@ -800,10 +804,109 @@ namespace CommandCentral.Entities.Muster
 
         #region Startup Methods
 
+        /// <summary>
+        /// Registers the roll over method to run at a certain time.
+        /// </summary>
         [ServiceManagement.StartMethod(Priority = 1)]
-        private static void RegisterRolloverMuster()
+        private static void SetupMuster()
         {
-            FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
+            Communicator.PostMessage("Detecting current muster state...", Communicator.MessageTypes.Informational);
+
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var persons = GetMusterablePersons();
+
+                    if (persons.Select(x => x.CurrentMusterStatus).GroupBy(x => x.MusterDayOfYear).Count() != 1)
+                    {
+                        Communicator.PostMessage("Current muster records are not all for the same day!  Cleaning up muster records...", Communicator.MessageTypes.Warning);
+
+                        //Ok so these muster records aren't all from the same day.
+                        //To fix this we're going to select any muster records that's aren't for today and then try to archive them and the reset the person's profile with a blank muster record.
+                        //During the archive, we'll need to ask if the person already has a muster record for that day, if so, we'll throw out the one we have.
+                        var recordsInError = persons.Select(x => x.CurrentMusterStatus).Where(x => x.MusterDayOfYear != GetMusterDay(DateTime.Now) && x.MusterYear != GetMusterYear(DateTime.Now));
+
+                        List<MusterRecord> musterRecordsForReset = new List<MusterRecord>();
+
+                        List<Person> personsNeedingNewMusterRecords = new List<Person>();
+
+                        //Ok we have them, now see if they already exist for the user.
+                        foreach (var record in recordsInError)
+                        {
+                            //Query for this date and year for this person.
+                            var otherRecordsFromSameDay = session.QueryOver<MusterRecord>()
+                                .Where(x => x.MusterDayOfYear == record.MusterDayOfYear && x.MusterYear == record.MusterYear && x.Musteree.Id == record.Musteree.Id && x.Id != record.Id)
+                                .List();
+
+                            if (otherRecordsFromSameDay.Count != 0)
+                            {
+                                //There's already a record in the archive, so let's add this one to the list of muster records to be reset.
+                                musterRecordsForReset.Add(record);
+
+                                Communicator.PostMessage("A current muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                    "  While trying to archive that record, another record for that date was found to have already been archived.  The current muster record in question was thrown out.", Communicator.MessageTypes.Warning);
+                            }
+                            else //There is no archive yet, so we'll add it.  We "add" it by just resetting the muster record on the profile entirely.
+                            {
+                                personsNeedingNewMusterRecords.Add(record.Musteree);
+
+                                Communicator.PostMessage("A muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                    "  The record has been archived and the person's current muster record was reset.", Communicator.MessageTypes.Warning);
+                            }
+                        }
+
+                        //Let's handle the stuff we got and do the updates..  This first one, we need to reset without changing the reference.
+                        for (int x = 0; x < musterRecordsForReset.Count; x++)
+                        {
+                            musterRecordsForReset[x].Command = null;
+                            musterRecordsForReset[x].Department = null;
+                            musterRecordsForReset[x].Division = null;
+                            musterRecordsForReset[x].DutyStatus = null;
+                            musterRecordsForReset[x].HasBeenSubmitted = false;
+                            musterRecordsForReset[x].MusterDayOfYear = GetMusterDay(DateTime.Now);
+                            musterRecordsForReset[x].Musterer = null;
+                            musterRecordsForReset[x].MusterStatus = null;
+                            musterRecordsForReset[x].MusterYear = GetMusterYear(DateTime.Now);
+                            musterRecordsForReset[x].Paygrade = null;
+                            musterRecordsForReset[x].SubmitTime = default(DateTime);
+                            musterRecordsForReset[x].UIC = null;
+
+                            session.Update(musterRecordsForReset[x]);
+                        }
+
+                        //This one though, the person legit needs a whoel new muster record.
+                        foreach (var person in personsNeedingNewMusterRecords)
+                        {
+                            person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                            session.Update(person);
+                        }
+
+                        Communicator.PostMessage("Muster record clean up completed.", Communicator.MessageTypes.Warning);
+
+                    }
+
+                    //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
+                    Communicator.PostMessage("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count), Communicator.MessageTypes.Informational);
+                    Communicator.PostMessage("Muster finalization status : {0}".FormatS(IsMusterFinalized ? "Finalized" : "Not Finalized" ), Communicator.MessageTypes.Informational);
+                    Communicator.PostMessage("Expected completion time : {0}".FormatS(_dueTime.ToString()), Communicator.MessageTypes.Informational);
+                    Communicator.PostMessage("Rollover time : {0}".FormatS(_rolloverTime.ToString()), Communicator.MessageTypes.Informational);
+
+                    Communicator.PostMessage("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()), Communicator.MessageTypes.Informational);
+                    FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
+
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
         #endregion
