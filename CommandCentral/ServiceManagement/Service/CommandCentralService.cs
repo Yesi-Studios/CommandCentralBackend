@@ -38,7 +38,7 @@ namespace CommandCentral.ServiceManagement.Service
             AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
             //Tell the host we received a pre flight.
-            Communicator.PostMessageToHost("Received Preflight Request", Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Received Preflight Request", Communicator.MessageTypes.Informational);
         }
 
         #endregion
@@ -76,7 +76,7 @@ namespace CommandCentral.ServiceManagement.Service
                         token.CalledEndpoint = endpoint;
 
                         //Tell the client we have a request.
-                        Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
+                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
 
                         //Add the headers to the response.
                         AddHeadersToOutgoingResponse(WebOperationContext.Current);
@@ -146,7 +146,7 @@ namespace CommandCentral.ServiceManagement.Service
                         //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
                         token.State = MessageStates.Processed;
 
-                        Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
+                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
 
                         //Ok, now we know that the request is valid let's see if we need to authenticate it.
                         if (description.EndpointMethodAttribute.RequiresAuthentication)
@@ -165,14 +165,14 @@ namespace CommandCentral.ServiceManagement.Service
                             token.AuthenticationSession.LastUsedTime = token.CallTime;
                             token.State = MessageStates.Authenticated;
 
-                            Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
+                            Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
                         }
 
                         //Invoke the data method to which the endpoint points. Point
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
-                        Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
+                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
                         token.HandledTime = DateTime.Now;
@@ -181,7 +181,7 @@ namespace CommandCentral.ServiceManagement.Service
                         //Alright it's all done so let's go ahead and save the token.
                         session.Save(token);
 
-                        Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Informational);
+                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -222,7 +222,7 @@ namespace CommandCentral.ServiceManagement.Service
                         EmailHelper.SendFatalErrorEmail(token, e);
 
                         //Tell the host what happened.
-                        Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Critical);
+                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Critical);
 
                         //Set the outgoing status code and then release.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -241,7 +241,7 @@ namespace CommandCentral.ServiceManagement.Service
                 EmailHelper.SendFatalErrorEmail(token, e);
 
                 //We can't save it cause we have no session so just post the message and then release.
-                Communicator.PostMessageToHost(token.ToString(), Communicator.MessageTypes.Critical);
+                Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Critical);
 
                 //Set the outgoing status code and then release.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
