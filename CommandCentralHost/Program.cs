@@ -90,18 +90,6 @@ namespace CommandCentralHost
             },
             new DialogueOption
             {
-                OptionText = "Create the McLean",
-                Method = PersonsEditor.CreateMcLean,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Create the Atwood",
-                Method = PersonsEditor.CreateAtwood,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
                 OptionText = "Finalize Muster",
                 Method = () =>
                     {
@@ -122,23 +110,9 @@ namespace CommandCentralHost
 
         };
 
-        private const int SWP_NOSIZE = 0x0001;
-
-
-        [DllImport("kernel32.dll", ExactSpelling = true)]
-        private static extern IntPtr GetConsoleWindow();
-
-        private static readonly IntPtr _myConsole = GetConsoleWindow();
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
-
-
-
         [STAThread]
-        private static void Main()
+        private static void Main(string[] args)
         {
-
             try
             {
                 string version = CommandCentral.Config.Version.RELEASE_VERSION;
@@ -147,7 +121,6 @@ namespace CommandCentralHost
 
                 Console.WindowWidth = 200;
                 Console.WindowHeight = Console.LargestWindowHeight;
-                SetWindowPos(_myConsole, 0, 0, 0, 0, 0, SWP_NOSIZE);
 
                 Console.ForegroundColor = ConsoleColor.Green;
 

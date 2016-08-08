@@ -64,6 +64,10 @@
     <ApplicationIcon>444214624108345120.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CommandLine, Version=1.9.71.2, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
+      <HintPath>..\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
       <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
       <Private>True</Private>
@@ -102,7 +106,6 @@
     <Compile Include="Editors\EndpointEditor.cs" />
     <Compile Include="Editors\ListEditor.cs" />
     <Compile Include="Editors\MetadataViewer.cs" />
-    <Compile Include="Editors\PersonsEditor.cs" />
     <Compile Include="Editors\SchemaEditor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
