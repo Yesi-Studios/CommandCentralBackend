@@ -11,6 +11,11 @@ namespace CommandCentral.DataAccess
     /// </summary>
     public class ConnectionSettings
     {
+
+        public static ConnectionSettings CurrentConnection { get; set; }
+
+        #region Properties
+
         /// <summary>
         /// The username to use to connect to the database.
         /// </summary>
@@ -36,56 +41,7 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public bool VerboseLogging { get; set; }
 
-        /// <summary>
-        /// Some pre-defined connection settings.
-        /// </summary>
-        public static Dictionary<string, ConnectionSettings> PredefinedConnectionSettings = new Dictionary<string, ConnectionSettings>()
-        {
-            { "Default NIPRNet Production", new ConnectionSettings
-            {
-                Database = "test_command_central",
-                Password = "niocga",
-                Server = "gord14ec204",
-                Username = "niocga",
-                VerboseLogging = false
-            }},
-            { "Default NIPRNet Development/Debugging", new ConnectionSettings
-            {
-                Database = "test_command_central_development",
-                Password = "niocga",
-                Server = "gord14ec204",
-                Username = "niocga",
-                VerboseLogging = false
-            }},
-            { "Atwood's Home Machine Production", new ConnectionSettings
-            {
-                Database = "test_db",
-                Password = "douglas0678",
-                Server = "localhost",
-                Username = "xanneth",
-                VerboseLogging = false
-            }},
-            { "Atwood's Home Machine Development", new ConnectionSettings
-            {
-                Database = "command_central_development",
-                Password = "douglas0678",
-                Server = "localhost",
-                Username = "xanneth",
-                VerboseLogging = false
-            }},
-            { "McLean's Home Machine", new ConnectionSettings
-            {
-                Database = "command_central",
-                Password = "password",
-                Server = "localhost",
-                Username = "anguslmm",
-                VerboseLogging = false
-            }}
-        };
+        #endregion
 
-        /// <summary>
-        /// The current settings object being used by NHibernate.
-        /// </summary>
-        public static string CurrentSettingsKey { get; set; }
     }
 }

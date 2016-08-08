@@ -188,7 +188,7 @@ namespace CommandCentral.DataAccess
         [ServiceManagement.StartMethod(Priority = 100)]
         private static void ConfirmDatabaseIntegrity()
         {
-            var currentSettings = DataAccess.ConnectionSettings.PredefinedConnectionSettings[DataAccess.ConnectionSettings.CurrentSettingsKey];
+            var currentSettings = ConnectionSettings.CurrentConnection;
 
             Communicator.PostMessage("Beginning database integrity check...", Communicator.MessageTypes.Informational);
 
