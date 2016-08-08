@@ -1595,15 +1595,74 @@ namespace CommandCentral.Entities
 
         /// <summary>
         /// Loads all persons from the database, thus initializing most of the 2nd level cache, and tells the host how many persons we have in the database.
+        /// <para />
+        /// Also, this method will assert that Atwood exists in the database.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 7)]
         private static void ReadPersons()
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                var persons = session.QueryOver<Person>().List();
+                try
+                {
+                    Communicator.PostMessage("Scanning for Atwood's profile...", Communicator.MessageTypes.Informational);
 
-                Communicator.PostMessageToHost("Found {0} persons.".FormatS(persons.Count), Communicator.MessageTypes.Informational);
+                    //Make sure I'm in the database.
+                    var atwoodProfile = session.QueryOver<Person>()
+                        .Where(x => x.FirstName == "Daniel" && x.LastName == "Atwood" && x.SSN == "525956681" && x.MiddleName == "Kurt Roger")
+                        .SingleOrDefault();
+
+                    //We're also going to look to see if Atwood's profile exists.  Talking in the third person... weeeeee.
+                    if (atwoodProfile == null)
+                    {
+                        Communicator.PostMessage("Atwood's profile was not found in the database.  Creating it now...", Communicator.MessageTypes.Warning);
+
+                        var person = new Person()
+                        {
+                            Id = Guid.NewGuid(),
+                            LastName = "Atwood",
+                            FirstName = "Daniel",
+                            MiddleName = "Kurt Roger",
+                            SSN = "525956681",
+                            IsClaimed = false,
+                            EmailAddresses = new List<EmailAddress>()
+                        {
+                            new EmailAddress
+                            {
+                                Address = "daniel.k.atwood.mil@mail.mil",
+                                IsContactable = true,
+                                IsPreferred = true
+                            }
+                        },
+                            DateOfBirth = new DateTime(1992, 04, 24),
+                            DateOfArrival = new DateTime(2013, 08, 23),
+                            EAOS = new DateTime(2018, 1, 27),
+                            Paygrade = CommandCentral.Paygrades.E5,
+                            DutyStatus = CommandCentral.DutyStatuses.Active
+                        };
+
+                        person.CurrentMusterStatus = CommandCentral.Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        session.Save(person);
+
+                        Communicator.PostMessage("Atwood's profile created.  Id : {0}".FormatS(person.Id), Communicator.MessageTypes.Warning);
+                    }
+                    else
+                    {
+                        Communicator.PostMessage("Atwood's profile found.", Communicator.MessageTypes.Informational);
+                    }
+
+                    //Give the listener the current row count.
+                    Communicator.PostMessage("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()), Communicator.MessageTypes.Informational);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
         }
 
