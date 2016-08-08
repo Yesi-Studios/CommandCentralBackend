@@ -98,18 +98,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DialogueOption.cs" />
-    <Compile Include="Editors\APIKeysEditor.cs" />
-    <Compile Include="Editors\CommandsEditor.cs" />
-    <Compile Include="Editors\ConnectionEditor.cs" />
-    <Compile Include="Editors\DepartmentsEditor.cs" />
-    <Compile Include="Editors\DivisionsEditor.cs" />
-    <Compile Include="Editors\EndpointEditor.cs" />
-    <Compile Include="Editors\ListEditor.cs" />
-    <Compile Include="Editors\MetadataViewer.cs" />
-    <Compile Include="Editors\SchemaEditor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Editors\ReferenceListEditor.cs" />
     <Compile Include="ServiceManager.cs" />
   </ItemGroup>
   <ItemGroup>

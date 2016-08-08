@@ -3,7 +3,6 @@ using AtwoodUtils;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-using CommandCentralHost.Editors;
 using System.Runtime.InteropServices;
 
 namespace CommandCentralHost
@@ -45,48 +44,6 @@ namespace CommandCentralHost
                 OptionText = "Unfreeze Communicator",
                 Method = () => CommandCentral.Communicator.Unfreeze(),
                 DisplayCriteria = () => CommandCentral.Communicator.IsCommunicatorInitialized && CommandCentral.Communicator.IsFrozen
-            },
-            new DialogueOption
-            {
-                OptionText = "Create Schema",
-                Method = SchemaEditor.CreateSchema,
-                DisplayCriteria = () => ServiceManager.Host == null
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage Reference Lists",
-                Method = ReferenceListEditor.EditAllReferenceLists,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage API Keys",
-                Method = ApiKeysEditor.EditAPIKeys,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage Commands",
-                Method = CommandsEditor.EditCommands,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage Endpoints",
-                Method = EndpointEditor.EditEndpoints,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "View Entity Metadata",
-                Method = MetadataViewer.ViewAllEntityMetadata,
-                DisplayCriteria = () => true
-            },
-            new DialogueOption
-            {
-                OptionText = "Manage Database Connection Settings",
-                Method = ConnectionEditor.EditConnection,
-                DisplayCriteria = () => true
             },
             new DialogueOption
             {
