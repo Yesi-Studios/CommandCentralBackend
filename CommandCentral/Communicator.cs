@@ -40,11 +40,7 @@ namespace CommandCentral
             /// <summary>
             /// Critical messages alert the host to the fact that a fatal error has occurred in the service and that re-mediating action should be taken immediately.
             /// </summary>
-            Critical,
-            /// <summary>
-            /// A cron operation message is a message from the Cron Operations Manager.
-            /// </summary>
-            CronOperation
+            Critical
         }
 
         /// <summary>
@@ -76,10 +72,10 @@ namespace CommandCentral
         public static void InitializeCommunicator(TextWriter textWriter)
         {
             TextWriter = textWriter;
-            ListeningTypes = new List<MessageTypes> { MessageTypes.Critical, MessageTypes.Important, MessageTypes.Informational, MessageTypes.Warning, MessageTypes.CronOperation };
+            ListeningTypes = new List<MessageTypes> { MessageTypes.Critical, MessageTypes.Important, MessageTypes.Informational, MessageTypes.Warning };
 
             //Tell whoever is listening that we've set up the communicator.
-            PostMessageToHost("Communicator initialized and forwarding all message types.", MessageTypes.Informational);
+            PostMessage("Communicator initialized and forwarding all message types.", MessageTypes.Informational);
         }
 
         /// <summary>
@@ -87,7 +83,7 @@ namespace CommandCentral
         /// </summary>
         /// <param name="message"></param>
         /// <param name="messageType"></param>
-        public static void PostMessageToHost(string message, MessageTypes messageType)
+        public static void PostMessage(string message, MessageTypes messageType)
         {
             if (TextWriter != null && ListeningTypes.Contains(messageType) && !IsFrozen)
             {
