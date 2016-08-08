@@ -57,7 +57,7 @@ namespace CommandCentral.ServiceManagement
         /// </summary>
         private static void CollectPermissions()
         {
-            Communicator.PostMessageToHost("Scanning for permissions.", Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Scanning for permissions.", Communicator.MessageTypes.Informational);
 
             var groups = Assembly.GetExecutingAssembly().GetTypes()
                     .Where(x => x.IsSubclassOf(typeof(Authorization.Groups.PermissionGroup)))
@@ -68,7 +68,7 @@ namespace CommandCentral.ServiceManagement
 
             AllPermissionGroups = new ConcurrentBag<Authorization.Groups.PermissionGroup>(groups);
 
-            Communicator.PostMessageToHost("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
 
         }
 
@@ -78,7 +78,7 @@ namespace CommandCentral.ServiceManagement
         /// <returns></returns>
         private static void SetupEndpoints()
         {
-            Communicator.PostMessageToHost("Scanning for endpoint methods.", Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Scanning for endpoint methods.", Communicator.MessageTypes.Informational);
 
             var endpoints = Assembly.GetExecutingAssembly().GetTypes()
                     .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
@@ -106,7 +106,7 @@ namespace CommandCentral.ServiceManagement
                         };
                     }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
 
-            Communicator.PostMessageToHost("Found {0} endpoint methods.".FormatS(endpoints.Count), Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Found {0} endpoint methods.".FormatS(endpoints.Count), Communicator.MessageTypes.Informational);
 
             EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(endpoints, StringComparer.OrdinalIgnoreCase);
         }
@@ -117,7 +117,7 @@ namespace CommandCentral.ServiceManagement
         /// <returns></returns>
         private static void RunStartupMethods()
         {
-            Communicator.PostMessageToHost("Scanning for startup methods.", Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Scanning for startup methods.", Communicator.MessageTypes.Informational);
 
             //Scan for all start up methods.
             var startupMethods = Assembly.GetExecutingAssembly().GetTypes()
@@ -155,13 +155,13 @@ namespace CommandCentral.ServiceManagement
             }
 
             //Now run them all in order.
-            Communicator.PostMessageToHost("Executing {0} startup method(s).".FormatS(startupMethods.Count()), Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Executing {0} startup method(s).".FormatS(startupMethods.Count()), Communicator.MessageTypes.Informational);
             foreach (var group in startupMethods)
             {
                 //We can say first because we know there's only one.
                 var info = group.ToList().First();
 
-                Communicator.PostMessageToHost("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
+                Communicator.PostMessage("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
                 info.Method();
             }
         }
