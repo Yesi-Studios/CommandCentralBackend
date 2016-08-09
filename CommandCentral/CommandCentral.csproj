@@ -116,10 +116,10 @@
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="FileProvider.cs" />
     <Compile Include="IValidatable.cs" />
+    <Compile Include="ServiceManagement\Events\EventsManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
-    <Compile Include="DataAccess\ConnectionSettings.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />

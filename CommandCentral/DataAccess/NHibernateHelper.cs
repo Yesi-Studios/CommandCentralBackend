@@ -31,21 +31,36 @@ namespace CommandCentral.DataAccess
         /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
         /// <param name="settings"></param>
-        private static void ConfigureNHibernate(ConnectionSettings settings)
+        private static void ConfigureNHibernate(string username, string password, string server, string database, bool printSQL)
         {
-            config = Fluently.Configure().Database(
+            if (printSQL)
+            {
+                config = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database(settings.Database)
-                        .Username(settings.Username)
-                        .Password(settings.Password)
-                        .Server(settings.Server))
+                    builder => builder.Database(database)
+                        .Username(username)
+                        .Password(password)
+                        .Server(server))
                     .ShowSql())
                 .Cache(x => x.UseQueryCache()
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();
-
-
+            }
+            else
+            {
+                config = Fluently.Configure().Database(
+                MySQLConfiguration.Standard.ConnectionString(
+                    builder => builder.Database(database)
+                        .Username(username)
+                        .Password(password)
+                        .Server(server)))
+                .Cache(x => x.UseQueryCache()
+                    .ProviderClass<SysCacheProvider>())
+                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                .BuildConfiguration();
+            }
+            
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
         }
@@ -153,23 +168,15 @@ namespace CommandCentral.DataAccess
         /// If it doesn't, we'll make it.  Then since we just had to make it, we'll then run the schema generation script.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 100)]
-        private static void SetupDatabaseAndNHibernate()
+        private static void SetupDatabaseAndNHibernate(CLI.Options.LaunchOptions launchOptions)
         {
-            var currentSettings = ConnectionSettings.CurrentConnectionSettings;
-
-            if (currentSettings == null)
-            {
-                Communicator.PostMessage("The current database settings have not been set.  Startup failure!", Communicator.MessageTypes.Critical);
-                throw new Exception("The current database settings have not been set.  Startup failure!");
-            }
-
             Communicator.PostMessage("Beginning database integrity check...", Communicator.MessageTypes.Informational);
 
             //First, we need to ping the database and make sure it's replying.
-            Communicator.PostMessage("Confirming connection to database : '{0}'...".FormatS(currentSettings.Server), Communicator.MessageTypes.Informational);
+            Communicator.PostMessage("Confirming connection to database : '{0}'...".FormatS(launchOptions.Server), Communicator.MessageTypes.Informational);
             try
             {
-                var connectionString = String.Format("server={0};uid={1};pwd={2}", currentSettings.Server, currentSettings.Username, currentSettings.Password);
+                var connectionString = String.Format("server={0};uid={1};pwd={2}", launchOptions.Server, launchOptions.Username, launchOptions.Password);
 
                 using (MySql.Data.MySqlClient.MySqlConnection connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString))
                 {
@@ -183,7 +190,7 @@ namespace CommandCentral.DataAccess
                     using (MySql.Data.MySqlClient.MySqlCommand command = 
                         new MySql.Data.MySqlClient.MySqlCommand("SELECT COUNT(SCHEMA_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = @schema", connection))
                     {
-                        command.Parameters.AddWithValue("@schema", currentSettings.Database);
+                        command.Parameters.AddWithValue("@schema", launchOptions.Database);
 
                         var result = command.ExecuteScalar();
 
@@ -194,7 +201,7 @@ namespace CommandCentral.DataAccess
                             Communicator.PostMessage("Database schema found.", Communicator.MessageTypes.Informational);
 
                             Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
-                            ConfigureNHibernate(ConnectionSettings.CurrentConnectionSettings);
+                            ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
                             Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
 
                             Communicator.PostMessage("Scanning for associated tables...", Communicator.MessageTypes.Informational);
@@ -207,7 +214,7 @@ namespace CommandCentral.DataAccess
                             {
                                 command.Parameters.Clear();
                                 command.CommandText = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @table";
-                                command.Parameters.AddWithValue("@schema", currentSettings.Database);
+                                command.Parameters.AddWithValue("@schema", launchOptions.Database);
                                 command.Parameters.AddWithValue("@table", table.Name);
 
                                 //Ok is the table there?  If not, add it to a collection.
@@ -232,18 +239,18 @@ namespace CommandCentral.DataAccess
                         }
                         else
                         {
-                            Communicator.PostMessage("The database schema, '{0}', was not found.  Creating it now.".FormatS(currentSettings.Database), Communicator.MessageTypes.Warning);
+                            Communicator.PostMessage("The database schema, '{0}', was not found.  Creating it now.".FormatS(launchOptions.Database), Communicator.MessageTypes.Warning);
 
                             //Database not found! Uh oh!
                             //In this case, we need to make the schema.
-                            command.CommandText = "CREATE DATABASE " + currentSettings.Database;
+                            command.CommandText = "CREATE DATABASE " + launchOptions.Database;
 
                             command.ExecuteNonQuery();
 
                             Communicator.PostMessage("Database created.", Communicator.MessageTypes.Warning);
 
                             Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
-                            ConfigureNHibernate(ConnectionSettings.CurrentConnectionSettings);
+                            ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
                             Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
 
                             //Since the database was just created, let's go ahead and populate it.
@@ -271,7 +278,7 @@ namespace CommandCentral.DataAccess
                     case 0:
                         {
                             Communicator.PostMessage("Database could not be contacted!  Throwing exception!", Communicator.MessageTypes.Critical);
-                            throw new Exception("The server at '{0}' did not reply.".FormatS(currentSettings.Server));
+                            throw new Exception("The server at '{0}' did not reply.".FormatS(launchOptions.Server));
                         }
                     case 1045:
                         {

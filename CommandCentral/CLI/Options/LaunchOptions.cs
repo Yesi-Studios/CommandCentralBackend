@@ -15,6 +15,9 @@ namespace CommandCentral.CLI.Options
         [Option('v', "verbose", HelpText = "Instructs the service to log 'Informational' messages.", DefaultValue = false)]
         public bool Verbose { get; set; }
 
+        [Option("printsql", HelpText = "Instructs the data providers to print the SQL they generate to the output stream.", DefaultValue = false)]
+        public bool PrintSQL { get; set; }
+
         [Option('u', "username", HelpText = "The username to use to connect to the database.", Required = true)]
         public string Username { get; set; }
 

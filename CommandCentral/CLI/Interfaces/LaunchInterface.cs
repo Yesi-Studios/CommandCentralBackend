@@ -29,17 +29,8 @@ namespace CommandCentral.CLI.Interfaces
             //Tell the user we've hooked into the communicator and we won't be using this anymore.
             "Communicator initialized.  All future messages will be handled by the communicator.".WriteLine();
 
-            //We also need to pick out the connection stuff and hand that to the connection settings.
-            DataAccess.ConnectionSettings.CurrentConnectionSettings = new DataAccess.ConnectionSettings
-            {
-                Database = launchOptions.Database,
-                Password = launchOptions.Password,
-                Server = launchOptions.Server,
-                Username = launchOptions.Username
-            };
-
             //Now we need to run all start up methods.
-            RunStartupMethods();
+            RunStartupMethods(launchOptions);
 
             //All startup methods have run, now we need to launch the service itself.
 
@@ -83,7 +74,7 @@ namespace CommandCentral.CLI.Interfaces
         /// Scans the entire executing assembly for any methods that want to be run at service start up.
         /// </summary>
         /// <returns></returns>
-        private static void RunStartupMethods()
+        private static void RunStartupMethods(Options.LaunchOptions launchOptions)
         {
             Communicator.PostMessage("Scanning for startup methods.", Communicator.MessageTypes.Informational);
 
@@ -94,7 +85,7 @@ namespace CommandCentral.CLI.Interfaces
                     .Select(x =>
                     {
                         //Make sure all start up methods follow the same pattern.
-                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 0)
+                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 1 || x.GetParameters()[0].ParameterType != typeof(Options.LaunchOptions))
                             throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of a startup method!".FormatS(x.Name, x.DeclaringType.Name));
 
                         //Create the method's call and compile it.
@@ -102,7 +93,7 @@ namespace CommandCentral.CLI.Interfaces
                            .Select(p => Expression.Parameter(p.ParameterType, p.Name))
                            .ToArray();
                         var call = Expression.Call(null, x, parameters);
-                        var startupMethod = (Action)Expression.Lambda(call, parameters).Compile();
+                        var startupMethod = (Action<Options.LaunchOptions>)Expression.Lambda(call, parameters).Compile();
 
 
                         var startupMethodAttribute = x.GetCustomAttribute<StartMethodAttribute>();
@@ -130,7 +121,7 @@ namespace CommandCentral.CLI.Interfaces
                 var info = group.ToList().First();
 
                 Communicator.PostMessage("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
-                info.Method();
+                info.Method(launchOptions);
             }
         }
     }
