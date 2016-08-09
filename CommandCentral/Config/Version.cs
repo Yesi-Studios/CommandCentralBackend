@@ -15,6 +15,6 @@ namespace CommandCentral.Config
         /// <summary>
         /// The version.
         /// </summary>
-        public const string RELEASE_VERSION = "0.9.5.1";
+        public const string RELEASE_VERSION = "0.12.1.2";
     }
 }

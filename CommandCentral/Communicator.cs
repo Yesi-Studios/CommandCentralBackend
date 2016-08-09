@@ -73,9 +73,6 @@ namespace CommandCentral
         {
             TextWriter = textWriter;
             ListeningTypes = new List<MessageTypes> { MessageTypes.Critical, MessageTypes.Important, MessageTypes.Informational, MessageTypes.Warning };
-
-            //Tell whoever is listening that we've set up the communicator.
-            PostMessage("Communicator initialized and forwarding all message types.", MessageTypes.Informational);
         }
 
         /// <summary>

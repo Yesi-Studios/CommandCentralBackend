@@ -83,7 +83,7 @@ namespace CommandCentral.ServiceManagement.Service
 
                         //Get the endpoint
                         ServiceEndpoint description;
-                        if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                        if (!ServiceEndpoint.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                         {
                             token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                 "and you've checked your spelling, yell at the developers.  For further issues, please call the developers at {0}.".FormatS(Config.ContactDetails.DEV_PHONE_NUMBER), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);

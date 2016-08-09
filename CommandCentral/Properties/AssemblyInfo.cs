@@ -1,15 +1,16 @@
 ﻿using System.Reflection;
+using System.Resources;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CommandDB_Plugin")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Command Central Service CLI")]
+[assembly: AssemblyDescription("Provides interaction with the service and its launcher.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("U.S. Army")]
-[assembly: AssemblyProduct("CommandDB_Plugin")]
-[assembly: AssemblyCopyright("Copyright © U.S. Army 2016")]
+[assembly: AssemblyCompany("U.S. Navy")]
+[assembly: AssemblyProduct("Command Central Backend Service")]
+[assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +32,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.12.1.2")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: NeutralResourcesLanguage("en")]
