@@ -28,11 +28,6 @@ namespace CommandCentral.DataAccess
         private static Configuration config = null;
 
         /// <summary>
-        /// Indicates that the NHibernateHelper has been initialized.
-        /// </summary>
-        public static bool IsInitialized { get; private set; }
-
-        /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
         /// <param name="settings"></param>
@@ -56,7 +51,7 @@ namespace CommandCentral.DataAccess
         }
 
         /// <summary>
-        /// Builds the session factory and extracts the class metadata. Sets the IsInitialized flag to true.
+        /// Builds the session factory and extracts the class metadata. 
         /// </summary>
         private static void FinishNHibernateSetup()
         {
@@ -72,8 +67,6 @@ namespace CommandCentral.DataAccess
                             x.Value);
                     })
                     .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase));
-
-            IsInitialized = true;
         }
 
 
@@ -86,9 +79,6 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static ISession CreateStatefulSession()
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             return _sessionFactory.OpenSession();
         }
 
@@ -98,9 +88,6 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IStatelessSession CreateStatelessSession()
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             return _sessionFactory.OpenStatelessSession();
         }
 
@@ -120,9 +107,6 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void Release()
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             _sessionFactory.Close();
             _sessionFactory.Dispose();
         }
@@ -134,9 +118,6 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IClassMetadata GetEntityMetadata(string entityName)
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             return _allClassMetadata[entityName];
         }
 
@@ -146,9 +127,6 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IDictionary<string, IClassMetadata> GetAllEntityMetadata()
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             return _allClassMetadata;
         }
 
@@ -157,9 +135,6 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public static void CreateSchema(bool dropFirst)
         {
-            if (!IsInitialized)
-                throw new Exception("The NHibernate Helper has not yet been initialized.");
-
             System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;
             
             if (dropFirst)
@@ -210,7 +185,9 @@ namespace CommandCentral.DataAccess
                     {
                         command.Parameters.AddWithValue("@schema", currentSettings.Database);
 
-                        var exists = ((int)command.ExecuteScalar()) != 0;
+                        var result = command.ExecuteScalar();
+
+                        var exists = (Convert.ToInt32(command.ExecuteScalar())) != 0;
 
                         if (exists)
                         {
@@ -234,7 +211,7 @@ namespace CommandCentral.DataAccess
                                 command.Parameters.AddWithValue("@table", table.Name);
 
                                 //Ok is the table there?  If not, add it to a collection.
-                                if (((int)command.ExecuteScalar()) != 0)
+                                if ((Convert.ToInt32(command.ExecuteScalar())) == 0)
                                     nonexistantTables.Add(table.Name);
                             }
 
@@ -254,7 +231,7 @@ namespace CommandCentral.DataAccess
 
                             //Database not found! Uh oh!
                             //In this case, we need to make the schema.
-                            command.CommandText = "CREATE DATABASE IF NOT EXISTS @schema";
+                            command.CommandText = "CREATE DATABASE " + currentSettings.Database;
 
                             command.ExecuteNonQuery();
 
