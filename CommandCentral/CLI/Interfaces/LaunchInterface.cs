@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CommandCentral.ServiceManagement;
 using CommandCentral.ServiceManagement.Service;
 
 namespace CommandCentral.CLI.Interfaces
@@ -19,11 +22,32 @@ namespace CommandCentral.CLI.Interfaces
         {
             _options = launchOptions;
 
+            //So you want to launch a service, eh?  Let's start doing the thing.  First up, initialize the communicator.  From now on, communication goes through it.
+            //TODO use the user's logging argument for this.
+            Communicator.InitializeCommunicator(Console.Out);
+
+            //Tell the user we've hooked into the communicator and we won't be using this anymore.
+            "Communicator initialized.  All future messages will be handled by the communicator.".WriteLine();
+
+            //We also need to pick out the connection stuff and hand that to the connection settings.
+            DataAccess.ConnectionSettings.CurrentConnectionSettings = new DataAccess.ConnectionSettings
+            {
+                Database = launchOptions.Database,
+                Password = launchOptions.Password,
+                Server = launchOptions.Server,
+                Username = launchOptions.Username
+            };
+
+            //Now we need to run all start up methods.
+            RunStartupMethods();
+
+            //All startup methods have run, now we need to launch the service itself.
+
             //Let's determine if our given port is usable.
             //Make sure the port hasn't been claimed by any other application.
             if (!Utilities.IsPortAvailable(launchOptions.Port))
             {
-                "It appears the port '{0}' is already in use.  Please try a different port.".FormatS(launchOptions.Port).WriteLine();
+                Communicator.PostMessage("It appears the port '{0}' is already in use. We cannot continue from this.", Communicator.MessageTypes.Critical);
                 Environment.Exit(0);
             }
 
@@ -34,14 +58,11 @@ namespace CommandCentral.CLI.Interfaces
                 ServiceDebugBehavior stp = host.Description.Behaviors.Find<ServiceDebugBehavior>();
                 stp.HttpHelpPageEnabled = false;
 
-                //Tell the service to initialize itself.
-                ServiceManagement.ServiceManager.InitializeService(launchOptions);
-
                 host.Faulted += host_Faulted;
 
                 host.Open();
 
-                "Press enter to shutdown service...".WriteLine();
+                Communicator.PostMessage("Press enter to shutdown service...", Communicator.MessageTypes.Informational);
                 Console.ReadLine();
             }
 
@@ -54,8 +75,63 @@ namespace CommandCentral.CLI.Interfaces
         /// <param name="e"></param>
         private static void host_Faulted(object sender, EventArgs e)
         {
-            CommandCentral.Communicator.PostMessage("The host has entered the faulted state.  Service re-initialization will now be started.", CommandCentral.Communicator.MessageTypes.Critical);
+            Communicator.PostMessage("The host has entered the faulted state.  Service re-initialization will now be started.", CommandCentral.Communicator.MessageTypes.Critical);
             Launch(_options);
+        }
+
+        /// <summary>
+        /// Scans the entire executing assembly for any methods that want to be run at service start up.
+        /// </summary>
+        /// <returns></returns>
+        private static void RunStartupMethods()
+        {
+            Communicator.PostMessage("Scanning for startup methods.", Communicator.MessageTypes.Informational);
+
+            //Scan for all start up methods.
+            var startupMethods = Assembly.GetExecutingAssembly().GetTypes()
+                    .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
+                    .Where(x => x.GetCustomAttribute<StartMethodAttribute>() != null)
+                    .Select(x =>
+                    {
+                        //Make sure all start up methods follow the same pattern.
+                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 0)
+                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of a startup method!".FormatS(x.Name, x.DeclaringType.Name));
+
+                        //Create the method's call and compile it.
+                        var parameters = x.GetParameters()
+                           .Select(p => Expression.Parameter(p.ParameterType, p.Name))
+                           .ToArray();
+                        var call = Expression.Call(null, x, parameters);
+                        var startupMethod = (Action)Expression.Lambda(call, parameters).Compile();
+
+
+                        var startupMethodAttribute = x.GetCustomAttribute<StartMethodAttribute>();
+
+                        return new
+                        {
+                            Method = startupMethod,
+                            Priority = startupMethodAttribute.Priority,
+                            Name = x.Name
+                        };
+
+                    }).GroupBy(x => x.Priority).OrderByDescending(x => x.Key);
+
+            //Make sure no methods share the same priority
+            if (startupMethods.Any(x => x.Count() > 1))
+            {
+                throw new Exception("One or more start up methods share the same startup priority.");
+            }
+
+            //Now run them all in order.
+            Communicator.PostMessage("Executing {0} startup method(s).".FormatS(startupMethods.Count()), Communicator.MessageTypes.Informational);
+            foreach (var group in startupMethods)
+            {
+                //We can say first because we know there's only one.
+                var info = group.ToList().First();
+
+                Communicator.PostMessage("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
+                info.Method();
+            }
         }
     }
 }
