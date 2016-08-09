@@ -24,7 +24,7 @@ namespace CommandCentral.CLI.Options
         [Option('d', "database", HelpText = "The name of the database (schema) to connect to.", Required = true)]
         public string Database { get; set; }
 
-        [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", Required = true)]
+        [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", DefaultValue = "GORD14EC204")]
         public string Server { get; set; }
 
         [Option('e', "emailserver", HelpText = "The address (IP or FQDN) of the email/SMTP server to which the service should send emails.", Required = false)]

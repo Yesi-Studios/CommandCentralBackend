@@ -26,16 +26,7 @@ namespace CommandCentral.CLI.Options
             help.AddDashesToOption = true;
 
             help.AddPreOptionsLine("License: IDK.  Ask LT Rawls.");
-            if (this.LastParserState?.Errors.Any() == true)
-            {
-                var errors = help.RenderParsingErrorsText(this, 2); // indent with two spaces
-
-                if (!string.IsNullOrEmpty(errors))
-                {
-                    help.AddPreOptionsLine(string.Concat(Environment.NewLine, "ERROR(S):"));
-                    help.AddPreOptionsLine(errors);
-                }
-            }
+            
             return help;
         }
     }
