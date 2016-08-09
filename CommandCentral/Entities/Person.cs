@@ -930,7 +930,7 @@ namespace CommandCentral.Entities
             newPerson.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
             //We're also going to add on the default permission groups.
-            newPerson.PermissionGroups = ServiceManagement.ServiceManager.AllPermissionGroups.Where(x => x.IsDefault).ToList();
+            newPerson.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
 
             //Now for validation!
             var results = new PersonValidator().Validate(newPerson);
