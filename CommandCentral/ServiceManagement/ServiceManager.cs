@@ -31,14 +31,15 @@ namespace CommandCentral.ServiceManagement
         /// <summary>
         /// Initializes the service.
         /// </summary>
-        /// <param name="writer">The text writer to which messages from the service should be written.</param>
-        public static void InitializeService(TextWriter writer)
+        /// <param name="options">The options from the CLI.</param>
+        public static void InitializeService(CLI.Options.LaunchOptions options)
         {
-            if (!DataAccess.NHibernateHelper.IsInitialized)
-                throw new Exception("Please select a database to connect to before starting the service.");
-
+            //The first thing to do is figure out where the client wants us to log things.
+            //TODO: Right now we're just going to hardcode the console.out into this.
             //Initialize the communicator first so that everyone else can use it.
-            Communicator.InitializeCommunicator(writer);
+            Communicator.InitializeCommunicator(Console.Out);
+
+            //Next, we're going to setup the current connection settings.
 
             CollectPermissions();
 
