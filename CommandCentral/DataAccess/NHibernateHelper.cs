@@ -30,7 +30,7 @@ namespace CommandCentral.DataAccess
         /// <summary>
         /// Indicates that the NHibernateHelper has been initialized.
         /// </summary>
-        public static bool IsInitialized { get; set; }
+        public static bool IsInitialized { get; private set; }
 
         /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.
@@ -181,6 +181,12 @@ namespace CommandCentral.DataAccess
         private static void SetupDatabaseAndNHibernate()
         {
             var currentSettings = ConnectionSettings.CurrentConnectionSettings;
+
+            if (currentSettings == null)
+            {
+                Communicator.PostMessage("The current database settings have not been set.  Startup failure!", Communicator.MessageTypes.Critical);
+                throw new Exception("The current database settings have not been set.  Startup failure!");
+            }
 
             Communicator.PostMessage("Beginning database integrity check...", Communicator.MessageTypes.Informational);
 
