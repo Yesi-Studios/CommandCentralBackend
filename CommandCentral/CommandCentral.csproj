@@ -110,6 +110,8 @@
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
+    <Compile Include="DataAccess\Importer.cs" />
+    <Compile Include="DataAccess\ImportError.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="FileProvider.cs" />

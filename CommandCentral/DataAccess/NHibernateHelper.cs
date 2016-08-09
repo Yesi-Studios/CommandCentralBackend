@@ -223,6 +223,11 @@ namespace CommandCentral.DataAccess
                             else
                             {
                                 Communicator.PostMessage("All tables found.", Communicator.MessageTypes.Informational);
+
+                                //If we got down here, then we're ready to initialize the factory.
+                                Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
+                                FinishNHibernateSetup();
+                                Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
                             }
                         }
                         else
@@ -245,14 +250,19 @@ namespace CommandCentral.DataAccess
                             Communicator.PostMessage("Populating database schema with NHibernate expected schema...", Communicator.MessageTypes.Informational);
                             CreateSchema(true);
                             Communicator.PostMessage("Schema created.", Communicator.MessageTypes.Informational);
+
+                            //If we got down here, then we're ready to initialize the factory.
+                            Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
+                            FinishNHibernateSetup();
+                            Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
+
+                            //Also, since we made everything a new, we can go ahead and ingest the old database into this database.
+                            Communicator.PostMessage("Ingesting old database...", Communicator.MessageTypes.Informational);
+                            DataAccess.Importer.IngestOldDatabase();
+                            Communicator.PostMessage("Ingest complete.", Communicator.MessageTypes.Informational);
                         }
                     }
                 }
-
-                //If we got down here, then we're ready to initialize the factory.
-                Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
-                FinishNHibernateSetup();
-                Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
             }
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {

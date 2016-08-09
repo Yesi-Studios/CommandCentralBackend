@@ -37,6 +37,11 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         public virtual IList<Department> Departments { get; set; }
 
+        /// <summary>
+        /// The old Id of this command in the old database.
+        /// </summary>
+        public virtual int OldId { get; set; }
+
         #endregion
 
         #region Overrides
@@ -399,6 +404,7 @@ namespace CommandCentral.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
+                Map(x => x.OldId).Not.Nullable().Unique();
 
                 HasMany(x => x.Departments).Cascade.All().Not.LazyLoad();
 

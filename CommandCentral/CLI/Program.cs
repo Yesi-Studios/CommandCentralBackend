@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using CommandCentral.CLI.Options;
 using CommandCentral.CLI.Interfaces;
 
-namespace CommandCentralHost
+namespace CommandCentral.CLI
 {
     /// <summary>
     /// Main Class
