@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
@@ -8,10 +10,18 @@ using AtwoodUtils;
 namespace CommandCentral.Authorization.Groups
 {
     /// <summary>
-    /// All permission grups must inherit from this in order to be included into the permissions system.
+    /// All permission groups must inherit from this in order to be included into the permissions system.
     /// </summary>
     public abstract class PermissionGroup
     {
+
+        /// <summary>
+        /// All of the permission groups.
+        /// </summary>
+        public static ConcurrentBag<PermissionGroup> AllPermissionGroups { get; set; }
+
+        #region Properties
+
         /// <summary>
         /// The name of the permission group. Default : the class's name.
         /// </summary>
@@ -37,6 +47,10 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         public List<PermissionGroup> GroupsCanEditMembershipOf { get; set; }
 
+        #endregion
+
+        #region ctors
+
         /// <summary>
         /// Builds a new permission group, setting up the defaults.
         /// </summary>
@@ -47,6 +61,10 @@ namespace CommandCentral.Authorization.Groups
             AccessibleSubModules = new List<string>();
             GroupsCanEditMembershipOf = new List<PermissionGroup>();
         }
+
+        #endregion
+
+        #region Fluent Methods
 
         /// <summary>
         /// Assigns the given name to the current permission group.
@@ -99,5 +117,34 @@ namespace CommandCentral.Authorization.Groups
         {
             GroupsCanEditMembershipOf = permissionGroups.ToList();
         }
+
+        #endregion
+
+        #region Startup Methods
+
+        /// <summary>
+        /// Scans the entire assembly looking for any types that implement permission groups, creates an instance of them, and then saves them.
+        /// <para />
+        /// Validates that no two permission groups have the same name.
+        /// </summary>
+        [ServiceManagement.StartMethod(Priority = 3)]
+        private static void ScanPermissions()
+        {
+            Communicator.PostMessage("Scanning for permissions.", Communicator.MessageTypes.Informational);
+
+            var groups = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(x => x.IsSubclassOf(typeof(PermissionGroup)))
+                        .Select(x => (PermissionGroup)Activator.CreateInstance(x));
+
+            if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+                throw new Exception("No two groups may have the same name.");
+
+            AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
+
+            Communicator.PostMessage("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
+        }
+
+        #endregion
+
     }
 }
