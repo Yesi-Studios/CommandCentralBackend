@@ -115,7 +115,6 @@
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="FileProvider.cs" />
     <Compile Include="IValidatable.cs" />
-    <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
