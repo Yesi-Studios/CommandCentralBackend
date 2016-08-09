@@ -27,7 +27,7 @@ namespace CommandCentral.CLI.Options
         [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", Required = true)]
         public string Server { get; set; }
 
-        [Option('e', "emailserver", HelpText = "The address (IP or FQDN) of the email/SMTP server to which the service should send emails.", Required = true)]
+        [Option('e', "emailserver", HelpText = "The address (IP or FQDN) of the email/SMTP server to which the service should send emails.", Required = false)]
         public string SMTPServer { get; set; }
 
         [Option('l', "log", HelpText = "The relative or absolute path to the directory to which the logs should be written. NOT IMPLEMENTED", DefaultValue = "CONSOLE")]
