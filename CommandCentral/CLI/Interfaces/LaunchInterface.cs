@@ -14,10 +14,17 @@ using CommandCentral.ServiceManagement.Service;
 
 namespace CommandCentral.CLI.Interfaces
 {
+    /// <summary>
+    /// Contains the Launch vern option handler.
+    /// </summary>
     public static class LaunchInterface
     {
         private static Options.LaunchOptions _options = null;
-
+        
+        /// <summary>
+        /// Handles the launch verb option.
+        /// </summary>
+        /// <param name="launchOptions"></param>
         public static void Launch(Options.LaunchOptions launchOptions)
         {
             _options = launchOptions;
