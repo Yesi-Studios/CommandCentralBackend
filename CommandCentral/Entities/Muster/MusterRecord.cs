@@ -186,9 +186,36 @@ namespace CommandCentral.Entities.Muster
         /// <returns></returns>
         public static bool CanClientMusterPerson(Person client, Person person)
         {
-            //TODO: rewrite the chain of command check here.
+            var resolvedPermissions = client.PermissionGroups.Resolve(client, person);
+            var highestLevelInMuster = resolvedPermissions.HighestLevels["Muster"];
 
-            return true;
+            switch (highestLevelInMuster)
+            {
+                case Authorization.Groups.PermissionGroupLevels.Command:
+                    {
+                        return client.IsInSameCommandAs(person);
+                    }
+                case Authorization.Groups.PermissionGroupLevels.Department:
+                    {
+                        return client.IsInSameDepartmentAs(person);
+                    }
+                case Authorization.Groups.PermissionGroupLevels.Division:
+                    {
+                        return client.IsInSameDivisionAs(person);
+                    }
+                case Authorization.Groups.PermissionGroupLevels.Self:
+                    {
+                        return client.Id == person.Id;
+                    }
+                case Authorization.Groups.PermissionGroupLevels.None:
+                    {
+                        return false;
+                    }
+                default:
+                    {
+                        throw new NotImplementedException("Fell to the default case in the CanClientMusterPerson switch.");
+                    }
+            }
         }
 
         /// <summary>
@@ -213,7 +240,7 @@ namespace CommandCentral.Entities.Muster
                     //Set it to true to prevent anyone else trying to finalize the muster while we're processing.
                     IsMusterFinalized = true;
 
-                    var persons = GetMusterablePersons(session);
+                    var persons = GetMusterablePersonsQuery(session).List();
                     
                     //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
                     foreach (Person per in persons)
@@ -268,7 +295,7 @@ namespace CommandCentral.Entities.Muster
             {
                 try
                 {
-                    var persons = GetMusterablePersons(session);
+                    var persons = GetMusterablePersonsQuery(session).List();
 
                     //Now we need to go through each person and reset their current muster status.
                     foreach (var person in persons)
@@ -301,23 +328,9 @@ namespace CommandCentral.Entities.Muster
         /// </summary>
         /// <param name="session"></param>
         /// <returns></returns>
-        public static IList<Person> GetMusterablePersons(NHibernate.ISession session)
+        public static NHibernate.IQueryOver<Person, Person> GetMusterablePersonsQuery(NHibernate.ISession session)
         {
-            return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss).List();
-        }
-
-        /// <summary>
-        /// Returns a list of those persons who are currently musterable.  Uses a new session to do the loading then disposes it.
-        /// </summary>
-        /// <param name="session"></param>
-        /// <returns></returns>
-        public static IList<Person> GetMusterablePersons()
-        {
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss).List();
-            }
+            return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss);
         }
 
         #endregion
@@ -712,6 +725,8 @@ namespace CommandCentral.Entities.Muster
                         }
                 }
 
+                //Here we also want to limit the msuterable persons query to only those people   
+
                 //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
                 //Because Atwood is a good code monkey. Oh yes he is.
                 var results = musterablePersons.Select(x =>
@@ -808,7 +823,7 @@ namespace CommandCentral.Entities.Muster
         /// Registers the roll over method to run at a certain time.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 1)]
-        private static void SetupMuster()
+        private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
         {
             Communicator.PostMessage("Detecting current muster state...", Communicator.MessageTypes.Informational);
 
@@ -818,7 +833,7 @@ namespace CommandCentral.Entities.Muster
             {
                 try
                 {
-                    var persons = GetMusterablePersons();
+                    var persons = GetMusterablePersonsQuery(session).List();
 
                     if (persons.Select(x => x.CurrentMusterStatus).GroupBy(x => x.MusterDayOfYear).Count() != 1)
                     {

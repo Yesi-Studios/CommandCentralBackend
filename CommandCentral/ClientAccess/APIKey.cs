@@ -75,7 +75,7 @@ namespace CommandCentral.ClientAccess
         /// Scans the API Keys in the database and ensures that the primary one exists.  Also prints all the API Keys we have.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 2)]
-        private static void SetupAPIKeys()
+        private static void SetupAPIKeys(CLI.Options.LaunchOptions launchOptions)
         {
             Communicator.PostMessage("Scanning API Keys...", Communicator.MessageTypes.Informational);
 

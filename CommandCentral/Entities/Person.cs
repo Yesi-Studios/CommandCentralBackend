@@ -1599,7 +1599,7 @@ namespace CommandCentral.Entities
         /// Also, this method will assert that Atwood exists in the database.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 7)]
-        private static void ReadPersons()
+        private static void ReadPersons(CLI.Options.LaunchOptions launchOptions)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())

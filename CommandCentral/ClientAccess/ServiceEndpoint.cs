@@ -46,7 +46,7 @@ namespace CommandCentral.ClientAccess
         /// </summary>
         /// <returns></returns>
         [ServiceManagement.StartMethod(Priority = 4)]
-        private static void SetupEndpoints()
+        private static void SetupEndpoints(CLI.Options.LaunchOptions launchOptions)
         {
             Communicator.PostMessage("Scanning for endpoint methods.", Communicator.MessageTypes.Informational);
 

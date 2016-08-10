@@ -378,7 +378,7 @@ namespace CommandCentral.Entities.ReferenceLists
         #region Startup Methods
 
         [ServiceManagement.StartMethod(Priority = 5)]
-        private static void ShowCommands()
+        private static void ShowCommands(CLI.Options.LaunchOptions launchOptions)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {

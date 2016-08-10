@@ -128,7 +128,7 @@ namespace CommandCentral.Authorization.Groups
         /// Validates that no two permission groups have the same name.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 3)]
-        private static void ScanPermissions()
+        private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
         {
             Communicator.PostMessage("Scanning for permissions.", Communicator.MessageTypes.Informational);
 
