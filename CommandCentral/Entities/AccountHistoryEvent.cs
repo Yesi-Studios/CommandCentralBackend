@@ -4,44 +4,7 @@ using AtwoodUtils;
 
 namespace CommandCentral.Entities
 {
-    /// <summary>
-    /// Describes the different account history types.
-    /// </summary>
-    public enum AccountHistoryEventTypes
-    {
-        /// <summary>
-        /// A login event.
-        /// </summary>
-        Login,
-        /// <summary>
-        /// A logout event that results in the invalidation of a session.
-        /// </summary>
-        Logout,
-        /// <summary>
-        /// A failed login event.
-        /// </summary>
-        FailedLogin,
-        /// <summary>
-        /// The password of an account was reset.
-        /// </summary>
-        PasswordReset,
-        /// <summary>
-        /// The registration process was successfully begun.
-        /// </summary>
-        RegistrationStarted,
-        /// <summary>
-        /// The registration process was completed.
-        /// </summary>
-        RegistrationCompleted,
-        /// <summary>
-        /// The password reset process was started.
-        /// </summary>
-        PasswordResetInitiated,
-        /// <summary>
-        /// The password of a person account was reset.
-        /// </summary>
-        PasswordResetCompleted
-    }
+    
 
     /// <summary>
     /// Describes a single account history event.

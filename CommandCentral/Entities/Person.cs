@@ -388,9 +388,6 @@ namespace CommandCentral.Entities
                         string username = token.Args["username"] as string;
                         string password = token.Args["password"] as string;
 
-                        //Validate the username and the password
-                        //TODO that validation
-
                         //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                         var person = session.QueryOver<Person>()
@@ -400,40 +397,56 @@ namespace CommandCentral.Entities
                         if (person == null)
                         {
                             token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                            return;
+                        }
+
+                        if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
+                        {
+                            //A login to the client's account failed.  We need to send an email.
+                            EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+
+                            if (address == null)
+                                throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
+
+                            //Ok, so we have an email we can use to contact the person!
+                            EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
+
+                            //Put the error on token.
+                            token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+
+                            //Now we also need to add the event to client's account history.
+                            person.AccountHistory.Add(new AccountHistoryEvent
+                            {
+                                AccountHistoryEventType = AccountHistoryEventTypes.FailedLogin,
+                                EventTime = token.CallTime
+                            });
+
+                            session.Save(person);
+
                         }
                         else
                         {
-                            if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
+                            //Cool then we can make a new authentication session.
+                            AuthenticationSession ses = new AuthenticationSession
                             {
-                                //A login to the client's account failed.  We need to send an email.
-                                EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
+                                IsActive = true,
+                                LastUsedTime = token.CallTime,
+                                LoginTime = token.CallTime,
+                                Person = person
+                            };
 
-                                if (address == null)
-                                    throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
+                            //Now insert it
+                            session.Save(ses);
 
-                                //Ok, so we have an email we can use to contact the person!
-                                EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
-
-                                token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-
-                            }
-                            else
+                            //Also put the account history on the client.
+                            person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                //Cool then we can make a new authentication session.
-                                AuthenticationSession ses = new AuthenticationSession
-                                {
-                                    IsActive = true,
-                                    LastUsedTime = token.CallTime,
-                                    LoginTime = token.CallTime,
-                                    Person = person
-                                };
+                                AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                                EventTime = token.CallTime
+                            });
 
-                                //Now insert it
-                                session.Save(ses);
-
-                                //We need to get the client's permission groups, add the defaults, and then tell the client their permissions.
-                                token.SetResult(new { PersonId = person.Id, ResolvedPermissions = AuthorizationUtilities.GetPermissionGroupsFromNames(person.PermissionGroupNames, true).Resolve(person, null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
-                            }
+                            //We need to get the client's permission groups, add the defaults, and then tell the client their permissions.
+                            token.SetResult(new { PersonId = person.Id, ResolvedPermissions = AuthorizationUtilities.GetPermissionGroupsFromNames(person.PermissionGroupNames, true).Resolve(person, null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                         }
 
                         transaction.Commit();
@@ -465,6 +478,13 @@ namespace CommandCentral.Entities
             }
 
             token.AuthenticationSession.IsActive = false;
+
+            //Cool, we also need to update the client.
+            token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
+            {
+                AccountHistoryEventType = AccountHistoryEventTypes.Logout,
+                EventTime = token.CallTime
+            });
         }
 
         #endregion
@@ -567,6 +587,13 @@ namespace CommandCentral.Entities
                     //And then persist it.
                     session.Save(pendingAccountConfirmation);
 
+                    //Let's also add the account history object here.
+                    person.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = AccountHistoryEventTypes.RegistrationStarted,
+                        EventTime = token.CallTime
+                    });
+
                     //And then persist that by updating the person.
                     session.Update(person);
 
@@ -662,6 +689,13 @@ namespace CommandCentral.Entities
                     pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
                     pendingAccountConfirmation.Person.IsClaimed = true;
 
+                    //Also put the account history object on the person.
+                    pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = AccountHistoryEventTypes.RegistrationCompleted,
+                        EventTime = token.CallTime
+                    });
+
                     //Cool, so now just update the person object.
                     session.Update(pendingAccountConfirmation.Person);
 
@@ -745,6 +779,12 @@ namespace CommandCentral.Entities
                         token.AddErrorMessage("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
+
+                    person.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
+                        EventTime = token.CallTime
+                    });
 
                     //Save the event
                     session.Update(person);
@@ -836,16 +876,22 @@ namespace CommandCentral.Entities
                         //If not we need to delete the record and then tell the client to start over.
                         session.Delete(pendingPasswordReset);
 
-                        token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                        token.AddErrorMessage("It appears you waited too long to reset your password!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
 
                     //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
                     pendingPasswordReset.Person.PasswordHash = passwordHash;
 
+                    //Let's also add the account history. 
+                    pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetCompleted,
+                        EventTime = token.CallTime
+                    });
 
-                    //Update/save it.
-                    session.Update(pendingPasswordReset);
+                    //Update/save the person.
+                    session.Update(pendingPasswordReset.Person);
 
                     //Finally we need to send an email before we delete the object.
                     //TODO send that email.
@@ -940,6 +986,13 @@ namespace CommandCentral.Entities
                 token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
+
+            //Cool, since everything is good to go, let's also add the account history.
+            newPerson.AccountHistory.Add(new AccountHistoryEvent
+            {
+                AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                EventTime = token.CallTime
+            });
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
