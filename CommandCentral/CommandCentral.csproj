@@ -78,6 +78,7 @@
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Web" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -103,7 +104,6 @@
     <Compile Include="Authorization\SubModulesEnum.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
-    <Compile Include="CLI\Interfaces\LaunchInterface.cs" />
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
     <Compile Include="CLI\Program.cs" />
@@ -117,6 +117,7 @@
     <Compile Include="Enums\AccountHistoryTypesEnum.cs" />
     <Compile Include="FileProvider.cs" />
     <Compile Include="IValidatable.cs" />
+    <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
     <Compile Include="Communicator.cs" />
@@ -158,6 +159,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\Variance.cs" />
     <Compile Include="ServiceManagement\StartMethodAttribute.cs" />
+    <Compile Include="WindowsService.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">

@@ -5,17 +5,38 @@ using System.Linq;
 using System.ServiceModel;
 using System.Runtime.InteropServices;
 using CommandCentral.CLI.Options;
-using CommandCentral.CLI.Interfaces;
+using System.ServiceProcess;
 
 namespace CommandCentral.CLI
 {
     /// <summary>
     /// Main Class
     /// </summary>
-    class Program
+    public class Program
     {
-        [STAThread]
-        static void Main(string[] args)
+        /// <summary>
+        /// Entry point.
+        /// </summary>
+        /// <param name="args"></param>
+        public static void Main(string[] args)
+        {
+            if (!Environment.UserInteractive)
+                // running as service
+                using (var service = new WindowsService())
+                    ServiceBase.Run(service);
+            else
+            {
+                // running as console app
+                Start(args);
+
+                Console.WriteLine("Press any key to stop...");
+                Console.ReadKey(true);
+
+                Stop();
+            }
+        }
+
+        private static void Start(string[] args)
         {
             var options = new MainOptions();
 
@@ -38,7 +59,7 @@ namespace CommandCentral.CLI
             {
                 case "launch":
                     {
-                        LaunchInterface.Launch((LaunchOptions)invokedVerbInstance);
+                        ServiceManagement.ServiceManager.StartService((LaunchOptions)invokedVerbInstance);
                         break;
                     }
                 default:
@@ -48,5 +69,15 @@ namespace CommandCentral.CLI
                     }
             }
         }
+
+        private static void Stop()
+        {
+        }
+
+        public static void ParseAndRouteArguments(string[] args)
+        {
+            
+        }
     }
+
 }
