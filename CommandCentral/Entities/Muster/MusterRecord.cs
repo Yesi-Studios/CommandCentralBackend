@@ -597,7 +597,6 @@ namespace CommandCentral.Entities.Muster
                 return;
             }
 
-
             Dictionary<Guid, string> musterSubmissions = null;
             //When we try to parse the JSON from the request, we'll do it in a try catch because there's no convenient, performant TryParse implementation for this.
             try
@@ -667,7 +666,7 @@ namespace CommandCentral.Entities.Muster
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadMusterablePersonsForToday", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadTodaysMuster(MessageToken token)
+        private static void EndpointMethod_LoadMusterablePersonsForToday(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
