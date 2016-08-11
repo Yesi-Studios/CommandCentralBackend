@@ -36,7 +36,6 @@
             this.CCServiceProcessInstaller.Account = System.ServiceProcess.ServiceAccount.NetworkService;
             this.CCServiceProcessInstaller.Password = null;
             this.CCServiceProcessInstaller.Username = null;
-            this.CCServiceProcessInstaller.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.CCServiceProcessInstaller_AfterInstall);
             // 
             // serviceInstaller1
             // 
