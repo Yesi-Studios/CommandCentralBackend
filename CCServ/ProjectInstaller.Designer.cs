@@ -33,13 +33,13 @@
             // 
             // CCServiceProcessInstaller
             // 
-            this.CCServiceProcessInstaller.Account = System.ServiceProcess.ServiceAccount.NetworkService;
+            this.CCServiceProcessInstaller.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
             this.CCServiceProcessInstaller.Password = null;
             this.CCServiceProcessInstaller.Username = null;
             // 
             // serviceInstaller1
             // 
-            this.serviceInstaller1.ServiceName = "CCServ Windows Service";
+            this.serviceInstaller1.ServiceName = "CCSERV";
             // 
             // ProjectInstaller
             // 
