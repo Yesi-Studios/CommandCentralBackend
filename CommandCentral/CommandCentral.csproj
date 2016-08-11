@@ -72,9 +72,11 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Deployment" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Web" />
@@ -86,114 +88,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Authorization\AuthorizationExtensions.cs" />
-    <Compile Include="Authorization\AuthorizationUtilities.cs" />
-    <Compile Include="Authorization\Groups\Definitions\Users.cs" />
-    <Compile Include="Authorization\Groups\PermissionGroup.cs" />
-    <Compile Include="Authorization\Groups\PropertySelector.cs" />
-    <Compile Include="Authorization\ResolvedPermissions.cs" />
-    <Compile Include="Authorization\Rules\AuthorizationRuleBase.cs" />
-    <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
-    <Compile Include="Authorization\Groups\ModulePart.cs" />
-    <Compile Include="Authorization\Groups\PropertyGroupPart.cs" />
-    <Compile Include="Authorization\Rules\RuleDisjunction.cs" />
-    <Compile Include="Authorization\Rules\IfInChainOfCommandRule.cs" />
-    <Compile Include="Authorization\Rules\IfSelfRule.cs" />
-    <Compile Include="Authorization\AuthorizationToken.cs" />
-    <Compile Include="Authorization\Groups\PermissionGroupLevelEnum.cs" />
-    <Compile Include="Authorization\SubModulesEnum.cs" />
-    <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
-    <Compile Include="ClientAccess\MessageStatesEnum.cs" />
-    <Compile Include="CLI\Options\LaunchOptions.cs" />
-    <Compile Include="CLI\Options\MainOptions.cs" />
-    <Compile Include="CLI\Program.cs" />
-    <Compile Include="Config\ContactDetails.cs" />
-    <Compile Include="Config\ParamNames.cs" />
-    <Compile Include="Config\Version.cs" />
-    <Compile Include="DataAccess\Importer.cs" />
-    <Compile Include="DataAccess\ImportError.cs" />
-    <Compile Include="Entities\Muster\MusterReport.cs" />
-    <Compile Include="Entities\ReferenceLists\Designation.cs" />
-    <Compile Include="Enums\AccountHistoryTypesEnum.cs" />
-    <Compile Include="FileProvider.cs" />
-    <Compile Include="IValidatable.cs" />
-    <Compile Include="ServiceManagement\ServiceManager.cs" />
-    <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
-    <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
-    <Compile Include="Communicator.cs" />
-    <Compile Include="DataAccess\SessionExtensions.cs" />
-    <Compile Include="Entities\AccountHistoryEvent.cs" />
-    <Compile Include="ClientAccess\ErrorTypes.cs" />
-    <Compile Include="ClientAccess\ReturnContainer.cs" />
-    <Compile Include="Entities\Error.cs" />
-    <Compile Include="Entities\PendingAccountConfirmation.cs" />
-    <Compile Include="Entities\PendingPasswordReset.cs" />
-    <Compile Include="Enums\ChangeEventLevelsEnum.cs" />
-    <Compile Include="Enums\DutyStatusesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
-    <Compile Include="Enums\MusterStatusesEnum.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
-    <Compile Include="Entities\Change.cs" />
-    <Compile Include="ClientAccess\ServiceEndpoint.cs" />
-    <Compile Include="ClientAccess\MessageToken.cs" />
-    <Compile Include="ClientAccess\AuthenticationSession.cs" />
-    <Compile Include="DataAccess\NHibernateHelper.cs" />
-    <Compile Include="ClientAccess\APIKey.cs" />
-    <Compile Include="Entities\ReferenceLists\Command.cs" />
-    <Compile Include="Entities\ReferenceLists\Department.cs" />
-    <Compile Include="Entities\ReferenceLists\Division.cs" />
-    <Compile Include="Entities\EmailAddress.cs" />
-    <Compile Include="EmailHelper.cs" />
-    <Compile Include="Entities\ReferenceLists\NEC.cs" />
-    <Compile Include="Entities\NewsItem.cs" />
-    <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
-    <Compile Include="Enums\PaygradesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
-    <Compile Include="Enums\SexesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\UIC.cs" />
-    <Compile Include="Entities\Muster\MusterRecord.cs" />
-    <Compile Include="ClientAccess\PasswordHash.cs" />
-    <Compile Include="Entities\PhoneNumber.cs" />
-    <Compile Include="Entities\PhysicalAddress.cs" />
-    <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Entities\Variance.cs" />
-    <Compile Include="ServiceManagement\StartMethodAttribute.cs" />
-    <Compile Include="WindowsService.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\ConfirmAccount.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\BeginRegistrationError.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FailedAccountLogin.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\GenericError.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\InitiatePasswordReset.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <Compile Include="WindowsService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="WindowsService.Designer.cs">
+      <DependentUpon>WindowsService.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Compile Include="Entities\Person.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -201,21 +106,6 @@
       <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
       <Name>AtwoodUtils</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\ChangeEventOccured.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FinalMusterReport.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FatalError.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

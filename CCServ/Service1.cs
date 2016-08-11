@@ -9,15 +9,16 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CommandCentral
+namespace CCServ
 {
-    public class WindowsService : ServiceBase
+    public partial class Service1 : ServiceBase
     {
-        CLI.Options.LaunchOptions _launchOptions;
+        private static CLI.Options.LaunchOptions _launchOptions;
 
-        public WindowsService()
+
+        public Service1()
         {
-            ServiceName = "CCServ Windows Service v{0}".FormatS(Config.Version.RELEASE_VERSION);
+            InitializeComponent();
         }
 
         protected override void OnStart(string[] args)
@@ -55,3 +56,4 @@ namespace CommandCentral
         }
     }
 }
+

@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtwoodUtils", "AtwoodUtils\AtwoodUtils.csproj", "{689992A9-0C1F-4B2C-92AB-0241F7C82A42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandCentral", "CommandCentral\CommandCentral.csproj", "{F2D303EA-4081-4B7B-8BC2-54686D907C94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCServ", "CCServ\CCServ.csproj", "{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{689992A9-0C1F-4B2C-92AB-0241F7C82A42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{689992A9-0C1F-4B2C-92AB-0241F7C82A42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{689992A9-0C1F-4B2C-92AB-0241F7C82A42}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2D303EA-4081-4B7B-8BC2-54686D907C94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2D303EA-4081-4B7B-8BC2-54686D907C94}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F2D303EA-4081-4B7B-8BC2-54686D907C94}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F2D303EA-4081-4B7B-8BC2-54686D907C94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
