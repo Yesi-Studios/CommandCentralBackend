@@ -1706,6 +1706,53 @@ namespace CCServ.Entities
                         Communicator.PostMessage("Atwood's profile found.", Communicator.MessageTypes.Informational);
                     }
 
+                    Communicator.PostMessage("Scanning for McLean's profile...", Communicator.MessageTypes.Informational);
+
+                    //Make sure mclean is in the database.
+                    var mcleanProfile = session.QueryOver<Person>()
+                        .Where(x => x.FirstName == "Angus" && x.LastName == "McLean" && x.MiddleName == "Laughton")
+                        .SingleOrDefault();
+
+                    //We're also going to look to see if mclean's profile exists.
+                    if (mcleanProfile == null)
+                    {
+                        Communicator.PostMessage("McLean's profile was not found in the database.  Creating it now...", Communicator.MessageTypes.Warning);
+
+                        var person = new Person()
+                        {
+                            Id = Guid.NewGuid(),
+                            LastName = "McLean",
+                            FirstName = "Angus",
+                            MiddleName = "Laughton",
+                            SSN = "888888888",
+                            IsClaimed = false,
+                            EmailAddresses = new List<EmailAddress>()
+                        {
+                            new EmailAddress
+                            {
+                                Address = "angus.l.mclean5.mil@mail.mil",
+                                IsContactable = true,
+                                IsPreferred = true
+                            }
+                        },
+                            DateOfBirth = new DateTime(1992, 04, 24),
+                            DateOfArrival = new DateTime(2013, 08, 23),
+                            EAOS = new DateTime(2018, 1, 27),
+                            Paygrade = Paygrades.E5,
+                            DutyStatus = DutyStatuses.Active
+                        };
+
+                        person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        session.Save(person);
+
+                        Communicator.PostMessage("McLean's profile created.  Id : {0}".FormatS(person.Id), Communicator.MessageTypes.Warning);
+                    }
+                    else
+                    {
+                        Communicator.PostMessage("McLean's profile found.", Communicator.MessageTypes.Informational);
+                    }
+
                     //Give the listener the current row count.
                     Communicator.PostMessage("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()), Communicator.MessageTypes.Informational);
 
