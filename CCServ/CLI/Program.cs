@@ -20,20 +20,31 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
-            if (!Environment.UserInteractive)
-                // running as service
-                using (var service = new CCServ.Service1())
-                    ServiceBase.Run(service);
-            else
+            try
             {
-                // running as console app
-                Start(args);
+                if (!Environment.UserInteractive)
+                    // running as service
+                    using (var service = new Service1())
+                        ServiceBase.Run(service);
+                else
+                {
+                    // running as console app
+                    Start(args);
 
-                Console.WriteLine("Press any key to stop...");
-                Console.ReadKey(true);
+                    Console.WriteLine("Press any key to stop...");
+                    Console.ReadKey(true);
 
-                Stop();
+                    Stop();
+                }
             }
+            catch (Exception e)
+            {
+                e.ToString().WriteLine();
+
+                Console.WriteLine("Press any key to close...");
+                Console.ReadKey(true);
+            }
+            
         }
 
         private static void Start(string[] args)
@@ -51,6 +62,8 @@ namespace CCServ.CLI
                     invokedVerbInstance = subOptions;
                 }))
             {
+                "Bad things...".WriteLine();
+                Console.ReadLine();
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 

@@ -81,7 +81,7 @@ namespace CCServ.DataAccess
 
                         //Now departments
                         Communicator.PostMessage("Importing departments...", Communicator.MessageTypes.Informational);
-                        //Select only those departments that are artive. That's what the where clause does.
+                        //Select only those departments that are active. That's what the where clause does.
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `dept` WHERE `DEPT_actv` = 1", connection))
                         {
                             using (MySqlDataReader reader = command.ExecuteReader())
@@ -143,7 +143,7 @@ namespace CCServ.DataAccess
 
                     transaction.Commit();
                 }
-                catch (MySql.Data.MySqlClient.MySqlException ex)
+                catch (MySqlException ex)
                 {
                     transaction.Rollback();
 
@@ -152,17 +152,17 @@ namespace CCServ.DataAccess
                         case 0:
                             {
                                 Communicator.PostMessage("Old database could not be contacted!  Throwing exception!", Communicator.MessageTypes.Critical);
-                                throw new Exception("The server at '{0}' did not reply.".FormatS("gord14ec204"));
+                                break;
                             }
                         case 1045:
                             {
                                 Communicator.PostMessage("The Username/password combination for the old database was invalid! Throwing exception!", Communicator.MessageTypes.Critical);
-                                throw new Exception("The Username/password combination for the old database was invalid");
+                                break;
                             }
                         default:
                             {
                                 Communicator.PostMessage("An unexpected error occurred while connecting to the old database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
-                                throw ex;
+                                break;
                             }
                     }
                 }

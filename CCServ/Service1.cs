@@ -19,6 +19,8 @@ namespace CCServ
         public Service1()
         {
             InitializeComponent();
+
+            ServiceName = "CCSERV";
         }
 
         protected override void OnStart(string[] args)
