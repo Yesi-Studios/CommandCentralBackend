@@ -35,6 +35,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AtwoodUtils">
       <HintPath>..\AtwoodUtils\bin\Debug\AtwoodUtils.dll</HintPath>
@@ -111,8 +114,10 @@
     <Compile Include="ClientAccess\PasswordHash.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
     <Compile Include="ClientAccess\ServiceEndpoint.cs" />
+    <Compile Include="CLI\Options\InstallOptions.cs" />
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
+    <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="Config\ContactDetails.cs" />
@@ -153,12 +158,6 @@
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="IValidatable.cs" />
-    <Compile Include="ProjectInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ProjectInstaller.Designer.cs">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </Compile>
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Service1.cs">
       <SubType>Component</SubType>
@@ -167,6 +166,7 @@
       <DependentUpon>Service1.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceInstaller.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
@@ -174,12 +174,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <EmbeddedResource Include="app.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ProjectInstaller.resx">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>

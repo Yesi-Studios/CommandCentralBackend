@@ -75,6 +75,18 @@ namespace CCServ.CLI
                         ServiceManagement.ServiceManager.StartService((LaunchOptions)invokedVerbInstance);
                         break;
                     }
+                case "install":
+                    {
+                        var installOptions = (InstallOptions)invokedVerbInstance;
+                        ServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
+                        break;
+                    }
+                case "uninstall":
+                    {
+                        var uninstallOptions = (UninstallOptions)invokedVerbInstance;
+                        ServiceInstaller.UnInstallService(uninstallOptions.ServiceName);
+                        break;
+                    }
                 default:
                     {
                         "Fell to default statement in verb switch.".WriteLine();

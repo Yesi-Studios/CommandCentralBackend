@@ -13,6 +13,12 @@ namespace CCServ.CLI.Options
         [VerbOption("launch", HelpText = "Launches the application.")]
         public LaunchOptions LaunchVerb { get; set; }
 
+        [VerbOption("install", HelpText = "Installs the service.")]
+        public InstallOptions InstallVerb { get; set; }
+
+        [VerbOption("uninstall", HelpText = "Uninstalls the service.")]
+        public UninstallOptions UninstallVerb { get; set; }
+
         [ParserState]
         public IParserState LastParserState { get; set; }
 
@@ -25,7 +31,7 @@ namespace CCServ.CLI.Options
             help.AdditionalNewLineAfterOption = true;
             help.AddDashesToOption = true;
 
-            help.AddPreOptionsLine("License: IDK.  Ask LT Rawls.");
+            help.AddPreOptionsLine("License: IDK.");
             
             return help;
         }
