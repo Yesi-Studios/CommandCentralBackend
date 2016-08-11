@@ -31,8 +31,8 @@ namespace CCServ.CLI
                     // running as console app
                     Start(args);
 
-                    Console.WriteLine("Press any key to stop...");
-                    Console.ReadKey(true);
+                    Console.WriteLine("Press enter key to stop...");
+                    Console.ReadLine();
 
                     Stop();
                 }
