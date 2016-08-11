@@ -159,6 +159,7 @@
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="IValidatable.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Service1.cs">
       <SubType>Component</SubType>
