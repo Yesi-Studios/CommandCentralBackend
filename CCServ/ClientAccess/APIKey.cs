@@ -77,7 +77,7 @@ namespace CCServ.ClientAccess
         [ServiceManagement.StartMethod(Priority = 2)]
         private static void SetupAPIKeys(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Scanning API Keys...", Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Scanning API Keys...");
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -86,15 +86,15 @@ namespace CCServ.ClientAccess
                 {
                     if (session.Get<APIKey>(_primaryAPIKey.Id) == null)
                     {
-                        Communicator.PostMessage("The primary API key was not found!  Adding it now...", Communicator.MessageTypes.Warning);
+                        Logger.LogWarning("The primary API key was not found!  Adding it now...");
                         session.Save(_primaryAPIKey);
-                        Communicator.PostMessage("Primary API key was added.  Key : {0} | Name : {1}".FormatS(_primaryAPIKey.Id, _primaryAPIKey.ApplicationName), Communicator.MessageTypes.Warning);
+                        Logger.LogInformation("Primary API key was added.  Key : {0} | Name : {1}".FormatS(_primaryAPIKey.Id, _primaryAPIKey.ApplicationName));
                     }
 
                     //Now tell the client how many we have.
                     var apiKeys = session.QueryOver<APIKey>().List();
 
-                    Communicator.PostMessage("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(",", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))), Communicator.MessageTypes.Informational);
+                    Logger.LogInformation("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(",", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))));
 
                     transaction.Commit();
                 }

@@ -270,12 +270,8 @@ namespace CCServ.Entities.Muster
                     //Set to false becaues we rolled back our changes.
                     IsMusterFinalized = false;
 
-                    Communicator.PostMessage("The finalize muster method failed!  All changes were rolled back. The muster was not finalized! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
-
-                    EmailHelper.SendFatalErrorEmail(null, e);
-
-                    session.Save(new Error(e, DateTime.Now, null));
-
+                    Logger.LogException(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!", null);
+                    
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
             }
@@ -312,11 +308,7 @@ namespace CCServ.Entities.Muster
                 {
                     transaction.Rollback();
 
-                    Communicator.PostMessage("The rollover muster method failed!  All changes were rolled back. The muster was not advanced! Error message: {0}".FormatS(e.Message), Communicator.MessageTypes.Critical);
-
-                    EmailHelper.SendFatalErrorEmail(null, e);
-
-                    session.Save(new Error(e, DateTime.Now, null));
+                    Logger.LogException(e, "The rollover muster method failed!  All changes were rolled back. The muster was not advanced!", null);
 
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
@@ -824,7 +816,7 @@ namespace CCServ.Entities.Muster
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Detecting current muster state...", Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Detecting current muster state...");
 
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -836,7 +828,7 @@ namespace CCServ.Entities.Muster
 
                     if (persons.Select(x => x.CurrentMusterStatus).GroupBy(x => x.MusterDayOfYear).Count() != 1)
                     {
-                        Communicator.PostMessage("Current muster records are not all for the same day!  Cleaning up muster records...", Communicator.MessageTypes.Warning);
+                        Logger.LogWarning("Current muster records are not all for the same day!  Cleaning up muster records...");
 
                         //Ok so these muster records aren't all from the same day.
                         //To fix this we're going to select any muster records that's aren't for today and then try to archive them and the reset the person's profile with a blank muster record.
@@ -860,15 +852,15 @@ namespace CCServ.Entities.Muster
                                 //There's already a record in the archive, so let's add this one to the list of muster records to be reset.
                                 musterRecordsForReset.Add(record);
 
-                                Communicator.PostMessage("A current muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
-                                    "  While trying to archive that record, another record for that date was found to have already been archived.  The current muster record in question was thrown out.", Communicator.MessageTypes.Warning);
+                                Logger.LogWarning("A current muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                    "  While trying to archive that record, another record for that date was found to have already been archived.  The current muster record in question was thrown out.");
                             }
                             else //There is no archive yet, so we'll add it.  We "add" it by just resetting the muster record on the profile entirely.
                             {
                                 personsNeedingNewMusterRecords.Add(record.Musteree);
 
-                                Communicator.PostMessage("A muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
-                                    "  The record has been archived and the person's current muster record was reset.", Communicator.MessageTypes.Warning);
+                                Logger.LogWarning("A muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                    "  The record has been archived and the person's current muster record was reset.");
                             }
                         }
 
@@ -899,17 +891,17 @@ namespace CCServ.Entities.Muster
                             session.Update(person);
                         }
 
-                        Communicator.PostMessage("Muster record clean up completed.", Communicator.MessageTypes.Warning);
+                        Logger.LogInformation("Muster record clean up completed.");
 
                     }
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
-                    Communicator.PostMessage("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count), Communicator.MessageTypes.Informational);
-                    Communicator.PostMessage("Muster finalization status : {0}".FormatS(IsMusterFinalized ? "Finalized" : "Not Finalized" ), Communicator.MessageTypes.Informational);
-                    Communicator.PostMessage("Expected completion time : {0}".FormatS(_dueTime.ToString()), Communicator.MessageTypes.Informational);
-                    Communicator.PostMessage("Rollover time : {0}".FormatS(_rolloverTime.ToString()), Communicator.MessageTypes.Informational);
+                    Logger.LogInformation("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count));
+                    Logger.LogInformation("Muster finalization status : {0}".FormatS(IsMusterFinalized ? "Finalized" : "Not Finalized"));
+                    Logger.LogInformation("Expected completion time : {0}".FormatS(_dueTime.ToString()));
+                    Logger.LogInformation("Rollover time : {0}".FormatS(_rolloverTime.ToString()));
 
-                    Communicator.PostMessage("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()), Communicator.MessageTypes.Informational);
+                    Logger.LogInformation("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()));
                     FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
 
 

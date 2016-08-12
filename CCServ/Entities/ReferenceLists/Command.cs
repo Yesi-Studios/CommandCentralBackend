@@ -384,7 +384,7 @@ namespace CCServ.Entities.ReferenceLists
             {
                 var commands = session.QueryOver<Command>().List();
 
-                Communicator.PostMessage("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))), Communicator.MessageTypes.Informational);
+                Logger.LogInformation("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))));
             }
         }
 

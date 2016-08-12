@@ -120,7 +120,6 @@
     <Compile Include="CLI\Options\MainOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
-    <Compile Include="Communicator.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
@@ -132,7 +131,6 @@
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
-    <Compile Include="Entities\Error.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
     <Compile Include="Entities\NewsItem.cs" />

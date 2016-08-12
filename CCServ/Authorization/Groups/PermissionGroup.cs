@@ -130,7 +130,7 @@ namespace CCServ.Authorization.Groups
         [ServiceManagement.StartMethod(Priority = 3)]
         private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Scanning for permissions.", Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Scanning for permissions.");
 
             var groups = Assembly.GetExecutingAssembly().GetTypes()
                     .Where(x => x.IsSubclassOf(typeof(PermissionGroup)))
@@ -141,7 +141,7 @@ namespace CCServ.Authorization.Groups
 
             AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
 
-            Communicator.PostMessage("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))), Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))));
         }
 
         #endregion

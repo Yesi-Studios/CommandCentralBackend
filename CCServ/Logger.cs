@@ -74,14 +74,18 @@ namespace CCServ
         /// Logs the exception.
         /// </summary>
         /// <param name="ex">The ex.</param>
+        /// <param name="token">The message token representing the transaction during which the exception occurred.</param>
         /// <param name="source">The name of the app/process calling the logging method. If not provided,
         /// an attempt will be made to get the name of the calling process.</param>
-        public static void LogException(Exception ex, string source = "")
+        public static void LogException(Exception ex, string message, ClientAccess.MessageToken token, string source = "")
         {
             if (ex == null)
                 throw new ArgumentNullException("ex"); 
 
-            Log(ex.ToString(), EventLogEntryType.Error, source);
+            Log(String.Format("ERROR: Message : {0} ||| Token: {1} ||| Exception : {1}", message, (token == null) ? "null" : token.ToString(), ex.ToString()), EventLogEntryType.Error, source);
+
+            //And send an email.
+            EmailHelper.SendFatalErrorEmail(token, ex);
         }
 
         /// <summary>

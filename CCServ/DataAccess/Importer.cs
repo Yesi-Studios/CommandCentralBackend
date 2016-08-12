@@ -34,7 +34,7 @@ namespace CCServ.DataAccess
                         //Let's start at the top and load in all of the references.
 
                         //Commands first
-                        Communicator.PostMessage("Importing commands...", Communicator.MessageTypes.Informational);
+                        Logger.LogInformation("Importing commands...");
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `commands`", connection))
                         {
                             using (MySqlDataReader reader = command.ExecuteReader())
@@ -70,17 +70,17 @@ namespace CCServ.DataAccess
                                         }
                                     }
 
-                                    Communicator.PostMessage("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()), Communicator.MessageTypes.Informational);
+                                    Logger.LogInformation("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()));
                                 }
                                 else
                                 {
-                                    Communicator.PostMessage("Import from old database failed to read from the commands table.", Communicator.MessageTypes.Critical);
+                                    Logger.LogWarning("Import from old database failed to read from the commands table.");
                                 }
                             }
                         }
 
                         //Now departments
-                        Communicator.PostMessage("Importing departments...", Communicator.MessageTypes.Informational);
+                        Logger.LogInformation("Importing departments...");
                         //Select only those departments that are active. That's what the where clause does.
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `dept` WHERE `DEPT_actv` = 1", connection))
                         {
@@ -96,7 +96,7 @@ namespace CCServ.DataAccess
 
                                     if (niocGA == null)
                                     {
-                                        Communicator.PostMessage("Could not read departments because the command, nioc ga, could not be found.", Communicator.MessageTypes.Warning);
+                                        Logger.LogWarning("Could not read departments because the command, nioc ga, could not be found.");
                                     }
                                     else
                                     {
@@ -130,12 +130,12 @@ namespace CCServ.DataAccess
                                             }
                                         }
 
-                                        Communicator.PostMessage("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()), Communicator.MessageTypes.Informational);
+                                        Logger.LogInformation("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()));
                                     }
                                 }
                                 else
                                 {
-                                    Communicator.PostMessage("Import from old database failed to read from the departments table.", Communicator.MessageTypes.Critical);
+                                    Logger.LogWarning("Import from old database failed to read from the departments table.");
                                 }
                             }
                         }
@@ -151,17 +151,17 @@ namespace CCServ.DataAccess
                     {
                         case 0:
                             {
-                                Communicator.PostMessage("Old database could not be contacted!  Throwing exception!", Communicator.MessageTypes.Critical);
+                                Logger.LogWarning("Old database could not be contacted!");
                                 break;
                             }
                         case 1045:
                             {
-                                Communicator.PostMessage("The Username/password combination for the old database was invalid! Throwing exception!", Communicator.MessageTypes.Critical);
+                                Logger.LogWarning("The Username/password combination for the old database was invalid!");
                                 break;
                             }
                         default:
                             {
-                                Communicator.PostMessage("An unexpected error occurred while connecting to the old database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
+                                Logger.LogException(ex, "While attempting to connect to the old database an exception occurred.", null);
                                 break;
                             }
                     }

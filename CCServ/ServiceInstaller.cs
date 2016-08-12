@@ -88,17 +88,17 @@ namespace CCServ
                         // note: error may arise if the service is already running or some other problem.
                         if (i == 0)
                         {
-                            Communicator.PostMessage("Couldn't start service", Communicator.MessageTypes.Critical);
+                            Logger.LogWarning("Couldn't start service");
                             return false;
                         }
-                        Communicator.PostMessage("Success", Communicator.MessageTypes.Informational);
+                        Logger.LogInformation("Success");
                         CloseServiceHandle(sc_handle);
                         return true;
                     }
                 }
                 else
                 {
-                    Communicator.PostMessage("SCM not opened successfully", Communicator.MessageTypes.Critical);
+                    Logger.LogWarning("SCM not opened successfully");
                     return false;
                 }
             }

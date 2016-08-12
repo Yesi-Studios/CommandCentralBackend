@@ -38,7 +38,7 @@ namespace CCServ.ServiceManagement.Service
             AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
             //Tell the host we received a pre flight.
-            Communicator.PostMessage("Received Preflight Request", Communicator.MessageTypes.Informational);
+            Logger.LogDebug("Received Preflight Request");
         }
 
         #endregion
@@ -76,7 +76,7 @@ namespace CCServ.ServiceManagement.Service
                         token.CalledEndpoint = endpoint;
 
                         //Tell the client we have a request.
-                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
+                        Logger.LogDebug(token.ToString());
 
                         //Add the headers to the response.
                         AddHeadersToOutgoingResponse(WebOperationContext.Current);
@@ -146,7 +146,7 @@ namespace CCServ.ServiceManagement.Service
                         //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
                         token.State = MessageStates.Processed;
 
-                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
+                        Logger.LogDebug(token.ToString());
 
                         //Ok, now we know that the request is valid let's see if we need to authenticate it.
                         if (description.EndpointMethodAttribute.RequiresAuthentication)
@@ -165,14 +165,14 @@ namespace CCServ.ServiceManagement.Service
                             token.AuthenticationSession.LastUsedTime = token.CallTime;
                             token.State = MessageStates.Authenticated;
 
-                            Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
+                            Logger.LogDebug(token.ToString());
                         }
 
                         //Invoke the data method to which the endpoint points. Point
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
-                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
+                        Logger.LogDebug(token.ToString());
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
                         token.HandledTime = DateTime.Now;
@@ -181,7 +181,7 @@ namespace CCServ.ServiceManagement.Service
                         //Alright it's all done so let's go ahead and save the token.
                         session.Save(token);
 
-                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Informational);
+                        Logger.LogDebug(token.ToString());
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -205,24 +205,8 @@ namespace CCServ.ServiceManagement.Service
                         token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
-                        //In order to save things we need to do it in a new session because the old one has been rolled back.
-                        using (var errorSession = NHibernateHelper.CreateStatefulSession())
-                        using (var errorTransaction = errorSession.BeginTransaction())
-                        {
-                            //Save the token
-                            errorSession.Save(token);
-
-                            //We also need to save the error to the database.
-                            errorSession.Save(new Entities.Error(e, token.CallTime, token));
-
-                            errorTransaction.Commit();
-                        }
-
-                        //And send an email.
-                        EmailHelper.SendFatalErrorEmail(token, e);
-
-                        //Tell the host what happened.
-                        Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Critical);
+                        //Log what happened.
+                        Logger.LogException(e, "A fatal, unknown error occurred in the backend service.", token);
 
                         //Set the outgoing status code and then release.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -238,10 +222,7 @@ namespace CCServ.ServiceManagement.Service
                 //We can't save anything to the database.  :(
                 token.State = MessageStates.FatalError;
 
-                EmailHelper.SendFatalErrorEmail(token, e);
-
-                //We can't save it cause we have no session so just post the message and then release.
-                Communicator.PostMessage(token.ToString(), Communicator.MessageTypes.Critical);
+                Logger.LogException(e, "An error occurred while trying to create a database session.", token);
 
                 //Set the outgoing status code and then release.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;

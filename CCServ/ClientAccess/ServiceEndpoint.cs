@@ -48,7 +48,7 @@ namespace CCServ.ClientAccess
         [ServiceManagement.StartMethod(Priority = 4)]
         private static void SetupEndpoints(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Scanning for endpoint methods.", Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Scanning for endpoint methods.");
 
             var endpoints = Assembly.GetExecutingAssembly().GetTypes()
                     .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
@@ -76,7 +76,7 @@ namespace CCServ.ClientAccess
                         };
                     }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
 
-            Communicator.PostMessage("Found {0} endpoint methods.".FormatS(endpoints.Count), Communicator.MessageTypes.Informational);
+            Logger.LogInformation("Found {0} endpoint methods.".FormatS(endpoints.Count));
 
             EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(endpoints, StringComparer.OrdinalIgnoreCase);
         }
