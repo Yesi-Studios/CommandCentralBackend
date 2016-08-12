@@ -104,7 +104,7 @@ namespace CCServ
                 source = Source;
 
             string possiblyTruncatedMessage = EnsureLogMessageLimit(message);
-            EventLog.WriteEntry(source, possiblyTruncatedMessage, entryType);
+            //EventLog.WriteEntry(source, possiblyTruncatedMessage, entryType);
 
             // If we're running a console app, also write the message to the console window.
             if (Environment.UserInteractive)
