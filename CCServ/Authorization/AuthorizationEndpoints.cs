@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CCServ.ClientAccess;
 using CCServ.Entities;
+using AtwoodUtils;
 
 namespace CCServ.Authorization
 {
@@ -77,6 +78,103 @@ namespace CCServ.Authorization
                     FriendlyName = person.ToString(),
                     AllPermissionGroups = Groups.PermissionGroup.AllPermissionGroups.Select(x => x.GroupName).ToList()
                 });
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Edits the permission groups a person is a part of.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "EditPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_EditPermissionGroups(MessageToken token)
+        {
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Get the person's Id.
+            if (!token.Args.ContainsKey("personid"))
+            {
+                token.AddErrorMessage("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid personId;
+            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
+            {
+                token.AddErrorMessage("Your person Id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //What permission groups does the client want this person to be in?
+            if (!token.Args.ContainsKey("permissiongroups"))
+            {
+                token.AddErrorMessage("You failed to send a 'permissiongroups' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            List<string> desiredPermissionGroups = null;
+
+            //Get the list of permission group names.
+            try
+            {
+                desiredPermissionGroups = token.Args["permissiongroups"].CastJToken<List<string>>();
+            }
+            catch
+            {
+                //If that cast failed.
+                token.AddErrorMessage("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now we load the person and begin the permissions edit.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    //Get the person and check if the id was legit.
+                    var person = session.Get<Person>(personId);
+
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("Your person Id parameter was wrong. lol.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Get the current permission groups the person is a part of.
+                    var currentGroups = person.PermissionGroupNames;
+
+                    //Now get the resolved permissions of our client.
+                    var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+
+                    //Now determine what permissions the client wants to change.
+                    var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First());
+
+                    var failures = changes.Except(resolvedPermissions.EditablePermissionGroups);
+
+                    if (failures.Any())
+                    {
+                        token.AddErrorMessage("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                        return;
+                    }
+
+                    person.PermissionGroupNames = desiredPermissionGroups;
+
+                    session.Update(person);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
         }
     }
