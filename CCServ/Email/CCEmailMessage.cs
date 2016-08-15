@@ -18,7 +18,7 @@ namespace CCServ.Email
             Sender = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
             ReplyToList.Add(new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications"));
             Priority = MailPriority.High;
-
+            CC.Add(new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications"));
         }
 
 
