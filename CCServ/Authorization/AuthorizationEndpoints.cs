@@ -73,7 +73,7 @@ namespace CCServ.Authorization
 
                 token.SetResult(new
                 {
-                    CurrentPermissionGroups = groups,
+                    CurrentPermissionGroups = groups.Select(x => x.GroupName),
                     EditablePermissionGroups = editableGroups,
                     FriendlyName = person.ToString(),
                     AllPermissionGroups = Groups.PermissionGroup.AllPermissionGroups.Select(x => x.GroupName).ToList()
@@ -88,8 +88,8 @@ namespace CCServ.Authorization
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "EditPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_EditPermissionGroups(MessageToken token)
+        [EndpointMethod(EndpointName = "UpdatePermissionGroupsByPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_UpdatePermissionGroupsByPerson(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -148,7 +148,7 @@ namespace CCServ.Authorization
                     }
 
                     //Get the current permission groups the person is a part of.
-                    var currentGroups = person.PermissionGroupNames;
+                    var currentGroups = person.PermissionGroupNames.Concat(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
 
                     //Now get the resolved permissions of our client.
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
@@ -156,7 +156,20 @@ namespace CCServ.Authorization
                     //Now determine what permissions the client wants to change.
                     var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First());
 
-                    var failures = changes.Except(resolvedPermissions.EditablePermissionGroups);
+                    //Now go through all the requested changes and make sure the client can make them.
+                    List<string> failures = new List<string>();
+                    foreach (string groupName in changes)
+                    {
+                        //First is the easy one.  Can client the edit the permission group's membership at all?
+                        if (!resolvedPermissions.EditablePermissionGroups.Contains(groupName))
+                        {
+                            failures.Add(groupName);
+                        }
+                        else
+                        {
+                            //Ok so the client can edit that permission group, now we need to take into account access level.
+                        }
+                    }
 
                     if (failures.Any())
                     {
@@ -164,9 +177,13 @@ namespace CCServ.Authorization
                         return;
                     }
 
-                    person.PermissionGroupNames = desiredPermissionGroups;
+                    //Now make sure we don't try to save the default permissions.
+                    person.PermissionGroupNames = Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
 
                     session.Update(person);
+
+                    //Finally tell the client if they updated themselves.
+                    token.SetResult(new { WasSelf = token.AuthenticationSession.Person.Id == person.Id });
 
                     transaction.Commit();
                 }

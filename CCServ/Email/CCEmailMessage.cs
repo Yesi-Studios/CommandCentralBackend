@@ -11,6 +11,8 @@ namespace CCServ.Email
     {
         public abstract string Template { get; }
 
+        public static string SMTPHost { get; set; }
+
         public CCEmailMessage()
         {
             IsBodyHtml = true;
@@ -24,7 +26,7 @@ namespace CCServ.Email
 
         public void Send()
         {
-
+            new SmtpClient(SMTPHost).Send(this);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace CCServ.Authorization.Groups.Definitions
             Default();
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
-            CanEditMembershipOf();
+            CanEditMembershipOf(new LPOs());
 
             CanAccessModule("Main")
                 .AtLevel(PermissionGroupLevels.Command)

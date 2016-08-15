@@ -96,6 +96,7 @@
     <Compile Include="Authorization\AuthorizationUtilities.cs" />
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\Definitions\Developers.cs" />
+    <Compile Include="Authorization\Groups\Definitions\LPOs.cs" />
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
