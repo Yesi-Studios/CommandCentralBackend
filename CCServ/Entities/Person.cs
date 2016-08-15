@@ -1707,7 +1707,7 @@ namespace CCServ.Entities
                         Log.Info("Atwood's profile found.");
                     }
 
-                    Communicator.PostMessage("Scanning for McLean's profile...", Communicator.MessageTypes.Informational);
+                    Log.Info("Scanning for McLean's profile...");
 
                     //Make sure mclean is in the database.
                     var mcleanProfile = session.QueryOver<Person>()
@@ -1717,7 +1717,7 @@ namespace CCServ.Entities
                     //We're also going to look to see if mclean's profile exists.
                     if (mcleanProfile == null)
                     {
-                        Communicator.PostMessage("McLean's profile was not found in the database.  Creating it now...", Communicator.MessageTypes.Warning);
+                        Log.Warning("McLean's profile was not found in the database.  Creating it now...");
 
                         var person = new Person()
                         {
@@ -1747,11 +1747,11 @@ namespace CCServ.Entities
 
                         session.Save(person);
 
-                        Communicator.PostMessage("McLean's profile created.  Id : {0}".FormatS(person.Id), Communicator.MessageTypes.Warning);
+                        Log.Info("McLean's profile created.  Id : {0}".FormatS(person.Id));
                     }
                     else
                     {
-                        Communicator.PostMessage("McLean's profile found.", Communicator.MessageTypes.Informational);
+                        Log.Info("McLean's profile found.");
                     }
 
                     //Give the listener the current row count.
