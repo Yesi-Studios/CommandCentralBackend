@@ -10,6 +10,7 @@ using NHibernate.Cfg;
 using NHibernate.Metadata;
 using System.Linq;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.DataAccess
 {
@@ -150,12 +151,12 @@ namespace CCServ.DataAccess
         /// </summary>
         public static void CreateSchema(bool dropFirst)
         {
-            System.IO.TextWriter writer = Communicator.TextWriter ?? Console.Out;
+            //TODO have the schema shit pritn to the logger.
             
             if (dropFirst)
-                _schema.Drop(writer, true);
+                _schema.Drop(Console.Out, true);
 
-            _schema.Create(writer, true);
+            _schema.Create(Console.Out, true);
         }
 
         #endregion
@@ -167,13 +168,13 @@ namespace CCServ.DataAccess
         /// <para />
         /// If it doesn't, we'll make it.  Then since we just had to make it, we'll then run the schema generation script.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 100)]
+        [ServiceManagement.StartMethod(Priority = 99)]
         private static void SetupDatabaseAndNHibernate(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Beginning database integrity check...", Communicator.MessageTypes.Informational);
+            Log.Info("Beginning database integrity check...");
 
             //First, we need to ping the database and make sure it's replying.
-            Communicator.PostMessage("Confirming connection to database : '{0}'...".FormatS(launchOptions.Server), Communicator.MessageTypes.Informational);
+            Log.Info("Confirming connection to database : '{0}'...".FormatS(launchOptions.Server));
             try
             {
                 var connectionString = String.Format("server={0};uid={1};pwd={2}", launchOptions.Server, launchOptions.Username, launchOptions.Password);
@@ -182,10 +183,10 @@ namespace CCServ.DataAccess
                 {
                     connection.Open();
 
-                    Communicator.PostMessage("Database connection established.", Communicator.MessageTypes.Informational);
+                    Log.Info("Database connection established.");
 
                     //Ok, the connection to the database is good.  Now let's see if the schema is valid.
-                    Communicator.PostMessage("Confirming schema...", Communicator.MessageTypes.Informational);
+                    Log.Info("Confirming schema...");
 
                     using (MySql.Data.MySqlClient.MySqlCommand command = 
                         new MySql.Data.MySqlClient.MySqlCommand("SELECT COUNT(SCHEMA_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = @schema", connection))
@@ -198,13 +199,13 @@ namespace CCServ.DataAccess
 
                         if (exists)
                         {
-                            Communicator.PostMessage("Database schema found.", Communicator.MessageTypes.Informational);
+                            Log.Info("Database schema found.");
 
-                            Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
+                            Log.Info("Configuring NHibernate...");
                             ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
-                            Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
+                            Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
-                            Communicator.PostMessage("Scanning for associated tables...", Communicator.MessageTypes.Informational);
+                            Log.Info("Scanning for associated tables...");
 
                             List<string> nonexistantTables = new List<string>();
 
@@ -224,22 +225,22 @@ namespace CCServ.DataAccess
 
                             if (nonexistantTables.Any())
                             {
-                                Communicator.PostMessage("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)), Communicator.MessageTypes.Critical);
-                                throw new Exception("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)));
+                                var exception = new Exception("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)));
+                                Log.Exception(exception, exception.Message);
                             }
                             else
                             {
-                                Communicator.PostMessage("All tables found.", Communicator.MessageTypes.Informational);
+                                Log.Info("All tables found.");
 
                                 //If we got down here, then we're ready to initialize the factory.
-                                Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
+                                Log.Info("Initializing session factory...");
                                 FinishNHibernateSetup();
-                                Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
+                                Log.Info("Initialized session factory.");
                             }
                         }
                         else
                         {
-                            Communicator.PostMessage("The database schema, '{0}', was not found.  Creating it now.".FormatS(launchOptions.Database), Communicator.MessageTypes.Warning);
+                            Log.Warning("The database schema, '{0}', was not found.  Creating it now.".FormatS(launchOptions.Database));
 
                             //Database not found! Uh oh!
                             //In this case, we need to make the schema.
@@ -247,26 +248,26 @@ namespace CCServ.DataAccess
 
                             command.ExecuteNonQuery();
 
-                            Communicator.PostMessage("Database created.", Communicator.MessageTypes.Warning);
+                            Log.Info("Database created.");
 
-                            Communicator.PostMessage("Configuring NHibernate...", Communicator.MessageTypes.Informational);
+                            Log.Info("Configuring NHibernate...");
                             ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
-                            Communicator.PostMessage("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count), Communicator.MessageTypes.Informational);
+                            Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
                             //Since the database was just created, let's go ahead and populate it.
-                            Communicator.PostMessage("Populating database schema with NHibernate expected schema...", Communicator.MessageTypes.Informational);
+                            Log.Info("Populating database schema with NHibernate expected schema...");
                             CreateSchema(true);
-                            Communicator.PostMessage("Schema created.", Communicator.MessageTypes.Informational);
+                            Log.Info("Schema created.");
 
                             //If we got down here, then we're ready to initialize the factory.
-                            Communicator.PostMessage("Initializing session factory...", Communicator.MessageTypes.Informational);
+                            Log.Info("Initializing session factory...");
                             FinishNHibernateSetup();
-                            Communicator.PostMessage("Initialized session factory.", Communicator.MessageTypes.Informational);
+                            Log.Info("Initialized session factory.");
 
                             //Also, since we made everything a new, we can go ahead and ingest the old database into this database.
-                            Communicator.PostMessage("Ingesting old database...", Communicator.MessageTypes.Informational);
+                            Log.Info("Ingesting old database...");
                             DataAccess.Importer.IngestOldDatabase();
-                            Communicator.PostMessage("Ingest complete.", Communicator.MessageTypes.Informational);
+                            Log.Info("Ingest complete.");
                         }
                     }
                 }
@@ -277,18 +278,18 @@ namespace CCServ.DataAccess
                 {
                     case 0:
                         {
-                            Communicator.PostMessage("Database could not be contacted!  Throwing exception!", Communicator.MessageTypes.Critical);
-                            throw new Exception("The server at '{0}' did not reply.".FormatS(launchOptions.Server));
+                            Log.Exception(ex, "Database could not be contacted!");
+                            break;
                         }
                     case 1045:
                         {
-                            Communicator.PostMessage("The Username/password combination for the database was invalid! Throwing exception!", Communicator.MessageTypes.Critical);
-                            throw new Exception("The Username/password combination for the database was invalid");
+                            Log.Exception(ex, "The Username/password combination for the database was invalid!");
+                            break;
                         }
                     default:
                         {
-                            Communicator.PostMessage("An unexpected error occurred while connecting to the database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
-                            throw ex;
+                            Log.Exception(ex, "An unexpected error occurred while connecting to the database!");
+                            break;
                         }
                 }
             }

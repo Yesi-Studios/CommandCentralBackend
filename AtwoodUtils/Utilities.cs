@@ -143,6 +143,17 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Returns the .ToString() of the given object unless it is null, in which case the nullString is returned.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="nullString"></param>
+        /// <returns></returns>
+        public static string ToSafeString(object obj, string nullString = "null")
+        {
+            return (obj == null) ? nullString : obj.ToString();
+        }
+
+        /// <summary>
         /// Determines whether or not a given string starts and ends with either {} or [].
         /// </summary>
         /// <param name="json"></param>

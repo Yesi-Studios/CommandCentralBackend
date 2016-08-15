@@ -7,6 +7,7 @@ using AtwoodUtils;
 using FluentValidation;
 using NHibernate.Criterion;
 using CCServ.Authorization;
+using CCServ.Logging;
 
 namespace CCServ.Entities.ReferenceLists
 {
@@ -384,7 +385,7 @@ namespace CCServ.Entities.ReferenceLists
             {
                 var commands = session.QueryOver<Command>().List();
 
-                Communicator.PostMessage("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))), Communicator.MessageTypes.Informational);
+                Log.Info("Found {0} command(s): {1}".FormatS(commands.Count, String.Join(",", commands.Select(x => x.Value))));
             }
         }
 

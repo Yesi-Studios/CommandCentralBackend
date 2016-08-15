@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using System.Data;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.DataAccess
 {
@@ -27,14 +28,14 @@ namespace CCServ.DataAccess
                 {
                     var connectionString = String.Format("server={0};uid={1};pwd={2};database={3}", "gord14ec204", "dkatwoo", "dkatwoo987", "sullitest");
 
-                    using (MySql.Data.MySqlClient.MySqlConnection connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString))
+                    using (MySqlConnection connection = new MySqlConnection(connectionString))
                     {
                         connection.Open();
 
                         //Let's start at the top and load in all of the references.
 
                         //Commands first
-                        Communicator.PostMessage("Importing commands...", Communicator.MessageTypes.Informational);
+                        Log.Info("Importing commands...");
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `commands`", connection))
                         {
                             using (MySqlDataReader reader = command.ExecuteReader())
@@ -70,17 +71,17 @@ namespace CCServ.DataAccess
                                         }
                                     }
 
-                                    Communicator.PostMessage("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()), Communicator.MessageTypes.Informational);
+                                    Log.Info("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()));
                                 }
                                 else
                                 {
-                                    Communicator.PostMessage("Import from old database failed to read from the commands table.", Communicator.MessageTypes.Critical);
+                                    Log.Warning("Import from old database failed to read from the commands table.");
                                 }
                             }
                         }
 
                         //Now departments
-                        Communicator.PostMessage("Importing departments...", Communicator.MessageTypes.Informational);
+                        Log.Info("Importing departments...");
                         //Select only those departments that are active. That's what the where clause does.
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `dept` WHERE `DEPT_actv` = 1", connection))
                         {
@@ -96,7 +97,7 @@ namespace CCServ.DataAccess
 
                                     if (niocGA == null)
                                     {
-                                        Communicator.PostMessage("Could not read departments because the command, nioc ga, could not be found.", Communicator.MessageTypes.Warning);
+                                        Log.Warning("Could not read departments because the command, nioc ga, could not be found.");
                                     }
                                     else
                                     {
@@ -130,12 +131,12 @@ namespace CCServ.DataAccess
                                             }
                                         }
 
-                                        Communicator.PostMessage("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()), Communicator.MessageTypes.Informational);
+                                        Log.Info("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()));
                                     }
                                 }
                                 else
                                 {
-                                    Communicator.PostMessage("Import from old database failed to read from the departments table.", Communicator.MessageTypes.Critical);
+                                    Log.Warning("Import from old database failed to read from the departments table.");
                                 }
                             }
                         }
@@ -151,17 +152,22 @@ namespace CCServ.DataAccess
                     {
                         case 0:
                             {
-                                Communicator.PostMessage("Old database could not be contacted!  Throwing exception!", Communicator.MessageTypes.Critical);
+                                Log.Warning("Old database could not be contacted!");
                                 break;
                             }
                         case 1045:
                             {
-                                Communicator.PostMessage("The Username/password combination for the old database was invalid! Throwing exception!", Communicator.MessageTypes.Critical);
+                                Log.Warning("The Username/password combination for the old database was invalid!");
+                                break;
+                            }
+                        case 1042:
+                            {
+                                Log.Warning("The old database was either offline or otherwise non-contactable.");
                                 break;
                             }
                         default:
                             {
-                                Communicator.PostMessage("An unexpected error occurred while connecting to the old database! Throwing exception!  Error: {0}".FormatS(ex.Message), Communicator.MessageTypes.Critical);
+                                Log.Exception(ex, "While attempting to connect to the old database an exception occurred.");
                                 break;
                             }
                     }

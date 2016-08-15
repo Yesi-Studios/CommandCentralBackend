@@ -12,6 +12,7 @@ using NHibernate.Criterion;
 using NHibernate.Linq;
 using AtwoodUtils;
 using CCServ.ServiceManagement;
+using CCServ.Logging;
 
 namespace CCServ.Entities
 {
@@ -1659,7 +1660,7 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    Communicator.PostMessage("Scanning for Atwood's profile...", Communicator.MessageTypes.Informational);
+                    Log.Info("Scanning for Atwood's profile...");
 
                     //Make sure I'm in the database.
                     var atwoodProfile = session.QueryOver<Person>()
@@ -1669,7 +1670,7 @@ namespace CCServ.Entities
                     //We're also going to look to see if Atwood's profile exists.  Talking in the third person... weeeeee.
                     if (atwoodProfile == null)
                     {
-                        Communicator.PostMessage("Atwood's profile was not found in the database.  Creating it now...", Communicator.MessageTypes.Warning);
+                        Log.Warning("Atwood's profile was not found in the database.  Creating it now...");
 
                         var person = new Person()
                         {
@@ -1699,11 +1700,11 @@ namespace CCServ.Entities
 
                         session.Save(person);
 
-                        Communicator.PostMessage("Atwood's profile created.  Id : {0}".FormatS(person.Id), Communicator.MessageTypes.Warning);
+                        Log.Info("Atwood's profile created.  Id : {0}".FormatS(person.Id));
                     }
                     else
                     {
-                        Communicator.PostMessage("Atwood's profile found.", Communicator.MessageTypes.Informational);
+                        Log.Info("Atwood's profile found.");
                     }
 
                     Communicator.PostMessage("Scanning for McLean's profile...", Communicator.MessageTypes.Informational);
@@ -1754,7 +1755,7 @@ namespace CCServ.Entities
                     }
 
                     //Give the listener the current row count.
-                    Communicator.PostMessage("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()), Communicator.MessageTypes.Informational);
+                    Log.Info("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
 
                     transaction.Commit();
                 }

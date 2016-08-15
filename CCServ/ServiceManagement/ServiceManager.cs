@@ -9,6 +9,7 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CCServ.Logging;
 using CCServ.ServiceManagement;
 using CCServ.ServiceManagement.Service;
 
@@ -24,12 +25,7 @@ namespace CCServ.ServiceManagement
         {
             _options = launchOptions;
 
-            //So you want to launch a service, eh?  Let's start doing the thing.  First up, initialize the communicator.  From now on, communication goes through it.
-            //TODO use the user's logging argument for this.
-            Communicator.InitializeCommunicator(Console.Out);
-
-            //Tell the user we've hooked into the communicator and we won't be using this anymore.
-            "Communicator initialized.  All future messages will be handled by the communicator.".WriteLine();
+            Log.Info("Starting service startup...");
 
             //Now we need to run all start up methods.
             RunStartupMethods(launchOptions);
@@ -40,7 +36,7 @@ namespace CCServ.ServiceManagement
             //Make sure the port hasn't been claimed by any other application.
             if (!Utilities.IsPortAvailable(launchOptions.Port))
             {
-                Communicator.PostMessage("It appears the port '{0}' is already in use. We cannot continue from this.", Communicator.MessageTypes.Critical);
+                Log.Warning("It appears the port '{0}' is already in use. We cannot continue from this.");
                 Environment.Exit(0);
             }
 
@@ -67,7 +63,7 @@ namespace CCServ.ServiceManagement
         /// <param name="e"></param>
         private static void host_Faulted(object sender, EventArgs e)
         {
-            Communicator.PostMessage("The host has entered the faulted state.  Service re-initialization will now be started.", Communicator.MessageTypes.Critical);
+            Log.Warning("The host has entered the faulted state.  Service re-initialization will now be started.");
             StartService(_options);
         }
 
@@ -77,7 +73,7 @@ namespace CCServ.ServiceManagement
         /// <returns></returns>
         private static void RunStartupMethods(CLI.Options.LaunchOptions launchOptions)
         {
-            Communicator.PostMessage("Scanning for startup methods.", Communicator.MessageTypes.Informational);
+            Log.Info("Scanning for startup methods.");
 
             //Scan for all start up methods.
             var startupMethods = Assembly.GetExecutingAssembly().GetTypes()
@@ -115,13 +111,13 @@ namespace CCServ.ServiceManagement
             }
 
             //Now run them all in order.
-            Communicator.PostMessage("Executing {0} startup method(s).".FormatS(startupMethods.Count()), Communicator.MessageTypes.Informational);
+            Log.Info("Executing {0} startup method(s).".FormatS(startupMethods.Count()));
             foreach (var group in startupMethods)
             {
                 //We can say first because we know there's only one.
                 var info = group.ToList().First();
 
-                Communicator.PostMessage("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority), Communicator.MessageTypes.Informational);
+                Log.Info("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority));
                 info.Method(launchOptions);
             }
         }
