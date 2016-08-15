@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using AtwoodUtils;
 using CCServ.Authorization;
+using CCServ.Logging;
 
 namespace CCServ.ClientAccess
 {
@@ -48,7 +49,7 @@ namespace CCServ.ClientAccess
         [ServiceManagement.StartMethod(Priority = 4)]
         private static void SetupEndpoints(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Scanning for endpoint methods.");
+            Log.Info("Scanning for endpoint methods.");
 
             var endpoints = Assembly.GetExecutingAssembly().GetTypes()
                     .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
@@ -76,7 +77,7 @@ namespace CCServ.ClientAccess
                         };
                     }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
 
-            Logger.LogInformation("Found {0} endpoint methods.".FormatS(endpoints.Count));
+            Log.Info("Found {0} endpoint methods.".FormatS(endpoints.Count));
 
             EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(endpoints, StringComparer.OrdinalIgnoreCase);
         }

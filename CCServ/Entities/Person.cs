@@ -12,6 +12,7 @@ using NHibernate.Criterion;
 using NHibernate.Linq;
 using AtwoodUtils;
 using CCServ.ServiceManagement;
+using CCServ.Logging;
 
 namespace CCServ.Entities
 {
@@ -1659,7 +1660,7 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    Logger.LogInformation("Scanning for Atwood's profile...");
+                    Log.Info("Scanning for Atwood's profile...");
 
                     //Make sure I'm in the database.
                     var atwoodProfile = session.QueryOver<Person>()
@@ -1669,7 +1670,7 @@ namespace CCServ.Entities
                     //We're also going to look to see if Atwood's profile exists.  Talking in the third person... weeeeee.
                     if (atwoodProfile == null)
                     {
-                        Logger.LogWarning("Atwood's profile was not found in the database.  Creating it now...");
+                        Log.Warning("Atwood's profile was not found in the database.  Creating it now...");
 
                         var person = new Person()
                         {
@@ -1699,15 +1700,15 @@ namespace CCServ.Entities
 
                         session.Save(person);
 
-                        Logger.LogInformation("Atwood's profile created.  Id : {0}".FormatS(person.Id));
+                        Log.Info("Atwood's profile created.  Id : {0}".FormatS(person.Id));
                     }
                     else
                     {
-                        Logger.LogInformation("Atwood's profile found.");
+                        Log.Info("Atwood's profile found.");
                     }
 
                     //Give the listener the current row count.
-                    Logger.LogInformation("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
+                    Log.Info("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
 
                     transaction.Commit();
                 }

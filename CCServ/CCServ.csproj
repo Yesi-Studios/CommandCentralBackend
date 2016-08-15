@@ -157,7 +157,12 @@
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="IValidatable.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\LogEntity.cs" />
+    <Compile Include="Logging\Log.cs" />
+    <Compile Include="Logging\Loggers\ConsoleLogger.cs" />
+    <Compile Include="Logging\LoggingTargetsEnum.cs" />
+    <Compile Include="Logging\MessageTypesEnum.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
     <Compile Include="Service1.cs">
       <SubType>Component</SubType>

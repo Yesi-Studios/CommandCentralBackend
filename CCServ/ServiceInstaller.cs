@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using CCServ.Logging;
 
 namespace CCServ
 {
@@ -88,17 +89,17 @@ namespace CCServ
                         // note: error may arise if the service is already running or some other problem.
                         if (i == 0)
                         {
-                            Logger.LogWarning("Couldn't start service");
+                            Log.Warning("Couldn't start service");
                             return false;
                         }
-                        Logger.LogInformation("Success");
+                        Log.Info("Success");
                         CloseServiceHandle(sc_handle);
                         return true;
                     }
                 }
                 else
                 {
-                    Logger.LogWarning("SCM not opened successfully");
+                    Log.Warning("SCM not opened successfully");
                     return false;
                 }
             }

@@ -3,6 +3,7 @@ using FluentNHibernate.Mapping;
 using CCServ.Authorization;
 using System.Linq;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.ClientAccess
 {
@@ -77,7 +78,7 @@ namespace CCServ.ClientAccess
         [ServiceManagement.StartMethod(Priority = 2)]
         private static void SetupAPIKeys(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Scanning API Keys...");
+            Log.Info("Scanning API Keys...");
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -86,15 +87,15 @@ namespace CCServ.ClientAccess
                 {
                     if (session.Get<APIKey>(_primaryAPIKey.Id) == null)
                     {
-                        Logger.LogWarning("The primary API key was not found!  Adding it now...");
+                        Log.Warning("The primary API key was not found!  Adding it now...");
                         session.Save(_primaryAPIKey);
-                        Logger.LogInformation("Primary API key was added.  Key : {0} | Name : {1}".FormatS(_primaryAPIKey.Id, _primaryAPIKey.ApplicationName));
+                        Log.Info("Primary API key was added.  Key : {0} | Name : {1}".FormatS(_primaryAPIKey.Id, _primaryAPIKey.ApplicationName));
                     }
 
                     //Now tell the client how many we have.
                     var apiKeys = session.QueryOver<APIKey>().List();
 
-                    Logger.LogInformation("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(",", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))));
+                    Log.Info("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(",", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))));
 
                     transaction.Commit();
                 }

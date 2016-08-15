@@ -6,6 +6,7 @@ using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
 using CCServ.Authorization;
+using CCServ.Logging;
 
 namespace CCServ.Entities.Muster
 {
@@ -270,7 +271,7 @@ namespace CCServ.Entities.Muster
                     //Set to false becaues we rolled back our changes.
                     IsMusterFinalized = false;
 
-                    Logger.LogException(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!", null);
+                    Log.Exception(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!");
                     
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
@@ -308,7 +309,7 @@ namespace CCServ.Entities.Muster
                 {
                     transaction.Rollback();
 
-                    Logger.LogException(e, "The rollover muster method failed!  All changes were rolled back. The muster was not advanced!", null);
+                    Log.Exception(e, "The rollover muster method failed!  All changes were rolled back. The muster was not advanced!");
 
                     //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
@@ -816,7 +817,7 @@ namespace CCServ.Entities.Muster
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Detecting current muster state...");
+            Log.Info("Detecting current muster state...");
 
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -828,7 +829,7 @@ namespace CCServ.Entities.Muster
 
                     if (persons.Select(x => x.CurrentMusterStatus).GroupBy(x => x.MusterDayOfYear).Count() != 1)
                     {
-                        Logger.LogWarning("Current muster records are not all for the same day!  Cleaning up muster records...");
+                        Log.Warning("Current muster records are not all for the same day!  Cleaning up muster records...");
 
                         //Ok so these muster records aren't all from the same day.
                         //To fix this we're going to select any muster records that's aren't for today and then try to archive them and the reset the person's profile with a blank muster record.
@@ -852,14 +853,14 @@ namespace CCServ.Entities.Muster
                                 //There's already a record in the archive, so let's add this one to the list of muster records to be reset.
                                 musterRecordsForReset.Add(record);
 
-                                Logger.LogWarning("A current muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                Log.Warning("A current muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
                                     "  While trying to archive that record, another record for that date was found to have already been archived.  The current muster record in question was thrown out.");
                             }
                             else //There is no archive yet, so we'll add it.  We "add" it by just resetting the muster record on the profile entirely.
                             {
                                 personsNeedingNewMusterRecords.Add(record.Musteree);
 
-                                Logger.LogWarning("A muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
+                                Log.Warning("A muster record for the person, '{0}', was found for the day and year, '{1}':'{2}'.".FormatS(record.Musteree.ToString(), record.MusterDayOfYear, record.MusterYear) +
                                     "  The record has been archived and the person's current muster record was reset.");
                             }
                         }
@@ -891,17 +892,17 @@ namespace CCServ.Entities.Muster
                             session.Update(person);
                         }
 
-                        Logger.LogInformation("Muster record clean up completed.");
+                        Log.Info("Muster record clean up completed.");
 
                     }
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
-                    Logger.LogInformation("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count));
-                    Logger.LogInformation("Muster finalization status : {0}".FormatS(IsMusterFinalized ? "Finalized" : "Not Finalized"));
-                    Logger.LogInformation("Expected completion time : {0}".FormatS(_dueTime.ToString()));
-                    Logger.LogInformation("Rollover time : {0}".FormatS(_rolloverTime.ToString()));
+                    Log.Info("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count));
+                    Log.Info("Muster finalization status : {0}".FormatS(IsMusterFinalized ? "Finalized" : "Not Finalized"));
+                    Log.Info("Expected completion time : {0}".FormatS(_dueTime.ToString()));
+                    Log.Info("Rollover time : {0}".FormatS(_rolloverTime.ToString()));
 
-                    Logger.LogInformation("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()));
+                    Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()));
                     FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
 
 

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.Authorization.Groups
 {
@@ -130,7 +131,7 @@ namespace CCServ.Authorization.Groups
         [ServiceManagement.StartMethod(Priority = 3)]
         private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Scanning for permissions.");
+            Log.Info("Scanning for permissions...");
 
             var groups = Assembly.GetExecutingAssembly().GetTypes()
                     .Where(x => x.IsSubclassOf(typeof(PermissionGroup)))
@@ -141,7 +142,7 @@ namespace CCServ.Authorization.Groups
 
             AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
 
-            Logger.LogInformation("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))));
+            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))));
         }
 
         #endregion

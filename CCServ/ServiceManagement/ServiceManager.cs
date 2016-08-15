@@ -9,6 +9,7 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CCServ.Logging;
 using CCServ.ServiceManagement;
 using CCServ.ServiceManagement.Service;
 
@@ -24,7 +25,7 @@ namespace CCServ.ServiceManagement
         {
             _options = launchOptions;
 
-            Logger.LogInformation("Starting service startup...");
+            Log.Info("Starting service startup...");
 
             //Now we need to run all start up methods.
             RunStartupMethods(launchOptions);
@@ -35,7 +36,7 @@ namespace CCServ.ServiceManagement
             //Make sure the port hasn't been claimed by any other application.
             if (!Utilities.IsPortAvailable(launchOptions.Port))
             {
-                Logger.LogWarning("It appears the port '{0}' is already in use. We cannot continue from this.");
+                Log.Warning("It appears the port '{0}' is already in use. We cannot continue from this.");
                 Environment.Exit(0);
             }
 
@@ -62,7 +63,7 @@ namespace CCServ.ServiceManagement
         /// <param name="e"></param>
         private static void host_Faulted(object sender, EventArgs e)
         {
-            Logger.LogWarning("The host has entered the faulted state.  Service re-initialization will now be started.");
+            Log.Warning("The host has entered the faulted state.  Service re-initialization will now be started.");
             StartService(_options);
         }
 
@@ -72,7 +73,7 @@ namespace CCServ.ServiceManagement
         /// <returns></returns>
         private static void RunStartupMethods(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Scanning for startup methods.");
+            Log.Info("Scanning for startup methods.");
 
             //Scan for all start up methods.
             var startupMethods = Assembly.GetExecutingAssembly().GetTypes()
@@ -110,13 +111,13 @@ namespace CCServ.ServiceManagement
             }
 
             //Now run them all in order.
-            Logger.LogInformation("Executing {0} startup method(s).".FormatS(startupMethods.Count()));
+            Log.Info("Executing {0} startup method(s).".FormatS(startupMethods.Count()));
             foreach (var group in startupMethods)
             {
                 //We can say first because we know there's only one.
                 var info = group.ToList().First();
 
-                Logger.LogInformation("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority));
+                Log.Info("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority));
                 info.Method(launchOptions);
             }
         }

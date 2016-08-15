@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using System.Data;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.DataAccess
 {
@@ -27,14 +28,14 @@ namespace CCServ.DataAccess
                 {
                     var connectionString = String.Format("server={0};uid={1};pwd={2};database={3}", "gord14ec204", "dkatwoo", "dkatwoo987", "sullitest");
 
-                    using (MySql.Data.MySqlClient.MySqlConnection connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString))
+                    using (MySqlConnection connection = new MySqlConnection(connectionString))
                     {
                         connection.Open();
 
                         //Let's start at the top and load in all of the references.
 
                         //Commands first
-                        Logger.LogInformation("Importing commands...");
+                        Log.Info("Importing commands...");
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `commands`", connection))
                         {
                             using (MySqlDataReader reader = command.ExecuteReader())
@@ -70,17 +71,17 @@ namespace CCServ.DataAccess
                                         }
                                     }
 
-                                    Logger.LogInformation("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()));
+                                    Log.Info("Imported {0} commands.".FormatS(session.QueryOver<Entities.ReferenceLists.Command>().RowCount()));
                                 }
                                 else
                                 {
-                                    Logger.LogWarning("Import from old database failed to read from the commands table.");
+                                    Log.Warning("Import from old database failed to read from the commands table.");
                                 }
                             }
                         }
 
                         //Now departments
-                        Logger.LogInformation("Importing departments...");
+                        Log.Info("Importing departments...");
                         //Select only those departments that are active. That's what the where clause does.
                         using (MySqlCommand command = new MySqlCommand("SELECT * FROM `dept` WHERE `DEPT_actv` = 1", connection))
                         {
@@ -96,7 +97,7 @@ namespace CCServ.DataAccess
 
                                     if (niocGA == null)
                                     {
-                                        Logger.LogWarning("Could not read departments because the command, nioc ga, could not be found.");
+                                        Log.Warning("Could not read departments because the command, nioc ga, could not be found.");
                                     }
                                     else
                                     {
@@ -130,12 +131,12 @@ namespace CCServ.DataAccess
                                             }
                                         }
 
-                                        Logger.LogInformation("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()));
+                                        Log.Info("Imported {0} departments.".FormatS(session.QueryOver<Entities.ReferenceLists.Department>().RowCount()));
                                     }
                                 }
                                 else
                                 {
-                                    Logger.LogWarning("Import from old database failed to read from the departments table.");
+                                    Log.Warning("Import from old database failed to read from the departments table.");
                                 }
                             }
                         }
@@ -151,17 +152,22 @@ namespace CCServ.DataAccess
                     {
                         case 0:
                             {
-                                Logger.LogWarning("Old database could not be contacted!");
+                                Log.Warning("Old database could not be contacted!");
                                 break;
                             }
                         case 1045:
                             {
-                                Logger.LogWarning("The Username/password combination for the old database was invalid!");
+                                Log.Warning("The Username/password combination for the old database was invalid!");
+                                break;
+                            }
+                        case 1042:
+                            {
+                                Log.Warning("The old database was either offline or otherwise non-contactable.");
                                 break;
                             }
                         default:
                             {
-                                Logger.LogException(ex, "While attempting to connect to the old database an exception occurred.", null);
+                                Log.Exception(ex, "While attempting to connect to the old database an exception occurred.");
                                 break;
                             }
                     }

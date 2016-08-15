@@ -10,6 +10,7 @@ using NHibernate.Cfg;
 using NHibernate.Metadata;
 using System.Linq;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.DataAccess
 {
@@ -167,13 +168,13 @@ namespace CCServ.DataAccess
         /// <para />
         /// If it doesn't, we'll make it.  Then since we just had to make it, we'll then run the schema generation script.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 100)]
+        [ServiceManagement.StartMethod(Priority = 99)]
         private static void SetupDatabaseAndNHibernate(CLI.Options.LaunchOptions launchOptions)
         {
-            Logger.LogInformation("Beginning database integrity check...");
+            Log.Info("Beginning database integrity check...");
 
             //First, we need to ping the database and make sure it's replying.
-            Logger.LogInformation("Confirming connection to database : '{0}'...".FormatS(launchOptions.Server));
+            Log.Info("Confirming connection to database : '{0}'...".FormatS(launchOptions.Server));
             try
             {
                 var connectionString = String.Format("server={0};uid={1};pwd={2}", launchOptions.Server, launchOptions.Username, launchOptions.Password);
@@ -182,10 +183,10 @@ namespace CCServ.DataAccess
                 {
                     connection.Open();
 
-                    Logger.LogInformation("Database connection established.");
+                    Log.Info("Database connection established.");
 
                     //Ok, the connection to the database is good.  Now let's see if the schema is valid.
-                    Logger.LogInformation("Confirming schema...");
+                    Log.Info("Confirming schema...");
 
                     using (MySql.Data.MySqlClient.MySqlCommand command = 
                         new MySql.Data.MySqlClient.MySqlCommand("SELECT COUNT(SCHEMA_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = @schema", connection))
@@ -198,13 +199,13 @@ namespace CCServ.DataAccess
 
                         if (exists)
                         {
-                            Logger.LogInformation("Database schema found.");
+                            Log.Info("Database schema found.");
 
-                            Logger.LogInformation("Configuring NHibernate...");
+                            Log.Info("Configuring NHibernate...");
                             ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
-                            Logger.LogInformation("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
+                            Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
-                            Logger.LogInformation("Scanning for associated tables...");
+                            Log.Info("Scanning for associated tables...");
 
                             List<string> nonexistantTables = new List<string>();
 
@@ -225,21 +226,21 @@ namespace CCServ.DataAccess
                             if (nonexistantTables.Any())
                             {
                                 var exception = new Exception("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)));
-                                Logger.LogException(exception, exception.Message, null);
+                                Log.Exception(exception, exception.Message);
                             }
                             else
                             {
-                                Logger.LogInformation("All tables found.");
+                                Log.Info("All tables found.");
 
                                 //If we got down here, then we're ready to initialize the factory.
-                                Logger.LogInformation("Initializing session factory...");
+                                Log.Info("Initializing session factory...");
                                 FinishNHibernateSetup();
-                                Logger.LogInformation("Initialized session factory.");
+                                Log.Info("Initialized session factory.");
                             }
                         }
                         else
                         {
-                            Logger.LogWarning("The database schema, '{0}', was not found.  Creating it now.".FormatS(launchOptions.Database));
+                            Log.Warning("The database schema, '{0}', was not found.  Creating it now.".FormatS(launchOptions.Database));
 
                             //Database not found! Uh oh!
                             //In this case, we need to make the schema.
@@ -247,26 +248,26 @@ namespace CCServ.DataAccess
 
                             command.ExecuteNonQuery();
 
-                            Logger.LogInformation("Database created.");
+                            Log.Info("Database created.");
 
-                            Logger.LogInformation("Configuring NHibernate...");
+                            Log.Info("Configuring NHibernate...");
                             ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
-                            Logger.LogInformation("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
+                            Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
                             //Since the database was just created, let's go ahead and populate it.
-                            Logger.LogInformation("Populating database schema with NHibernate expected schema...");
+                            Log.Info("Populating database schema with NHibernate expected schema...");
                             CreateSchema(true);
-                            Logger.LogInformation("Schema created.");
+                            Log.Info("Schema created.");
 
                             //If we got down here, then we're ready to initialize the factory.
-                            Logger.LogInformation("Initializing session factory...");
+                            Log.Info("Initializing session factory...");
                             FinishNHibernateSetup();
-                            Logger.LogInformation("Initialized session factory.");
+                            Log.Info("Initialized session factory.");
 
                             //Also, since we made everything a new, we can go ahead and ingest the old database into this database.
-                            Logger.LogInformation("Ingesting old database...");
+                            Log.Info("Ingesting old database...");
                             DataAccess.Importer.IngestOldDatabase();
-                            Logger.LogInformation("Ingest complete.");
+                            Log.Info("Ingest complete.");
                         }
                     }
                 }
@@ -277,17 +278,17 @@ namespace CCServ.DataAccess
                 {
                     case 0:
                         {
-                            Logger.LogException(ex, "Database could not be contacted!", null);
+                            Log.Exception(ex, "Database could not be contacted!");
                             break;
                         }
                     case 1045:
                         {
-                            Logger.LogException(ex, "The Username/password combination for the database was invalid!", null);
+                            Log.Exception(ex, "The Username/password combination for the database was invalid!");
                             break;
                         }
                     default:
                         {
-                            Logger.LogException(ex, "An unexpected error occurred while connecting to the database!", null);
+                            Log.Exception(ex, "An unexpected error occurred while connecting to the database!");
                             break;
                         }
                 }

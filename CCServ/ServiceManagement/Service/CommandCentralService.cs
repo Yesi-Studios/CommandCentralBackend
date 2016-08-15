@@ -15,6 +15,7 @@ using AtwoodUtils;
 using CCServ.DataAccess;
 using System.Linq.Expressions;
 using CCServ.ClientAccess;
+using CCServ.Logging;
 
 namespace CCServ.ServiceManagement.Service
 {
@@ -38,7 +39,7 @@ namespace CCServ.ServiceManagement.Service
             AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
             //Tell the host we received a pre flight.
-            Logger.LogDebug("Received Preflight Request");
+            Log.Debug("Received Preflight Request");
         }
 
         #endregion
@@ -75,8 +76,8 @@ namespace CCServ.ServiceManagement.Service
                         //Create the new message token for this request.
                         token.CalledEndpoint = endpoint;
 
-                        //Tell the client we have a request.
-                        Logger.LogDebug(token.ToString());
+                        //Tell the logs we have a client.
+                        Log.Debug(token.ToString());
 
                         //Add the headers to the response.
                         AddHeadersToOutgoingResponse(WebOperationContext.Current);
@@ -146,7 +147,7 @@ namespace CCServ.ServiceManagement.Service
                         //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
                         token.State = MessageStates.Processed;
 
-                        Logger.LogDebug(token.ToString());
+                        Log.Debug(token.ToString());
 
                         //Ok, now we know that the request is valid let's see if we need to authenticate it.
                         if (description.EndpointMethodAttribute.RequiresAuthentication)
@@ -165,14 +166,14 @@ namespace CCServ.ServiceManagement.Service
                             token.AuthenticationSession.LastUsedTime = token.CallTime;
                             token.State = MessageStates.Authenticated;
 
-                            Logger.LogDebug(token.ToString());
+                            Log.Debug(token.ToString());
                         }
 
                         //Invoke the data method to which the endpoint points. Point
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
-                        Logger.LogDebug(token.ToString());
+                        Log.Debug(token.ToString());
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
                         token.HandledTime = DateTime.Now;
@@ -181,7 +182,7 @@ namespace CCServ.ServiceManagement.Service
                         //Alright it's all done so let's go ahead and save the token.
                         session.Save(token);
 
-                        Logger.LogDebug(token.ToString());
+                        Log.Debug(token.ToString());
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -206,7 +207,7 @@ namespace CCServ.ServiceManagement.Service
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
                         //Log what happened.
-                        Logger.LogException(e, "A fatal, unknown error occurred in the backend service.", token);
+                        Log.Exception(e, "A fatal, unknown error occurred in the backend service.", token);
 
                         //Set the outgoing status code and then release.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
@@ -222,7 +223,7 @@ namespace CCServ.ServiceManagement.Service
                 //We can't save anything to the database.  :(
                 token.State = MessageStates.FatalError;
 
-                Logger.LogException(e, "An error occurred while trying to create a database session.", token);
+                Log.Exception(e, "An error occurred while trying to create a database session.", token);
 
                 //Set the outgoing status code and then release.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
