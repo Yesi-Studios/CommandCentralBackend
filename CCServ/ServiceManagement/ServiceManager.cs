@@ -49,6 +49,8 @@ namespace CCServ.ServiceManagement
             _host.Faulted += host_Faulted;
 
             _host.Open();
+
+            Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
         }
 
         public static void StopService()

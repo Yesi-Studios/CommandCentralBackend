@@ -115,6 +115,9 @@ namespace CCServ.DataAccess
         /// <returns></returns>
         public static object GetIdentifier(object entity, string identifierPropertyName = "Id")
         {
+            if (entity == null)
+                return null;
+
             return entity.GetType().GetProperty(identifierPropertyName).GetValue(entity);
         }
 

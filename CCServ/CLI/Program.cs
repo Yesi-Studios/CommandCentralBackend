@@ -31,8 +31,10 @@ namespace CCServ.CLI
                     // running as console app
                     Start(args);
 
-                    Console.WriteLine("Press enter key to stop...");
-                    Console.ReadLine();
+                    do
+                    {
+                        Console.WriteLine("Type 'stop' to stop...");
+                    } while (Console.ReadLine().ToLower() != "stop");
 
                     Stop();
                 }

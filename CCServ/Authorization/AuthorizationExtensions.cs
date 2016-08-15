@@ -93,7 +93,8 @@ namespace CCServ.Authorization
                             if (!editableFieldsByType.ContainsKey(x.DeclaringType.Name))
                                 editableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
                             else
-                                editableFieldsByType[x.DeclaringType.Name].Add(x.Name);
+                                if (!editableFieldsByType[x.DeclaringType.Name].Contains(x.Name))
+                                    editableFieldsByType[x.DeclaringType.Name].Add(x.Name);
                         });
 
                     //And now the returnable fields.
@@ -121,8 +122,10 @@ namespace CCServ.Authorization
                             if (!returnableFieldsByType.ContainsKey(x.DeclaringType.Name))
                                 returnableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
                             else
+                                if (!returnableFieldsByType[x.DeclaringType.Name].Contains(x.Name))
                                 returnableFieldsByType[x.DeclaringType.Name].Add(x.Name);
                         });
+
                 }
 
             }

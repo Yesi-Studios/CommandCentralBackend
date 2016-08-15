@@ -95,6 +95,7 @@
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\AuthorizationUtilities.cs" />
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
+    <Compile Include="Authorization\Groups\Definitions\Developers.cs" />
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
@@ -129,6 +130,8 @@
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="EmailHelper.cs" />
+    <Compile Include="Email\CCEmailMessage.cs" />
+    <Compile Include="Email\Templates\TemplateManager.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
@@ -232,6 +235,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
