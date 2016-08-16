@@ -14,22 +14,22 @@ namespace CCServ.Authorization.Groups
         /// <summary>
         /// The default permission level indicating no permission to exercise the powers in this permission.
         /// </summary>
-        None,
+        None = 0,
         /// <summary>
         /// A permission with this level may be execrecised on the person's self only.
         /// </summary>
-        Self,
+        Self = 1,
         /// <summary>
         /// A permission with this permission level may be exercised by a person on all other person's in his/her same division.
         /// </summary>
-        Division,
+        Division = 2,
         /// <summary>
         /// A permission with this permission level may be exercised by a person on all other person's in his/her same department.
         /// </summary>
-        Department,
+        Department = 3,
         /// <summary>
         /// A permission with this permission level may be exercised by a person on all other person's in his/her same command.
         /// </summary>
-        Command
+        Command = 4
     }
 }

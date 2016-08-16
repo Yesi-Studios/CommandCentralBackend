@@ -13,8 +13,6 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public Developers()
         {
-            Default();
-
             HasAccessLevel(PermissionGroupLevels.Command);
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());

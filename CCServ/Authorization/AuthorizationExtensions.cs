@@ -144,6 +144,18 @@ namespace CCServ.Authorization
                         .SelectMany(x => x.Properties.Select(y => y.Name))
                         .ToList();
 
+                    //Now we need to copy the fields to the level beneath them because of this assumption:
+                    //Any field I can return at the command level, I can return at the division level.
+                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Department.ToString()] =
+                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Department.ToString()]
+                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Command.ToString()])
+                        .Distinct().ToList();
+
+                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Division.ToString()] =
+                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Division.ToString()]
+                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Department.ToString()])
+                        .Distinct().ToList();
+
                 }
 
             }
