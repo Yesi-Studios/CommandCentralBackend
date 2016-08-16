@@ -77,6 +77,9 @@ namespace CCServ.Authorization
             HighestLevels = new Dictionary<string, Groups.PermissionGroupLevels>(StringComparer.OrdinalIgnoreCase);
             EditablePermissionGroups = new List<string>();
 
+            PrivelegedReturnableFields = new Dictionary<string, Dictionary<string, List<string>>>();
+            ChainOfCommandByModule = new Dictionary<string, bool>();
+
             PermissionGroupNames = new List<string>();
         }
 

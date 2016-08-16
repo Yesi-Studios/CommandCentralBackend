@@ -107,6 +107,19 @@ namespace CCServ.Entities.Muster
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns this.MusterStatus.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return this.MusterStatus;
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>

@@ -1271,6 +1271,94 @@ namespace CCServ.Entities
             }
             Dictionary<string, string> filters = token.Args["filters"].CastJToken<Dictionary<string, string>>();
 
+            //Ok, let's figure out what fields the client is allowed to search.
+            //This is determined, in part by the existence of the searchlevel parameter.
+            //If we don't find the level limit, then continue as normal.  However, if we do find a level limit, then we need to check the client's permissions.
+            //We also need to throw out any property they gave us for the relevant level and insert our own.
+            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
+            if (token.Args.ContainsKey("searchlevel"))
+            {
+                //Ok there's a search level.  We need to do something different based on division, department or command.
+                switch (token.Args["searchlevel"] as string)
+                {
+                    case "Division":
+                        {
+                            //The client wants to limit everything to their Division.  Sweet.
+
+                            //First, if the filters have division, delete it.
+                            if (filters.ContainsKey("Division"))
+                                filters.Remove("Division");
+
+                            //Now ask if the client is allowed to search in all these fields.
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+
+                            if (failures.Any())
+                            {
+                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                                return;
+                            }
+
+                            break;
+                        }
+                    case "Department":
+                        {
+                            //The client wants to limit everything to their Department.  Sweet.
+
+                            //First, if the filters have department, delete it.
+                            if (filters.ContainsKey("Department"))
+                                filters.Remove("Department");
+
+                            //Now ask if the client is allowed to search in all these fields.
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+
+                            if (failures.Any())
+                            {
+                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                                return;
+                            }
+
+                            break;
+                        }
+                    case "Command":
+                        {
+                            //The client wants to limit everything to their Command.  Sweet.
+
+                            //First, if the filters have command, delete it.
+                            if (filters.ContainsKey("Command"))
+                                filters.Remove("Command");
+
+                            //Now ask if the client is allowed to search in all these fields.
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+
+                            if (failures.Any())
+                            {
+                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                                return;
+                            }
+
+                            break;
+                        }
+                    default:
+                        {
+                            token.AddErrorMessage("The searchlevel you sent was not in the correct format.  It must only be Command, Department, or Division.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                }
+            }
+            else
+            {
+                //We weren't told to limit the search at all, meaning the searchable fields are the client's normal returnable fields.
+                //So let's just test the fields against that.
+                var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
+
+                if (failures.Any())
+                {
+                    //There were one or more fields you weren't allowed to search in.
+                    token.AddErrorMessage("You weren't allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                    return;
+                }
+            }
+
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
             {
@@ -1287,6 +1375,45 @@ namespace CCServ.Entities
                 //Ok the client can search and return everything.  Now we need to build the actual query.
                 //To do this we need to determine what type each property is and then add it to the query.
                 var queryOver = session.QueryOver<Person>();
+
+                //So you remember the searchlevel from before?  We need to use that here.  If the client gave it to us.
+                if (token.Args.ContainsKey("searchlevel"))
+                {
+                    //Ok there's a search level.  We need to do something different based on division, department or command.
+                    switch (token.Args["searchlevel"] as string)
+                    {
+                        case "Division":
+                            {
+
+                                var disjunction = Restrictions.Disjunction();
+                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().Where(x => x.Id == token.AuthenticationSession.Person.Division.Id).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+
+                                break;
+                            }
+                        case "Department":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().Where(x => x.Id == token.AuthenticationSession.Person.Department.Id).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+
+                                break;
+                            }
+                        case "Command":
+                            {
+                                var disjunction = Restrictions.Disjunction();
+                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().Where(x => x.Id == token.AuthenticationSession.Person.Command.Id).Select(x => x.Id)));
+                                queryOver = queryOver.Where(disjunction);
+
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("Fell to the second searchlevel default in the advanced search endpoint.");
+                            }
+                    }
+                }
+
                 foreach (var filter in filters)
                 {
                     var searchTerms = filter.Value.Split((char[])null);
@@ -1447,24 +1574,33 @@ namespace CCServ.Entities
                     //We need to know the fields the client is allowed to return for this client.
                     var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, returnedPerson).ReturnableFields["Main"]["Person"];
 
-                    var temp = new Dictionary<string, string>();
-                    foreach (var returnField in returnFields)
+                    var returnData = new Dictionary<string, string>();
+
+                    //Now just set the fields the client is allowed to see.
+                    foreach (var propertyName in returnableFields)
                     {
-                        //if the client isn't allowed to return this field, replace its value with "redacted"
-                        if (returnableFields.Contains(returnField))
+                        //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
+                        if (propertyName.ToLower() == "id")
                         {
-                            var value = personMetadata.GetPropertyValue(returnedPerson, returnField, NHibernate.EntityMode.Poco);
-                            temp.Add(returnField, value == null ? "" : value.ToString());
+                            returnData.Add("Id", personMetadata.GetIdentifier(returnedPerson, NHibernate.EntityMode.Poco).ToString());
                         }
                         else
                         {
-                            temp.Add(returnField, "REDACTED");
-                        }
+                            //if the client isn't allowed to return this field, replace its value with "redacted"
+                            if (returnableFields.Contains(propertyName))
+                            {
+                                var value = personMetadata.GetPropertyValue(returnedPerson, propertyName, NHibernate.EntityMode.Poco);
+                                returnData.Add(propertyName, value == null ? "" : value.ToString());
+                            }
+                            else
+                            {
+                                returnData.Add(propertyName, "REDACTED");
+                            }
 
+                        }
                     }
-                    //We're also going to append the Id onto every search result so that the client knows who this is.
-                    temp.Add("Id", personMetadata.GetIdentifier(returnedPerson, NHibernate.EntityMode.Poco).ToString());
-                    return temp;
+
+                    return returnData;
                 });
 
                 token.SetResult(new 

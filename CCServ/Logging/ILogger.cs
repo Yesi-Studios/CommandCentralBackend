@@ -19,15 +19,15 @@ namespace CCServ.Logging
 
         bool IsValid();
 
-        void LogDebug(string message, ClientAccess.MessageToken token, [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "");
+        void LogDebug(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
-        void LogInformation(string message, ClientAccess.MessageToken token, [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "");
+        void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
-        void LogCritical(string message, ClientAccess.MessageToken token, [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "");
+        void LogCritical(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
-        void LogWarning(string message, ClientAccess.MessageToken token, [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "");
+        void LogWarning(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
-        void LogException(Exception ex, string message, ClientAccess.MessageToken token, [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "");
+        void LogException(Exception ex, string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
     }
 }

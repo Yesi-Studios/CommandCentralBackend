@@ -59,7 +59,7 @@ namespace CCServ.Logging
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {
-                logger.LogDebug(message, token);
+                logger.LogDebug(message, token, callerMemberName, callerLineNumber, callerFilePath);
             });
         }
 
@@ -73,7 +73,7 @@ namespace CCServ.Logging
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {
-                logger.LogInformation(message, token);
+                logger.LogInformation(message, token, callerMemberName, callerLineNumber, callerFilePath);
             });
         }
 
@@ -87,7 +87,7 @@ namespace CCServ.Logging
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {
-                logger.LogWarning(message, token);
+                logger.LogWarning(message, token, callerMemberName, callerLineNumber, callerFilePath);
             });
         }
 
@@ -104,7 +104,7 @@ namespace CCServ.Logging
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {
-                logger.LogCritical(message, token);
+                logger.LogCritical(message, token, callerMemberName, callerLineNumber, callerFilePath);
             });
         }
 
@@ -119,7 +119,7 @@ namespace CCServ.Logging
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {
-                logger.LogException(ex, message, token);
+                logger.LogException(ex, message, token, callerMemberName, callerLineNumber, callerFilePath);
             });
         }
 

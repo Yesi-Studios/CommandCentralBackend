@@ -155,9 +155,7 @@ namespace CCServ.Authorization
                         resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Division.ToString()]
                         .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.PermissionGroupLevels.Department.ToString()])
                         .Distinct().ToList();
-
                 }
-
             }
 
             //Now let's do the chain of command determination.  If we're talking about the same person, then the answer is no.
