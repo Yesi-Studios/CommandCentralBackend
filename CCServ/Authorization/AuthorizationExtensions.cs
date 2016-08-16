@@ -127,6 +127,23 @@ namespace CCServ.Authorization
                                 returnableFieldsByType[x.DeclaringType.Name].Add(x.Name);
                         });
 
+                    //And those fields we can return with stipulations at each of the levels.
+                    //If the priv return fields doesn't have the module, then set it all up including empty lists for all of the access levels.
+                    if (!resolvedPermissions.PrivelegedReturnableFields.ContainsKey(module.ModuleName))
+                    {
+                        resolvedPermissions.PrivelegedReturnableFields.Add(module.ModuleName, 
+                            Enum.GetNames(typeof(Groups.PermissionGroupLevels))
+                            .Select(x => new KeyValuePair<string, List<string>>(x, new List<string>()))
+                            .ToDictionary(x => x.Key, x => x.Value));
+                    }
+
+                    //Ok cool now we have this module and a list of all the access levels.  weeeeee.
+                    //Now go through all the property groups in this module.  if the property group is return and either has no rules or its rules are all if in chain of command rules, then add it.
+                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][module.ParentPermissionGroup.AccessLevel.ToString()] = module.PropertyGroups
+                        .Where(x => x.AccessCategory == Groups.AccessCategories.Return && (!x.Disjunctions.Any() || x.Disjunctions.All(y => y.Rules.All(z => z is Rules.IfInChainOfCommandRule))))
+                        .SelectMany(x => x.Properties.Select(y => y.Name))
+                        .ToList();
+
                 }
 
             }

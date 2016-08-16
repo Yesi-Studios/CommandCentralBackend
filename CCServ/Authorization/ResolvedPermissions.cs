@@ -42,6 +42,11 @@ namespace CCServ.Authorization
         public Dictionary<string, Dictionary<string, List<string>>> ReturnableFields { get; set; }
 
         /// <summary>
+        /// The list of fields that the client can return, with stipulations.
+        /// </summary>
+        public Dictionary<string, Dictionary<string, List<string>>> PrivelegedReturnableFields { get; set; }
+
+        /// <summary>
         /// THe highest levels in each of the modules that this client has.  The key is case insensitive.
         /// </summary>
         public Dictionary<string, Groups.PermissionGroupLevels> HighestLevels { get; set; }
