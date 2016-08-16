@@ -15,11 +15,12 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             Default();
 
+            HasAccessLevel(PermissionGroupLevels.Command);
+
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
             CanEditMembershipOf(new LPOs());
 
             CanAccessModule("Main")
-                .AtLevel(PermissionGroupLevels.Command)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
@@ -100,8 +101,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.AccountHistory,
                     x => x.Changes));
 
-            CanAccessModule("Muster")
-                .AtLevel(PermissionGroupLevels.Command);
+            CanAccessModule("Muster");
         }
     }
 }

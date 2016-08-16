@@ -29,6 +29,11 @@ namespace CCServ.Authorization.Groups
         public string GroupName { get; set; }
 
         /// <summary>
+        /// This permission group's access level.
+        /// </summary>
+        public PermissionGroupLevels AccessLevel { get; set; }
+
+        /// <summary>
         /// The modules included in this group.
         /// </summary>
         public List<ModulePart> Modules { get; set; }
@@ -86,6 +91,15 @@ namespace CCServ.Authorization.Groups
         }
 
         /// <summary>
+        /// Sets the group's access level.
+        /// </summary>
+        /// <param name="level"></param>
+        public void HasAccessLevel(PermissionGroupLevels level)
+        {
+            AccessLevel = level;
+        }
+
+        /// <summary>
         /// Creates a new module permission and sets its name.
         /// </summary>
         /// <param name="moduleName"></param>
@@ -95,7 +109,7 @@ namespace CCServ.Authorization.Groups
             if (Modules.Any(x => x.ModuleName.SafeEquals(moduleName)))
                 throw new Exception("You may not declare access to a module more than once for the same permission group.");
 
-            Modules.Add(new ModulePart(moduleName));
+            Modules.Add(new ModulePart(moduleName) { ParentPermissionGroup = this });
             return Modules.Last();
         }
 

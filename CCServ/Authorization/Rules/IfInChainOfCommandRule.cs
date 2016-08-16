@@ -22,7 +22,14 @@ namespace CCServ.Authorization.Rules
             if (authToken.PersonFromClient == null)
                 return false;
 
-            return authToken.Client.IsInChainOfCommandOf(authToken.PersonFromClient, this.ParentPropertyGroup.ParentModule.ModuleName);
+            var resolvedPermissions = authToken.Client.PermissionGroups.Resolve(authToken.Client, authToken.PersonFromClient);
+
+            var moduleName = this.ParentPropertyGroup.ParentModule.ModuleName;
+
+            if (!resolvedPermissions.ChainOfCommandByModule.ContainsKey(moduleName))
+                return false;
+
+            return resolvedPermissions.ChainOfCommandByModule[moduleName];
         }
     }
 }

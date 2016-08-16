@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using CCServ.Logging;
 
 namespace CCServ.Authorization
 {
@@ -63,10 +64,10 @@ namespace CCServ.Authorization
                 {
                     //First the highest level.
                     if (!resolvedPermissions.HighestLevels.ContainsKey(module.ModuleName))
-                        resolvedPermissions.HighestLevels.Add(module.ModuleName, module.Level);
+                        resolvedPermissions.HighestLevels.Add(module.ModuleName, group.AccessLevel);
                     else
-                        if (resolvedPermissions.HighestLevels[module.ModuleName] < module.Level)
-                            resolvedPermissions.HighestLevels[module.ModuleName] = module.Level;
+                        if (resolvedPermissions.HighestLevels[module.ModuleName] < group.AccessLevel)
+                            resolvedPermissions.HighestLevels[module.ModuleName] = group.AccessLevel;
 
                     //And now for editable fields.  First get or add them.
                     Dictionary<string, List<string>> editableFieldsByType;
@@ -130,9 +131,45 @@ namespace CCServ.Authorization
 
             }
 
-            
-
-
+            //Now let's do the chain of command determination.  If we're talking about the same person, then the answer is no.
+            foreach (var highestLevel in resolvedPermissions.HighestLevels)
+            {
+                if (person == null || client.Id == person.Id)
+                {
+                    resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
+                }
+                else
+                {
+                    switch (highestLevel.Value)
+                    {
+                        case Groups.PermissionGroupLevels.Command:
+                            {
+                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameCommandAs(person);
+                                break;
+                            }
+                        case Groups.PermissionGroupLevels.Department:
+                            {
+                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDepartmentAs(person);
+                                break;
+                            }
+                        case Groups.PermissionGroupLevels.Division:
+                            {
+                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDivisionAs(person);
+                                break;
+                            }
+                        case Groups.PermissionGroupLevels.Self:
+                        case Groups.PermissionGroupLevels.None:
+                            {
+                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("In the switch between levels in the CoC determinations in Resolve().");
+                            }
+                    }
+                }
+            }
 
             return resolvedPermissions;
         }

@@ -15,8 +15,9 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             CanEditMembershipOf();
 
+            HasAccessLevel(PermissionGroupLevels.Division);
+
             CanAccessModule("Main")
-                .AtLevel(PermissionGroupLevels.Division)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
@@ -49,8 +50,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.IsClaimed,
                     x => x.PermissionGroupNames));
 
-            CanAccessModule("Muster")
-                .AtLevel(PermissionGroupLevels.Division);
+            CanAccessModule("Muster");
         }
     }
 }

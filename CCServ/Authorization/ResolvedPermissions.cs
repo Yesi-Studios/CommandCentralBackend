@@ -47,6 +47,11 @@ namespace CCServ.Authorization
         public Dictionary<string, Groups.PermissionGroupLevels> HighestLevels { get; set; }
 
         /// <summary>
+        /// A dictionary where the string is the name of a module and the boolean indicates if the client is in that chain of command for the given person.
+        /// </summary>
+        public Dictionary<string, bool> ChainOfCommandByModule { get; set; }
+
+        /// <summary>
         /// The list of those permission groups' names that this client can edit the membership of.
         /// </summary>
         public List<string> EditablePermissionGroups { get; set; }

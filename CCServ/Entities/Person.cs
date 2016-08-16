@@ -276,48 +276,15 @@ namespace CCServ.Entities
         }
         
         /// <summary>
-        /// Returns a boolean indicating whether or not this person is in the chain of command of a given person.
-        /// <para/>
-        /// Person A (this person) is in Person B's chain of command if:
-        /// <para/>
-        /// A and B have the same command and Person A has a command-level permission OR
-        /// <para />
-        /// A and B have the same command and department and Person A has a department-level permission OR
-        /// <para />
-        /// A and B have the same command and department and division and Person A has a division-level permission.
-        /// <para />
-        /// Note: No person may be in his/her own chain of command.
-        /// </summary>
-        /// <param name="person"></param>
-        /// <param name="module">The module in which to look for the chain of command.</param>
-        /// <returns></returns>
-        public virtual bool IsInChainOfCommandOf(Person person, string module)
-        {
-            if (Id == person.Id)
-                return false;
-
-            //First get all the module permissions for the module in question.
-            var modules = this.PermissionGroups.SelectMany(x => x.Modules.Where(y => y.ModuleName.SafeEquals(module)));
-
-            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Command) && Command.Equals(person.Command))
-                return true;
-
-            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Department) && Command.Equals(person.Command) && Department.Equals(person.Department))
-                return true;
-
-            if (modules.Any(x => x.Level == Authorization.Groups.PermissionGroupLevels.Division) && Command.Equals(person.Command) && Department.Equals(person.Department) && Division.Equals(person.Division))
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
         /// Returns a boolean indicating if this person is in the same command as the given person.
         /// </summary>
         /// <param name="person"></param>
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
+            if (person == null)
+                return false;
+
             return this.Command.Id == person.Command.Id;
         }
 
@@ -328,6 +295,9 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
+            if (person == null)
+                return false;
+
             return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
         }
 
@@ -338,6 +308,9 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
+            if (person == null)
+                return false;
+
             return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
         }
 

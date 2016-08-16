@@ -22,8 +22,9 @@ namespace CCServ.Authorization.Groups.Definitions
             CanAccessSubModules(new[] { SubModules.EditNews }.Select(x => x.ToString()).ToArray());
             CanEditMembershipOf();
 
+            HasAccessLevel(PermissionGroupLevels.Self);
+
             CanAccessModule("Main")
-                .AtLevel(PermissionGroupLevels.None)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
