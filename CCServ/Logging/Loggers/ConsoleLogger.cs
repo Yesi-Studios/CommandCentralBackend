@@ -18,14 +18,6 @@ namespace CCServ.Logging.Loggers
 
         public List<MessageTypes> EnabledMessageTypes { get; set; }
 
-        public int MaxEntryLength
-        {
-            get
-            {
-                return 2000;
-            }
-        }
-
         public string Name
         {
             get
