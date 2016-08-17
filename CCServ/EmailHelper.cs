@@ -90,23 +90,7 @@ namespace CCServ
             SmtpClient client = new SmtpClient(SmtpHost);
             await client.SendMailAsync(message);
         }
-
-        /// <summary>
-        /// Sends an email informing a client that a password reset request has begun.
-        /// </summary>
-        /// <param name="passwordResetId"></param>
-        /// <param name="emailAddressTo"></param>
-        /// <returns></returns>
-        public static async Task SendBeginPasswordResetEmail(Guid passwordResetId, string emailAddressTo)
-        {
-            MailMessage message = BuildStandardMessage();
-            message.To.Add(emailAddressTo);
-            message.Subject = "CommandDB Password Reset";
-            message.Body = string.Format(await LoadEmailResource("InitiatePasswordReset.html"), DateTime.Now, _passwordResetPageLocation + passwordResetId, emailAddressTo);
-            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
-            await client.SendMailAsync(message);
-        }
-
+        
         /// <summary>
         /// Sends a muster report.
         /// </summary>
