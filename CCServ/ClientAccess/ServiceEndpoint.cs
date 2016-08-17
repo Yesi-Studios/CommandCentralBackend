@@ -69,6 +69,9 @@ namespace CCServ.ClientAccess
                         if (string.IsNullOrWhiteSpace(endpointMethodAttribute.EndpointName))
                             endpointMethodAttribute.EndpointName = x.Name;
 
+                        Log.Info("Found endpoint : {0}".FormatS(endpointMethodAttribute.EndpointName));
+
+
                         return new ServiceEndpoint
                         {
                             EndpointMethod = endpointMethod,// lambda.Compile(),
