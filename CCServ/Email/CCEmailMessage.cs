@@ -4,29 +4,52 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.Mail;
+using FluentEmail;
 
 namespace CCServ.Email
 {
-    public abstract class CCEmailMessage : MailMessage
+    /// <summary>
+    /// The base of the mail system.
+    /// </summary>
+    public abstract class CCEmailMessage
     {
+        /// <summary>
+        /// The template to use for the given mail message.
+        /// </summary>
         public abstract string Template { get; }
 
-        public static string SMTPHost { get; set; }
+        /// <summary>
+        /// The FluentEmail mail object.
+        /// </summary>
+        private IFluentEmail _emailMessage;
 
-        public CCEmailMessage()
+        public object Context { get; set; }
+
+        /// <summary>
+        /// Creates a new mail message with the defaults.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="context"></param>
+        public CCEmailMessage(string subject, string smtpHost)
         {
-            IsBodyHtml = true;
-            From = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
-            Sender = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
-            ReplyToList.Add(new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications"));
-            Priority = MailPriority.High;
-            CC.Add(new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications"));
+            _emailMessage = FluentEmail.Email
+                .From("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
+                .To("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
+                .CC("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
+                .ReplyTo("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
+                .BodyAsHtml()
+                .HighPriority()
+                .UsingClient(new SmtpClient() { Host = smtpHost })
+                .UsingTemplate(Template, Context)
+                .Subject(subject);
         }
 
-
+        /// <summary>
+        /// Sends the mail message.
+        /// </summary>
         public void Send()
         {
-            new SmtpClient(SMTPHost).Send(this);
+            
         }
     }
 }
