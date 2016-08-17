@@ -144,6 +144,7 @@
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="Config\ContactDetails.cs" />
+    <Compile Include="Config\Email.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="DataAccess\Importer.cs" />
@@ -158,11 +159,13 @@
     <Compile Include="Email\Args\BeginRegistrationErrorEmailArgs.cs" />
     <Compile Include="Email\Args\CompletedAccountRegistrationEmailArgs.cs" />
     <Compile Include="Email\Args\FailedAccountLoginEmailArgs.cs" />
+    <Compile Include="Email\Args\FatalErrorEmailArgs.cs" />
     <Compile Include="Email\BeginPasswordResetEmail.cs" />
     <Compile Include="Email\BeginRegistrationErrorEmail.cs" />
     <Compile Include="Email\CCEmailMessage.cs" />
     <Compile Include="Email\CompletedAccountRegistrationEmail.cs" />
     <Compile Include="Email\FailedAccountLoginEmail.cs" />
+    <Compile Include="Email\FatalErrorEmail.cs" />
     <Compile Include="Email\Templates\TemplateManager.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
@@ -197,6 +200,7 @@
     <Compile Include="Logging\LogEntity.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Logging\Loggers\ConsoleLogger.cs" />
+    <Compile Include="Logging\Loggers\EmailLogger.cs" />
     <Compile Include="Logging\LoggingTargetsEnum.cs" />
     <Compile Include="Logging\MessageTypesEnum.cs" />
     <Compile Include="ReferenceListItemBase.cs" />
@@ -228,7 +232,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FatalError.html">
+    <EmbeddedResource Include="Email\Templates\FatalErrorEmail.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
