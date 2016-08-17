@@ -778,9 +778,25 @@ namespace CCServ.Entities
                 return;
             }
 
-            if (mailAddress.Host != EmailHelper.RequiredDODEmailHost)
+            if (mailAddress.Host != Config.Email.DODEmailHost)
             {
                 token.AddErrorMessage("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Let's get the continue link
+            if (!token.Args.ContainsKey("continuelink"))
+            {
+                token.AddErrorMessage("You failed to send a 'continuelink' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var continueLink = token.Args["continuelink"] as string;
+
+            //Let's just do some basic validation and make sure it's a real URI.
+            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
+            {
+                token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -844,6 +860,7 @@ namespace CCServ.Entities
                         FriendlyName = pendingPasswordReset.Person.ToString(),
                         PasswordResetId = pendingPasswordReset.Id,
                         Subject = "CommandCentral Password Reset",
+                        PasswordResetLink = continueLink,
                         ToAddressList = new List<string> { email }
                     }).Send();
 

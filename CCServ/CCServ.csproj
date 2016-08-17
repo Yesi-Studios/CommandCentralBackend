@@ -151,7 +151,6 @@
     <Compile Include="DataAccess\ImportError.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
-    <Compile Include="EmailHelper.cs" />
     <Compile Include="Email\AccountConfirmationEmail.cs" />
     <Compile Include="Email\Args\AccountConfirmationEmailArgs.cs" />
     <Compile Include="Email\Args\BaseEmailArgs.cs" />
@@ -227,22 +226,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FailedAccountLogin.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Email\Templates\FatalErrorEmail.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\FinalMusterReport.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\GenericError.html">
+    <EmbeddedResource Include="Email\Templates\MusterReportEmail.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
