@@ -285,6 +285,9 @@ namespace CCServ.Entities
             if (person == null)
                 return false;
 
+            if (this.Command == null || person.Command == null)
+                return false;
+
             return this.Command.Id == person.Command.Id;
         }
 
@@ -298,7 +301,10 @@ namespace CCServ.Entities
             if (person == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
+            if (this.Department == null || person.Department == null)
+                return false;
+
+            return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
         }
 
         /// <summary>
@@ -311,7 +317,10 @@ namespace CCServ.Entities
             if (person == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
+            if (this.Division == null || person.Division == null)
+                return false;
+
+            return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
         }
 
         #endregion
