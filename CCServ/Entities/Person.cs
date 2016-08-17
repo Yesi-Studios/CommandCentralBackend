@@ -282,7 +282,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Command == null || person.Command == null)
                 return false;
 
             return this.Command.Id == person.Command.Id;
@@ -295,10 +295,10 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Department == null || person.Department == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
+            return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
         }
 
         /// <summary>
@@ -308,10 +308,10 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Division == null || person.Division == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
+            return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
         }
 
         #endregion
