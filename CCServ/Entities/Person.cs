@@ -282,10 +282,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
-            if (person == null)
-                return false;
-
-            if (this.Command == null || person.Command == null)
+            if (person == null || this.Command == null || person.Command == null)
                 return false;
 
             return this.Command.Id == person.Command.Id;
@@ -298,10 +295,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
-            if (person == null)
-                return false;
-
-            if (this.Department == null || person.Department == null)
+            if (person == null || this.Department == null || person.Department == null)
                 return false;
 
             return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
@@ -314,10 +308,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
-            if (person == null)
-                return false;
-
-            if (this.Division == null || person.Division == null)
+            if (person == null || this.Division == null || person.Division == null)
                 return false;
 
             return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
