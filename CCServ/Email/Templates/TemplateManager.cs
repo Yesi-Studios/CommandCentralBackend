@@ -9,8 +9,14 @@ using CCServ.Logging;
 
 namespace CCServ.Email.Templates
 {
+    /// <summary>
+    /// Contains all the email templates and their loader.
+    /// </summary>
     public static class TemplateManager
     {
+        /// <summary>
+        /// The list of all email templates.  The key is the name of the template.  i.e. template.html 
+        /// </summary>
         public static ConcurrentDictionary<string, string> AllTemplates = new ConcurrentDictionary<string, string>();
 
         /// <summary>
