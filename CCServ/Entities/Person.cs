@@ -503,7 +503,7 @@ namespace CCServ.Entities
                     string continueLink = token.Args["continueLink"] as string;
 
                     //Let's just do some basic validation and make sure it's a real URI.
-                    if (!Uri.IsWellFormedUriString(continueLink, UriKind.RelativeOrAbsolute))
+                    if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
                     {
                         token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
