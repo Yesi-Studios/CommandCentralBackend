@@ -38,11 +38,6 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         public virtual Department Department { get; set; }
 
-        /// <summary>
-        /// The old Id of this command in the old database.
-        /// </summary>
-        public virtual int OldId { get; set; }
-
         #endregion
 
         #region Overrides
@@ -383,7 +378,6 @@ namespace CCServ.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);
-                Map(x => x.OldId).Not.Nullable().Unique();
 
                 References(x => x.Department).LazyLoad(Laziness.False);
 
