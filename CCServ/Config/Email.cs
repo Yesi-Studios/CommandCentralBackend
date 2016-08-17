@@ -31,5 +31,13 @@ namespace CCServ.Config
                 return new System.Net.Mail.MailAddress("anguslmm@gmail.com", "Angus McLean");
             }
         }
+
+        public static string DODEmailHost
+        {
+            get
+            {
+                return "mail.mil";
+            }
+        }
     }
 }
