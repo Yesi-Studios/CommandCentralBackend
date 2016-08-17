@@ -56,7 +56,7 @@ namespace CCServ.Entities
             /// </summary>
             public PendingAccountConfirmationMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Person).Not.Nullable().Unique();
 

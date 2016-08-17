@@ -100,7 +100,7 @@ namespace CCServ.Logging
         /// <param name="callerMemberName"></param>
         /// <param name="callerLineNumber"></param>
         /// <param name="callerFilePath"></param>
-        public static void Critical(string message, MessageToken token, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
+        public static void Critical(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
             Parallel.ForEach<ILogger>(_loggers, logger =>
             {

@@ -29,8 +29,6 @@ namespace CCServ.Authorization.Groups
         /// </summary>
         public PermissionGroup ParentPermissionGroup { get; set; }
 
-        private bool wasLevelSet = false;
-
         /// <summary>
         /// Creates a new module with the given name.
         /// </summary>

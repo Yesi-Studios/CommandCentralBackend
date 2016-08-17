@@ -33,11 +33,6 @@ namespace CCServ
         //public static readonly string SmtpHost = "smtp.gordon.army.mil";
 
         /// <summary>
-        /// The template URI for where the complete registration page can be found. 147.51.62.19
-        /// </summary>
-        private static readonly string _completeRegistrationPageLocation = @"http://147.51.62.19/livebeta/#/finishregistration/";
-
-        /// <summary>
         /// The template URI for where the reset password page can be found.
         /// </summary>
         private static readonly string _passwordResetPageLocation = @"http://147.51.62.19/livebeta/#/finishreset/";

@@ -492,6 +492,8 @@ namespace CCServ.Entities
                 try
                 {
 
+                    session.FlushMode = NHibernate.FlushMode.Always;
+
                     //First off, we need the link that the client wants us to use to finish registration.
                     if (!token.Args.ContainsKey("continuelink"))
                     {
@@ -556,24 +558,27 @@ namespace CCServ.Entities
                         return;
                     }
 
-                    //Let's see if there is already a pending account confirmation.
-                    var pendingAccountConfirmations = session.QueryOver<PendingAccountConfirmation>()
-                        .Where(x => x.Person.Id == person.Id)
-                        .List<PendingAccountConfirmation>();
-
-                    //If there are any (should only be one) then we're going to delete all of them.  
-                    //This would happen if the client tries to begin registration after already doing it.
-                    if (pendingAccountConfirmations.Any())
-                        pendingAccountConfirmations.ToList().ForEach(x => session.Delete(x));
-
                     //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                     var pendingAccountConfirmation = new PendingAccountConfirmation
                     {
                         Person = person,
-                        Time = token.CallTime
+                        Time = token.CallTime,
+                        Id = Guid.NewGuid()
                     };
 
-                    //And then persist it.
+                    //Let's see if there is already a pending account confirmation.
+                    var existingPendingAccountConfirmation = session.QueryOver<PendingAccountConfirmation>()
+                        .Where(x => x.Person.Id == person.Id)
+                        .SingleOrDefault();
+
+                    //if one already exists, update it, else make a new one.
+                    if (existingPendingAccountConfirmation != null)
+                    {
+                        session.Delete(existingPendingAccountConfirmation);
+                        session.Flush();
+                    }
+                    
+                    //Then, persist it if there isn't one yet.
                     session.Save(pendingAccountConfirmation);
 
                     //Let's also add the account history object here.

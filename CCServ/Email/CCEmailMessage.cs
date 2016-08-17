@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Mail;
 using FluentEmail;
+using Polly;
+using AtwoodUtils;
 
 namespace CCServ.Email
 {
@@ -47,9 +49,26 @@ namespace CCServ.Email
         /// </summary>
         public void Send(string smtpHost = "localhost")
         {
-            _emailMessage
-                .UsingClient(new SmtpClient { Host = smtpHost })
-                .Send();
+            Task.Run(() =>
+            {
+                var result = Policy
+                .Handle<SmtpException>()
+                .WaitAndRetry(3, count => TimeSpan.FromSeconds(5 * count), (exception, waitDuration) =>
+                {
+                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable! Trying again in {0} seconds...".FormatS(waitDuration.TotalSeconds));
+                })
+                .ExecuteAndCapture(() =>
+                {
+                    _emailMessage
+                        .UsingClient(new SmtpClient { Host = smtpHost })
+                        .Send();
+                });
+
+                if (result.Outcome == OutcomeType.Failure)
+                {
+                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable!  Reached maximum number of retries.  Error message: {0}".FormatS(result.FinalException.Message));
+                }
+            });
         }
     }
 }
