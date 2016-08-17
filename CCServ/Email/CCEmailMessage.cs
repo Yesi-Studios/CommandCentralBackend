@@ -64,7 +64,7 @@ namespace CCServ.Email
                 .ExecuteAndCapture(() =>
                 {
                     _emailMessage
-                        .UsingClient(new SmtpClient { Host = alternateSMTPHost })
+                        .UsingClient(new SmtpClient { Host = attemptServer })
                         .Send();
                 });
 
