@@ -970,8 +970,6 @@ namespace CCServ.Entities
                     throw;
                 }
             }
-
-            
         }
 
         #endregion
