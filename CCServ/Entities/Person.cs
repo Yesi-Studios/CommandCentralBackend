@@ -704,7 +704,14 @@ namespace CCServ.Entities
                     //Cool, so now just update the person object.
                     session.Update(pendingAccountConfirmation.Person);
 
-                    //TODO send completion email.
+                    //Send the email to the client telling them we're done.
+                    new Email.CompletedAccountRegistrationEmail(new Email.Args.CompletedAccountRegistrationEmailArgs
+                    {
+                        DateTime = token.CallTime,
+                        FriendlyName = pendingAccountConfirmation.Person.ToString(),
+                        Subject = "Account Registration Completed!",
+                        ToAddressList = pendingAccountConfirmation.Person.EmailAddresses.Select(x => x.Address).ToList()
+                    }).Send();
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
                     session.Delete(pendingAccountConfirmation);
@@ -753,6 +760,24 @@ namespace CCServ.Entities
             string email = token.Args["email"] as string;
             string ssn = token.Args["ssn"] as string;
 
+            //Let's validate the email.  
+            System.Net.Mail.MailAddress mailAddress = null;
+            try
+            {
+                mailAddress = new System.Net.Mail.MailAddress(email);
+            }
+            catch
+            {
+                token.AddErrorMessage("The mail parameter you sent was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            if (mailAddress.Host != EmailHelper.RequiredDODEmailHost)
+            {
+                token.AddErrorMessage("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
@@ -785,6 +810,8 @@ namespace CCServ.Entities
                         return;
                     }
 
+                    //Let's also make sure the client has a dod email address.
+
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
                         AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
@@ -805,7 +832,14 @@ namespace CCServ.Entities
                     session.Save(pendingPasswordReset);
 
                     //And then send the email.
-                    EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.Id, email).Wait();
+                    new Email.BeginPasswordResetEmail(new Email.Args.BeginPasswordResetEmailArgs
+                    {
+                        DateTime = token.CallTime,
+                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                        PasswordResetId = pendingPasswordReset.Id,
+                        Subject = "CommandCentral Password Reset",
+                        ToAddressList = new List<string> { email }
+                    }).Send();
 
                     token.SetResult("Success");
 
