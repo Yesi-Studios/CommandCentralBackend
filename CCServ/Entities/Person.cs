@@ -535,17 +535,21 @@ namespace CCServ.Entities
                     if (person.IsClaimed)
                     {
                         //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
-                        //To do that, we need an email for this user.
-                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
-                        if (address == null)
+                        if (!person.EmailAddresses.Any())
                             throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                         //Now send that email.
-                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
+                        new Email.BeginRegistrationErrorEmail(new Email.Args.BeginRegistrationErrorEmailArgs
+                        {
+                            DateTime = token.CallTime,
+                            PersonID = person.Id,
+                            Subject = "Account Registration Security Alert",
+                            ToAddressList = person.EmailAddresses.Select(x => x.Address).ToList()
+                        }).Send();
 
                         token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                              "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
 

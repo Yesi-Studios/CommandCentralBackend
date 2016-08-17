@@ -154,6 +154,8 @@
     <Compile Include="Email\AccountConfirmationEmail.cs" />
     <Compile Include="Email\Args\AccountConfirmationEmailArgs.cs" />
     <Compile Include="Email\Args\BaseEmailArgs.cs" />
+    <Compile Include="Email\Args\BeginRegistrationErrorEmailArgs.cs" />
+    <Compile Include="Email\BeginRegistrationErrorEmail.cs" />
     <Compile Include="Email\CCEmailMessage.cs" />
     <Compile Include="Email\Templates\TemplateManager.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
@@ -215,11 +217,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\AccountUpdated.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\BeginRegistrationError.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -256,6 +253,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Email\Templates\AccountConfirmationEmail.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\BeginRegistrationErrorEmail.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
