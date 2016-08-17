@@ -23,7 +23,7 @@ namespace CCServ.Email.Templates
         /// Loads all email templates into memory for faster retrieval.
         /// </summary>
         /// <param name="options"></param>
-        [ServiceManagement.StartMethod(Priority = 8)]
+        [ServiceManagement.StartMethod(Priority = 9)]
         private static void LoadEmailTemplates(CLI.Options.LaunchOptions options)
         {
             //First up, go and get all email templates in this same namespace.

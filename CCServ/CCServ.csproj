@@ -145,6 +145,7 @@
     <Compile Include="EmailHelper.cs" />
     <Compile Include="Email\AccountConfirmationEmail.cs" />
     <Compile Include="Email\Args\AccountConfirmationEmailArgs.cs" />
+    <Compile Include="Email\Args\BaseEmailArgs.cs" />
     <Compile Include="Email\CCEmailMessage.cs" />
     <Compile Include="Email\Templates\TemplateManager.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />

@@ -12,11 +12,6 @@ namespace CCServ.Email.Args
     public class AccountConfirmationEmailArgs
     {
         /// <summary>
-        /// The address to which to send the email.
-        /// </summary>
-        public string AddressTo { get; set; }
-
-        /// <summary>
         /// The Id of the confirmation.
         /// </summary>
         public Guid ConfirmationId { get; set; }

@@ -23,14 +23,12 @@ namespace CCServ.Email
         /// </summary>
         private IFluentEmail _emailMessage;
 
-        public object Context { get; set; }
-
         /// <summary>
         /// Creates a new mail message with the defaults.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="context"></param>
-        public CCEmailMessage(string subject, string smtpHost)
+        public CCEmailMessage(string subject)
         {
             _emailMessage = FluentEmail.Email
                 .From("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
@@ -39,7 +37,6 @@ namespace CCServ.Email
                 .ReplyTo("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
                 .BodyAsHtml()
                 .HighPriority()
-                .UsingClient(new SmtpClient() { Host = smtpHost })
                 .UsingTemplate(Template, Context)
                 .Subject(subject);
         }
@@ -47,9 +44,11 @@ namespace CCServ.Email
         /// <summary>
         /// Sends the mail message.
         /// </summary>
-        public void Send()
+        public void Send(string smtpHost)
         {
-            
+            _emailMessage
+                .UsingClient(new SmtpClient { Host = smtpHost })
+                .Send();
         }
     }
 }
