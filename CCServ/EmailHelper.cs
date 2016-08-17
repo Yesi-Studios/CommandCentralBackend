@@ -57,24 +57,6 @@ namespace CCServ
         };
 
         /// <summary>
-        /// Sends an email to the specified email address, intended for the specified user account that informs the user that a login attempt failed on their account.
-        /// <para />
-        /// Uses the FailedAccountLogin.html template.
-        /// </summary>
-        /// <param name="emailAddressTo"></param>
-        /// <param name="personId"></param>
-        /// <returns></returns>
-        public static async Task SendFailedAccountLoginEmail(string emailAddressTo, Guid personId)
-        {
-            MailMessage message = BuildStandardMessage();
-            message.To.Add(emailAddressTo);
-            message.Subject = "Failed Account Login";
-            message.Body = string.Format(await LoadEmailResource("FailedAccountLogin.html"), DateTime.Now, personId);
-            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
-            await client.SendMailAsync(message);
-        }
-
-        /// <summary>
         /// Sends a generic error.
         /// </summary>
         /// <param name="errorMessage"></param>

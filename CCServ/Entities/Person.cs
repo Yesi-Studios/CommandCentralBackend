@@ -383,9 +383,15 @@ namespace CCServ.Entities
                                 throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                             //Ok, so we have an email we can use to contact the person!
-                            EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
+                            new Email.FailedAccountLoginEmail(new Email.Args.FailedAccountLoginEmailArgs
+                            {
+                                DateTime = token.CallTime,
+                                FriendlyName = person.ToString(),
+                                Subject = "Security Alert : Failed Login",
+                                ToAddressList = new List<string> { address.Address }
+                            }).Send();
 
-                            //Put the error on token.
+                            //Put the error in the token and shake it all up.
                             token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
 
                             //Now we also need to add the event to client's account history.
