@@ -6,13 +6,30 @@ using System.Threading.Tasks;
 
 namespace CCServ.Email.Args
 {
+    /// <summary>
+    /// The base of all email args.
+    /// </summary>
     public abstract class BaseEmailArgs
     {
-        List<string> ToList { get; set; }
+        /// <summary>
+        /// The list of people to send the email to.  The Address.
+        /// </summary>
+        public List<string> ToAddressList { get; set; }
 
+        /// <summary>
+        /// The email's subject.
+        /// </summary>
+        public string Subject { get; set; }
+
+        public DateTime DateTime { get; set; }
+
+        /// <summary>
+        /// Makes a new base email args.
+        /// </summary>
         public BaseEmailArgs()
         {
-            ToList = new List<string>();
+            ToAddressList = new List<string>();
+            DateTime = DateTime.Now;
         }
     }
 }
