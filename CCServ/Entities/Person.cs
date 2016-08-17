@@ -920,6 +920,106 @@ namespace CCServ.Entities
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Creates a list of persons, and registers all of them.
+        /// <para/>
+        /// NOTE: This method is intended only for testing and is only enabled if the environment is interactable and if we're debugging.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "MassCreatePersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_MassCreatePersons(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to create persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //You have permission?
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase) &&
+             x.AccessibleSubModules.Contains("admintools", StringComparer.CurrentCultureIgnoreCase)))
+            {
+                token.AddErrorMessage("You don't have permission to create persons and/or access admin tools..", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Let's also make sure this isntance is debugging and interactive.
+            if (!Environment.UserInteractive || !System.Diagnostics.Debugger.IsAttached)
+            {
+                token.AddErrorMessage("This endpoint is only accessible if the service is in debug mode.", ErrorTypes.Authorization, System.Net.HttpStatusCode.MethodNotAllowed);
+                return;
+            }
+
+            //Ok let's do the thing.
+            if (!token.Args.ContainsKey("persons"))
+            {
+                token.AddErrorMessage("You failed to send a 'persons' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var personsFromClient = (Newtonsoft.Json.Linq.JArray)token.Args["persons"];
+
+            var personsToCreate = personsFromClient.Select(x =>
+                new Person
+                {
+                    FirstName = x.Value<string>("FirstName"),
+                    MiddleName = x.Value<string>("MiddleName"),
+                    LastName = x.Value<string>("LastName"),
+                    Division = x.Value<Division>("Division"),
+                    Department = x.Value<Department>("Department"),
+                    Command = x.Value<Command>("Command"),
+                    Paygrade = x.Value<Paygrades>("Paygrade"),
+                    UIC = x.Value<UIC>("UIC"),
+                    Designation = x.Value<Designation>("Designation"),
+                    Sex = x.Value<Sexes>("Sex"),
+                    SSN = x.Value<string>("SSN"),
+                    DateOfBirth = x.Value<DateTime>("DateOfBirth"),
+                    DateOfArrival = x.Value<DateTime>("DateOfArrival"),
+                    DutyStatus = x.Value<DutyStatuses>("DutyStatus"),
+                    Id = Guid.NewGuid(),
+                    IsClaimed = false,
+                    Username = x.Value<string>("Username"),
+                    PasswordHash = ClientAccess.PasswordHash.CreateHash(x.Value<string>("Password")),
+                    EmailAddresses = new List<EmailAddress>
+                    {
+                        new EmailAddress
+                        {
+                            Address = x.Value<EmailAddress>("EmailAddress").Address,
+                            IsContactable = x.Value<EmailAddress>("EmailAddress").IsContactable,
+                            IsPreferred = x.Value<EmailAddress>("EmailAddress").IsPreferred
+                        }
+                    },
+                    PermissionGroupNames = x.Value<List<string>>("PermissionGroupNames")
+                }
+            );
+
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+
+                    foreach (var person in personsToCreate)
+                    {
+                        session.Save(person);
+                        Log.Warning("Created a person through the create persons testing endpoint. Person: {0}".FormatS(person));
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Creates a new person in the database by taking a person object from the client, picking out only the properties we want, and saving them.  Then it returns the Id we assigned to the person.
         /// <para />
         /// Client Parameters: <para />
