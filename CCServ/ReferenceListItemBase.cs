@@ -137,7 +137,6 @@ namespace CCServ
                         {
                             result[x.Key] = x.Value;
                         });
-                //TODO REVIEW go through the enum namespace
                 result.Add("ChangeEventLevels", Enum.GetNames(typeof(ChangeEventLevels)));
                 result.Add("DutyStatuses", Enum.GetNames(typeof(DutyStatuses)));
                 result.Add("MusterStatuses", Enum.GetNames(typeof(MusterStatuses)));

@@ -170,7 +170,7 @@ namespace CCServ.ClientAccess
                 x.Value.IsActive
             }).ToList());
 
-            //TODO send an email to the devs informing them of the state change of an endpoint.
+            Log.Critical("The service endpoint, '{0}', was switched to the state, '{1}', by {2}.".FormatS(serviceEndpoint.EndpointMethodAttribute.EndpointName, serviceEndpoint.IsActive, token.AuthenticationSession.Person.ToString()));
         }
 
         #endregion
