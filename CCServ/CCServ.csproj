@@ -157,10 +157,12 @@
     <Compile Include="Email\Args\BeginPasswordResetEmailArgs.cs" />
     <Compile Include="Email\Args\BeginRegistrationErrorEmailArgs.cs" />
     <Compile Include="Email\Args\CompletedAccountRegistrationEmailArgs.cs" />
+    <Compile Include="Email\Args\FailedAccountLoginEmailArgs.cs" />
     <Compile Include="Email\BeginPasswordResetEmail.cs" />
     <Compile Include="Email\BeginRegistrationErrorEmail.cs" />
     <Compile Include="Email\CCEmailMessage.cs" />
     <Compile Include="Email\CompletedAccountRegistrationEmail.cs" />
+    <Compile Include="Email\FailedAccountLoginEmail.cs" />
     <Compile Include="Email\Templates\TemplateManager.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
@@ -221,16 +223,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\BeginRegistrationError.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\EmailTemplates\ChangeEventOccured.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\EmailTemplates\FailedAccountLogin.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -263,6 +255,9 @@
   <ItemGroup>
     <Content Include="Email\Templates\BeginPasswordResetEmail.html" />
     <Content Include="Email\Templates\CompletedAccontRegistrationEmail.html" />
+    <EmbeddedResource Include="Email\Templates\FailedAccountLoginEmail.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
