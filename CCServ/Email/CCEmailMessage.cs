@@ -47,20 +47,24 @@ namespace CCServ.Email
         /// <summary>
         /// Sends the mail message.
         /// </summary>
-        public void Send(string smtpHost = "localhost")
+        public void Send(string smtpHost = "smtp.gordon.army.mil", string alternateSMTPHost = "localhost")
         {
+
+            string attemptServer = smtpHost;
             Task.Run(() =>
             {
                 var result = Policy
                 .Handle<SmtpException>()
-                .WaitAndRetry(3, count => TimeSpan.FromSeconds(5 * count), (exception, waitDuration) =>
+                .WaitAndRetry(1, count => TimeSpan.FromSeconds(1), (exception, waitDuration) =>
                 {
-                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable! Trying again in {0} seconds...".FormatS(waitDuration.TotalSeconds));
+                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable! Trying again in {0} seconds with server '{1}'...".FormatS(waitDuration.TotalSeconds, alternateSMTPHost));
+                    attemptServer = alternateSMTPHost;
+
                 })
                 .ExecuteAndCapture(() =>
                 {
                     _emailMessage
-                        .UsingClient(new SmtpClient { Host = smtpHost })
+                        .UsingClient(new SmtpClient { Host = alternateSMTPHost })
                         .Send();
                 });
 
