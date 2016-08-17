@@ -919,7 +919,7 @@ namespace CCServ.Entities
             //If it is, we'll set the password and then send the user an email telling them that the password was reset.
             //We'll also log the event on the user's profile.
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
