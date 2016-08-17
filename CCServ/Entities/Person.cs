@@ -1310,7 +1310,12 @@ namespace CCServ.Entities
                 {
                     case "Division":
                         {
-                            //The client wants to limit everything to their Division.  Sweet.
+                            //The client wants to limit everything to their Division.  Sweet.  Do they have a division?
+                            if (token.AuthenticationSession.Person.Division == null)
+                            {
+                                token.AddErrorMessage("You can't limit by division if you don't have a division.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have division, delete it.
                             if (filters.ContainsKey("Division"))
@@ -1330,6 +1335,11 @@ namespace CCServ.Entities
                     case "Department":
                         {
                             //The client wants to limit everything to their Department.  Sweet.
+                            if (token.AuthenticationSession.Person.Department == null)
+                            {
+                                token.AddErrorMessage("You can't limit by department if you don't have a department.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
@@ -1349,6 +1359,11 @@ namespace CCServ.Entities
                     case "Command":
                         {
                             //The client wants to limit everything to their Command.  Sweet.
+                            if (token.AuthenticationSession.Person.Command == null)
+                            {
+                                token.AddErrorMessage("You can't limit by command if you don't have a command.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have command, delete it.
                             if (filters.ContainsKey("Command"))
