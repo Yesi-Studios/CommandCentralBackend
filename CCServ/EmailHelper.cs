@@ -80,25 +80,6 @@ namespace CCServ
         }
 
         /// <summary>
-        /// Sends an email to the specified email address with the information necessary to complete account registration.
-        /// <para />
-        /// Uses the ConfirmAccount.html email template.
-        /// </summary>
-        /// <param name="emailAddressTo"></param>
-        /// <param name="confirmationId"></param>
-        /// <param name="ssn"></param>
-        /// <returns></returns>
-        public static async Task SendConfirmAccountEmail(string emailAddressTo, Guid confirmationId, string ssn)
-        {
-            MailMessage message = BuildStandardMessage();
-            message.To.Add(emailAddressTo);
-            message.Subject = "Confirm Email Address";
-            message.Body = string.Format(await LoadEmailResource("ConfirmAccount.html"), DateTime.Now, _completeRegistrationPageLocation + confirmationId, ssn.Substring(ssn.Length - 4));
-            SmtpClient client = new SmtpClient(SmtpHost) { DeliveryMethod = SmtpDeliveryMethod.Network };
-            await client.SendMailAsync(message);
-        }
-        
-        /// <summary>
         /// Sends an email to a client informing the client that an error occurred during registration.
         /// </summary>
         /// <param name="emailAddressTo"></param>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -76,6 +77,11 @@ namespace AtwoodUtils
         {
             var hashset = new HashSet<T>();
             return list.Any(x => !hashset.Add(x));
+        }
+
+        public static bool ContainsInsensitive(this string str, string other, CultureInfo culture)
+        {
+            return culture.CompareInfo.IndexOf(str, other, CompareOptions.IgnoreCase) >= 0;
         }
 
         public static string Serialize(this object obj)

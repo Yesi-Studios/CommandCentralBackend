@@ -23,28 +23,29 @@ namespace CCServ.Email
         /// </summary>
         private IFluentEmail _emailMessage;
 
+        private Args.BaseEmailArgs args { get; set; }
+
         /// <summary>
         /// Creates a new mail message with the defaults.
         /// </summary>
         /// <param name="subject"></param>
-        /// <param name="context"></param>
-        public CCEmailMessage(string subject)
+        public CCEmailMessage(Args.BaseEmailArgs args)
         {
             _emailMessage = FluentEmail.Email
                 .From("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
-                .To("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
                 .CC("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
                 .ReplyTo("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
                 .BodyAsHtml()
                 .HighPriority()
-                .UsingTemplate(Template, Context)
-                .Subject(subject);
+                .UsingTemplate(Template, args)
+                .Subject(args.Subject)
+                .To(args.ToAddressList.Select(x => new MailAddress(x)).ToList());
         }
 
         /// <summary>
         /// Sends the mail message.
         /// </summary>
-        public void Send(string smtpHost)
+        public void Send(string smtpHost = "localhost")
         {
             _emailMessage
                 .UsingClient(new SmtpClient { Host = smtpHost })

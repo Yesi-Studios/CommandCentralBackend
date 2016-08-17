@@ -29,15 +29,10 @@ namespace CCServ.Email
         /// <param name="subject"></param>
         /// <param name="context"></param>
         /// <param name="smtpHost"></param>
-        public AccountConfirmationEmail(string subject, Args.AccountConfirmationEmailArgs args)
-            : base(subject)
+        public AccountConfirmationEmail(Args.AccountConfirmationEmailArgs args)
+            : base(args)
         {
         }
-
-        [ServiceManagement.StartMethod(Priority = 8)]
-        private static void TestSend(CLI.Options.LaunchOptions options)
-        {
-            new AccountConfirmationEmail("test", new Args.AccountConfirmationEmailArgs { AddressTo = "sundevilgoalie13@gmail.com", ConfirmationId = Guid.NewGuid(), SSN = "sf3weegr" }).Send("localhost");
-        }
+        
     }
 }

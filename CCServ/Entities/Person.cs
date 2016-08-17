@@ -492,7 +492,22 @@ namespace CCServ.Entities
                 try
                 {
 
-                    //First we need the client's ssn.  This is the account they want to claim.
+                    //First off, we need the link that the client wants us to use to finish registration.
+                    if (!token.Args.ContainsKey("continuelink"))
+                    {
+                        token.AddErrorMessage("You failed to send a 'continuelink' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+                    string continueLink = token.Args["continueLink"] as string;
+
+                    //Let's just do some basic validation and make sure it's a real URI.
+                    if (!Uri.IsWellFormedUriString(continueLink, UriKind.RelativeOrAbsolute))
+                    {
+                        token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //We also need the client's ssn.  This is the account they want to claim.
                     if (!token.Args.ContainsKey("ssn"))
                     {
                         token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -572,7 +587,14 @@ namespace CCServ.Entities
                     session.Update(person);
 
                     //Wait!  we're not even done yet.  Let's send the client the registration email now.
-                    EmailHelper.SendConfirmAccountEmail(dodEmailAddress.Address, pendingAccountConfirmation.Id, ssn).Wait();
+                    new Email.AccountConfirmationEmail(new Email.Args.AccountConfirmationEmailArgs
+                    {
+                        ConfirmEmailAddressLink = continueLink,
+                        ConfirmationId = pendingAccountConfirmation.Id,
+                        DateTime = token.CallTime,
+                        Subject = "Command Central Account Confirmation",
+                        ToAddressList = new List<string> { dodEmailAddress.Address }
+                    }).Send();
 
                     //Ok, Jesus Christ.  I think we're finally done.
                     token.SetResult("Success");
