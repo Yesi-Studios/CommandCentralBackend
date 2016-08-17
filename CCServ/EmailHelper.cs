@@ -75,24 +75,6 @@ namespace CCServ
         }
 
         /// <summary>
-        /// Sends an email to a client informing the client that an error occurred during registration.
-        /// </summary>
-        /// <param name="emailAddressTo"></param>
-        /// <param name="personId"></param>
-        /// <returns></returns>
-        public static async Task SendBeginRegistrationErrorEmail(string emailAddressTo, Guid personId)
-        {
-            MailMessage message = new MailMessage();
-            _developerEmailAddresses.ForEach(x => message.To.Add(x));
-            message.To.Add(emailAddressTo);
-            message.Subject = "IMPORTANT! Registration - Important Security Error";
-            message.From = _emailSenderAddress;
-            message.Body = string.Format(await LoadEmailResource("BeginRegistrationError.html"), DateTime.Now, personId);
-            SmtpClient client = new SmtpClient(SmtpHost);
-            await client.SendMailAsync(message);
-        }
-
-        /// <summary>
         /// Sends a generic error.
         /// </summary>
         /// <param name="errorMessage"></param>
