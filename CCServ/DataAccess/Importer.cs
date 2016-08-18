@@ -605,7 +605,7 @@ namespace CCServ.DataAccess
                                 //Primary is 0, secondary is 1
                                 var necRows = oldDatabase.Tables["pers_necs"].AsEnumerable().Where(x => Convert.ToInt32(x["WORK_id"]) == Convert.ToInt32(workRow["WORK_id"])).ToList();
 
-                                person.NECAssignments = necRows.Select(nec =>
+                                /*person.NECAssignments = necRows.Select(nec =>
                                     {
                                         var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
 
@@ -673,7 +673,7 @@ namespace CCServ.DataAccess
 
                                         return phone;
 
-                                    }).ToList();
+                                    }).ToList();*/
 
                                 //TODO
                                 //Home is 0
