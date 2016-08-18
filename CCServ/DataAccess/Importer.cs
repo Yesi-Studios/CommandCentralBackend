@@ -110,7 +110,7 @@ namespace CCServ.DataAccess
                                         Department = department,
                                         Description = "",
                                         Id = Guid.Parse(x["NewId"] as string),
-                                        Value = x["Div_div"] as string
+                                        Value = x["DIV_div"] as string
                                     }).ToList();
                         }
 
@@ -387,7 +387,7 @@ namespace CCServ.DataAccess
 
 
                         //Start the person load.  First we need only those persons that are active at the command.
-
+                        Log.Info("Loading all members of the command...");
                         string idsResourcePath = "CCServ.DataAccess.ids.json";
                         List<int> ids = new List<int>();
                         using (var stream = System.Reflection.Assembly.GetEntryAssembly().GetManifestResourceStream(idsResourcePath))
@@ -471,9 +471,6 @@ namespace CCServ.DataAccess
                                         person.DateOfDeparture = temp;
                                 }
 
-                                var departmentNewId = oldDatabase.Tables["dept"].AsEnumerable().First(x => Convert.ToInt32(x["DEPT_id"]) == Convert.ToInt32(workRow["DEPT_id"]))["NewId"] as string;
-                                person.Department = commands.First().Departments.First(x => x.Id.ToString() == departmentNewId);
-
                                 if (Convert.ToInt32(workRow["RATE_id"]) != 0)
                                 {
                                     var designationNewId = oldDatabase.Tables["rate"].AsEnumerable().First(x => Convert.ToInt32(x["RATE_id"]) == Convert.ToInt32(workRow["RATE_id"]))["NewId"] as string;
@@ -481,7 +478,11 @@ namespace CCServ.DataAccess
                                 }
 
                                 var divisionNewId = oldDatabase.Tables["div"].AsEnumerable().First(x => Convert.ToInt32(x["DIV_id"]) == Convert.ToInt32(workRow["DIV_id"]))["NewId"] as string;
-                                person.Division = person.Department.Divisions.First(x => x.Id.ToString() == divisionNewId);
+                                person.Department = person.Command.Departments.FirstOrDefault(x => x.Divisions.Any(y => y.Id.ToString() == divisionNewId));
+                                if (person.Department != null)
+                                {
+                                    person.Division = person.Department.Divisions.First(x => x.Id.ToString() == divisionNewId);
+                                }
 
                                 var typeId = Convert.ToInt32(workRow["TYPE_id"]);
 
@@ -493,14 +494,55 @@ namespace CCServ.DataAccess
                                 {
                                     case 1:
                                         {
+
+                                            if (person.UIC.Value == "01234")
+                                            {
+                                                person.DutyStatus = DutyStatuses.SecondParty;
+                                                break;
+                                            }
+
+                                            if (person.UIC.Value == "22222")
+                                            {
+                                                person.DutyStatus = DutyStatuses.TADToCommand;
+                                                break;
+                                            }
+
                                             //mil
                                             //Now we need to find out if the person is active or reserves.
+                                            if (person.UIC.Value == "00000")
+                                            {
+                                                person.DutyStatus = DutyStatuses.Reserves;
+                                            }
+                                            else
+                                            {
+                                                person.DutyStatus = DutyStatuses.Active;
+                                            }
                                             break;
                                         }
                                     case 2:
                                         {
+                                            if (person.UIC.Value == "01234")
+                                            {
+                                                person.DutyStatus = DutyStatuses.SecondParty;
+                                                break;
+                                            }
+
+                                            if (person.UIC.Value == "22222")
+                                            {
+                                                person.DutyStatus = DutyStatuses.TADToCommand;
+                                                break;
+                                            }
+
                                             //civ
                                             //Now we need to find out what kind of civilian.
+                                            if (person.UIC.Value == "11111")
+                                            {
+                                                person.DutyStatus = DutyStatuses.Contractor;
+                                            }
+                                            else
+                                            {
+                                                person.DutyStatus = DutyStatuses.Civilian;
+                                            }
                                             break;
                                         }
                                     default:
@@ -536,8 +578,13 @@ namespace CCServ.DataAccess
                                     }).ToList();
 
                                 person.EmergencyContactInstructions = "";
-                                var ethnicityNewId = ((Newtonsoft.Json.Linq.JArray)parsedEthnicities).First(x => Convert.ToInt32(x.Value<string>("Id")) == Convert.ToInt32(persRow["PERS_ethnicity"])).Value<string>("NewId");
-                                person.Ethnicity = ethnicities.First(x => x.Id.ToString().SafeEquals(ethnicityNewId));
+
+                                if (!String.IsNullOrEmpty(persRow["PERS_ethnicity"] as string))
+                                {
+                                    var ethnicityNewId = ((Newtonsoft.Json.Linq.JArray)parsedEthnicities).First(x => Convert.ToInt32(x.Value<string>("Id")) == Convert.ToInt32(persRow["PERS_ethnicity"])).Value<string>("NewId");
+                                    person.Ethnicity = ethnicities.First(x => x.Id.ToString().SafeEquals(ethnicityNewId));
+                                }
+                                
 
                                 person.FirstName = persRow["PERS_fname"] as string;
                                 person.Id = Guid.Parse(persRow["NewId"] as string);
@@ -549,12 +596,47 @@ namespace CCServ.DataAccess
 
                                 person.MiddleName = persRow["PERS_mi"] as string;
 
+                                //Primary is 0, secondary is 1
+                                var necRows = oldDatabase.Tables["pers_necs"].AsEnumerable().Where(x => Convert.ToInt32(x["WORK_id"]) == Convert.ToInt32(workRow["WORK_id"])).ToList();
+
+                                person.NECAssignments = necRows.Select(nec =>
+                                    {
+                                        var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
+
+                                        var necToPerson = new Entities.NECAssignment
+                                        {
+                                            Id = Guid.Parse(nec["NewId"] as string),
+                                            IsPrimary = (nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0",
+                                            NEC = necs.First(x => x.Id.ToString() == necNewId),
+                                            Person = person
+                                        };
+
+                                        return necToPerson;
+                                    }).ToList();
+
+                                var rank = oldDatabase.Tables["rank"].AsEnumerable().First(x => Convert.ToInt32(x["RANK_id"]) == Convert.ToInt32(workRow["RANK_id"]))["RANK_rank"] as string;
+
+                                if (rank == "CWO")
+                                {
+                                    person.Paygrade = Paygrades.CWO2;
+                                }
+                                else
+                                {
+                                    person.Paygrade = (Paygrades)Enum.Parse(typeof(Paygrades), rank);
+                                }
+
+
 
 
                                 
 
                                 return person;
                             }).ToList();
+
+                        //Persist the persons.
+                        Log.Info("Persisting all members of the command...");
+                        persons.ForEach(x => session.Save(x));
+                        session.Flush();
 
                         int i = 0;
                     }
