@@ -28,6 +28,10 @@
         /// <summary>
         /// Second party.
         /// </summary>
-        SecondParty
+        SecondParty,
+        /// <summary>
+        /// The person is temp assigned to this command.
+        /// </summary>
+        TADToCommand,
     }
 }
