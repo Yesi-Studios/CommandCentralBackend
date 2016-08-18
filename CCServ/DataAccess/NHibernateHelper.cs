@@ -154,7 +154,7 @@ namespace CCServ.DataAccess
         /// </summary>
         public static void CreateSchema(bool dropFirst)
         {
-            //TODO have the schema shit pritn to the logger.
+            //TODO have the schema shit print to the logger.
             
             if (dropFirst)
                 _schema.Drop(Console.Out, true);

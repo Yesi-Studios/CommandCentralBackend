@@ -9,8 +9,6 @@ namespace CCServ.Logging
 {
     public interface ILogger
     {
-        int MaxEntryLength { get; }
-
         List<MessageTypes> EnabledMessageTypes { get; set; }
                                                           
         LoggingTargetTypes TargetType { get; }

@@ -23,9 +23,12 @@ namespace CCServ.Email
         /// <summary>
         /// The FluentEmail mail object.
         /// </summary>
-        private IFluentEmail _emailMessage;
+        public IFluentEmail UnderlyingMailMessage { get; set; }
 
-        private Args.BaseEmailArgs args { get; set; }
+        /// <summary>
+        /// The email args of the mail object.
+        /// </summary>
+        public Args.BaseEmailArgs EmailArgs { get; set; }
 
         /// <summary>
         /// Creates a new mail message with the defaults.
@@ -33,10 +36,10 @@ namespace CCServ.Email
         /// <param name="subject"></param>
         public CCEmailMessage(Args.BaseEmailArgs args)
         {
-            _emailMessage = FluentEmail.Email
-                .From("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
-                .CC("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
-                .ReplyTo("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications")
+            UnderlyingMailMessage = FluentEmail.Email
+                .From(Config.Email.DeveloperDistroAddress.Address, Config.Email.DeveloperDistroAddress.DisplayName)
+                .CC(Config.Email.DeveloperDistroAddress.Address, Config.Email.DeveloperDistroAddress.DisplayName)
+                .ReplyTo(Config.Email.DeveloperDistroAddress.Address, Config.Email.DeveloperDistroAddress.DisplayName)
                 .BodyAsHtml()
                 .HighPriority()
                 .UsingTemplate(Template, args)
@@ -47,20 +50,24 @@ namespace CCServ.Email
         /// <summary>
         /// Sends the mail message.
         /// </summary>
-        public void Send(string smtpHost = "localhost")
+        public void Send(string smtpHost = "smtp.gordon.army.mil", string alternateSMTPHost = "localhost")
         {
+
+            string attemptServer = smtpHost;
             Task.Run(() =>
             {
                 var result = Policy
                 .Handle<SmtpException>()
-                .WaitAndRetry(3, count => TimeSpan.FromSeconds(5 * count), (exception, waitDuration) =>
+                .WaitAndRetry(1, count => TimeSpan.FromSeconds(1), (exception, waitDuration) =>
                 {
-                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable! Trying again in {0} seconds...".FormatS(waitDuration.TotalSeconds));
+                    Logging.Log.Critical("A critical error occurred while trying to send an email.  The SMTP server was not contactable! Trying again in {0} second(s) with server '{1}'...".FormatS(waitDuration.TotalSeconds, alternateSMTPHost));
+                    attemptServer = alternateSMTPHost;
+
                 })
                 .ExecuteAndCapture(() =>
                 {
-                    _emailMessage
-                        .UsingClient(new SmtpClient { Host = smtpHost })
+                    UnderlyingMailMessage
+                        .UsingClient(new SmtpClient { Host = attemptServer })
                         .Send();
                 });
 
