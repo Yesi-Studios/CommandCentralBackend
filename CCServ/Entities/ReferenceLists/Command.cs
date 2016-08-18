@@ -396,7 +396,7 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public CommandMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(20);
                 Map(x => x.Description).Nullable().Length(50);

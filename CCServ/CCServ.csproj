@@ -171,6 +171,7 @@
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
+    <Compile Include="Entities\NECAssignment.cs" />
     <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
@@ -191,6 +192,7 @@
     <Compile Include="Enums\ChangeEventLevelsEnum.cs" />
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Enums\MusterStatusesEnum.cs" />
+    <Compile Include="Enums\PersonTypeEnum.cs" />
     <Compile Include="Enums\PaygradesEnum.cs" />
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
@@ -221,6 +223,9 @@
       <SubType>Designer</SubType>
     </None>
     <EmbeddedResource Include="app.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DataAccess\ids.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <None Include="packages.config" />

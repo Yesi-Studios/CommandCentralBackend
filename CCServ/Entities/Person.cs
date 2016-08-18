@@ -111,9 +111,9 @@ namespace CCServ.Entities
         #region Work Properties
 
         /// <summary>
-        /// The NECs of the person.
+        /// The NECs of the person, through an nec assignment.
         /// </summary>
-        public virtual IList<NEC> NECs { get; set; }
+        public virtual IList<NECAssignment> NECAssignments { get; set; }
 
         /// <summary>
         /// The person's supervisor
@@ -1683,14 +1683,7 @@ namespace CCServ.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "NECs":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.NECs.Any(nec => nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
+                            //TODO: search NECs
                             case "EmailAddresses":
                                 {
                                     EmailAddress addressAlias = null;
@@ -2125,7 +2118,7 @@ namespace CCServ.Entities
                 Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
 
-                HasManyToMany(x => x.NECs).Not.LazyLoad();
+                HasMany(x => x.NECAssignments).Not.LazyLoad();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
@@ -2245,17 +2238,17 @@ namespace CCServ.Entities
                         return command.Equals(x);
                     })
                     .WithMessage("The command was invalid.");
-                RuleForEach(x => x.NECs).Must(x =>
+                RuleForEach(x => x.NECAssignments).Must(x =>
                     {
                         if (x == null)
                             return true;
 
-                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
+                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.NEC.Id);
 
                         if (nec == null)
                             return false;
 
-                        return nec.Equals(x);
+                        return nec.Equals(x.NEC);
                     });
                 RuleFor(x => x.Supervisor).Length(0, 40)
                     .WithMessage("The supervisor field may not be longer than 40 characters.");

@@ -36,6 +36,9 @@ namespace CCServ.CLI.Options
         [Option('l', "log", HelpText = "The relative or absolute path to the directory to which the logs should be written. NOT IMPLEMENTED", DefaultValue = "CONSOLE")]
         public string LogFileDirectoryPath { get; set; }
 
+        [Option("dropfirst", HelpText = "Instructs the service to attempt to drop the targeted schema before running.", DefaultValue = false)]
+        public bool DropFirst { get; set; }
+
         /// <summary>
         /// Indicates if the log file directory path = CONSOLE - telling us to print to the console and not to a file.
         /// </summary>
