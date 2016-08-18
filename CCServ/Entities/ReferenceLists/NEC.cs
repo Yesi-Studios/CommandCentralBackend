@@ -8,6 +8,12 @@ namespace CCServ.Entities.ReferenceLists
     /// </summary>
     public class NEC : ReferenceListItemBase
     {
+
+        /// <summary>
+        /// The type of the NEC.
+        /// </summary>
+        public virtual PersonTypes NECType { get; set; }
+
         /// <summary>
         /// Validates an NEC.  Weeee.
         /// </summary>
@@ -16,7 +22,6 @@ namespace CCServ.Entities.ReferenceLists
         {
             return new NECValidator().Validate(this);
         }
-
 
         /// <summary>
         /// Maps an NEC to the database.
@@ -28,10 +33,11 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public NECMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Value).Not.Nullable().Unique().Length(10);
                 Map(x => x.Description).Nullable().Length(40);
+                Map(x => x.NECType).Nullable();
 
                 Cache.ReadWrite();
             }

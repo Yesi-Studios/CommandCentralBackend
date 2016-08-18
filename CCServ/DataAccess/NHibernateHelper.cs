@@ -188,6 +188,18 @@ namespace CCServ.DataAccess
 
                     Log.Info("Database connection established.");
 
+                    //Does the client want us to drop the schema?
+                    if (launchOptions.DropFirst)
+                    {
+                        Log.Info("Dropping database if it exists...");
+                        using (var command = new MySql.Data.MySqlClient.MySqlCommand("DROP DATABASE IF EXISTS {0}".FormatS(launchOptions.Database), connection))
+                        {
+                            command.ExecuteNonQuery();
+
+                        }
+                        Log.Info("Dropped database (if it exists).");
+                    }
+
                     //Ok, the connection to the database is good.  Now let's see if the schema is valid.
                     Log.Info("Confirming schema...");
 
