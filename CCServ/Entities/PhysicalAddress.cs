@@ -88,7 +88,7 @@ namespace CCServ.Entities
             /// </summary>
             public PhysicalAddressMapping()
             {
-                Id(x => x.Id);
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.StreetNumber).Not.Nullable().Length(45);
                 Map(x => x.Route).Not.Nullable().Length(45);

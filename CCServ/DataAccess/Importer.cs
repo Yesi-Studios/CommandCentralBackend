@@ -423,13 +423,14 @@ namespace CCServ.DataAccess
                                 person.AccountHistory = new List<Entities.AccountHistoryEvent>();
                                 person.Changes = new List<Entities.Change>();
                                 person.Command = commands.First();
-                                person.ContactRemarks = persRow["PERS_rmks"] as string;
+                                person.ContactRemarks = "";
                                 person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                                 var doa = adminRow["ADM_cmddoa"] as string;
                                 if (string.IsNullOrEmpty(doa))
                                 {
-                                    person.DateOfArrival = null;
+                                    person.DateOfArrival = DateTime.Now;
+                                    //TODO LOG ME
                                 }
                                 else
                                 {
@@ -439,6 +440,11 @@ namespace CCServ.DataAccess
                                         DateTimeStyles.None,
                                         out temp))
                                         person.DateOfArrival = temp;
+                                    else
+                                    {
+                                        person.DateOfArrival = DateTime.Now;
+                                        //TODO LOG ME
+                                    }
                                 }
 
                                 var dob = persRow["PERS_dob"] as string;
@@ -614,29 +620,138 @@ namespace CCServ.DataAccess
                                         return necToPerson;
                                     }).ToList();
 
-                                var rank = oldDatabase.Tables["rank"].AsEnumerable().First(x => Convert.ToInt32(x["RANK_id"]) == Convert.ToInt32(workRow["RANK_id"]))["RANK_rank"] as string;
-
-                                if (rank == "CWO")
+                                if (Convert.ToInt32(workRow["RANK_id"]) != 0)
                                 {
-                                    person.Paygrade = Paygrades.CWO2;
+                                    var rank = oldDatabase.Tables["rank"].AsEnumerable().First(x => Convert.ToInt32(x["RANK_id"]) == Convert.ToInt32(workRow["RANK_id"]))["RANK_rank"] as string;
+
+                                    if (rank == "CWO")
+                                    {
+                                        person.Paygrade = Paygrades.CWO2;
+                                    }
+                                    else
+                                    {
+                                        person.Paygrade = (Paygrades)Enum.Parse(typeof(Paygrades), rank);
+                                    }
+                                }
+
+                                //home is 0, work is 1, cell is 2
+                                var phoneRows = oldDatabase.Tables["phone"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
+
+                                person.PhoneNumbers = phoneRows.Select(x =>
+                                    {
+                                        var phone = new Entities.PhoneNumber
+                                        {
+                                            Id = Guid.Parse(x["NewId"] as string),
+                                            IsContactable = false,
+                                            IsPreferred = false,
+                                            Number = x["PH_number"] as string
+                                        };
+
+                                        switch (Convert.ToInt32(x["PH_type"]))
+                                        {
+                                            case 0:
+                                                {
+                                                    phone.PhoneType = PhoneNumberTypes.Home;
+                                                    break;
+                                                }
+                                            case 1:
+                                                {
+                                                    phone.PhoneType = PhoneNumberTypes.Work;
+                                                    break;
+                                                }
+                                            case 2:
+                                                {
+                                                    phone.PhoneType = PhoneNumberTypes.Mobile;
+                                                    break;
+                                                }
+                                            default:
+                                                {
+                                                    throw new NotImplementedException("fucking shit");
+                                                }
+
+                                        }
+
+                                        return phone;
+
+                                    }).ToList();
+
+                                //TODO
+                                //Home is 0
+                                /*var addressRows = oldDatabase.Tables["address"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
+
+                                addressRows.Select(x =>
+                                    {
+                                        var address = new Entities.PhysicalAddress
+                                        {
+                                            City = x["ADD_city"] as string,
+                                            Country = "United States of America",
+                                            Id = Guid.Parse(x["NewId"] as string),
+                                            IsHomeAddress = Convert.ToInt32(x["ADD_type"]) == 0,
+                                            Route = ,
+                                            
+                                        };
+
+                                        return address;
+                                    });*/
+
+                                if (!String.IsNullOrEmpty(persRow["PERS_relpref"] as string))
+                                {
+                                    var relPreferenceNewId = ((Newtonsoft.Json.Linq.JArray)parsedRelPreferences).First(x => Convert.ToInt32(x.Value<string>("Id")) == Convert.ToInt32(persRow["PERS_relpref"])).Value<string>("NewId");
+                                    person.ReligiousPreference = religiousPreferences.First(x => x.Id.ToString().SafeEquals(relPreferenceNewId));
+                                }
+
+                                person.Remarks = persRow["PERS_rmks"] as string;
+
+                                if (String.IsNullOrEmpty(persRow["PERS_sex"] as string))
+                                {
+                                    person.Sex = Sexes.Female;
                                 }
                                 else
                                 {
-                                    person.Paygrade = (Paygrades)Enum.Parse(typeof(Paygrades), rank);
+                                    person.Sex = (Sexes)Enum.Parse(typeof(Sexes), persRow["PERS_sex"] as string);
                                 }
-
-
-
-
                                 
+
+                                person.Shift = workRow["WORK_shift"] as string;
+
+                                person.SSN = persRow["PERS_ssn"] as string;
+
+                                person.Suffix = persRow["PERS_suffix"] as string;
+
+                                person.Supervisor = workRow["WORK_supe"] as string;
+
+                                person.WorkCenter = workRow["WORK_wkcenter"] as string;
+
+                                person.WorkRemarks = workRow["WORK_rmks"] as string;
+
+                                person.WorkRoom = workRow["WORK_room"] as string;
 
                                 return person;
                             }).ToList();
 
+                        //Finally, we're going to make some decisions here.
+
+                        //First, throw out all persons without a DOB.  A search in the database shows that people without a DOB are bad records.
+                        persons = persons.Where(x => x.DateOfBirth != null).ToList();
+
+                        int fails = 0;
+
                         //Persist the persons.
                         Log.Info("Persisting all members of the command...");
-                        persons.ForEach(x => session.Save(x));
-                        session.Flush();
+                        persons.ForEach(x =>
+                            {
+                                try
+                                {
+                                    session.SaveOrUpdate(x);
+                                    session.Flush();
+                                }
+                                catch
+                                {
+                                    fails++;
+                                    Log.Info("{0} have failed so far.".FormatS(fails));
+                                }
+                                
+                            });
 
                         int i = 0;
                     }

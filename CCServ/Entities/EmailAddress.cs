@@ -74,7 +74,7 @@ namespace CCServ.Entities
             /// </summary>
             public EmailAddressMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Address).Not.Nullable().Unique();
                 Map(x => x.IsContactable).Not.Nullable();
