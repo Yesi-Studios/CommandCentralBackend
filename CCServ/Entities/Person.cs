@@ -282,7 +282,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Command == null || person.Command == null)
                 return false;
 
             return this.Command.Id == person.Command.Id;
@@ -295,10 +295,10 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Department == null || person.Department == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id;
+            return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
         }
 
         /// <summary>
@@ -308,10 +308,10 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
-            if (person == null)
+            if (person == null || this.Division == null || person.Division == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id && this.Department.Id == person.Department.Id && this.Division.Id == person.Division.Id;
+            return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
         }
 
         #endregion
@@ -383,9 +383,15 @@ namespace CCServ.Entities
                                 throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                             //Ok, so we have an email we can use to contact the person!
-                            EmailHelper.SendFailedAccountLoginEmail(address.Address, person.Id).Wait();
+                            new Email.FailedAccountLoginEmail(new Email.Args.FailedAccountLoginEmailArgs
+                            {
+                                DateTime = token.CallTime,
+                                FriendlyName = person.ToString(),
+                                Subject = "Security Alert : Failed Login",
+                                ToAddressList = new List<string> { address.Address }
+                            }).Send();
 
-                            //Put the error on token.
+                            //Put the error in the token and shake it all up.
                             token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
 
                             //Now we also need to add the event to client's account history.
@@ -535,17 +541,21 @@ namespace CCServ.Entities
                     if (person.IsClaimed)
                     {
                         //If the profile is already claimed that's a big issue.  That means someone is trying to reclaim it.  It's send some emails.
-                        //To do that, we need an email for this user.
-                        EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
 
-                        if (address == null)
+                        if (!person.EmailAddresses.Any())
                             throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
                         //Now send that email.
-                        EmailHelper.SendBeginRegistrationErrorEmail(address.Address, person.Id).Wait();
+                        new Email.BeginRegistrationErrorEmail(new Email.Args.BeginRegistrationErrorEmailArgs
+                        {
+                            DateTime = token.CallTime,
+                            PersonID = person.Id,
+                            Subject = "Account Registration Security Alert",
+                            ToAddressList = person.EmailAddresses.Select(x => x.Address).ToList()
+                        }).Send();
 
                         token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                              "If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
 
@@ -700,7 +710,14 @@ namespace CCServ.Entities
                     //Cool, so now just update the person object.
                     session.Update(pendingAccountConfirmation.Person);
 
-                    //TODO send completion email.
+                    //Send the email to the client telling them we're done.
+                    new Email.CompletedAccountRegistrationEmail(new Email.Args.CompletedAccountRegistrationEmailArgs
+                    {
+                        DateTime = token.CallTime,
+                        FriendlyName = pendingAccountConfirmation.Person.ToString(),
+                        Subject = "Account Registration Completed!",
+                        ToAddressList = pendingAccountConfirmation.Person.EmailAddresses.Select(x => x.Address).ToList()
+                    }).Send();
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
                     session.Delete(pendingAccountConfirmation);
@@ -749,6 +766,40 @@ namespace CCServ.Entities
             string email = token.Args["email"] as string;
             string ssn = token.Args["ssn"] as string;
 
+            //Let's validate the email.  
+            System.Net.Mail.MailAddress mailAddress = null;
+            try
+            {
+                mailAddress = new System.Net.Mail.MailAddress(email);
+            }
+            catch
+            {
+                token.AddErrorMessage("The mail parameter you sent was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            if (mailAddress.Host != Config.Email.DODEmailHost)
+            {
+                token.AddErrorMessage("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Let's get the continue link
+            if (!token.Args.ContainsKey("continuelink"))
+            {
+                token.AddErrorMessage("You failed to send a 'continuelink' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var continueLink = token.Args["continuelink"] as string;
+
+            //Let's just do some basic validation and make sure it's a real URI.
+            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
+            {
+                token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
@@ -781,6 +832,8 @@ namespace CCServ.Entities
                         return;
                     }
 
+                    //Let's also make sure the client has a dod email address.
+
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
                         AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
@@ -801,7 +854,15 @@ namespace CCServ.Entities
                     session.Save(pendingPasswordReset);
 
                     //And then send the email.
-                    EmailHelper.SendBeginPasswordResetEmail(pendingPasswordReset.Id, email).Wait();
+                    new Email.BeginPasswordResetEmail(new Email.Args.BeginPasswordResetEmailArgs
+                    {
+                        DateTime = token.CallTime,
+                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                        PasswordResetId = pendingPasswordReset.Id,
+                        Subject = "CommandCentral Password Reset",
+                        PasswordResetLink = continueLink,
+                        ToAddressList = new List<string> { email }
+                    }).Send();
 
                     token.SetResult("Success");
 
@@ -858,7 +919,7 @@ namespace CCServ.Entities
             //If it is, we'll set the password and then send the user an email telling them that the password was reset.
             //We'll also log the event on the user's profile.
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -909,13 +970,111 @@ namespace CCServ.Entities
                     throw;
                 }
             }
-
-            
         }
 
         #endregion
 
         #region Create
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Creates a list of persons, and registers all of them.
+        /// <para/>
+        /// NOTE: This method is intended only for testing and is only enabled if the environment is interactable and if we're debugging.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "MassCreatePersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_MassCreatePersons(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to create persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //You have permission?
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase) &&
+             x.AccessibleSubModules.Contains("admintools", StringComparer.CurrentCultureIgnoreCase)))
+            {
+                token.AddErrorMessage("You don't have permission to create persons and/or access admin tools..", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Let's also make sure this isntance is debugging and interactive.
+            if (!Environment.UserInteractive || !System.Diagnostics.Debugger.IsAttached)
+            {
+                token.AddErrorMessage("This endpoint is only accessible if the service is in debug mode.", ErrorTypes.Authorization, System.Net.HttpStatusCode.MethodNotAllowed);
+                return;
+            }
+
+            //Ok let's do the thing.
+            if (!token.Args.ContainsKey("persons"))
+            {
+                token.AddErrorMessage("You failed to send a 'persons' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var personsFromClient = (Newtonsoft.Json.Linq.JArray)token.Args["persons"];
+
+            var personsToCreate = personsFromClient.Select(x =>
+                new Person
+                {
+                    FirstName = x.Value<string>("FirstName"),
+                    MiddleName = x.Value<string>("MiddleName"),
+                    LastName = x.Value<string>("LastName"),
+                    Division = x.Value<Division>("Division"),
+                    Department = x.Value<Department>("Department"),
+                    Command = x.Value<Command>("Command"),
+                    Paygrade = x.Value<Paygrades>("Paygrade"),
+                    UIC = x.Value<UIC>("UIC"),
+                    Designation = x.Value<Designation>("Designation"),
+                    Sex = x.Value<Sexes>("Sex"),
+                    SSN = x.Value<string>("SSN"),
+                    DateOfBirth = x.Value<DateTime>("DateOfBirth"),
+                    DateOfArrival = x.Value<DateTime>("DateOfArrival"),
+                    DutyStatus = x.Value<DutyStatuses>("DutyStatus"),
+                    Id = Guid.NewGuid(),
+                    IsClaimed = false,
+                    Username = x.Value<string>("Username"),
+                    PasswordHash = ClientAccess.PasswordHash.CreateHash(x.Value<string>("Password")),
+                    EmailAddresses = new List<EmailAddress>
+                    {
+                        new EmailAddress
+                        {
+                            Address = x.Value<EmailAddress>("EmailAddress").Address,
+                            IsContactable = x.Value<EmailAddress>("EmailAddress").IsContactable,
+                            IsPreferred = x.Value<EmailAddress>("EmailAddress").IsPreferred
+                        }
+                    },
+                    PermissionGroupNames = x.Value<List<string>>("PermissionGroupNames")
+                }
+            );
+
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+
+                    foreach (var person in personsToCreate)
+                    {
+                        session.Save(person);
+                        Log.Warning("Created a person through the create persons testing endpoint. Person: {0}".FormatS(person));
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+        }
 
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
@@ -1310,7 +1469,12 @@ namespace CCServ.Entities
                 {
                     case "Division":
                         {
-                            //The client wants to limit everything to their Division.  Sweet.
+                            //The client wants to limit everything to their Division.  Sweet.  Do they have a division?
+                            if (token.AuthenticationSession.Person.Division == null)
+                            {
+                                token.AddErrorMessage("You can't limit by division if you don't have a division.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have division, delete it.
                             if (filters.ContainsKey("Division"))
@@ -1330,6 +1494,11 @@ namespace CCServ.Entities
                     case "Department":
                         {
                             //The client wants to limit everything to their Department.  Sweet.
+                            if (token.AuthenticationSession.Person.Department == null)
+                            {
+                                token.AddErrorMessage("You can't limit by department if you don't have a department.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
@@ -1349,6 +1518,11 @@ namespace CCServ.Entities
                     case "Command":
                         {
                             //The client wants to limit everything to their Command.  Sweet.
+                            if (token.AuthenticationSession.Person.Command == null)
+                            {
+                                token.AddErrorMessage("You can't limit by command if you don't have a command.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //First, if the filters have command, delete it.
                             if (filters.ContainsKey("Command"))

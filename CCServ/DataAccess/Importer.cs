@@ -48,8 +48,7 @@ namespace CCServ.DataAccess
                                         {
                                             Departments = new List<Entities.ReferenceLists.Department>(),
                                             Description = reader["CMD_name"] as string,
-                                            Value = reader["CMD_pla"] as string,
-                                            OldId = reader.GetInt32("CMD_id")
+                                            Value = reader["CMD_pla"] as string
                                         };
 
                                         session.Save(newCommand);
@@ -108,8 +107,7 @@ namespace CCServ.DataAccess
                                                 Command = niocGA,
                                                 Description = null,
                                                 Divisions = new List<Entities.ReferenceLists.Division>(),
-                                                Value = reader["DEPT_dept"] as string,
-                                                OldId = reader.GetInt32("DEPT_id")
+                                                Value = reader["DEPT_dept"] as string
                                             };
 
                                             session.Save(department);

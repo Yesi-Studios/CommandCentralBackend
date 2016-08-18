@@ -115,6 +115,21 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Casts the object (which is expected to be a JObject) into the requested class.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static JToken CastJToken(this object value)
+        {
+            if (!(value is JToken))
+                throw new Exception("The value could not be cast to a JToken.");
+
+
+            return ((JToken)value);
+        }
+
+        /// <summary>
         /// Performs a case insensitive, current culture string comparison.  Handles nulls.
         /// </summary>
         /// <param name="str1"></param>
