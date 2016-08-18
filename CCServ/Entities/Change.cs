@@ -64,7 +64,7 @@ namespace CCServ.Entities
             /// </summary>
             public ChangeMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Editor).Not.Nullable();
 
