@@ -145,11 +145,11 @@ namespace CCServ.Authorization.Groups
         [ServiceManagement.StartMethod(Priority = 3)]
         private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
         {
-            Log.Info("Scanning for permissions...");
+            Log.Info("Collecting permissions...");
 
-            var groups = Assembly.GetExecutingAssembly().GetTypes()
-                    .Where(x => x.IsSubclassOf(typeof(PermissionGroup)))
-                        .Select(x => (PermissionGroup)Activator.CreateInstance(x));
+            var fields = typeof(Authorization.Groups.Definitions.DefinitionsManager).GetFields().Where(x => typeof(Groups.PermissionGroup).IsAssignableFrom(x.FieldType)).ToList();
+
+            List<PermissionGroup> groups = fields.Select(x => x.GetValue(null) as PermissionGroup).ToList();
 
             if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
                 throw new Exception("No two groups may have the same name.");

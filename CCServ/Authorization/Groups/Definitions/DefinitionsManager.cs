@@ -13,6 +13,6 @@ namespace CCServ.Authorization.Groups.Definitions
         public static PermissionGroup Developers = new Definitions.Developers();
         public static PermissionGroup DepartmentLeadership = new Definitions.DepartmentLeadership();
         public static PermissionGroup CommandLeadership = new Definitions.CommandLeadership();
-        public static PermissionGroup Admin = new Definitions.CommandLeadership();
+        public static PermissionGroup Admin = new Definitions.Admin();
     }
 }
