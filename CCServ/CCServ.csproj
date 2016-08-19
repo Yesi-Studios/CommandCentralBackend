@@ -275,14 +275,6 @@
       <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
       <Name>AtwoodUtils</Name>
     </ProjectReference>
-    <ProjectReference Include="J:\Downloads\PDFSharp-MigraDocFoundation-1_31\PDFsharp\code\PdfSharp.Xps\PdfSharp.Xps.csproj">
-      <Project>{0bc3964b-a3bc-49d5-9b7c-463299b5a166}</Project>
-      <Name>PdfSharp.Xps</Name>
-    </ProjectReference>
-    <ProjectReference Include="J:\Downloads\PDFSharp-MigraDocFoundation-1_31\PDFsharp\code\PdfSharp\PdfSharp-WPF.csproj">
-      <Project>{02fcc0bb-2aa2-43ba-8d2f-66d168b87a1d}</Project>
-      <Name>PdfSharp-WPF</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
