@@ -117,6 +117,7 @@
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\Definitions\Admin.cs" />
     <Compile Include="Authorization\Groups\Definitions\CommandLeadership.cs" />
+    <Compile Include="Authorization\Groups\Definitions\DefinitionsManager.cs" />
     <Compile Include="Authorization\Groups\Definitions\DepartmentLeadership.cs" />
     <Compile Include="Authorization\Groups\Definitions\Developers.cs" />
     <Compile Include="Authorization\Groups\Definitions\DivisionLeadership.cs" />
