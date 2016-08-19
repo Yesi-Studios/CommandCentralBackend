@@ -18,7 +18,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
 
-            CanEditMembershipOf(new Users(), new DivisionLeadership(), new DepartmentLeadership(), new CommandLeadership(), new Admin(), new Developers());
+            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership, DefinitionsManager.DepartmentLeadership, DefinitionsManager.CommandLeadership, DefinitionsManager.Admin, DefinitionsManager.Developers);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

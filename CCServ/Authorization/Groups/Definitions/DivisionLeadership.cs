@@ -13,7 +13,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public DivisionLeadership()
         {
-            CanEditMembershipOf(new Users(), new DivisionLeadership());
+            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership);
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
