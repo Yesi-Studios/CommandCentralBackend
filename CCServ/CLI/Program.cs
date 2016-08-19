@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Runtime.InteropServices;
 using CCServ.CLI.Options;
 using System.ServiceProcess;
+using System.Threading;
 
 namespace CCServ.CLI
 {
@@ -20,6 +21,13 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
+
+            Thread thread = new Thread(() => new Entities.Muster.MusterReportPDFView().GetPDF());
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+
+            return;
+
             try
             {
                 if (!Environment.UserInteractive)
