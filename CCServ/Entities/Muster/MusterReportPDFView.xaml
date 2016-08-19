@@ -8,7 +8,9 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
         <Grid>
-            
+            <TextBlock>
+                kjdfshdslkfgjhsdlkfghjdkfjgh
+            </TextBlock>
         </Grid>
     </Grid>
 </Window>
