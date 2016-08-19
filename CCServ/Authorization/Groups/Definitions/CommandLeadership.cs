@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class Chiefs : PermissionGroup
+    class CommandLeadership : PermissionGroup
     {
         /// <summary>
-        /// The Chiefs permission group. Should be given to all division and department Chiefs, so they can manage sailors in their charge.
+        /// The Command Leadership permission group. For the top leadership in the command.
         /// </summary>
-        public Chiefs()
+        public CommandLeadership()
         {
-            CanEditMembershipOf();
+            CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
 
-            HasAccessLevel(PermissionGroupLevels.Division);
+            CanEditMembershipOf(new Users(), new DivisionLeadership(), new DepartmentLeadership(), new CommandLeadership(), new Admin());
+
+            HasAccessLevel(PermissionGroupLevels.Command);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

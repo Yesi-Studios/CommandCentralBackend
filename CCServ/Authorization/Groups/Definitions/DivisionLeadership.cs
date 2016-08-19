@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class LPOs : PermissionGroup
+    class DivisionLeadership : PermissionGroup
     {
         /// <summary>
-        /// The LPO permission group. Designed to allow LPOs to manage their sailors effectively.
+        /// The Chiefs permission group. Should be given to all division and department Chiefs, so they can manage sailors in their charge.
         /// </summary>
-        public LPOs()
+        public DivisionLeadership()
         {
-            CanEditMembershipOf();
+            CanEditMembershipOf(new Users(), new DivisionLeadership());
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
