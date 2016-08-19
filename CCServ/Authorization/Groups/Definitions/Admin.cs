@@ -6,40 +6,22 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    /// <summary>
-    /// The users permission group.  Default, and assigned to all persons.
-    /// </summary>
-    public class Users : PermissionGroup
+    class Admin : PermissionGroup
     {
         /// <summary>
-        /// The users permission group.  Default, and assigned to all persons.
+        /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstanes.
+        /// These high permissions are necessary for testing and high level management. No one else should ever require this.
         /// </summary>
-        public Users()
+        public Admin()
         {
-            Name("Users");
-            Default();
-            
-            CanEditMembershipOf();
+            CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
 
-            HasAccessLevel(PermissionGroupLevels.Self);
+            CanEditMembershipOf(new Users(), new DivisionLeadership(), new DepartmentLeadership(), new CommandLeadership(), new Admin());
+
+            HasAccessLevel(PermissionGroupLevels.Command);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
-                    x => x.Id,
-                    x => x.LastName,
-                    x => x.FirstName,
-                    x => x.MiddleName,
-                    x => x.Suffix,
-                    x => x.Remarks,
-                    x => x.Supervisor,
-                    x => x.WorkCenter,
-                    x => x.WorkRoom,
-                    x => x.Shift,
-                    x => x.CurrentMusterStatus,
-                    x => x.EmailAddresses,
-                    x => x.PhoneNumbers,
-                    x => x.EmergencyContactInstructions))
-                .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
                     x => x.FirstName,
@@ -79,20 +61,42 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes))
-                    .IfSelf()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
+                    x => x.SSN,
                     x => x.Suffix,
+                    x => x.DateOfBirth,
+                    x => x.Sex,
+                    x => x.Remarks,
+                    x => x.Ethnicity,
                     x => x.ReligiousPreference,
+                    x => x.Paygrade,
+                    x => x.Designation,
+                    x => x.Division,
+                    x => x.Department,
+                    x => x.Command,
+                    x => x.NECs,
+                    x => x.Supervisor,
+                    x => x.WorkCenter,
+                    x => x.WorkRoom,
+                    x => x.Shift,
+                    x => x.WorkRemarks,
+                    x => x.DutyStatus,
+                    x => x.UIC,
+                    x => x.DateOfArrival,
+                    x => x.JobTitle,
+                    x => x.EAOS,
+                    x => x.DateOfDeparture,
                     x => x.CurrentMusterStatus,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
-                    .IfSelf();
+                    x => x.ContactRemarks));
+
+            CanAccessModule("Muster");
         }
     }
 }
