@@ -21,13 +21,6 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
-
-            Thread thread = new Thread(() => new Entities.Muster.MusterReportPDFView().GetPDF());
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-
-            return;
-
             try
             {
                 if (!Environment.UserInteractive)

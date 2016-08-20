@@ -39,6 +39,9 @@ namespace CCServ.CLI.Options
         [Option("dropfirst", HelpText = "Instructs the service to attempt to drop the targeted schema before running.", DefaultValue = false)]
         public bool DropFirst { get; set; }
 
+        [Option("ingest", HelpText = "Instructs the service to ingest the old database.  This will only happen if the schema has to be created, so please combine this with --dropfirst.", DefaultValue = false)]
+        public bool Ingest { get; set; }
+
         /// <summary>
         /// Indicates if the log file directory path = CONSOLE - telling us to print to the console and not to a file.
         /// </summary>

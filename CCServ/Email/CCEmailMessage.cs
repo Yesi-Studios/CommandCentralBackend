@@ -42,7 +42,7 @@ namespace CCServ.Email
                 .ReplyTo(Config.Email.DeveloperDistroAddress.Address, Config.Email.DeveloperDistroAddress.DisplayName)
                 .BodyAsHtml()
                 .HighPriority()
-                .UsingTemplate(Template, args)
+                .UsingTemplate(Email.Templates.TemplateManager.AllTemplates[Template], args, true)
                 .Subject(args.Subject)
                 .To(args.ToAddressList.Select(x => new MailAddress(x)).ToList());
         }
@@ -50,7 +50,7 @@ namespace CCServ.Email
         /// <summary>
         /// Sends the mail message.
         /// </summary>
-        public void Send(string smtpHost = "smtp.gordon.army.mil", string alternateSMTPHost = "localhost")
+        public void Send(string smtpHost = "localhost", string alternateSMTPHost = "smtp.gordon.army.mil")
         {
 
             string attemptServer = smtpHost;
