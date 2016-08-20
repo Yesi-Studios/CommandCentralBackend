@@ -59,6 +59,16 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+        public PhoneNumber()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a single phone number to the database.
         /// </summary>

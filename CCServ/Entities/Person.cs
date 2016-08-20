@@ -314,6 +314,24 @@ namespace CCServ.Entities
             return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
         }
 
+        /// <summary>
+        /// Determines if this person is an officer.
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool IsOfficer()
+        {
+            return this.Paygrade != Paygrades.CON && this.Paygrade.ToString().Contains("O");
+        }
+
+        /// <summary>
+        /// Determines if this person is enlisted.
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool IsEnlisted()
+        {
+            return this.Paygrade.ToString().Contains("E") && !IsOfficer();
+        }
+
         #endregion
         
         #region Client Access

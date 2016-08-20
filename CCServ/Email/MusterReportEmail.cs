@@ -7,9 +7,9 @@ using CCServ.Email.Args;
 
 namespace CCServ.Email
 {
-    public class FailedAccountLoginEmail : CCEmailMessage
+    public class MusterReportEmail : CCEmailMessage
     {
-        public FailedAccountLoginEmail(FailedAccountLoginEmailArgs args) : base(args)
+        public MusterReportEmail(MusterReportEmailArgs args) : base(args)
         {
         }
 
@@ -17,7 +17,7 @@ namespace CCServ.Email
         {
             get
             {
-                return "FailedAccountLoginEmail";
+                return "MusterReportEmail.html";
             }
         }
     }
