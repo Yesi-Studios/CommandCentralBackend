@@ -1,6 +1,6 @@
 ﻿namespace CCServ
 {
-    partial class Service1
+    partial class WindowsServiceEntry
     {
         /// <summary> 
         /// Required designer variable.

@@ -11,12 +11,12 @@ using AtwoodUtils;
 
 namespace CCServ
 {
-    public partial class Service1 : ServiceBase
+    public partial class WindowsServiceEntry : ServiceBase
     {
         private static CLI.Options.LaunchOptions _launchOptions;
 
 
-        public Service1()
+        public WindowsServiceEntry()
         {
             InitializeComponent();
 

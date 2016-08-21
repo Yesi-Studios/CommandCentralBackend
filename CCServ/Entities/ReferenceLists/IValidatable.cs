@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ
+namespace CCServ.Entities.ReferenceLists
 {
     /// <summary>
     /// Forces consumers to implement a validate method.

@@ -196,7 +196,7 @@
     <Compile Include="Enums\PaygradesEnum.cs" />
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
-    <Compile Include="IValidatable.cs" />
+    <Compile Include="Entities\ReferenceLists\IValidatable.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogEntity.cs" />
     <Compile Include="Logging\Log.cs" />
@@ -204,15 +204,15 @@
     <Compile Include="Logging\Loggers\EmailLogger.cs" />
     <Compile Include="Logging\LoggingTargetsEnum.cs" />
     <Compile Include="Logging\MessageTypesEnum.cs" />
-    <Compile Include="ReferenceListItemBase.cs" />
-    <Compile Include="Service1.cs">
+    <Compile Include="Entities\ReferenceLists\ReferenceListItemBase.cs" />
+    <Compile Include="WindowsService\WindowsServiceEntry.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service1.Designer.cs">
-      <DependentUpon>Service1.cs</DependentUpon>
+    <Compile Include="WindowsService\WindowsServiceEntry.Designer.cs">
+      <DependentUpon>WindowsServiceEntry.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceInstaller.cs" />
+    <Compile Include="WindowsService\WindowsServiceInstaller.cs" />
     <Compile Include="ServiceManagement\ServiceManager.cs" />
     <Compile Include="ServiceManagement\Service\CommandCentralService.cs" />
     <Compile Include="ServiceManagement\Service\ICommandCentralService.cs" />
@@ -228,6 +228,7 @@
     <EmbeddedResource Include="DataAccess\ids.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <None Include="LICENSE.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
