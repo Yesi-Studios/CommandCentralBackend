@@ -228,7 +228,6 @@
     <EmbeddedResource Include="DataAccess\ids.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <None Include="LICENSE.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
