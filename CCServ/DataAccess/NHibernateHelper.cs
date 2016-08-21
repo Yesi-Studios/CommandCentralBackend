@@ -280,9 +280,13 @@ namespace CCServ.DataAccess
                             Log.Info("Initialized session factory.");
 
                             //Also, since we made everything a new, we can go ahead and ingest the old database into this database.
-                            Log.Info("Ingesting old database...");
-                            DataAccess.Importer.IngestOldDatabase();
-                            Log.Info("Ingest complete.");
+                            if (launchOptions.Ingest)
+                            {
+                                Log.Info("Ingesting old database...");
+                                DataAccess.Importer.IngestOldDatabase();
+                                Log.Info("Ingest complete.");
+                            }
+                            
                         }
                     }
                 }

@@ -16,7 +16,7 @@ namespace CCServ.Authorization.Groups.Definitions
             HasAccessLevel(PermissionGroupLevels.Command);
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
-            CanEditMembershipOf(new LPOs());
+            CanEditMembershipOf(new LPOs(), new Users());
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

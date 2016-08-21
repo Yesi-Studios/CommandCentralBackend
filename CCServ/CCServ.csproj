@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CCServ</RootNamespace>
     <AssemblyName>CCServ</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
@@ -40,15 +40,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AtwoodUtils">
-      <HintPath>..\AtwoodUtils\bin\Debug\AtwoodUtils.dll</HintPath>
-    </Reference>
     <Reference Include="CommandLine, Version=1.9.71.2, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
       <HintPath>..\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FluentEmail, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\fluent-email.1.5\lib\net40\FluentEmail.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FluentNHibernate, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
@@ -87,20 +80,26 @@
       <HintPath>..\packages\Polly.4.3.0\lib\net45\Polly.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="RazorEngine, Version=3.2.0.0, Culture=neutral, PublicKeyToken=9ee697374c7e744a, processorArchitecture=MSIL">
       <HintPath>..\packages\RazorEngine.3.2.0\lib\net40\RazorEngine.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="ReachFramework" />
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Printing" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Web" />
     <Reference Include="System.Web.Razor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.Razor.2.0.20715.0\lib\net40\System.Web.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -108,6 +107,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\AuthorizationEndpoints.cs" />
@@ -151,21 +151,17 @@
     <Compile Include="DataAccess\ImportError.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
-    <Compile Include="Email\AccountConfirmationEmail.cs" />
-    <Compile Include="Email\Args\AccountConfirmationEmailArgs.cs" />
-    <Compile Include="Email\Args\BaseEmailArgs.cs" />
-    <Compile Include="Email\Args\BeginPasswordResetEmailArgs.cs" />
-    <Compile Include="Email\Args\BeginRegistrationErrorEmailArgs.cs" />
-    <Compile Include="Email\Args\CompletedAccountRegistrationEmailArgs.cs" />
-    <Compile Include="Email\Args\FailedAccountLoginEmailArgs.cs" />
-    <Compile Include="Email\Args\FatalErrorEmailArgs.cs" />
-    <Compile Include="Email\BeginPasswordResetEmail.cs" />
-    <Compile Include="Email\BeginRegistrationErrorEmail.cs" />
-    <Compile Include="Email\CCEmailMessage.cs" />
-    <Compile Include="Email\CompletedAccountRegistrationEmail.cs" />
-    <Compile Include="Email\FailedAccountLoginEmail.cs" />
-    <Compile Include="Email\FatalErrorEmail.cs" />
-    <Compile Include="Email\Templates\TemplateManager.cs" />
+    <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
+    <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
+    <Compile Include="Email\Models\BeginRegistrationErrorEmailModel.cs" />
+    <Compile Include="Email\Models\CompletedAccountRegistrationEmailModel.cs" />
+    <Compile Include="Email\Models\CriticalMessageEmailModel.cs" />
+    <Compile Include="Email\Models\FailedAccountLoginEmailModel.cs" />
+    <Compile Include="Email\Models\FatalErrorEmailModel.cs" />
+    <Compile Include="Email\Models\FinishPasswordResetEmailModel.cs" />
+    <Compile Include="Email\Models\MusterReportEmailModel.cs" />
+    <Compile Include="Email\EmailInterface\CCEmailMessage.cs" />
+    <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
@@ -231,31 +227,66 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\FatalErrorEmail.html">
+    <EmbeddedResource Include="Email\Templates\FatalError_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\MusterReportEmail.html">
+    <EmbeddedResource Include="Email\Templates\MusterReport_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\AccountConfirmationEmail.html">
+    <EmbeddedResource Include="Email\Templates\AccountConfirmation_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\BeginRegistrationErrorEmail.html">
+    <EmbeddedResource Include="Email\Templates\ReregistrationError_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Email\Templates\BeginPasswordResetEmail.html" />
-    <Content Include="Email\Templates\CompletedAccontRegistrationEmail.html" />
-    <EmbeddedResource Include="Email\Templates\FailedAccountLoginEmail.html">
+    <EmbeddedResource Include="Email\Templates\AccountConfirmation_Plain.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\BeginPasswordReset_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\CompletedAccountRegistration_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\CompletedAccountRegistration_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\FailedAccountLogin_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\FatalError_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\MusterReport_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\ReregistrationError_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\FailedAccountLogin_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AtwoodUtils\AtwoodUtils.csproj">
+      <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
+      <Name>AtwoodUtils</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Email\Templates\BeginPasswordReset_Plain.txt" />
+    <Content Include="Email\Templates\CriticalMessage_HTML.html" />
+    <Content Include="Email\Templates\CriticalMessage_Plain.txt" />
+    <Content Include="Email\Templates\FinishPasswordReset_HTML.html" />
+    <Content Include="Email\Templates\FinishPasswordReset_Plain.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
