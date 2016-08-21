@@ -11,11 +11,19 @@ using AtwoodUtils;
 
 namespace CCServ
 {
+    /// <summary>
+    /// Contains the windows service entry.  This is akin to the Program class for the interactive version.
+    /// </summary>
     public partial class WindowsServiceEntry : ServiceBase
     {
+        /// <summary>
+        /// The options with which the service was launched.  Important so that we can do restarts.
+        /// </summary>
         private static CLI.Options.LaunchOptions _launchOptions;
 
-
+        /// <summary>
+        /// Initializes the windows service.  This is called when the system first creates our service.
+        /// </summary>
         public WindowsServiceEntry()
         {
             InitializeComponent();
@@ -23,6 +31,10 @@ namespace CCServ
             ServiceName = "CCSERV";
         }
 
+        /// <summary>
+        /// Invoked by the system when the service is started.
+        /// </summary>
+        /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
             var options = new CLI.Options.LaunchOptions();

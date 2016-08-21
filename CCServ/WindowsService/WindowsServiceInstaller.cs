@@ -8,6 +8,9 @@ using CCServ.Logging;
 
 namespace CCServ.WindowsService
 {
+    /// <summary>
+    /// Provides methods for installing the windows service version of the application.
+    /// </summary>
     public static class WindowsServiceInstaller
     {
         #region DLLImport
@@ -37,7 +40,7 @@ namespace CCServ.WindowsService
         /// <param name="svcPath">The complete path of the service.</param>
         /// <param name="svcName">Name of the service.</param>
         /// <param name="svcDispName">Display name of the service.</param>
-        /// <returns>True if the process went thro successfully. False if there was any error.</returns>
+        /// <returns>True if the process went through successfully. False if there was any error.</returns>
         public static bool InstallService(string svcPath, string svcName, string svcDispName)
         {
             #region Constants declaration.

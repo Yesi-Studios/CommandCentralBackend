@@ -27,6 +27,20 @@ namespace CCServ.Email.EmailInterface
         /// </summary>
         private List<SmtpClient> _clients;
 
+        /// <summary>
+        /// Creates a new CCEmailMessage with the following defaults:
+        /// <para />
+        /// From : Dev Distro
+        /// <para />
+        /// BCC : Atwood
+        /// <para />
+        /// ReplyTo : Dev Distro
+        /// <para />
+        /// HighPriority
+        /// <para />
+        /// SMTP Hosts : DODSMTP,localhost
+        /// </summary>
+        /// <returns></returns>
         public static CCEmailMessage CreateDefault()
         {
             return CCEmailMessage
@@ -40,7 +54,7 @@ namespace CCServ.Email.EmailInterface
         /// <summary>
         /// Starts a new mail message and sets the from field.
         /// </summary>
-        /// <param name="fromAddress"></param>
+        /// <param name="address"></param>
         /// <returns></returns>
         public static CCEmailMessage From(MailAddress address)
         {
@@ -50,13 +64,19 @@ namespace CCServ.Email.EmailInterface
         /// <summary>
         /// Starts a new mail message and sets the from field.
         /// </summary>
-        /// <param name="fromAddress"></param>
+        /// <param name="address"></param>
+        /// <param name="displayName"></param>
         /// <returns></returns>
         public static CCEmailMessage From(string address, string displayName = "")
         {
             return new CCEmailMessage { Message = new MailMessage { From = new MailAddress(address) } };
         }
 
+        /// <summary>
+        /// The addresses to add to the To collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage To(params MailAddress[] addresses)
         {
             foreach (var address in addresses)
@@ -66,12 +86,23 @@ namespace CCServ.Email.EmailInterface
             return this;
         }
         
+        /// <summary>
+        /// The address to which to send this email.  Adds to the To collection.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="displayName"></param>
+        /// <returns></returns>
         public CCEmailMessage To(string address, string displayName = "")
         {
             Message.To.Add(new MailAddress(address, displayName));
             return this;
         }
 
+        /// <summary>
+        /// The addresses to add to the To collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage To(IEnumerable<MailAddress> addresses)
         {
             foreach (var address in addresses)
@@ -81,6 +112,11 @@ namespace CCServ.Email.EmailInterface
             return this;
         }
 
+        /// <summary>
+        /// The addresses to add to the CC collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage CC(params MailAddress[] addresses)
         {
             foreach (var address in addresses)
@@ -90,12 +126,23 @@ namespace CCServ.Email.EmailInterface
             return this;
         }
 
+        /// <summary>
+        /// The address to add to the CC collection.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="displayName"></param>
+        /// <returns></returns>
         public CCEmailMessage CC(string address, string displayName = "")
         {
             Message.CC.Add(new MailAddress(address, displayName));
             return this;
         }
 
+        /// <summary>
+        /// The addresses to add to the CC collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage CC(IEnumerable<MailAddress> addresses)
         {
             foreach (var address in addresses)
@@ -105,6 +152,11 @@ namespace CCServ.Email.EmailInterface
             return this;
         }
 
+        /// <summary>
+        /// The addresses to add to the BCC collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage BCC(params MailAddress[] addresses)
         {
             foreach (var address in addresses)
@@ -114,12 +166,23 @@ namespace CCServ.Email.EmailInterface
             return this;
         }
 
+        /// <summary>
+        /// The address to add to the BCC collection.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="displayName"></param>
+        /// <returns></returns>
         public CCEmailMessage BCC(string address, string displayName = "")
         {
             Message.Bcc.Add(new MailAddress(address, displayName));
             return this;
         }
 
+        /// <summary>
+        /// The addresses to add to the BCC collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
         public CCEmailMessage BCC(IEnumerable<MailAddress> addresses)
         {
             foreach (var address in addresses)
@@ -260,6 +323,7 @@ namespace CCServ.Email.EmailInterface
         /// </summary>
         /// <param name="retryCallback">The callback that will be called before a re-attempt is made.  The exception that occurred that caused the retry will be passed along with how long we're going to wait until the next retry and which retry attempt we're on.</param>
         /// <param name="failureCallback">The callback that will be called if all sending attempts fail.  The final exception will be passed.  If this callback is called, the email was never sent.</param>
+        /// <param name="retryDelay">The delay to use between retry attempts.  Note: It takes a few seconds for the email to fail by hitting the timeout.</param>
         /// <returns></returns>
         public CCEmailMessage SendWithRetryAndFailure(TimeSpan retryDelay, Action<Exception, TimeSpan, int> retryCallback = null, Action<Exception> failureCallback = null)
         {

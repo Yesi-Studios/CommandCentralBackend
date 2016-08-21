@@ -27,8 +27,6 @@ namespace CCServ.Authorization.Rules
         /// <summary>
         /// Creates a new AuthorizationRuleBase.
         /// </summary>
-        /// <param name="category"></param>
-        /// <param name="propertyNames"></param>
         public AuthorizationRuleBase()
         {
         }
