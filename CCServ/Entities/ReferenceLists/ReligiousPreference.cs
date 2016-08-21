@@ -26,9 +26,9 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public ReligiousPreferenceMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.Value).Not.Nullable().Unique().Length(15);
+                Map(x => x.Value).Not.Nullable().Unique().Length(45);
                 Map(x => x.Description).Nullable().Length(40);
 
                 Cache.ReadWrite();

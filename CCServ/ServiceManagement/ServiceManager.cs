@@ -31,6 +31,8 @@ namespace CCServ.ServiceManagement
             RunStartupMethods(launchOptions);
 
             //All startup methods have run, now we need to launch the service itself.
+            //TODO remove me
+            Entities.Muster.MusterRecord.FinalizeMuster(null);
 
             //Let's determine if our given port is usable.
             //Make sure the port hasn't been claimed by any other application.

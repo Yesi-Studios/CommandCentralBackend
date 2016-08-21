@@ -1,0 +1,22 @@
+﻿Command Central Communications
+
+---------------------
+
+**Security Alert**
+Failed Account Login
+
+---------------------
+
+Hello @Model.FriendlyName,
+ 
+    A user attempted to login to your account and failed to produce the correct password. If this was you, you can safely ignore this email (and remember your password next time or we'll keep spamming you :D ).
+ 
+    However, if this was not you, we recommend that you change your password and contact the development team - especially if you receive more emails like this. This may indicate a user is attempting to hack into your account.
+ 
+Sincerely,
+ 
+The Command Central Team
+
+---------------------
+
+The information in this email was sent by CommandCentral and was intended for the account owner. If this is not you, please contact the development team!

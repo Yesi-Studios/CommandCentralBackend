@@ -6,10 +6,10 @@
     public enum MusterStatuses
     {
         Present,
+        Terminal_Leave,
         Leave,
         SIQ,
         UA,
-        Dead,
         Transferred
     }
 }

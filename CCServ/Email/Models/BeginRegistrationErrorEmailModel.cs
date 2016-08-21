@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
-    public class CompletedAccountRegistrationEmailArgs : BaseEmailArgs
+    public class BeginRegistrationErrorEmailModel
     {
         /// <summary>
-        /// The friendly name of the client who registered with us.
+        /// The person's friendly name.
         /// </summary>
         public string FriendlyName { get; set; }
     }
