@@ -31,7 +31,11 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
-        /// <param name="settings"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <param name="server"></param>
+        /// <param name="database"></param>
+        /// <param name="printSQL"></param>
         private static void ConfigureNHibernate(string username, string password, string server, string database, bool printSQL)
         {
             if (printSQL)

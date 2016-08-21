@@ -9,7 +9,6 @@ namespace CCServ.Authorization.Rules
     /// <summary>
     /// Returns true if the client is in the person's chain of command.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class IfInChainOfCommandRule : AuthorizationRuleBase
     {
         /// <summary>
