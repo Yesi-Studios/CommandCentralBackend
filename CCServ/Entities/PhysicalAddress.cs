@@ -78,6 +78,16 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+        public PhysicalAddress()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps a physical address to the database.
         /// </summary>

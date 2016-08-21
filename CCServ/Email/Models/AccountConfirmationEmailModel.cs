@@ -6,13 +6,18 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
     /// <summary>
     /// Encapsulates the arguments to the account confirmation thing.
     /// </summary>
-    public class AccountConfirmationEmailArgs : BaseEmailArgs
+    public class AccountConfirmationEmailModel
     {
+        /// <summary>
+        /// The person's friendly name.
+        /// </summary>
+        public string FriendlyName { get; set; }
+
         /// <summary>
         /// The Id of the confirmation.
         /// </summary>

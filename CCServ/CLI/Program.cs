@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Runtime.InteropServices;
 using CCServ.CLI.Options;
 using System.ServiceProcess;
+using System.Threading;
 
 namespace CCServ.CLI
 {
