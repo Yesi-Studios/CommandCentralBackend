@@ -56,7 +56,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Division,
                     x => x.Department,
                     x => x.Command,
-                    x => x.NECs,
+                    x => x.NECAssignments,
                     x => x.Supervisor,
                     x => x.WorkCenter,
                     x => x.WorkRoom,
