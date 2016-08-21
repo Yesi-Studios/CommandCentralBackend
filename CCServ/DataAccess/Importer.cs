@@ -753,7 +753,6 @@ namespace CCServ.DataAccess
                                 
                             });
 
-                        int i = 0;
                     }
 
                     transaction.Commit();
