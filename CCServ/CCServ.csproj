@@ -286,11 +286,21 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Email\Templates\BeginPasswordReset_Plain.txt" />
-    <Content Include="Email\Templates\CriticalMessage_HTML.html" />
-    <Content Include="Email\Templates\CriticalMessage_Plain.txt" />
-    <Content Include="Email\Templates\FinishPasswordReset_HTML.html" />
-    <Content Include="Email\Templates\FinishPasswordReset_Plain.txt" />
+    <EmbeddedResource Include="Email\Templates\BeginPasswordReset_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\CriticalMessage_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\CriticalMessage_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\FinishPasswordReset_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\FinishPasswordReset_Plain.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
