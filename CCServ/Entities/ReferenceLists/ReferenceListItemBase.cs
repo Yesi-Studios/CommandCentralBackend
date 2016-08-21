@@ -8,7 +8,7 @@ using FluentValidation.Results;
 using NHibernate.Criterion;
 using CCServ.Authorization;
 
-namespace CCServ
+namespace CCServ.Entities.ReferenceLists
 {
     /// <summary>
     /// Provides abstracted access to a reference list such as Ranks or Rates.

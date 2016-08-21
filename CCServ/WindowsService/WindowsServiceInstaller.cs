@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using CCServ.Logging;
 
-namespace CCServ
+namespace CCServ.WindowsService
 {
-    public static class ServiceInstaller
+    public static class WindowsServiceInstaller
     {
         #region DLLImport
 
@@ -113,7 +113,7 @@ namespace CCServ
         /// This method uninstalls the service from the service control manager.
         /// </summary>
         /// <param name="svcName">Name of the service to uninstall.</param>
-        public static bool UnInstallService(string svcName)
+        public static bool UninstallService(string svcName)
         {
             int GENERIC_WRITE = 0x40000000;
             IntPtr sc_hndl = OpenSCManager(null, null, GENERIC_WRITE);

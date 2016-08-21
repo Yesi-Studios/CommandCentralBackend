@@ -2060,6 +2060,12 @@ namespace CCServ.Entities
 
                         person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
+                        person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            EventTime = DateTime.Now
+                        });
+
                         session.Save(person);
 
                         Log.Info("Atwood's profile created.  Id : {0}".FormatS(person.Id));
@@ -2106,6 +2112,12 @@ namespace CCServ.Entities
                         };
 
                         person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        person.AccountHistory.Add(new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            EventTime = DateTime.Now
+                        });
 
                         session.Save(person);
 
@@ -2176,8 +2188,9 @@ namespace CCServ.Entities
                 Map(x => x.Username).Nullable().Length(40).Unique().Not.LazyLoad();
                 Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.GTCTrainingDate).Nullable().Not.LazyLoad();
 
-                HasMany(x => x.NECAssignments).Not.LazyLoad();
+                HasMany(x => x.NECAssignments).Not.LazyLoad().Cascade.All();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();

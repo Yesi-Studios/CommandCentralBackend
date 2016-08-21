@@ -25,7 +25,7 @@ namespace CCServ.CLI
             {
                 if (!Environment.UserInteractive)
                     // running as service
-                    using (var service = new Service1())
+                    using (var service = new WindowsServiceEntry())
                         ServiceBase.Run(service);
                 else
                 {
@@ -81,13 +81,13 @@ namespace CCServ.CLI
                 case "install":
                     {
                         var installOptions = (InstallOptions)invokedVerbInstance;
-                        ServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
+                        WindowsService.WindowsServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
                         break;
                     }
                 case "uninstall":
                     {
                         var uninstallOptions = (UninstallOptions)invokedVerbInstance;
-                        ServiceInstaller.UnInstallService(uninstallOptions.ServiceName);
+                        WindowsService.WindowsServiceInstaller.UninstallService(uninstallOptions.ServiceName);
                         break;
                     }
                 default:
