@@ -9,7 +9,8 @@ namespace CCServ.Authorization.Groups.Definitions
     class Developers : PermissionGroup
     {
         /// <summary>
-        /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstanes.
+        /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstances.
+        /// <para />
         /// These high permissions are necessary for testing and high level management. No one else should ever require this.
         /// </summary>
         public Developers()
