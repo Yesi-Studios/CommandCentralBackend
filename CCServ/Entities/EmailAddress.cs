@@ -64,6 +64,17 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+        public EmailAddress()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+
+        #endregion
+
         /// <summary>
         /// Maps an email address to the database.
         /// </summary>
@@ -74,7 +85,7 @@ namespace CCServ.Entities
             /// </summary>
             public EmailAddressMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Address).Not.Nullable().Unique();
                 Map(x => x.IsContactable).Not.Nullable();

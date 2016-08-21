@@ -31,6 +31,11 @@ namespace CCServ.Entities.Muster
         public int MusterYear { get; set; }
 
         /// <summary>
+        /// The time that the muster rolls over.
+        /// </summary>
+        public AtwoodUtils.Time RollOverTime { get; set; }
+
+        /// <summary>
         /// The person that caused this report to be created.  If null, then the system created the report at muster rollover otherwise, this value shows who forced a finalize event.
         /// </summary>
         public Person ReportGeneratedBy { get; set; }
@@ -44,7 +49,6 @@ namespace CCServ.Entities.Muster
         /// The list of the muster records contained in this report.
         /// </summary>
         public IList<MusterRecord> Records { get; set; }
-
 
         #endregion
 

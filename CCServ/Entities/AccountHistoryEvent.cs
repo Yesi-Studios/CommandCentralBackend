@@ -54,7 +54,7 @@ namespace CCServ.Entities
             /// </summary>
             public AccountHistoryEventMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.EventTime).Not.Nullable();
                 Map(x => x.AccountHistoryEventType).Not.Nullable().Length(50);

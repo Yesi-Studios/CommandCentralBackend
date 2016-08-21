@@ -28,7 +28,7 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public UICMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Value).Not.Nullable().Length(10).Unique();
                 Map(x => x.Description).Nullable().Length(40);

@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
-    public class BeginPasswordResetEmailArgs : BaseEmailArgs
+    public class BeginPasswordResetEmailModel
     {
         public Guid PasswordResetId { get; set; }
 
