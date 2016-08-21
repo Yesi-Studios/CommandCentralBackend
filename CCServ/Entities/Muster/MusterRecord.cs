@@ -285,14 +285,20 @@ namespace CCServ.Entities.Muster
                         session.Save(per);
                     }
 
-                    //Ok, now we need to send the email.
-                    new Email.MusterReportEmail(new Email.Args.MusterReportEmailArgs(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
+                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
                     {
-                        Subject = "",
                         RollOverTime = _rolloverTime,
-                        ReportLink = "",
-                        ToAddressList = new List<string> { "sundevilgoalie13@gmail.com" }
-                    }).Send();
+                        ReportLink = "", //TODO
+                    };
+
+                    //Ok, now we need to send the email.
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(Config.Email.DeveloperDistroAddress)
+                        .Subject("Muster Report")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     transaction.Commit();
                 }
@@ -300,12 +306,12 @@ namespace CCServ.Entities.Muster
                 {
                     transaction.Rollback();
 
-                    //Set to false becaues we rolled back our changes.
+                    //Set to false because we rolled back our changes.
                     IsMusterFinalized = false;
 
                     Log.Exception(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!");
                     
-                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
+                    //Note: we can't re-throw the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
             }
         }

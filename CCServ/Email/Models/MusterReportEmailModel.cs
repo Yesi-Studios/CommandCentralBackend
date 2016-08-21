@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    public class MusterReportEmailArgs : BaseEmailArgs
+    public class MusterReportEmailModel
     {
         /// <summary>
         /// The link to the muster report.
@@ -58,7 +58,7 @@ namespace CCServ.Email.Args
             }
         }
 
-        public MusterReportEmailArgs(IEnumerable<Entities.Muster.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
+        public MusterReportEmailModel(IEnumerable<Entities.Muster.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
         {
             MusterDateTime = musterDateTime;
 

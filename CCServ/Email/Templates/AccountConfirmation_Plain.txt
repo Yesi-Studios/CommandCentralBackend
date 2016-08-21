@@ -1,0 +1,27 @@
+﻿Command Central Communications
+
+---------------------
+
+Account Registered
+
+---------------------
+
+Hello @﻿Model.FriendlyName,
+ 
+To finish the account registration process, please click the link below.
+ 
+ 
+@Model.FullContinueLink
+ 
+ 
+Sincerely,
+ 
+The Command Central Team
+
+---------------------
+
+If you did not initiate this action, please contact the Command Central development team immediately so we can ensure the integrity of your account and its information. 
+
+---------------------
+
+The information in this email was sent by CommandCentral and was intended for the account owner. If this is not you, please contact the development team!
