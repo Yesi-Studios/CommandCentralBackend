@@ -106,6 +106,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual Command Command { get; set; }
 
+        /// <summary>
+        /// The date this person received government travel card training.
+        /// </summary>
+        public virtual DateTime? GTCTrainingDate { get; set; }
+
         #endregion
 
         #region Work Properties
@@ -1815,7 +1820,7 @@ namespace CCServ.Entities
                 }
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
-                //Important note: the client expects every field to be a string.  We don't return object results.
+                //Important note: the client expects every field to be a string.  We don't return object results. :(
                 var result = queryOver.List().Select(returnedPerson =>
                 {
                     //We need to know the fields the client is allowed to return for this client.
@@ -1907,7 +1912,7 @@ namespace CCServ.Entities
                 return;
             }
 
-            //Ok, so since we're read to do ze WORK we're going to do it on a separate session.
+            //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
@@ -1930,13 +1935,14 @@ namespace CCServ.Entities
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
                     {
-                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
                     Person personFromDB = session.Get<Person>(personFromClient.Id);
 
+                    //De-proxy the object.  I'm pretty sure we don't need due to our no proxy mappings this but I'm unwilling to test without it right now.
                     personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
 
                     //Did we get a person?  If not, the person the client gave us is bullshit.

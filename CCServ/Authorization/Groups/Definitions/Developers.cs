@@ -96,11 +96,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks,
-                    x => x.IsClaimed,
                     x => x.Username,
-                    x => x.PermissionGroupNames,
-                    x => x.AccountHistory,
-                    x => x.Changes));
+                    x => x.PermissionGroupNames));
 
             CanAccessModule("Muster");
         }
