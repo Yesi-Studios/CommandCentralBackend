@@ -98,12 +98,9 @@ namespace CCServ.CLI
 
         private static void Stop()
         {
+            ServiceManagement.ServiceManager.StopService();
         }
-
-        public static void ParseAndRouteArguments(string[] args)
-        {
-            
-        }
+        
     }
 
 }
