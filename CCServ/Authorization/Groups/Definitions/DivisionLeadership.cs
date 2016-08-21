@@ -6,22 +6,16 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    /// <summary>
-    /// The users permission group.  Default, and assigned to all persons.
-    /// </summary>
-    public class Users : PermissionGroup
+    class DivisionLeadership : PermissionGroup
     {
         /// <summary>
-        /// The users permission group.  Default, and assigned to all persons.
+        /// The Chiefs permission group. Should be given to all division and department Chiefs, so they can manage sailors in their charge.
         /// </summary>
-        public Users()
+        public DivisionLeadership()
         {
-            Name("Users");
-            Default();
-            
-            CanEditMembershipOf();
+            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership);
 
-            HasAccessLevel(PermissionGroupLevels.Self);
+            HasAccessLevel(PermissionGroupLevels.Division);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
@@ -29,22 +23,6 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
-                    x => x.Suffix,
-                    x => x.Remarks,
-                    x => x.Supervisor,
-                    x => x.WorkCenter,
-                    x => x.WorkRoom,
-                    x => x.Shift,
-                    x => x.CurrentMusterStatus,
-                    x => x.EmailAddresses,
-                    x => x.PhoneNumbers,
-                    x => x.EmergencyContactInstructions))
-                .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
-                    x => x.Id,
-                    x => x.LastName,
-                    x => x.FirstName,
-                    x => x.MiddleName,
-                    x => x.SSN,
                     x => x.Suffix,
                     x => x.DateOfBirth,
                     x => x.Sex,
@@ -79,20 +57,34 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes))
-                    .IfSelf()
+                    .IfInChainOfCommand()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
                     x => x.Suffix,
-                    x => x.ReligiousPreference,
+                    x => x.DateOfBirth,
+                    x => x.Sex,
+                    x => x.Remarks,
+                    x => x.Ethnicity,
+                    x => x.Paygrade,
+                    x => x.Designation,
+                    x => x.Division,
+                    x => x.Department,
+                    x => x.Supervisor,
+                    x => x.WorkCenter,
+                    x => x.WorkRoom,
+                    x => x.Shift,
+                    x => x.WorkRemarks,
+                    x => x.JobTitle,
                     x => x.CurrentMusterStatus,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
-                    .IfSelf();
+                    x => x.ContactRemarks));
+
+            CanAccessModule("Muster");
         }
     }
 }
