@@ -65,8 +65,6 @@ namespace CCServ.CLI
                     invokedVerbInstance = subOptions;
                 }))
             {
-                "Bad things...".WriteLine();
-                Console.ReadLine();
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
