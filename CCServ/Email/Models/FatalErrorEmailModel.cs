@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
-    public class FatalErrorEmailArgs : BaseEmailArgs
+    public class FatalErrorEmailModel
     {
         /// <summary>
         /// The original message.

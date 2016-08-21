@@ -35,21 +35,45 @@ namespace CCServ.Logging.Loggers
 
         public void LogCritical(string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            //TODO create an email that gets sent by this critical event.
+            if (EnabledMessageTypes.Contains(MessageTypes.ERROR))
+            {
+                var model = new Email.Models.CriticalMessageEmailModel
+                {
+                    CallerFilePath = callerFilePath,
+                    CallerLineNumber = callerLineNumber,
+                    CallerMemberName = callerMemberName,
+                    Message = message,
+                    Token = token
+                };
+
+                Email.EmailInterface.CCEmailMessage
+                    .CreateDefault()
+                    .To(Config.Email.DeveloperDistroAddress)
+                    .Subject("Command Central Critical Message")
+                    .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_Plain.txt", model)
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
+                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+            }
         }
 
         public void LogException(Exception ex, string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
             if (EnabledMessageTypes.Contains(MessageTypes.ERROR))
             {
-                new Email.FatalErrorEmail(new Email.Args.FatalErrorEmailArgs
+                var model = new Email.Models.FatalErrorEmailModel
                 {
                     Exception = ex,
                     OriginalMessage = message,
-                    Subject = "CommandCentral Fatal Error",
-                    Token = token,
-                    ToAddressList = new List<string> { Config.Email.AtwoodAddress.Address, Config.Email.DeveloperDistroAddress.Address, Config.Email.McLean.Address }
-                }).Send();
+                    Token = token
+                };
+
+                Email.EmailInterface.CCEmailMessage
+                    .CreateDefault()
+                    .To(Config.Email.DeveloperDistroAddress)
+                    .Subject("Command Central Fatal Error")
+                    .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_Plain.txt", model)
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
+                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             }
         }
 

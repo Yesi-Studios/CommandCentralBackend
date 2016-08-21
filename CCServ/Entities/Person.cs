@@ -395,19 +395,22 @@ namespace CCServ.Entities
                         if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
                         {
                             //A login to the client's account failed.  We need to send an email.
-                            EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
-
-                            if (address == null)
+                            if (!person.EmailAddresses.Any())
                                 throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
-                            //Ok, so we have an email we can use to contact the person!
-                            new Email.FailedAccountLoginEmail(new Email.Args.FailedAccountLoginEmailArgs
+                            var model = new Email.Models.FailedAccountLoginEmailModel
                             {
-                                DateTime = token.CallTime,
-                                FriendlyName = person.ToString(),
-                                Subject = "Security Alert : Failed Login",
-                                ToAddressList = new List<string> { address.Address }
-                            }).Send();
+                                FriendlyName = person.ToString()
+                            };
+
+                            //Ok, so we have an email we can use to contact the person!
+                            Email.EmailInterface.CCEmailMessage
+                                .CreateDefault()
+                                .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                                .Subject("Security Alert : Failed Login")
+                                .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_Plain.txt", model)
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_HTML.html", model)
+                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                             //Put the error in the token and shake it all up.
                             token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
@@ -563,14 +566,19 @@ namespace CCServ.Entities
                         if (!person.EmailAddresses.Any())
                             throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
-                        //Now send that email.
-                        new Email.BeginRegistrationErrorEmail(new Email.Args.BeginRegistrationErrorEmailArgs
+                        var beginRegModel = new Email.Models.BeginRegistrationErrorEmailModel
                         {
-                            DateTime = token.CallTime,
-                            PersonID = person.Id,
-                            Subject = "Account Registration Security Alert",
-                            ToAddressList = person.EmailAddresses.Select(x => x.Address).ToList()
-                        }).Send();
+                            FriendlyName = person.ToString()
+                        };
+
+                        Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .CC(Config.Email.DeveloperDistroAddress)
+                            .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                            .Subject("Security Alert : Reregistration Attempt")
+                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_Plain.txt", beginRegModel)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                         token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
                                               "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
@@ -620,14 +628,20 @@ namespace CCServ.Entities
                     session.Update(person);
 
                     //Wait!  we're not even done yet.  Let's send the client the registration email now.
-                    new Email.AccountConfirmationEmail(new Email.Args.AccountConfirmationEmailArgs
+                    var model = new Email.Models.AccountConfirmationEmailModel
                     {
-                        ConfirmEmailAddressLink = continueLink,
                         ConfirmationId = pendingAccountConfirmation.Id,
-                        DateTime = token.CallTime,
-                        Subject = "Command Central Account Confirmation",
-                        ToAddressList = new List<string> { dodEmailAddress.Address }
-                    }).Send();
+                        ConfirmEmailAddressLink = continueLink,
+                        FriendlyName = person.ToString()
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                            .Subject("Confirm Command Central Account")
+                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_Plain.txt", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_HTML.html", model)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     //Ok, Jesus Christ.  I think we're finally done.
                     token.SetResult("Success");
@@ -729,13 +743,18 @@ namespace CCServ.Entities
                     session.Update(pendingAccountConfirmation.Person);
 
                     //Send the email to the client telling them we're done.
-                    new Email.CompletedAccountRegistrationEmail(new Email.Args.CompletedAccountRegistrationEmailArgs
+                    var model = new Email.Models.CompletedAccountRegistrationEmailModel
                     {
-                        DateTime = token.CallTime,
-                        FriendlyName = pendingAccountConfirmation.Person.ToString(),
-                        Subject = "Account Registration Completed!",
-                        ToAddressList = pendingAccountConfirmation.Person.EmailAddresses.Select(x => x.Address).ToList()
-                    }).Send();
+                        FriendlyName = pendingAccountConfirmation.Person.ToString()
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(pendingAccountConfirmation.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingAccountConfirmation.Person.ToString())))
+                        .Subject("Account Registered!")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
                     session.Delete(pendingAccountConfirmation);
@@ -872,15 +891,20 @@ namespace CCServ.Entities
                     session.Save(pendingPasswordReset);
 
                     //And then send the email.
-                    new Email.BeginPasswordResetEmail(new Email.Args.BeginPasswordResetEmailArgs
+                    var model = new Email.Models.BeginPasswordResetEmailModel
                     {
-                        DateTime = token.CallTime,
-                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                        FriendlyName = person.ToString(),
                         PasswordResetId = pendingPasswordReset.Id,
-                        Subject = "CommandCentral Password Reset",
-                        PasswordResetLink = continueLink,
-                        ToAddressList = new List<string> { email }
-                    }).Send();
+                        PasswordResetLink = continueLink
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                        .Subject("Password Reset")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     token.SetResult("Success");
 
@@ -974,7 +998,18 @@ namespace CCServ.Entities
                     session.Update(pendingPasswordReset.Person);
 
                     //Finally we need to send an email before we delete the object.
-                    //TODO send that email.
+                    var model = new Email.Models.FinishPasswordResetEmailModel
+                    {
+                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(pendingPasswordReset.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingPasswordReset.Person.ToString())))
+                        .Subject("Password Reset")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     session.Delete(pendingPasswordReset);
 

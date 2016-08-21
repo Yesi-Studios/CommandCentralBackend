@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Args
+namespace CCServ.Email.Models
 {
-    public class FailedAccountLoginEmailArgs : BaseEmailArgs
+    public class FailedAccountLoginEmailModel
     {
         /// <summary>
         /// The friendly name of the person.

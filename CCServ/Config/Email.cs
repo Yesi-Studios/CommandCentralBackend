@@ -8,6 +8,14 @@ namespace CCServ.Config
 {
     public static class Email
     {
+        public static string DODSMTPAddress
+        {
+            get
+            {
+                return "smtp.gordon.army.mil";
+            }
+        }
+
         public static System.Net.Mail.MailAddress DeveloperDistroAddress
         {
             get
