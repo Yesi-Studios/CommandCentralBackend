@@ -54,7 +54,9 @@ namespace CCServ.Email.Models
         {
             get
             {
-                return String.Join("<br>", Containers);
+                var strs = Containers.Select(x => x.ToString());
+
+                return strs.Aggregate((current, newElement) => current + "<p>" + newElement + "</p>");
             }
         }
 
@@ -83,13 +85,13 @@ namespace CCServ.Email.Models
                 if (record.MusterDayOfYear != MusterDayOfYear || record.MusterYear != MusterYear)
                     throw new ArgumentException("One or more records were from different days or years.  A muster report may only be built from the records from the same time frame.");
 
-                var container = containers.FirstOrDefault(x => x.DutyStatus.SafeEquals(record.DutyStatus));
+                var container = containers.FirstOrDefault(x => x.GroupTitle.SafeEquals(record.DutyStatus));
 
                 if (container == null)
                 {
                     containers.Add(new MusterGroupContainer
                     {
-                        DutyStatus = record.DutyStatus,
+                        GroupTitle = record.DutyStatus,
                         Mustered = String.Equals(record.MusterStatus, MusterStatuses.UA.ToString()) ? 0 : 1,
                         Total = 1
                     });
@@ -102,12 +104,20 @@ namespace CCServ.Email.Models
                 }
             }
 
+            //Now, let's make a "total" container.
+            containers.Insert(0, new MusterGroupContainer
+            {
+                GroupTitle = "Total",
+                Mustered = containers.Sum(x => x.Mustered),
+                Total = containers.Sum(x => x.Total)
+            });
+
             Containers = containers;
         }
 
         public class MusterGroupContainer
         {
-            public string DutyStatus { get; set; }
+            public string GroupTitle { get; set; }
             public int Total { get; set; }
             public int Mustered { get; set; }
             public double Percentage
@@ -120,7 +130,7 @@ namespace CCServ.Email.Models
 
             public override string ToString()
             {
-                return "{0} Mustered / {0} Total : {1}% ({2}/{3})".FormatS(DutyStatus, Percentage, Mustered, Total);
+                return "{0} : {1}% ({2}/{3})".FormatS(GroupTitle, Percentage, Mustered, Total);
             }
         }
 
