@@ -450,7 +450,8 @@ namespace CCServ.DataAccess
                                 var dob = persRow["PERS_dob"] as string;
                                 if (string.IsNullOrEmpty(dob))
                                 {
-                                    person.DateOfBirth = null;
+                                    person.DateOfBirth = new DateTime(1775, 10, 13);
+                                    //TODO LOG ME
                                 }
                                 else
                                 {
@@ -460,6 +461,11 @@ namespace CCServ.DataAccess
                                         DateTimeStyles.None,
                                         out temp))
                                         person.DateOfBirth = temp;
+                                    else
+                                    {
+                                        person.DateOfBirth = new DateTime(1775, 10, 13);
+                                        //TODO LOG ME
+                                    }
                                 }
 
                                 var dod = adminRow["ADM_cmddod"] as string;
@@ -592,33 +598,18 @@ namespace CCServ.DataAccess
                                 }
                                 
 
-                                person.FirstName = persRow["PERS_fname"] as string;
+                                person.FirstName = Utilities.FirstCharacterToUpper((persRow["PERS_fname"] as string).ToLower());
                                 person.Id = Guid.Parse(persRow["NewId"] as string);
 
                                 person.IsClaimed = false;
 
                                 person.JobTitle = workRow["WORK_title"] as string;
-                                person.LastName = persRow["PERS_lname"] as string;
+                                person.LastName = Utilities.FirstCharacterToUpper((persRow["PERS_lname"] as string).ToLower());
 
-                                person.MiddleName = persRow["PERS_mi"] as string;
+                                person.MiddleName = Utilities.FirstCharacterToUpper((persRow["PERS_mi"] as string).ToLower());
 
                                 //Primary is 0, secondary is 1
                                 var necRows = oldDatabase.Tables["pers_necs"].AsEnumerable().Where(x => Convert.ToInt32(x["WORK_id"]) == Convert.ToInt32(workRow["WORK_id"])).ToList();
-
-                                /*person.NECAssignments = necRows.Select(nec =>
-                                    {
-                                        var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
-
-                                        var necToPerson = new Entities.NECAssignment
-                                        {
-                                            Id = Guid.Parse(nec["NewId"] as string),
-                                            IsPrimary = (nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0",
-                                            NEC = necs.First(x => x.Id.ToString() == necNewId),
-                                            Person = person
-                                        };
-
-                                        return necToPerson;
-                                    }).ToList();
 
                                 if (Convert.ToInt32(workRow["RANK_id"]) != 0)
                                 {
@@ -637,62 +628,99 @@ namespace CCServ.DataAccess
                                 //home is 0, work is 1, cell is 2
                                 var phoneRows = oldDatabase.Tables["phone"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
 
+                                person.NECAssignments = necRows.Select(nec =>
+                                   {
+                                       var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
+
+                                       var necToPerson = new Entities.NECAssignment
+                                       {
+                                           Id = Guid.NewGuid(),
+                                           IsPrimary = (nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0",
+                                           NEC = necs.First(x => x.Id.ToString().SafeEquals(necNewId)),
+                                           Person = person
+                                       };
+
+                                       return necToPerson;
+                                   }).ToList();
+
+                               
+
                                 person.PhoneNumbers = phoneRows.Select(x =>
+                                {
+                                    var phone = new Entities.PhoneNumber
                                     {
-                                        var phone = new Entities.PhoneNumber
-                                        {
-                                            Id = Guid.Parse(x["NewId"] as string),
-                                            IsContactable = false,
-                                            IsPreferred = false,
-                                            Number = x["PH_number"] as string
-                                        };
+                                        Id = Guid.Parse(x["NewId"] as string),
+                                        IsContactable = false,
+                                        IsPreferred = false,
+                                        Number = new String((x["PH_number"] as string).Where(Char.IsLetter).ToArray())
+                                    };
 
-                                        switch (Convert.ToInt32(x["PH_type"]))
-                                        {
-                                            case 0:
-                                                {
-                                                    phone.PhoneType = PhoneNumberTypes.Home;
-                                                    break;
-                                                }
-                                            case 1:
-                                                {
-                                                    phone.PhoneType = PhoneNumberTypes.Work;
-                                                    break;
-                                                }
-                                            case 2:
-                                                {
-                                                    phone.PhoneType = PhoneNumberTypes.Mobile;
-                                                    break;
-                                                }
-                                            default:
-                                                {
-                                                    throw new NotImplementedException("fucking shit");
-                                                }
+                                    switch (Convert.ToInt32(x["PH_type"]))
+                                    {
+                                        case 0:
+                                            {
+                                                phone.PhoneType = PhoneNumberTypes.Home;
+                                                break;
+                                            }
+                                        case 1:
+                                            {
+                                                phone.PhoneType = PhoneNumberTypes.Work;
+                                                break;
+                                            }
+                                        case 2:
+                                            {
+                                                phone.PhoneType = PhoneNumberTypes.Mobile;
+                                                break;
+                                            }
+                                        default:
+                                            {
+                                                throw new NotImplementedException("fucking shit");
+                                            }
 
-                                        }
+                                    }
 
-                                        return phone;
+                                    return phone;
 
-                                    }).ToList();*/
+                                }).ToList();
+
+                               
 
                                 //TODO
                                 //Home is 0
-                                /*var addressRows = oldDatabase.Tables["address"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
+                                var addressRows = oldDatabase.Tables["address"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
 
-                                addressRows.Select(x =>
+                                //TODO LOG ME
+                                var badRows = addressRows.Where(x => String.IsNullOrEmpty(x["ADD_line1"] as string));
+
+                                person.PhysicalAddresses = addressRows.Except(badRows).Select(x =>
                                     {
+                                        string streetNumber = null;
+                                        string route = null;
+                                        if ((x["ADD_line1"] as string).ToLower().Contains("bldg"))
+                                        {
+                                            route = (x["ADD_line1"] as string);
+                                            streetNumber = " ";
+                                        }
+                                        else
+                                        {
+                                            streetNumber = (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).First();
+                                            route = String.Join(" ", (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).Skip(1));
+                                        }
+                                        
                                         var address = new Entities.PhysicalAddress
                                         {
                                             City = x["ADD_city"] as string,
                                             Country = "United States of America",
                                             Id = Guid.Parse(x["NewId"] as string),
                                             IsHomeAddress = Convert.ToInt32(x["ADD_type"]) == 0,
-                                            Route = ,
-                                            
+                                            StreetNumber = streetNumber,
+                                            Route = route,
+                                            State = x["ADD_st"] as string,
+                                            ZipCode = x["ADD_zip"] as string
                                         };
 
                                         return address;
-                                    });*/
+                                    }).ToList();
 
                                 if (!String.IsNullOrEmpty(persRow["PERS_relpref"] as string))
                                 {
@@ -731,8 +759,8 @@ namespace CCServ.DataAccess
 
                         //Finally, we're going to make some decisions here.
 
-                        //First, throw out all persons without a DOB.  A search in the database shows that people without a DOB are bad records.
-                        persons = persons.Where(x => x.DateOfBirth != null).ToList();
+
+                        
 
                         int fails = 0;
 
