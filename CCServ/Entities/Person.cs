@@ -637,7 +637,7 @@ namespace CCServ.Entities
                     {
                         ConfirmationId = pendingAccountConfirmation.Id,
                         ConfirmEmailAddressLink = continueLink,
-                        FriendlyName = person.ToString()
+                        FriendlyName = person.ToString().Trim()
                     };
 
                     Email.EmailInterface.CCEmailMessage
@@ -2058,13 +2058,13 @@ namespace CCServ.Entities
                             DutyStatus = DutyStatuses.Active
                         };
 
-                        person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
-                        person.AccountHistory.Add(new AccountHistoryEvent
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryEventTypes.Creation,
                             EventTime = DateTime.Now
-                        });
+                        } };
 
                         session.Save(person);
 
@@ -2111,13 +2111,13 @@ namespace CCServ.Entities
                             DutyStatus = DutyStatuses.Active
                         };
 
-                        person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
-                        person.AccountHistory.Add(new AccountHistoryEvent
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryEventTypes.Creation,
                             EventTime = DateTime.Now
-                        });
+                        } };
 
                         session.Save(person);
 
