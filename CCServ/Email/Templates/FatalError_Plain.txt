@@ -7,18 +7,18 @@ Fatal Error Report
 Original Error Message : @Model.OriginalMessage
 
 --Session Information--
-	Session Id: @Model.Token.AuthenticationSession.Id
-    Login Time: @Model.Token.AuthenticationSession.LoginTime 
-    Person Id: @Model.Token.AuthenticationSession.Person.Id
-    Person Friendly Name: @Model.Token.AuthenticationSession.Person
-    Logout Time: @Model.Token.AuthenticationSession.LogoutTime 
-    Is Active: @Model.Token.AuthenticationSession.IsActive
-    Permission Names: @Model.ClientPermissionNames
-    Last Used Time: @Model.Token.AuthenticationSession.LastUsedTime 
+	Session Id: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.Id)
+    Login Time: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.LoginTime) 
+    Person Id: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.Person.Id)
+    Person Friendly Name: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.Person)
+    Logout Time: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.LogoutTime)
+    Is Active: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.IsActive)
+    Permission Names: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.ClientPermissionNames)
+    Last Used Time: @(@Model.Token.AuthenticationSession == null ? "null" : @Model.Token.AuthenticationSession.LastUsedTime)
 
 --Message Token Information--
 	Message Id: @Model.Token.Id
-	API Key: @Model.Token.APIKey.Value
+	API Key: @Model.Token.APIKey.Id
 	Application Name: @Model.Token.APIKey.ApplicationName
 	Call Time: @Model.Token.CallTime
 	Raw JSON Request: @Model.Token.RawRequestBody
@@ -30,7 +30,7 @@ Original Error Message : @Model.OriginalMessage
 
 --Error Information--
 	Error Message: @Model.Exception.Message
-	Inner Error Message: @Model.Exception.Message
+	Inner Error Message: @(@Model.Exception.InnerException == null ? "null" : @Model.InnerException.Message)
 	Source: @Model.Exception.Source
 	Target Site: @Model.Exception.TargetSite
 	Stack Trace: @Model.Exception.StackTrace

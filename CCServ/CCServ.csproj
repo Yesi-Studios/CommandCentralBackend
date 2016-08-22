@@ -206,6 +206,7 @@
     <Compile Include="Logging\LoggingTargetsEnum.cs" />
     <Compile Include="Logging\MessageTypesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\ReferenceListItemBase.cs" />
+    <Compile Include="Tests\TestEndpoints.cs" />
     <Compile Include="WindowsService\WindowsServiceEntry.cs">
       <SubType>Component</SubType>
     </Compile>

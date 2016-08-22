@@ -44,6 +44,16 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+        public AccountHistoryEvent()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps an account history event to the database.
         /// </summary>

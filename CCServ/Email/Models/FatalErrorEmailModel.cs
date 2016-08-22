@@ -28,7 +28,7 @@ namespace CCServ.Email.Models
             get
             {
                 if (Token.AuthenticationSession == null)
-                    return "null";
+                    return null;
 
                 return String.Join(", ", Token.AuthenticationSession.Person.PermissionGroupNames);
             }

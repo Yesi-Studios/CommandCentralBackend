@@ -6,7 +6,7 @@ Account Registered
 
 ---------------------
 
-Hello @﻿Model.FriendlyName,
+Hello @Model.FriendlyName,
  
 To finish the account registration process, please click the link below.
  
