@@ -1,7 +1,7 @@
 ﻿namespace CCServ
 {
     /// <summary>
-    /// Enumerates all military ranks
+    /// Enumerates all military and civilian ranks
     /// </summary>
     public enum Paygrades
     {
