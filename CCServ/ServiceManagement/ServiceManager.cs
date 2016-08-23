@@ -43,7 +43,7 @@ namespace CCServ.ServiceManagement
             //Make sure the port hasn't been claimed by any other application.
             if (!Utilities.IsPortAvailable(launchOptions.Port))
             {
-                Log.Warning("It appears the port '{0}' is already in use. We cannot continue from this.");
+                Log.Critical("It appears the port '{0}' is already in use. We cannot continue from this.");
                 Environment.Exit(0);
             }
 
