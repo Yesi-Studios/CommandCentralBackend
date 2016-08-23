@@ -9,7 +9,6 @@ namespace CCServ.Authorization.Rules
     /// <summary>
     /// Returns true if the client's Id matches the person's Id.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class IfSelfRule : AuthorizationRuleBase
     {
         /// <summary>

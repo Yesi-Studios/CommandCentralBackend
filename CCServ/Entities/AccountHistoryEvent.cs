@@ -44,6 +44,16 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+        public AccountHistoryEvent()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps an account history event to the database.
         /// </summary>
@@ -54,7 +64,7 @@ namespace CCServ.Entities
             /// </summary>
             public AccountHistoryEventMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.EventTime).Not.Nullable();
                 Map(x => x.AccountHistoryEventType).Not.Nullable().Length(50);

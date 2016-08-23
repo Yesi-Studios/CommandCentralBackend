@@ -106,14 +106,19 @@ namespace CCServ.Entities
         /// </summary>
         public virtual Command Command { get; set; }
 
+        /// <summary>
+        /// The date this person received government travel card training.
+        /// </summary>
+        public virtual DateTime? GTCTrainingDate { get; set; }
+
         #endregion
 
         #region Work Properties
 
         /// <summary>
-        /// The NECs of the person.
+        /// The NECs of the person, through an nec assignment.
         /// </summary>
-        public virtual IList<NEC> NECs { get; set; }
+        public virtual IList<NECAssignment> NECAssignments { get; set; }
 
         /// <summary>
         /// The person's supervisor
@@ -314,6 +319,24 @@ namespace CCServ.Entities
             return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
         }
 
+        /// <summary>
+        /// Determines if this person is an officer.
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool IsOfficer()
+        {
+            return this.Paygrade != Paygrades.CON && this.Paygrade.ToString().Contains("O");
+        }
+
+        /// <summary>
+        /// Determines if this person is enlisted.
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool IsEnlisted()
+        {
+            return this.Paygrade.ToString().Contains("E") && !IsOfficer();
+        }
+
         #endregion
         
         #region Client Access
@@ -377,19 +400,22 @@ namespace CCServ.Entities
                         if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
                         {
                             //A login to the client's account failed.  We need to send an email.
-                            EmailAddress address = person.EmailAddresses.FirstOrDefault(x => x.IsPreferred || x.IsContactable || x.IsDodEmailAddress);
-
-                            if (address == null)
+                            if (!person.EmailAddresses.Any())
                                 throw new Exception(string.Format("Login failed to the person's account whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
-                            //Ok, so we have an email we can use to contact the person!
-                            new Email.FailedAccountLoginEmail(new Email.Args.FailedAccountLoginEmailArgs
+                            var model = new Email.Models.FailedAccountLoginEmailModel
                             {
-                                DateTime = token.CallTime,
-                                FriendlyName = person.ToString(),
-                                Subject = "Security Alert : Failed Login",
-                                ToAddressList = new List<string> { address.Address }
-                            }).Send();
+                                FriendlyName = person.ToString()
+                            };
+
+                            //Ok, so we have an email we can use to contact the person!
+                            Email.EmailInterface.CCEmailMessage
+                                .CreateDefault()
+                                .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                                .Subject("Security Alert : Failed Login")
+                                .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_Plain.txt", model)
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_HTML.html", model)
+                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                             //Put the error in the token and shake it all up.
                             token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
@@ -545,14 +571,19 @@ namespace CCServ.Entities
                         if (!person.EmailAddresses.Any())
                             throw new Exception(string.Format("Another user tried to claim the profile whose Id is '{0}'; however, we could find no email to send this person a warning.", person.Id));
 
-                        //Now send that email.
-                        new Email.BeginRegistrationErrorEmail(new Email.Args.BeginRegistrationErrorEmailArgs
+                        var beginRegModel = new Email.Models.BeginRegistrationErrorEmailModel
                         {
-                            DateTime = token.CallTime,
-                            PersonID = person.Id,
-                            Subject = "Account Registration Security Alert",
-                            ToAddressList = person.EmailAddresses.Select(x => x.Address).ToList()
-                        }).Send();
+                            FriendlyName = person.ToString()
+                        };
+
+                        Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .CC(Config.Email.DeveloperDistroAddress)
+                            .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                            .Subject("Security Alert : Reregistration Attempt")
+                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_Plain.txt", beginRegModel)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                         token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
                                               "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
@@ -602,14 +633,20 @@ namespace CCServ.Entities
                     session.Update(person);
 
                     //Wait!  we're not even done yet.  Let's send the client the registration email now.
-                    new Email.AccountConfirmationEmail(new Email.Args.AccountConfirmationEmailArgs
+                    var model = new Email.Models.AccountConfirmationEmailModel
                     {
-                        ConfirmEmailAddressLink = continueLink,
                         ConfirmationId = pendingAccountConfirmation.Id,
-                        DateTime = token.CallTime,
-                        Subject = "Command Central Account Confirmation",
-                        ToAddressList = new List<string> { dodEmailAddress.Address }
-                    }).Send();
+                        ConfirmEmailAddressLink = continueLink,
+                        FriendlyName = person.ToString().Trim()
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                            .Subject("Confirm Command Central Account")
+                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_Plain.txt", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_HTML.html", model)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     //Ok, Jesus Christ.  I think we're finally done.
                     token.SetResult("Success");
@@ -711,13 +748,18 @@ namespace CCServ.Entities
                     session.Update(pendingAccountConfirmation.Person);
 
                     //Send the email to the client telling them we're done.
-                    new Email.CompletedAccountRegistrationEmail(new Email.Args.CompletedAccountRegistrationEmailArgs
+                    var model = new Email.Models.CompletedAccountRegistrationEmailModel
                     {
-                        DateTime = token.CallTime,
-                        FriendlyName = pendingAccountConfirmation.Person.ToString(),
-                        Subject = "Account Registration Completed!",
-                        ToAddressList = pendingAccountConfirmation.Person.EmailAddresses.Select(x => x.Address).ToList()
-                    }).Send();
+                        FriendlyName = pendingAccountConfirmation.Person.ToString()
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(pendingAccountConfirmation.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingAccountConfirmation.Person.ToString())))
+                        .Subject("Account Registered!")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
                     session.Delete(pendingAccountConfirmation);
@@ -854,15 +896,20 @@ namespace CCServ.Entities
                     session.Save(pendingPasswordReset);
 
                     //And then send the email.
-                    new Email.BeginPasswordResetEmail(new Email.Args.BeginPasswordResetEmailArgs
+                    var model = new Email.Models.BeginPasswordResetEmailModel
                     {
-                        DateTime = token.CallTime,
-                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                        FriendlyName = person.ToString(),
                         PasswordResetId = pendingPasswordReset.Id,
-                        Subject = "CommandCentral Password Reset",
-                        PasswordResetLink = continueLink,
-                        ToAddressList = new List<string> { email }
-                    }).Send();
+                        PasswordResetLink = continueLink
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                        .Subject("Password Reset")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     token.SetResult("Success");
 
@@ -956,7 +1003,18 @@ namespace CCServ.Entities
                     session.Update(pendingPasswordReset.Person);
 
                     //Finally we need to send an email before we delete the object.
-                    //TODO send that email.
+                    var model = new Email.Models.FinishPasswordResetEmailModel
+                    {
+                        FriendlyName = pendingPasswordReset.Person.ToString(),
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(pendingPasswordReset.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingPasswordReset.Person.ToString())))
+                        .Subject("Password Reset")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     session.Delete(pendingPasswordReset);
 
@@ -1683,14 +1741,7 @@ namespace CCServ.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "NECs":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.NECs.Any(nec => nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
+                            //TODO: search NECs
                             case "EmailAddresses":
                                 {
                                     EmailAddress addressAlias = null;
@@ -1769,7 +1820,7 @@ namespace CCServ.Entities
                 }
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
-                //Important note: the client expects every field to be a string.  We don't return object results.
+                //Important note: the client expects every field to be a string.  We don't return object results. :(
                 var result = queryOver.List().Select(returnedPerson =>
                 {
                     //We need to know the fields the client is allowed to return for this client.
@@ -1861,7 +1912,7 @@ namespace CCServ.Entities
                 return;
             }
 
-            //Ok, so since we're read to do ze WORK we're going to do it on a separate session.
+            //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
@@ -1884,13 +1935,14 @@ namespace CCServ.Entities
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
                     {
-                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owned closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
                     Person personFromDB = session.Get<Person>(personFromClient.Id);
 
+                    //De-proxy the object.  I'm pretty sure we don't need due to our no proxy mappings this but I'm unwilling to test without it right now.
                     personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
 
                     //Did we get a person?  If not, the person the client gave us is bullshit.
@@ -2006,7 +2058,13 @@ namespace CCServ.Entities
                             DutyStatus = DutyStatuses.Active
                         };
 
-                        person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            EventTime = DateTime.Now
+                        } };
 
                         session.Save(person);
 
@@ -2053,7 +2111,13 @@ namespace CCServ.Entities
                             DutyStatus = DutyStatuses.Active
                         };
 
-                        person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            EventTime = DateTime.Now
+                        } };
 
                         session.Save(person);
 
@@ -2124,8 +2188,9 @@ namespace CCServ.Entities
                 Map(x => x.Username).Nullable().Length(40).Unique().Not.LazyLoad();
                 Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
+                Map(x => x.GTCTrainingDate).Nullable().Not.LazyLoad();
 
-                HasManyToMany(x => x.NECs).Not.LazyLoad();
+                HasMany(x => x.NECAssignments).Not.LazyLoad().Cascade.All();
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
@@ -2245,17 +2310,17 @@ namespace CCServ.Entities
                         return command.Equals(x);
                     })
                     .WithMessage("The command was invalid.");
-                RuleForEach(x => x.NECs).Must(x =>
+                RuleForEach(x => x.NECAssignments).Must(x =>
                     {
                         if (x == null)
                             return true;
 
-                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
+                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.NEC.Id);
 
                         if (nec == null)
                             return false;
 
-                        return nec.Equals(x);
+                        return nec.Equals(x.NEC);
                     });
                 RuleFor(x => x.Supervisor).Length(0, 40)
                     .WithMessage("The supervisor field may not be longer than 40 characters.");

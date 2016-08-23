@@ -19,7 +19,7 @@ namespace CCServ.ServiceManagement.Service
         /// <returns></returns>
         [OperationContract]
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
-        Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint);
+        string InvokeGenericEndpointAsync(Stream data, string endpoint);
 
         /// <summary>
         /// The prototype for the endpoint method that replied to all preflight options requests.

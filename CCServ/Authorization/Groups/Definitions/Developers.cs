@@ -9,14 +9,17 @@ namespace CCServ.Authorization.Groups.Definitions
     class Developers : PermissionGroup
     {
         /// <summary>
-        /// The users permission group.  Default, and assigned to all persons.
+        /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstances.
+        /// <para />
+        /// These high permissions are necessary for testing and high level management. No one else should ever require this.
         /// </summary>
         public Developers()
         {
             HasAccessLevel(PermissionGroupLevels.Command);
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
-            CanEditMembershipOf(new LPOs());
+
+            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership, DefinitionsManager.DepartmentLeadership, DefinitionsManager.CommandLeadership, DefinitionsManager.Admin, DefinitionsManager.Developers);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
@@ -36,7 +39,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Division,
                     x => x.Department,
                     x => x.Command,
-                    x => x.NECs,
+                    x => x.NECAssignments,
                     x => x.Supervisor,
                     x => x.WorkCenter,
                     x => x.WorkRoom,
@@ -75,7 +78,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Division,
                     x => x.Department,
                     x => x.Command,
-                    x => x.NECs,
+                    x => x.NECAssignments,
                     x => x.Supervisor,
                     x => x.WorkCenter,
                     x => x.WorkRoom,
@@ -93,11 +96,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks,
-                    x => x.IsClaimed,
                     x => x.Username,
-                    x => x.PermissionGroupNames,
-                    x => x.AccountHistory,
-                    x => x.Changes));
+                    x => x.PermissionGroupNames));
 
             CanAccessModule("Muster");
         }

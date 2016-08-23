@@ -120,6 +120,16 @@ namespace CCServ.Entities.Muster
 
         #endregion
 
+        #region ctors
+
+        public MusterRecord()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -239,8 +249,8 @@ namespace CCServ.Entities.Muster
         /// saving the report,
         /// and then resetting everyone's current muster record and then archiving the old ones.
         /// </summary>
-        /// <param name="person">The person who initiated the muster finalization.  If null, the system initiated it.</param>
-        public static void FinalizeMuster(Person person)
+        /// <param name="creator">The person who initiated the muster finalization.  If null, the system initiated it.</param>
+        public static void FinalizeMuster(Person creator)
         {
             if (IsMusterFinalized)
                 throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
@@ -256,12 +266,12 @@ namespace CCServ.Entities.Muster
 
                     var persons = GetMusterablePersonsQuery(session).List();
                     
-                    //Ok we have all the persons and their muster records.  #thatwaseasy  Now we need to build a report of the current muster
+                    //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person per in persons)
                     {
-                        per.CurrentMusterStatus.Command = per.Command.Value;
-                        per.CurrentMusterStatus.Department = per.Department.Value;
-                        per.CurrentMusterStatus.Division = per.Division.Value;
+                        per.CurrentMusterStatus.Command = per.Command == null ? "" : per.Command.Value;
+                        per.CurrentMusterStatus.Department = per.Department == null ? "" : per.Department.Value;
+                        per.CurrentMusterStatus.Division = per.Division == null ? "" : per.Division.Value;
                         per.CurrentMusterStatus.DutyStatus = per.DutyStatus.ToString();
                         if (!per.CurrentMusterStatus.HasBeenSubmitted)
                         {
@@ -275,18 +285,33 @@ namespace CCServ.Entities.Muster
                         session.Save(per);
                     }
 
+                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
+                    {
+                        RollOverTime = _rolloverTime,
+                        ReportLink = "", //TODO
+                    };
+
+                    //Ok, now we need to send the email.
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(Config.Email.DeveloperDistroAddress)
+                        .Subject("Muster Report")
+                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_Plain.txt", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
                     transaction.Commit();
                 }
                 catch (Exception e)
                 {
                     transaction.Rollback();
 
-                    //Set to false becaues we rolled back our changes.
+                    //Set to false because we rolled back our changes.
                     IsMusterFinalized = false;
 
                     Log.Exception(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!");
                     
-                    //Note: we can't rethrow the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
+                    //Note: we can't re-throw the error because no one is listening for it.  We just need to handle that here.  We're far outside the sync context, just south of the rishi maze.
                 }
             }
         }
@@ -294,10 +319,18 @@ namespace CCServ.Entities.Muster
         /// <summary>
         /// Rolls over the muster.
         /// </summary>
-        public static void RolloverMuster()
+        public static void RolloverMuster(bool finalizeIfNeeded = false)
         {
+            if (finalizeIfNeeded)
+            {
+                if (!IsMusterFinalized)
+                {
+                    FinalizeMuster(null);
+                }
+            }
+
             if (!IsMusterFinalized)
-                throw new Exception("You can't rollover the muster until it has been finalized.");
+                throw new Exception("You can't rollover the muster until it has been finalized.  Consider passing the finalizeIfNeeded flag set to true.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -684,7 +717,9 @@ namespace CCServ.Entities.Muster
             List<Person> musterablePersons = new List<Person>();
 
             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            var highestLevelInMuster = resolvedPermissions.HighestLevels["Muster"];
+            Authorization.Groups.PermissionGroupLevels highestLevelInMuster;
+            if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out highestLevelInMuster))
+                highestLevelInMuster = Authorization.Groups.PermissionGroupLevels.None;
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -916,7 +951,7 @@ namespace CCServ.Entities.Muster
                     Log.Info("Rollover time : {0}".FormatS(_rolloverTime.ToString()));
 
                     Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(_rolloverTime.ToString()));
-                    FluentScheduler.JobManager.AddJob(RolloverMuster, s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
+                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(_rolloverTime.Hours, _rolloverTime.Minutes));
 
 
                     transaction.Commit();

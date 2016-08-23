@@ -60,7 +60,7 @@ namespace CCServ.ServiceManagement.Service
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public async Task<string> InvokeGenericEndpointAsync(Stream data, string endpoint)
+        public string InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
             //The token we're going to use for this request.
             MessageToken token = new MessageToken();

@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Runtime.InteropServices;
 using CCServ.CLI.Options;
 using System.ServiceProcess;
+using System.Threading;
 
 namespace CCServ.CLI
 {
@@ -24,7 +25,7 @@ namespace CCServ.CLI
             {
                 if (!Environment.UserInteractive)
                     // running as service
-                    using (var service = new Service1())
+                    using (var service = new WindowsServiceEntry())
                         ServiceBase.Run(service);
                 else
                 {
@@ -64,8 +65,6 @@ namespace CCServ.CLI
                     invokedVerbInstance = subOptions;
                 }))
             {
-                "Bad things...".WriteLine();
-                Console.ReadLine();
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
@@ -80,13 +79,13 @@ namespace CCServ.CLI
                 case "install":
                     {
                         var installOptions = (InstallOptions)invokedVerbInstance;
-                        ServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
+                        WindowsService.WindowsServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
                         break;
                     }
                 case "uninstall":
                     {
                         var uninstallOptions = (UninstallOptions)invokedVerbInstance;
-                        ServiceInstaller.UnInstallService(uninstallOptions.ServiceName);
+                        WindowsService.WindowsServiceInstaller.UninstallService(uninstallOptions.ServiceName);
                         break;
                     }
                 default:
@@ -99,12 +98,9 @@ namespace CCServ.CLI
 
         private static void Stop()
         {
+            ServiceManagement.ServiceManager.StopService();
         }
-
-        public static void ParseAndRouteArguments(string[] args)
-        {
-            
-        }
+        
     }
 
 }
