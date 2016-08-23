@@ -30,36 +30,43 @@ namespace CCServ.ServiceManagement
         /// <param name="launchOptions"></param>
         public static void StartService(CLI.Options.LaunchOptions launchOptions)
         {
-            _options = launchOptions;
-
-            Log.Info("Starting service startup...");
-
-            //Now we need to run all start up methods.
-            RunStartupMethods(launchOptions);
-
-            //All startup methods have run, now we need to launch the service itself.
-
-            //Let's determine if our given port is usable.
-            //Make sure the port hasn't been claimed by any other application.
-            if (!Utilities.IsPortAvailable(launchOptions.Port))
+            try
             {
-                Log.Critical("It appears the port '{0}' is already in use. We cannot continue from this.");
-                Environment.Exit(0);
+                _options = launchOptions;
+
+                Log.Info("Starting service startup...");
+
+                //Now we need to run all start up methods.
+                RunStartupMethods(launchOptions);
+
+                //All startup methods have run, now we need to launch the service itself.
+
+                //Let's determine if our given port is usable.
+                //Make sure the port hasn't been claimed by any other application.
+                if (!Utilities.IsPortAvailable(launchOptions.Port))
+                {
+                    Log.Critical("It appears the port '{0}' is already in use. We cannot continue from this.");
+                    Environment.Exit(0);
+                }
+
+                //Ok, so now we have a valid port.  Let's set up the service.
+                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("https://localhost:" + launchOptions.Port));
+                _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.Transport }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
+                ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
+                stp.HttpHelpPageEnabled = false;
+
+                _host.Faulted += host_Faulted;
+
+
+
+                _host.Open();
+
+                Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
             }
-
-            //Ok, so now we have a valid port.  Let's set up the service.
-            _host = new WebServiceHost(typeof(CommandCentralService), new Uri("https://localhost:" + launchOptions.Port));
-            _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.Transport }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
-            ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
-            stp.HttpHelpPageEnabled = false;
-
-            _host.Faulted += host_Faulted;
-
-
-
-            _host.Open();
-
-            Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
         }
 
         /// <summary>
