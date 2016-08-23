@@ -53,7 +53,7 @@ namespace CCServ.CLI.Options
             }
         }
 
-        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1113)]
+        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
         public int Port { get; set; }
     }
 }
