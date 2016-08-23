@@ -43,17 +43,19 @@ namespace CCServ.ServiceManagement
             //Make sure the port hasn't been claimed by any other application.
             if (!Utilities.IsPortAvailable(launchOptions.Port))
             {
-                Log.Warning("It appears the port '{0}' is already in use. We cannot continue from this.");
+                Log.Critical("It appears the port '{0}' is already in use. We cannot continue from this.");
                 Environment.Exit(0);
             }
 
             //Ok, so now we have a valid port.  Let's set up the service.
-            _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + launchOptions.Port));
-            _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
+            _host = new WebServiceHost(typeof(CommandCentralService), new Uri("https://localhost:" + launchOptions.Port));
+            _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.Transport }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
             ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
             stp.HttpHelpPageEnabled = false;
 
             _host.Faulted += host_Faulted;
+
+
 
             _host.Open();
 
