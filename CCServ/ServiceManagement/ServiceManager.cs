@@ -15,12 +15,19 @@ using CCServ.ServiceManagement.Service;
 
 namespace CCServ.ServiceManagement
 {
+    /// <summary>
+    /// Contains the actual web host instance and manages stopping and starting the service.
+    /// </summary>
     public static class ServiceManager
     {
         private static WebServiceHost _host = null;
 
         private static CLI.Options.LaunchOptions _options = null;
 
+        /// <summary>
+        /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.
+        /// </summary>
+        /// <param name="launchOptions"></param>
         public static void StartService(CLI.Options.LaunchOptions launchOptions)
         {
             _options = launchOptions;
@@ -53,6 +60,9 @@ namespace CCServ.ServiceManagement
             Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
         }
 
+        /// <summary>
+        /// Closes the host.
+        /// </summary>
         public static void StopService()
         {
             _host.Close();

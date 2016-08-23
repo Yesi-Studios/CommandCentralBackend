@@ -18,7 +18,6 @@ namespace CCServ.Authorization.Groups
         /// Selects a number of properties from a given type that are all of the same given type.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <typeparam name="PropertyT"></typeparam>
         /// <param name="expressions"></param>
         /// <returns></returns>
         public static List<MemberInfo> SelectPropertiesFrom<T>(params Expression<Func<T, object>>[] expressions)

@@ -1,0 +1,19 @@
+﻿Command Central Communications
+
+---------------------
+
+**Critical Message**
+
+Message: @Model.Message
+
+Caller Member Name : @Model.CallerMemberName
+
+Caller Line Number : @Model.CallerLineNumber
+
+Caller File Path : @Model.CallerFilePath
+
+Message Token : @Model.Token
+
+---------------------
+
+The information in this email was sent by Command Central and was intended for its developers.
