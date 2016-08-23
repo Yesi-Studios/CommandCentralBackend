@@ -717,7 +717,9 @@ namespace CCServ.Entities.Muster
             List<Person> musterablePersons = new List<Person>();
 
             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            var highestLevelInMuster = resolvedPermissions.HighestLevels["Muster"];
+            Authorization.Groups.PermissionGroupLevels highestLevelInMuster;
+            if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out highestLevelInMuster))
+                highestLevelInMuster = Authorization.Groups.PermissionGroupLevels.None;
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {

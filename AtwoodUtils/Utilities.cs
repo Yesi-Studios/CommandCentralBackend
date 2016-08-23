@@ -41,6 +41,14 @@ namespace AtwoodUtils
             return (radians);
         }
 
+        public static string FirstCharacterToUpper(string str)
+        {
+            if (String.IsNullOrEmpty(str))
+                return null;
+
+            return str.First().ToString().ToUpper() + str.Substring(1);
+        }
+
         /// <summary>
         /// For the given property of the given type, returns the name of that property.
         /// </summary>
