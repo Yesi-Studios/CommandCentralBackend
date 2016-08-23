@@ -19,7 +19,9 @@ namespace CCServ.Tests
         [EndpointMethod(EndpointName = "TestException", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_TestException(MessageToken token)
         {
-            throw new Exception("TEST TEST TEST");
+            #if DEBUG
+                throw new Exception("TEST TEST TEST");
+            #endif
         }
 
         /// <summary>
@@ -32,7 +34,9 @@ namespace CCServ.Tests
         [EndpointMethod(EndpointName = "CriticalMessage", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_CriticalMessage(MessageToken token)
         {
-            Logging.Log.Critical("TEST TEST TEST");
+            #if DEBUG
+                Logging.Log.Critical("TEST TEST TEST");
+            #endif
         }
     }
 }
