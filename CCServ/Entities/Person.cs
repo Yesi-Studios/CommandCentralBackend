@@ -1747,7 +1747,11 @@ namespace CCServ.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            //TODO: search NECs
+                            case "NECAssignments":
+                                {
+                                    token.AddErrorMessage("We do not currently support searching in NECs.  We apologize for the inconvenience.  We promise we're working on it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                    break;
+                                }
                             case "EmailAddresses":
                                 {
                                     EmailAddress addressAlias = null;
