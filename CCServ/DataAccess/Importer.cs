@@ -628,20 +628,24 @@ namespace CCServ.DataAccess
                                 //home is 0, work is 1, cell is 2
                                 var phoneRows = oldDatabase.Tables["phone"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
 
-                                person.NECAssignments = necRows.Select(nec =>
+                                necRows.ForEach(nec =>
                                    {
                                        var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
 
-                                       var necToPerson = new Entities.NECAssignment
+                                       //If is primary
+                                       if ((nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0")
                                        {
-                                           Id = Guid.NewGuid(),
-                                           IsPrimary = (nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0",
-                                           NEC = necs.First(x => x.Id.ToString().SafeEquals(necNewId)),
-                                           Person = person
-                                       };
-
-                                       return necToPerson;
-                                   }).ToList();
+                                           person.PrimaryNEC = necs.First(x => x.Id.ToString().SafeEquals(necNewId));
+                                       }
+                                       else
+                                       {
+                                           if (person.SecondaryNECs == null)
+                                           {
+                                               person.SecondaryNECs = new List<Entities.ReferenceLists.NEC>();
+                                           }
+                                           person.SecondaryNECs.Add(necs.First(x => x.Id.ToString().SafeEquals(necNewId)));
+                                       }
+                                   });
 
                                
 
