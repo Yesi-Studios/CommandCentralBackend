@@ -300,7 +300,7 @@ namespace CCServ.ClientAccess
 
                 HasMany(x => x.ErrorMessages)
                     .KeyColumn("MessageTokenId")
-                    .Element("ErrorMessage")
+                    .Element("ErrorMessage", map => map.Length(10000))
                     .Not.LazyLoad();
 
             }

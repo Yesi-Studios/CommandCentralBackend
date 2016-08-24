@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class DepartmentLeadership : PermissionGroup
+    public class DepartmentLeadership : PermissionGroup
     {
         /// <summary>
         /// The department leadership group. Allows department LPOs, Chiefs, and Department Heads to manage their sailors.
         /// </summary>
         public DepartmentLeadership()
         {
-            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership, DefinitionsManager.DepartmentLeadership);
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership));
 
             HasAccessLevel(PermissionGroupLevels.Department);
 

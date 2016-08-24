@@ -1987,6 +1987,12 @@ namespace CCServ.Entities
                         return;
                     }
 
+                    //HACK: Reassign the person to the nec assignments.
+                    foreach (var assignment in personFromDB.NECAssignments)
+                    {
+                        assignment.Person = personFromDB;
+                    }
+
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
 

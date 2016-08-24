@@ -51,7 +51,7 @@ namespace CCServ.Authorization.Groups
         /// <summary>
         /// A list of those permission groups this permission group can edit the membership of.
         /// </summary>
-        public List<PermissionGroup> GroupsCanEditMembershipOf { get; set; }
+        public List<string> GroupsCanEditMembershipOf { get; set; }
 
         #endregion
 
@@ -65,7 +65,7 @@ namespace CCServ.Authorization.Groups
             GroupName = this.GetType().Name;
             Modules = new List<ModulePart>();
             AccessibleSubModules = new List<string>();
-            GroupsCanEditMembershipOf = new List<PermissionGroup>();
+            GroupsCanEditMembershipOf = new List<string>();
         }
 
         #endregion
@@ -128,9 +128,9 @@ namespace CCServ.Authorization.Groups
         /// </summary>
         /// <param name="permissionGroups"></param>
         /// <returns></returns>
-        public void CanEditMembershipOf(params PermissionGroup[] permissionGroups)
+        public void CanEditMembershipOf(params Type[] permissionGroups)
         {
-            GroupsCanEditMembershipOf = permissionGroups.ToList();
+            GroupsCanEditMembershipOf = permissionGroups.Select(x => x.Name).ToList();
         }
 
         #endregion
