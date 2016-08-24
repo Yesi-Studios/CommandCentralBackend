@@ -2200,7 +2200,7 @@ namespace CCServ.Entities
                 Map(x => x.GTCTrainingDate).Nullable().Not.LazyLoad();
 
                 References(x => x.PrimaryNEC).LazyLoad(Laziness.False);
-                HasMany(x => x.SecondaryNECs).Not.LazyLoad().Cascade.All();
+                HasManyToMany(x => x.SecondaryNECs).Not.LazyLoad().Cascade.All();
 
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
