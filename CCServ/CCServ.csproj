@@ -172,7 +172,6 @@
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />
     <Compile Include="Entities\Muster\MusterReport.cs" />
-    <Compile Include="Entities\NECAssignment.cs" />
     <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />

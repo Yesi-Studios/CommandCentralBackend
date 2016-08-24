@@ -116,9 +116,14 @@ namespace CCServ.Entities
         #region Work Properties
 
         /// <summary>
-        /// The NECs of the person, through an nec assignment.
+        /// The person's primary NEC.
         /// </summary>
-        public virtual IList<NECAssignment> NECAssignments { get; set; }
+        public virtual NEC PrimaryNEC { get; set; }
+
+        /// <summary>
+        /// The list of the client's secondary NECs.
+        /// </summary>
+        public virtual IList<NEC> SecondaryNECs { get; set; }
 
         /// <summary>
         /// The person's supervisor
@@ -1317,12 +1322,6 @@ namespace CCServ.Entities
                                     wasSet = true;
                                     break;
                                 }
-                            case "necassignments":
-                                {
-                                    returnData.Add("NECs", person.NECAssignments.Select(x => new { NECId = x.NEC.Id, IsPrimary = x.IsPrimary }).ToList());
-                                    wasSet = true;
-                                    break;
-                                }
 
                         }
 
@@ -1962,45 +1961,6 @@ namespace CCServ.Entities
                         return;
                     }
 
-                    //Since we have th person from the DB we need to use it to rebuild the NECAssignments
-                    var necs = token.Args["person"].CastJToken().Value<object>("NECs");
-
-                    if (!(necs is Newtonsoft.Json.Linq.JArray))
-                    {
-                        token.AddErrorMessage("The necs weren't in a jarray.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
-                    foreach (var nec in necs as Newtonsoft.Json.Linq.JArray)
-                    {
-                        Guid necId;
-                        if (!Guid.TryParse(nec.Value<string>("NECId"), out necId))
-                        {
-                            token.AddErrorMessage("There was an error while trying to rebuild your NECs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
-
-                        bool isPrimary = Convert.ToBoolean(nec.Value<string>("IsPrimary"));
-
-                        //If the person in the DB has an nec assignment pointing to this NEC, just move it over.
-                        var necAssignment = personFromDB.NECAssignments.FirstOrDefault(x => x.NEC.Id == necId);
-                        if (necAssignment != null)
-                        {
-                            //The person in the database has this nec.  Just move it over.
-                            personFromClient.NECAssignments.Add(necAssignment);
-                        }
-                        else
-                        {
-                            //If it is null, then we're adding it.
-                            personFromClient.NECAssignments.Add(new NECAssignment
-                            {
-                                IsPrimary = isPrimary,
-                                Person = personFromClient,
-                                NEC = session.Get<NEC>(necId)
-                            });
-                        }
-                    }
-
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
@@ -2034,12 +1994,6 @@ namespace CCServ.Entities
                     {
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                         return;
-                    }
-
-                    //HACK: Reassign the person to the nec assignments.
-                    foreach (var assignment in personFromDB.NECAssignments)
-                    {
-                        assignment.Person = personFromDB;
                     }
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
@@ -2245,7 +2199,9 @@ namespace CCServ.Entities
                 Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
                 Map(x => x.GTCTrainingDate).Nullable().Not.LazyLoad();
 
-                HasMany(x => x.NECAssignments).Not.LazyLoad().Cascade.All();
+                References(x => x.PrimaryNEC).LazyLoad(Laziness.False);
+                HasMany(x => x.SecondaryNECs).Not.LazyLoad().Cascade.All();
+
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
@@ -2365,18 +2321,26 @@ namespace CCServ.Entities
                         return command.Equals(x);
                     })
                     .WithMessage("The command was invalid.");
-                RuleForEach(x => x.NECAssignments).Must(x =>
+                RuleFor(x => x.PrimaryNEC).Must((Person person, NEC x) =>
                     {
                         if (x == null)
                             return true;
 
-                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.NEC.Id);
+                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
 
-                        return nec.Equals(x.NEC);
-                    });
+                        if (!nec.Equals(x))
+                            return false;
+
+                        //Now let's also make sure this isn't in the secondary NECs.
+                        if (person.SecondaryNECs.Any(y => y.Id == x.Id))
+                            return false;
+
+                        return true;
+                    })
+                    .WithMessage("The primary NEC must not exist in the secondary NECs list.");
                 RuleFor(x => x.Supervisor).Length(0, 40)
                     .WithMessage("The supervisor field may not be longer than 40 characters.");
                 RuleFor(x => x.WorkCenter).Length(0, 40)
