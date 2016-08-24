@@ -153,7 +153,6 @@
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="DataAccess\Importer.cs" />
-    <Compile Include="DataAccess\ImportError.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
