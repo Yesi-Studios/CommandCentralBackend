@@ -1317,6 +1317,12 @@ namespace CCServ.Entities
                                     wasSet = true;
                                     break;
                                 }
+                            case "necassignments":
+                                {
+                                    returnData.Add("NECs", person.NECAssignments.Select(x => new { NECId = x.NEC.Id, IsPrimary = x.IsPrimary }).ToList());
+                                    wasSet = true;
+                                    break;
+                                }
 
                         }
 
@@ -1950,6 +1956,45 @@ namespace CCServ.Entities
                     {
                         token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
+                    }
+
+                    //Since we have th person from the DB we need to use it to rebuild the NECAssignments
+                    var necs = token.Args["person"].CastJToken().Value<object>("NECs");
+
+                    if (!(necs is Newtonsoft.Json.Linq.JArray))
+                    {
+                        token.AddErrorMessage("The necs weren't in a jarray.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    foreach (var nec in necs as Newtonsoft.Json.Linq.JArray)
+                    {
+                        Guid necId;
+                        if (!Guid.TryParse(nec.Value<string>("NECId"), out necId))
+                        {
+                            token.AddErrorMessage("There was an error while trying to rebuild your NECs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        bool isPrimary = Convert.ToBoolean(nec.Value<string>("IsPrimary"));
+
+                        //If the person in the DB has an nec assignment pointing to this NEC, just move it over.
+                        var necAssignment = personFromDB.NECAssignments.FirstOrDefault(x => x.NEC.Id == necId);
+                        if (necAssignment != null)
+                        {
+                            //The person in the database has this nec.  Just move it over.
+                            personFromClient.NECAssignments.Add(necAssignment);
+                        }
+                        else
+                        {
+                            //If it is null, then we're adding it.
+                            personFromClient.NECAssignments.Add(new NECAssignment
+                            {
+                                IsPrimary = isPrimary,
+                                Person = personFromClient,
+                                NEC = session.Get<NEC>(necId)
+                            });
+                        }
                     }
 
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
