@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class Developers : PermissionGroup
+    public class Developers : PermissionGroup
     {
         /// <summary>
         /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstances.
@@ -19,7 +19,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
 
-            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership, DefinitionsManager.DepartmentLeadership, DefinitionsManager.CommandLeadership, DefinitionsManager.Admin, DefinitionsManager.Developers);
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(CommandLeadership), typeof(Admin), typeof(Developers));
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

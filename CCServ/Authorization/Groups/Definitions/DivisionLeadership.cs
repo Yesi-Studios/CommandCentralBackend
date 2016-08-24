@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class DivisionLeadership : PermissionGroup
+    public class DivisionLeadership : PermissionGroup
     {
         /// <summary>
         /// The Chiefs permission group. Should be given to all division and department Chiefs, so they can manage sailors in their charge.
         /// </summary>
         public DivisionLeadership()
         {
-            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership);
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
 
             HasAccessLevel(PermissionGroupLevels.Division);
 

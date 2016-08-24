@@ -652,7 +652,7 @@ namespace CCServ.DataAccess
                                         Id = Guid.Parse(x["NewId"] as string),
                                         IsContactable = false,
                                         IsPreferred = false,
-                                        Number = new String((x["PH_number"] as string).Where(Char.IsLetter).ToArray())
+                                        Number = new String((x["PH_number"] as string).Where(Char.IsNumber).ToArray())
                                     };
 
                                     switch (Convert.ToInt32(x["PH_type"]))

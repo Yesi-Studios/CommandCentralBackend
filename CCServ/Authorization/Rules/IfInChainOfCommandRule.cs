@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
 
 namespace CCServ.Authorization.Rules
 {
@@ -21,14 +22,35 @@ namespace CCServ.Authorization.Rules
             if (authToken.PersonFromClient == null)
                 return false;
 
-            var resolvedPermissions = authToken.Client.PermissionGroups.Resolve(authToken.Client, authToken.PersonFromClient);
-
             var moduleName = this.ParentPropertyGroup.ParentModule.ModuleName;
 
-            if (!resolvedPermissions.ChainOfCommandByModule.ContainsKey(moduleName))
-                return false;
+            //First find the person's highest level in this module.
+            var highestLevel = (Groups.PermissionGroupLevels)authToken.Client.PermissionGroups.SelectMany(x => x.Modules).Where(x => x.ModuleName.SafeEquals(moduleName)).Max(x => x.ParentPermissionGroup.AccessLevel);
 
-            return resolvedPermissions.ChainOfCommandByModule[moduleName];
+            switch (highestLevel)
+            {
+                case Groups.PermissionGroupLevels.Command:
+                    {
+                        return authToken.Client.IsInSameCommandAs(authToken.PersonFromClient);
+                    }
+                case Groups.PermissionGroupLevels.Department:
+                    {
+                        return authToken.Client.IsInSameDepartmentAs(authToken.PersonFromClient);
+                    }
+                case Groups.PermissionGroupLevels.Division:
+                    {
+                        return authToken.Client.IsInSameDivisionAs(authToken.PersonFromClient);
+                    }
+                case Groups.PermissionGroupLevels.Self:
+                case Groups.PermissionGroupLevels.None:
+                    {
+                        return false;
+                    }
+                default:
+                    {
+                        throw new NotImplementedException("In the switch between levels in the CoC determinations in Resolve().");
+                    }
+            }
         }
     }
 }

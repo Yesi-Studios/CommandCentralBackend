@@ -8,11 +8,21 @@ namespace CCServ.Authorization.Groups.Definitions
 {
     public static class DefinitionsManager
     {
-        public static PermissionGroup Users = new Definitions.Users();
-        public static PermissionGroup DivisionLeadership = new Definitions.DivisionLeadership();
-        public static PermissionGroup Developers = new Definitions.Developers();
-        public static PermissionGroup DepartmentLeadership = new Definitions.DepartmentLeadership();
-        public static PermissionGroup CommandLeadership = new Definitions.CommandLeadership();
-        public static PermissionGroup Admin = new Definitions.Admin();
+        static DefinitionsManager()
+        {
+            Users = new Groups.Definitions.Users();
+            DivisionLeadership = new Groups.Definitions.DivisionLeadership();
+            DepartmentLeadership = new Groups.Definitions.DepartmentLeadership();
+            Admin = new Groups.Definitions.Admin();
+            CommandLeadership = new Groups.Definitions.CommandLeadership();
+            Developers = new Groups.Definitions.Developers();
+        }
+
+        public static PermissionGroup Users;
+        public static PermissionGroup DivisionLeadership;
+        public static PermissionGroup DepartmentLeadership;
+        public static PermissionGroup CommandLeadership;
+        public static PermissionGroup Admin;
+        public static PermissionGroup Developers;
     }
 }

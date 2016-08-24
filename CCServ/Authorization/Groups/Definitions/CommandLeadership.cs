@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class CommandLeadership : PermissionGroup
+    public class CommandLeadership : PermissionGroup
     {
         /// <summary>
         /// The Command Leadership permission group. For the top leadership in the command.
@@ -15,7 +15,7 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
 
-            CanEditMembershipOf(DefinitionsManager.Users, DefinitionsManager.DivisionLeadership, DefinitionsManager.DepartmentLeadership, DefinitionsManager.CommandLeadership, DefinitionsManager.Admin);
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership));
 
             HasAccessLevel(PermissionGroupLevels.Command);
 

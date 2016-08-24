@@ -35,6 +35,12 @@ namespace CCServ.Entities
         /// </summary>
         public virtual bool IsPrimary { get; set; }
 
+        public NECAssignment()
+        {
+            if (Id == default(Guid))
+                Id = Guid.NewGuid();
+        }
+
         /// <summary>
         /// Maps an NEC assignment to the database.
         /// </summary>
@@ -47,10 +53,10 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.IsPrimary).Not.Nullable();
+                Map(x => x.IsPrimary).Not.Nullable().Not.LazyLoad();
 
-                References(x => x.Person).Not.Nullable();
-                References(x => x.NEC).Not.Nullable();
+                References(x => x.Person).Not.Nullable().LazyLoad(Laziness.False);
+                References(x => x.NEC).Not.Nullable().LazyLoad(Laziness.False);
             }
         }
     }
