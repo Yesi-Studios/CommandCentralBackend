@@ -125,6 +125,16 @@ namespace CCServ.Authorization.Groups
         }
 
         /// <summary>
+        /// Declares optional submodules this permission group can access.
+        /// </summary>
+        /// <param name="subModules"></param>
+        /// <returns></returns>
+        public void CanAccessSubModules(params SubModules[] subModules)
+        {
+            AccessibleSubModules = subModules.Select(x => x.ToString()).ToList();
+        }
+
+        /// <summary>
         /// Declares the permission groups whose memership this client can edit.
         /// </summary>
         /// <param name="permissionGroups"></param>

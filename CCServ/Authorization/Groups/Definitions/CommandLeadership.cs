@@ -13,7 +13,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public CommandLeadership()
         {
-            CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
+            CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership));
 

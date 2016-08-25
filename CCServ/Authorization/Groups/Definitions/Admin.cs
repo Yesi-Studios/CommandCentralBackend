@@ -15,7 +15,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public Admin()
         {
-            CanAccessSubModules(new[] { SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson }.Select(x => x.ToString()).ToArray());
+            CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
 
             CanEditMembershipOf(typeof(Groups.Definitions.Users), typeof(Groups.Definitions.DivisionLeadership), typeof(Groups.Definitions.DepartmentLeadership), typeof(Groups.Definitions.Admin));
 
