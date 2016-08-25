@@ -293,15 +293,6 @@ namespace CCServ.DataAccess
                             Log.Info("Initializing session factory...");
                             FinishNHibernateSetup();
                             Log.Info("Initialized session factory.");
-
-                            //Also, since we made everything a new, we can go ahead and ingest the old database into this database.
-                            if (launchOptions.Ingest)
-                            {
-                                Log.Info("Ingesting old database...");
-                                DataAccess.Importer.IngestOldDatabase();
-                                Log.Info("Ingest complete.");
-                            }
-                            
                         }
                     }
                 }

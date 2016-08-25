@@ -3,21 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
 using FluentValidation;
 using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
-    public class Paygrade : IValidatable
+    public class Paygrade : ReferenceListItemBase
     {
-        #region Properties
-
-        public string Value { get; set; }
-
-        public string Description { get; set; }
-
-        #endregion
-
         #region Overrides
 
         public override string ToString()
@@ -35,22 +28,25 @@ namespace CCServ.Entities.ReferenceLists
             if (other == null)
                 return false;
 
-            return other.Value == this.Value && other.Description == this.Description;
+            return other.Id == this.Id && other.Value == this.Value && other.Description == this.Description;
         }
 
         #endregion
 
-        public ValidationResult Validate()
+        public override ValidationResult Validate()
         {
-            if (!Paygrades.AllPaygrades.Contains(this))
-            {
-                return new ValidationResult(new List<ValidationFailure> { new ValidationFailure("Object", "The paygrade did not exist in the paygrades collection.") });
-            }
-
-            return new ValidationResult();
+            throw new NotImplementedException();
         }
 
-        
+        public class PaygradeMapping : ClassMap<Paygrade>
+        {
+            public PaygradeMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Assigned();
 
+                Map(x => x.Value).Not.Nullable().Unique();
+                Map(x => x.Description);
+            }
+        }
     }
 }

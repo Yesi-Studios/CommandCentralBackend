@@ -20,9 +20,16 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Ingests the old database into the new database.  NHibernate must be configured prior to calling this method.
         /// </summary>
-        public static void IngestOldDatabase()
+        [ServiceManagement.StartMethod(Priority = 8)]
+        private static void IngestOldDatabase(CLI.Options.LaunchOptions options)
         {
+            if (!options.Ingest)
+            {
+                Log.Info("Skipping ingest...");
+                return;
+            }
 
+            Log.Info("Beginning ingest...");
             DataSet oldDatabase = new DataSet();
 
             using (var session = NHibernateHelper.CreateStatefulSession())
