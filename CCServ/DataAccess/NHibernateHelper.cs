@@ -29,6 +29,17 @@ namespace CCServ.DataAccess
         private static Configuration config = null;
 
         /// <summary>
+        /// Indicates if the underlying session factory is ready to start creating sessions for database access.
+        /// </summary>
+        public static bool IsReasy
+        {
+            get
+            {
+                return _sessionFactory != null;
+            }
+        }
+
+        /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
         /// <param name="username"></param>
