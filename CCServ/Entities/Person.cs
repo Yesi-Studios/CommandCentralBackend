@@ -103,10 +103,21 @@ namespace CCServ.Entities
         /// </summary>
         public virtual ReligiousPreference ReligiousPreference { get; set; }
 
+        private Paygrade _paygrade;
         /// <summary>
         /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
         /// </summary>
-        public virtual Paygrades Paygrade { get; set; }
+        public virtual Paygrade Paygrade
+        {
+            get
+            {
+                return _paygrade;
+            }
+            set
+            {
+                _paygrade = Paygrades.AllPaygrades.First(x => x.Value.SafeEquals(value.Value));
+            }
+        }
 
         /// <summary>
         /// The person's Designation (CTI2, CTR1, 1114, Job title)
@@ -1113,7 +1124,7 @@ namespace CCServ.Entities
                     Division = x.Value<Division>("Division"),
                     Department = x.Value<Department>("Department"),
                     Command = x.Value<Command>("Command"),
-                    Paygrade = x.Value<Paygrades>("Paygrade"),
+                    Paygrade = x.Value<Paygrade>("Paygrade"),
                     UIC = x.Value<UIC>("UIC"),
                     Designation = x.Value<Designation>("Designation"),
                     Sex = x.Value<Sexes>("Sex"),
@@ -1435,15 +1446,15 @@ namespace CCServ.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "SimpleSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        [EndpointMethod(EndpointName = "SimpleSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_SimpleSearchPersons(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            /*if (token.AuthenticationSession == null)
+            if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }*/
+            }
 
             //If you can search persons then we'll assume you can search/return the required fields.
             if (!token.Args.ContainsKey("searchterm"))
@@ -1474,7 +1485,7 @@ namespace CCServ.Entities
                         .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                        .Add<Person>(x => x.Paygrade.Value.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -1712,6 +1723,17 @@ namespace CCServ.Entities
                         //For now we're going to provide options for every property and a default.
                         switch (filter.Key)
                         {
+                            case "Paygrade":
+                                {
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                    {
+                                        disjunction.Add<Person>(x => x.Paygrade.Value.IsInsensitiveLike(term, MatchMode.Anywhere));
+                                        disjunction.Add<Person>(x => x.Paygrade.Description.IsInsensitiveLike(term, MatchMode.Anywhere));
+                                    }
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
                             case "Designation":
                                 {
                                     var disjunction = Restrictions.Disjunction();
@@ -2195,7 +2217,6 @@ namespace CCServ.Entities
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
-                Map(x => x.Paygrade).Not.Nullable().Not.LazyLoad().CustomType<GenericEnumMapper<Paygrades>>();
                 Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
                 Map(x => x.Sex).Not.Nullable().Not.LazyLoad();
                 Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
@@ -2235,6 +2256,11 @@ namespace CCServ.Entities
                     .KeyColumn("PersonId")
                     .Element("PermissionGroupName")
                     .Not.LazyLoad();
+
+                Component(x => x.Paygrade, x =>
+                {
+                    x.Map(y => y.Value, "Paygrade").Not.Nullable().Not.LazyLoad();
+                });
             }
         }
 

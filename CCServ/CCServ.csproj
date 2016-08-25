@@ -184,6 +184,8 @@
     <Compile Include="Entities\ReferenceLists\Division.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
     <Compile Include="Entities\ReferenceLists\NEC.cs" />
+    <Compile Include="Entities\ReferenceLists\Paygrade.cs" />
+    <Compile Include="Entities\ReferenceLists\Paygrades.cs" />
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\Variance.cs" />
@@ -192,7 +194,6 @@
     <Compile Include="Enums\DutyStatusesEnum.cs" />
     <Compile Include="Enums\MusterStatusesEnum.cs" />
     <Compile Include="Enums\PersonTypeEnum.cs" />
-    <Compile Include="Enums\PaygradesEnum.cs" />
     <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\IValidatable.cs" />

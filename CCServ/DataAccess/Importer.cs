@@ -8,6 +8,7 @@ using System.Data;
 using AtwoodUtils;
 using CCServ.Logging;
 using System.Globalization;
+using CCServ.Entities.ReferenceLists;
 
 namespace CCServ.DataAccess
 {
@@ -637,7 +638,7 @@ namespace CCServ.DataAccess
                                     }
                                     else
                                     {
-                                        person.Paygrade = (Paygrades)Enum.Parse(typeof(Paygrades), rank);
+                                        person.Paygrade = Paygrades.AllPaygrades.First(x => x.Value.SafeEquals(rank));
                                     }
                                 }
 
