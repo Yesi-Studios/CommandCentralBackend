@@ -62,6 +62,28 @@ namespace CCServ.Entities
         public virtual DateTime? DateOfBirth { get; set; }
 
         /// <summary>
+        /// The person's age.  0 if the date of birth isn't set.
+        /// </summary>
+        public virtual int Age
+        {
+            get
+            {
+                if (DateOfBirth == null || !DateOfBirth.HasValue)
+                    return 0;
+
+                if (DateTime.Today.Month < DateOfBirth.Value.Month ||
+                    DateTime.Today.Month == DateOfBirth.Value.Month &&
+                    DateTime.Today.Day < DateOfBirth.Value.Day)
+                {
+                    return DateTime.Today.Year - DateOfBirth.Value.Year - 1;
+                }
+
+                return DateTime.Today.Year - DateOfBirth.Value.Year;
+            }
+        }
+             
+
+        /// <summary>
         /// The person's sex.
         /// </summary>
         public virtual Sexes Sex { get; set; }
@@ -1413,15 +1435,15 @@ namespace CCServ.Entities
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "SimpleSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        [EndpointMethod(EndpointName = "SimpleSearchPersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_SimpleSearchPersons(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
+            /*if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }
+            }*/
 
             //If you can search persons then we'll assume you can search/return the required fields.
             if (!token.Args.ContainsKey("searchterm"))
@@ -1452,7 +1474,7 @@ namespace CCServ.Entities
                         .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        //.Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
+                        .Add(Restrictions.InsensitiveLike(Projections.Property<Person>(x => x.Paygrade), term, MatchMode.Anywhere))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -2173,8 +2195,8 @@ namespace CCServ.Entities
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
+                Map(x => x.Paygrade).Not.Nullable().Not.LazyLoad().CustomType<GenericEnumMapper<Paygrades>>();
                 Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
-                Map(x => x.Paygrade).Not.Nullable().CustomType<NHibernate.Type.EnumStringType<Paygrades>>().Not.LazyLoad();
                 Map(x => x.Sex).Not.Nullable().Not.LazyLoad();
                 Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
                 Map(x => x.FirstName).Not.Nullable().Length(40).Not.LazyLoad();

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -23,6 +26,29 @@ namespace AtwoodUtils
 
             int maxLength = Math.Min(str.Length, length);
             return str.Substring(0, maxLength);
+        }
+
+        /// <summary>
+        /// Deep copies an object, copying value data only - not reference data.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static T Clone<T>(this object obj) where T : ISerializable
+        {
+            if (obj == null)
+                return default(T);
+
+            using (var stream = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(stream, obj);
+                stream.Seek(0, SeekOrigin.Begin);
+
+                T result = (T)formatter.Deserialize(stream);
+
+                return result;
+            }
         }
 
         /// <summary>
