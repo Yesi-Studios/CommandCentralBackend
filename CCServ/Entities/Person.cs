@@ -144,6 +144,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual DateTime? GTCTrainingDate { get; set; }
 
+        /// <summary>
+        /// The user's preferences.
+        /// </summary>
+        public virtual IDictionary<string, string> UserPreferences { get; set; }
+
         #endregion
 
         #region Work Properties
@@ -2276,7 +2281,13 @@ namespace CCServ.Entities
                     .KeyColumn("PersonId")
                     .Element("PermissionGroupName")
                     .Not.LazyLoad();
-                
+
+                HasMany(x => x.UserPreferences)
+                    .AsMap<string>(index =>
+                        index.Column("PreferenceKey").Type<string>(), element =>
+                        element.Column("PreferenceValue").Type<string>())
+                    .Cascade.All();
+                    
             }
         }
 
@@ -2430,6 +2441,15 @@ namespace CCServ.Entities
                     .WithMessage("The UIC was invalid.");
                 RuleFor(x => x.JobTitle).Length(0, 40)
                     .WithMessage("The job title may not be longer than 40 characters.");
+                RuleFor(x => x.UserPreferences).Must((person, x) =>
+                    {
+                        return x.Keys.Count <= 20;
+                    })
+                    .WithMessage("You may not submit more than 20 preferece keys.");
+                RuleForEach(x => x.UserPreferences).Must((person, x) =>
+                    {
+                        return x.Value.Length <= 1000;
+                    });
 
 
                 //Set validations
@@ -2439,6 +2459,8 @@ namespace CCServ.Entities
                     .SetCollectionValidator(new PhoneNumber.PhoneNumberValidator());
                 RuleFor(x => x.PhysicalAddresses)
                     .SetCollectionValidator(new PhysicalAddress.PhysicalAddressValidator());
+                
+                    
                
 
 
