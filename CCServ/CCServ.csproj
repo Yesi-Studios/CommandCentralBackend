@@ -197,7 +197,7 @@
     <Compile Include="Enums\SexesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\IValidatable.cs" />
     <Compile Include="Logging\ILogger.cs" />
-    <Compile Include="Logging\LogEntity.cs" />
+    <Compile Include="Logging\LogEntry.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Logging\Loggers\ConsoleLogger.cs" />
     <Compile Include="Logging\Loggers\EmailLogger.cs" />
