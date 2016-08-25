@@ -38,9 +38,14 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.WorkRoom,
                     x => x.Shift,
                     x => x.CurrentMusterStatus,
-                    x => x.EmailAddresses,
-                    x => x.PhoneNumbers,
-                    x => x.EmergencyContactInstructions))
+                    x => x.EmergencyContactInstructions,
+                    x => x.Division,
+                    x => x.Department,
+                    x => x.Command,
+                    x => x.Paygrade,
+                    x => x.UIC,
+                    x => x.Designation,
+                    x => x.Sex))
                 .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,

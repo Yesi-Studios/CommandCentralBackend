@@ -148,16 +148,17 @@ namespace CCServ.Authorization.Groups
         {
             Log.Info("Collecting permissions...");
 
-            var fields = typeof(Definitions.DefinitionsManager).GetFields().Where(x => typeof(Groups.PermissionGroup).IsAssignableFrom(x.FieldType)).ToList();
-
-            List<PermissionGroup> groups = fields.Select(x => x.GetValue(null) as PermissionGroup).ToList();
+            var groups = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(x => typeof(PermissionGroup).IsAssignableFrom(x) && x != typeof(PermissionGroup))
+                .Select(x => (PermissionGroup)Activator.CreateInstance(x))
+                .ToList();
 
             if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
                 throw new Exception("No two groups may have the same name.");
 
             AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
 
-            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))));
+            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(", ", AllPermissionGroups.Select(x => x.GroupName))));
         }
 
         #endregion
