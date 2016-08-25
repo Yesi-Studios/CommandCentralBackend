@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Logging;
+using NHibernate.Criterion;
 
 namespace CCServ.Authorization.Groups
 {
@@ -147,7 +148,7 @@ namespace CCServ.Authorization.Groups
         {
             Log.Info("Collecting permissions...");
 
-            var fields = typeof(Authorization.Groups.Definitions.DefinitionsManager).GetFields().Where(x => typeof(Groups.PermissionGroup).IsAssignableFrom(x.FieldType)).ToList();
+            var fields = typeof(Definitions.DefinitionsManager).GetFields().Where(x => typeof(Groups.PermissionGroup).IsAssignableFrom(x.FieldType)).ToList();
 
             List<PermissionGroup> groups = fields.Select(x => x.GetValue(null) as PermissionGroup).ToList();
 

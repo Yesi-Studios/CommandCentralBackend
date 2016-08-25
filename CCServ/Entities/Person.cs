@@ -1485,7 +1485,7 @@ namespace CCServ.Entities
                         .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
                         .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<Person>(x => x.Paygrade.Value.IsInsensitiveLike(term, MatchMode.Anywhere))
+                        .Add(Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
                         .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
@@ -1727,10 +1727,7 @@ namespace CCServ.Entities
                                 {
                                     var disjunction = Restrictions.Disjunction();
                                     foreach (var term in searchTerms)
-                                    {
-                                        disjunction.Add<Person>(x => x.Paygrade.Value.IsInsensitiveLike(term, MatchMode.Anywhere));
-                                        disjunction.Add<Person>(x => x.Paygrade.Description.IsInsensitiveLike(term, MatchMode.Anywhere));
-                                    }
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
@@ -2096,19 +2093,20 @@ namespace CCServ.Entities
                             SSN = "525956681",
                             IsClaimed = false,
                             EmailAddresses = new List<EmailAddress>()
-                        {
-                            new EmailAddress
                             {
-                                Address = "daniel.k.atwood.mil@mail.mil",
-                                IsContactable = true,
-                                IsPreferred = true
-                            }
-                        },
+                                new EmailAddress
+                                {
+                                    Address = "daniel.k.atwood.mil@mail.mil",
+                                    IsContactable = true,
+                                    IsPreferred = true
+                                }
+                            },
                             DateOfBirth = new DateTime(1992, 04, 24),
                             DateOfArrival = new DateTime(2013, 08, 23),
                             EAOS = new DateTime(2018, 1, 27),
                             Paygrade = Paygrades.E5,
-                            DutyStatus = DutyStatuses.Active
+                            DutyStatus = DutyStatuses.Active,
+                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
                         person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
@@ -2125,7 +2123,17 @@ namespace CCServ.Entities
                     }
                     else
                     {
-                        Log.Info("Atwood's profile found.");
+                        Log.Info("Atwood's profile found. Id : {0}".FormatS(atwoodProfile.Id));
+
+                        if (!atwoodProfile.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
+                        {
+                            Log.Warning("Atwood isn't a developer.  That must be a mistake...");
+                            atwoodProfile.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
+
+                            session.Update(atwoodProfile);
+
+                            Log.Info("Atwood is now a developer.");
+                        }
                     }
 
                     Log.Info("Scanning for McLean's profile...");
@@ -2149,19 +2157,20 @@ namespace CCServ.Entities
                             SSN = "888888888",
                             IsClaimed = false,
                             EmailAddresses = new List<EmailAddress>()
-                        {
-                            new EmailAddress
                             {
-                                Address = "angus.l.mclean5.mil@mail.mil",
-                                IsContactable = true,
-                                IsPreferred = true
-                            }
-                        },
+                                new EmailAddress
+                                {
+                                    Address = "angus.l.mclean5.mil@mail.mil",
+                                    IsContactable = true,
+                                    IsPreferred = true
+                                }
+                            },
                             DateOfBirth = new DateTime(1992, 04, 24),
                             DateOfArrival = new DateTime(2013, 08, 23),
                             EAOS = new DateTime(2018, 1, 27),
                             Paygrade = Paygrades.E5,
-                            DutyStatus = DutyStatuses.Active
+                            DutyStatus = DutyStatuses.Active,
+                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
                         person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
@@ -2178,7 +2187,17 @@ namespace CCServ.Entities
                     }
                     else
                     {
-                        Log.Info("McLean's profile found.");
+                        Log.Info("McLean's profile found. Id : {0}".FormatS(mcleanProfile.Id));
+
+                        if (!mcleanProfile.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
+                        {
+                            Log.Warning("McLean isn't a developer.  That must be a mistake...");
+                            mcleanProfile.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
+
+                            session.Update(mcleanProfile);
+
+                            Log.Info("McLean is now a developer.");
+                        }
                     }
 
                     //Give the listener the current row count.
@@ -2215,6 +2234,7 @@ namespace CCServ.Entities
                 References(x => x.Department).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Command).Nullable().LazyLoad(Laziness.False);
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Paygrade).Not.Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
 
                 Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
@@ -2256,11 +2276,7 @@ namespace CCServ.Entities
                     .KeyColumn("PersonId")
                     .Element("PermissionGroupName")
                     .Not.LazyLoad();
-
-                Component(x => x.Paygrade, x =>
-                {
-                    x.Map(y => y.Value, "Paygrade").Not.Nullable().Not.LazyLoad();
-                });
+                
             }
         }
 
