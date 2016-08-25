@@ -81,7 +81,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Username,
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
-                    x => x.Changes))
+                    x => x.Changes,
+                    x => x.UserPreferences))
                     .IfSelf()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
@@ -94,7 +95,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.UserPreferences))
                     .IfSelf();
         }
     }
