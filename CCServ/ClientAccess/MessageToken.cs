@@ -38,13 +38,13 @@ namespace CCServ.ClientAccess
 
         private string _rawRequestBody = "";
         /// <summary>
-        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters.
+        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters or set to REDACTED if the service endpoint doesn't allow its logging.
         /// </summary>
-        public virtual string RawRequestBody
+        public virtual string RawRequestBodyForLogging
         {
             get
             {
-                return _rawRequestBody.Truncate(10000);
+                return EndpointDescription.EndpointMethodAttribute.AllowArgumentLogging ? _rawRequestBody.Truncate(10000) : "REDACTED";
             }
             set
             {
@@ -100,7 +100,7 @@ namespace CCServ.ClientAccess
         {
             get
             {
-                return ConstructResponseString().Truncate(10000);
+                return EndpointDescription.EndpointMethodAttribute.AllowResponseLogging ? ConstructResponseString().Truncate(10000) : "REDACTED";
             }
         }
 
@@ -177,7 +177,7 @@ namespace CCServ.ClientAccess
         /// <param name="convert" />
         public virtual void SetRequestBody(string body, bool convert)
         {
-            RawRequestBody = body;
+            RawRequestBodyForLogging = body;
 
             if (convert)
             {
@@ -288,7 +288,7 @@ namespace CCServ.ClientAccess
                 References(x => x.AuthenticationSession).LazyLoad(Laziness.False);
 
                 Map(x => x.CallTime);
-                Map(x => x.RawRequestBody).Length(10000);
+                Map(x => x.RawRequestBodyForLogging).Length(10000);
                 Map(x => x.CalledEndpoint);
                 Map(x => x.HasError).Access.ReadOnly();
                 Map(x => x.ErrorType);
