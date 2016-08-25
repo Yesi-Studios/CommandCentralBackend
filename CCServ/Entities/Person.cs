@@ -2282,7 +2282,7 @@ namespace CCServ.Entities
                         return designation.Equals(x);
                     })
                     .WithMessage("The designation wasn't valid.  It must match exactly a list item in the database.");
-                RuleFor(x => x.Division).Must(x =>
+                RuleFor(x => x.Division).Must((person, x) =>
                     {
                         if (x == null)
                             return true;
@@ -2321,7 +2321,7 @@ namespace CCServ.Entities
                         return command.Equals(x);
                     })
                     .WithMessage("The command was invalid.");
-                RuleFor(x => x.PrimaryNEC).Must((Person person, NEC x) =>
+                RuleFor(x => x.PrimaryNEC).Must((person, x) =>
                     {
                         if (x == null)
                             return true;
