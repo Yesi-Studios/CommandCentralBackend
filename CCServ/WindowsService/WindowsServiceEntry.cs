@@ -27,8 +27,6 @@ namespace CCServ
         public WindowsServiceEntry()
         {
             InitializeComponent();
-
-            ServiceName = "CCSERV";
         }
 
         /// <summary>
