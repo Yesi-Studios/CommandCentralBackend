@@ -30,7 +30,7 @@ Original Error Message : @Model.OriginalMessage
 
 --Error Information--
 	Error Message: @Model.Exception.Message
-	Inner Error Message: @(@Model.Exception.InnerException == null ? "null" : @Model.InnerException.Message)
+	Inner Error Message: @(@Model.Exception.InnerException == null ? "null" : @Model.Exception.InnerException.Message)
 	Source: @Model.Exception.Source
 	Target Site: @Model.Exception.TargetSite
 	Stack Trace: @Model.Exception.StackTrace

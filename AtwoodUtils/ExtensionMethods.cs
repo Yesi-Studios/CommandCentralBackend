@@ -12,8 +12,10 @@ namespace AtwoodUtils
 {
     public static class ExtensionMethods
     {
-        public static string Truncate(this string str, int length)
+        public static string Truncate(this string str, int length, string message = "|| MESSAGE TRUNCATED ||")
         {
+
+
             if (length < 0)
             {
                 throw new ArgumentOutOfRangeException("length", "Length must be greater than or equal to 0!");
@@ -24,8 +26,13 @@ namespace AtwoodUtils
                 return null;
             }
 
-            int maxLength = Math.Min(str.Length, length);
-            return str.Substring(0, maxLength);
+            if (str.Length >= length)
+            {
+                str = str.Substring(0, length - message.Length);
+                str += message;
+            }
+
+            return str;
         }
 
         /// <summary>
