@@ -62,10 +62,6 @@ namespace CCServ.ServiceManagement
                 stp.HttpHelpPageEnabled = false;
                 #endif
 
-                _host.Faulted += host_Faulted;
-
-
-
                 _host.Open();
 
                 Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
@@ -82,17 +78,6 @@ namespace CCServ.ServiceManagement
         public static void StopService()
         {
             _host.Close();
-        }
-
-        /// <summary>
-        /// If the service faults for any reason.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void host_Faulted(object sender, EventArgs e)
-        {
-            Log.Warning("The host has entered the faulted state.  Service re-initialization will now be started.");
-            StartService(_options);
         }
 
         /// <summary>
