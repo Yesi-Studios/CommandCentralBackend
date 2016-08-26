@@ -27,12 +27,6 @@ namespace CCServ.Logging.Loggers
             }
         }
 
-        public bool IsValid()
-        {
-            //TODO do something better here. Maybe... the email sender can handle errors if they occur so it's not a big deal.
-            return true;
-        }
-
         public void LogCritical(string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
             if (EnabledMessageTypes.Contains(MessageTypes.ERROR))

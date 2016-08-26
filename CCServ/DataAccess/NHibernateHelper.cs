@@ -31,7 +31,7 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Indicates if the underlying session factory is ready to start creating sessions for database access.
         /// </summary>
-        public static bool IsReasy
+        public static bool IsReady
         {
             get
             {
