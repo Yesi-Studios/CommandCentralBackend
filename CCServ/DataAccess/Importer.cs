@@ -807,12 +807,21 @@ namespace CCServ.DataAccess
                                 return person;
                             }).ToList();
 
+                        int total = persons.Count;
+                        int current = 0;
+
                         //Persist the persons.
                         Log.Info("Persisting all members of the command...");
                         persons.ForEach(x =>
                             {
-                                    session.SaveOrUpdate(x);
-                                    session.Flush();
+                                session.SaveOrUpdate(x);
+                                session.Flush();
+                                current++;
+
+                                if ((current % 50) == 0)
+                                {
+                                    Log.Info("{0}% completed...".FormatS(Math.Round(((double)current/(double)total) * 100, 2)));
+                                }
                             });
 
                         //All of that went well, so let's log the failures.
