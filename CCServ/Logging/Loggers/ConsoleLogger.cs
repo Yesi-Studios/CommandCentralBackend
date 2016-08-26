@@ -34,11 +34,6 @@ namespace CCServ.Logging.Loggers
             }
         }
 
-        public bool IsValid()
-        {
-            return Environment.UserInteractive;
-        }
-
         public void LogCritical(string message, MessageToken token, string callerMemberName = "unknown",  int callerLineNumber = 0,  string callerFilePath = "")
         {
             if (EnabledMessageTypes.Contains(MessageTypes.CRITICAL))

@@ -21,10 +21,16 @@ namespace CCServ.Logging
 
         public virtual int CallerLineNumber { get; set; }
 
+        public virtual string MessageType { get; set; }
+
+        public virtual DateTime Time { get; set; }
+
         public LogEntry()
         {
             if (Id == default(Guid))
                 Id = Guid.NewGuid();
+
+            Time = DateTime.Now;
         }
 
         public class LogEntryMapping : ClassMap<LogEntry>
@@ -34,6 +40,13 @@ namespace CCServ.Logging
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.Message).Not.Nullable().Length(10000);
+                Map(x => x.CallerMemberName);
+                Map(x => x.CallerFilePath);
+                Map(x => x.CallerLineNumber);
+                Map(x => x.MessageType).Not.Nullable();
+                Map(x => x.Time);
+
+                References(x => x.Token);
             }
         }
     }

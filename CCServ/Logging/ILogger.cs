@@ -15,8 +15,6 @@ namespace CCServ.Logging
 
         string Name { get; }
 
-        bool IsValid();
-
         void LogDebug(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 
         void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);

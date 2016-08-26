@@ -26,27 +26,30 @@ namespace CCServ.Logging
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
-        public static bool RegisterLogger(ILogger logger)
+        public static void RegisterLogger(ILogger logger)
         {
-            if (logger.IsValid())
+            try
             {
+
                 logger.EnabledMessageTypes = new List<MessageTypes>
-                {
-                    MessageTypes.CRITICAL,
-                    MessageTypes.DEBUG,
-                    MessageTypes.ERROR,
-                    MessageTypes.INFORMATION,
-                    MessageTypes.WARNING
-                };
+                    {
+                        MessageTypes.CRITICAL,
+                        MessageTypes.DEBUG,
+                        MessageTypes.ERROR,
+                        MessageTypes.INFORMATION,
+                        MessageTypes.WARNING
+                    };
 
                 _loggers.Add(logger);
 
                 Log.Info("Hello {0}, you were registered successfully!".FormatS(logger.Name), null);
 
-                return true;
+            }
+            catch
+            {
+                throw;
             }
 
-            return false;
         }
 
         /// <summary>
