@@ -21,7 +21,7 @@ Original Error Message : @Model.OriginalMessage
 	API Key: @Model.Token.APIKey.Id
 	Application Name: @Model.Token.APIKey.ApplicationName
 	Call Time: @Model.Token.CallTime
-	Raw JSON Request: @Model.Token.RawRequestBody
+	Raw JSON Request: @Model.Token.RawRequestBodyForLogging
 	Endpoint: @Model.Token.CalledEndpoint
 	Raw JSON Result: @Model.Token.RawResponseBody
 	State: @Model.Token.State

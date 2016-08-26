@@ -44,7 +44,19 @@ namespace CCServ.ClientAccess
         {
             get
             {
-                return EndpointDescription.EndpointMethodAttribute.AllowArgumentLogging ? _rawRequestBody.Truncate(10000) : "REDACTED";
+                bool allowLogging = false;
+
+                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowArgumentLogging)
+                    allowLogging = true;
+
+                if (allowLogging)
+                {
+                    return _rawRequestBody.Truncate(10000);
+                }
+                else
+                {
+                    return "REDACTED";
+                }
             }
             set
             {
@@ -100,7 +112,19 @@ namespace CCServ.ClientAccess
         {
             get
             {
-                return EndpointDescription.EndpointMethodAttribute.AllowResponseLogging ? ConstructResponseString().Truncate(10000) : "REDACTED";
+                bool allowLogging = false;
+
+                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowResponseLogging)
+                    allowLogging = true;
+
+                if (allowLogging)
+                {
+                    return ConstructResponseString().Truncate(10000);
+                }
+                else
+                {
+                    return "REDACTED";
+                }
             }
         }
 
@@ -164,6 +188,7 @@ namespace CCServ.ClientAccess
             //Initialize the status code to OK.  If the error message is ever set, then that'll change.
             StatusCode = System.Net.HttpStatusCode.OK;
             ErrorType = ErrorTypes.Null;
+            APIKey = new APIKey();
         }
 
         #endregion
