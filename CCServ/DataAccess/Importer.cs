@@ -615,12 +615,6 @@ namespace CCServ.DataAccess
                                         IsPreferred = false
                                     }).ToList();
 
-                                //Let's make sure the person has a mail.mil account and if not, add it.
-                                if (!person.EmailAddresses.Any(x => x.Address.Contains("mail.mil")))
-                                {
-                                    errorsLog.Add("{0} has no mail.mil email account.  He/She will not be able to register an account without that.".FormatS(person.ToString()));
-                                }
-
                                 person.EmergencyContactInstructions = "";
 
                                 if (!String.IsNullOrEmpty(persRow["PERS_ethnicity"] as string))
@@ -647,6 +641,13 @@ namespace CCServ.DataAccess
                                     {
                                         person.Paygrade = Paygrades.AllPaygrades.First(x => x.Value.SafeEquals(rank));
                                     }
+                                }
+
+                                //Did we get a paygrade?  If not set it to e1.
+                                if (person.Paygrade == null)
+                                {
+                                    errorsLog.Add("{0} had no valid rank.  It was set to E1.".FormatS(person.ToString()));
+                                    person.Paygrade = Paygrades.E1;
                                 }
 
                                 //home is 0, work is 1, cell is 2

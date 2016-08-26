@@ -19,7 +19,7 @@ namespace CCServ.Entities.Muster
         /// <summary>
         /// The hour at which the muster will roll over, starting a new muster day, regardless of the current muster's status.
         /// </summary>
-        private static readonly Time _rolloverTime = new Time(16, 0, 0);
+        private static readonly Time _rolloverTime = new Time(12, 50, 0);
 
         /// <summary>
         /// The hour at which the muster _should_ be completed.  This governs when email are sent and their urgency.
@@ -267,22 +267,22 @@ namespace CCServ.Entities.Muster
                     var persons = GetMusterablePersonsQuery(session).List();
                     
                     //Ok we have all the persons and their muster records.  #thatwaseasy
-                    foreach (Person per in persons)
+                    foreach (Person person in persons)
                     {
-                        per.CurrentMusterStatus.Command = per.Command == null ? "" : per.Command.Value;
-                        per.CurrentMusterStatus.Department = per.Department == null ? "" : per.Department.Value;
-                        per.CurrentMusterStatus.Division = per.Division == null ? "" : per.Division.Value;
-                        per.CurrentMusterStatus.DutyStatus = per.DutyStatus.ToString();
-                        if (!per.CurrentMusterStatus.HasBeenSubmitted)
+                        person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.Value;
+                        person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.Value;
+                        person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.Value;
+                        person.CurrentMusterStatus.DutyStatus = person.DutyStatus.ToString();
+                        if (!person.CurrentMusterStatus.HasBeenSubmitted)
                         {
-                            per.CurrentMusterStatus.MusterStatus = MusterStatuses.UA.ToString();
-                            per.CurrentMusterStatus.SubmitTime = DateTime.Now;
+                            person.CurrentMusterStatus.MusterStatus = MusterStatuses.UA.ToString();
+                            person.CurrentMusterStatus.SubmitTime = DateTime.Now;
                         }
-                        per.CurrentMusterStatus.HasBeenSubmitted = true;
-                        per.CurrentMusterStatus.Paygrade = per.Paygrade.ToString();
-                        per.CurrentMusterStatus.UIC = per.UIC == null ? "" : per.UIC.Value;
+                        person.CurrentMusterStatus.HasBeenSubmitted = true;
+                        person.CurrentMusterStatus.Paygrade = person.Paygrade.ToString();
+                        person.CurrentMusterStatus.UIC = person.UIC == null ? "" : person.UIC.Value;
 
-                        session.Save(per);
+                        session.Save(person);
                     }
 
                     var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
