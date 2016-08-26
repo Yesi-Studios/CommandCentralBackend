@@ -64,7 +64,7 @@ namespace CCServ.Logging.Loggers
                 {
                     Exception = ex,
                     OriginalMessage = message,
-                    Token = token
+                    Token = token == null ? new MessageToken() : token
                 };
 
                 Email.EmailInterface.CCEmailMessage

@@ -72,7 +72,7 @@ namespace CCServ.ServiceManagement
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Logging.Log.Exception(e, "An error occurred during service start up");
             }
         }
 

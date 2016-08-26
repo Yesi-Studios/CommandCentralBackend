@@ -255,8 +255,7 @@ namespace CCServ.DataAccess
 
                             if (nonexistantTables.Any())
                             {
-                                var exception = new Exception("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)));
-                                Log.Exception(exception, exception.Message);
+                                throw new Exception("One or more tables were not found in the database that NHibernate expected to exist.  Tables : {0}".FormatS(String.Join(",", nonexistantTables)));
                             }
                             else
                             {
