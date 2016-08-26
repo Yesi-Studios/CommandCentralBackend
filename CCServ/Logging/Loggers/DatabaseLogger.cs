@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
 
 namespace CCServ.Logging.Loggers
 {
@@ -64,7 +65,7 @@ namespace CCServ.Logging.Loggers
                         CallerFilePath = callerFilePath,
                         CallerLineNumber = callerLineNumber,
                         CallerMemberName = callerMemberName,
-                        Message = message,
+                        Message = message.Truncate(10000),
                         Token = token,
                         MessageType = "Debug"
                     });
@@ -82,7 +83,7 @@ namespace CCServ.Logging.Loggers
                         CallerFilePath = callerFilePath,
                         CallerLineNumber = callerLineNumber,
                         CallerMemberName = callerMemberName,
-                        Message = message,
+                        Message = message.Truncate(10000),
                         Token = token,
                         MessageType = "Information"
                     });
@@ -100,7 +101,7 @@ namespace CCServ.Logging.Loggers
                     CallerFilePath = callerFilePath,
                     CallerLineNumber = callerLineNumber,
                     CallerMemberName = callerMemberName,
-                    Message = message,
+                    Message = message.Truncate(10000),
                     Token = token,
                     MessageType = "Critical"
                 });
@@ -118,7 +119,7 @@ namespace CCServ.Logging.Loggers
                     CallerFilePath = callerFilePath,
                     CallerLineNumber = callerLineNumber,
                     CallerMemberName = callerMemberName,
-                    Message = message,
+                    Message = message.Truncate(10000),
                     Token = token,
                     MessageType = "Warning"
                 });
@@ -136,7 +137,7 @@ namespace CCServ.Logging.Loggers
                     CallerFilePath = callerFilePath,
                     CallerLineNumber = callerLineNumber,
                     CallerMemberName = callerMemberName,
-                    Message = message + "||BREAK EXCEPTION||" + ex.ToString(),
+                    Message = (message.Truncate(10000) + "||BREAK EXCEPTION||" + ex.ToString()).Truncate(10000),
                     Token = token,
                     MessageType = "Exception"
                 });
