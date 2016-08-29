@@ -19,7 +19,7 @@ namespace CCServ.Entities.Muster
         /// <summary>
         /// The hour at which the muster will roll over, starting a new muster day, regardless of the current muster's status.
         /// </summary>
-        private static readonly Time _rolloverTime = new Time(12, 03, 0);
+        private static readonly Time _rolloverTime = new Time(16, 00, 0);
 
         /// <summary>
         /// The hour at which the muster _should_ be completed.  This governs when email are sent and their urgency.
