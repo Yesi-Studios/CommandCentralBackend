@@ -16,7 +16,13 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The link to the muster report.
         /// </summary>
-        public string ReportLink { get; set; }
+        public string ReportISODateString
+        {
+            get
+            {
+                return MusterDateTime.ToString("s", CultureInfo.InvariantCulture);
+            }
+        }
 
         public string CreatorName { get; set; }
 
