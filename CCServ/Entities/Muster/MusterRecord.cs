@@ -19,7 +19,7 @@ namespace CCServ.Entities.Muster
         /// <summary>
         /// The hour at which the muster will roll over, starting a new muster day, regardless of the current muster's status.
         /// </summary>
-        private static readonly Time _rolloverTime = new Time(16, 00, 0);
+        private static readonly Time _rolloverTime = new Time(12, 03, 0);
 
         /// <summary>
         /// The hour at which the muster _should_ be completed.  This governs when email are sent and their urgency.
@@ -288,7 +288,6 @@ namespace CCServ.Entities.Muster
                     var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
                     {
                         RollOverTime = _rolloverTime,
-                        ReportLink = "", //TODO
                     };
 
                     //Ok, now we need to send the email.
@@ -296,7 +295,6 @@ namespace CCServ.Entities.Muster
                         .CreateDefault()
                         .To(Config.Email.DeveloperDistroAddress)
                         .Subject("Muster Report")
-                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_Plain.txt", model)
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
