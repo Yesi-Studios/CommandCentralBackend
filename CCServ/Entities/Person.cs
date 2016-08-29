@@ -456,7 +456,6 @@ namespace CCServ.Entities
                                 .CreateDefault()
                                 .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                                 .Subject("Security Alert : Failed Login")
-                                .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_Plain.txt", model)
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_HTML.html", model)
                                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
@@ -624,7 +623,6 @@ namespace CCServ.Entities
                             .CC(Config.Email.DeveloperDistroAddress)
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Security Alert : Reregistration Attempt")
-                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_Plain.txt", beginRegModel)
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
@@ -687,7 +685,6 @@ namespace CCServ.Entities
                             .CreateDefault()
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Confirm Command Central Account")
-                            .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_Plain.txt", model)
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
@@ -800,7 +797,6 @@ namespace CCServ.Entities
                         .CreateDefault()
                         .To(pendingAccountConfirmation.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingAccountConfirmation.Person.ToString())))
                         .Subject("Account Registered!")
-                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_Plain.txt", model)
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
@@ -950,7 +946,6 @@ namespace CCServ.Entities
                         .CreateDefault()
                         .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                         .Subject("Password Reset")
-                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_Plain.txt", model)
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
@@ -1055,7 +1050,6 @@ namespace CCServ.Entities
                         .CreateDefault()
                         .To(pendingPasswordReset.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingPasswordReset.Person.ToString())))
                         .Subject("Password Reset")
-                        .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_Plain.txt", model)
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 

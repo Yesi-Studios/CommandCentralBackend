@@ -44,7 +44,6 @@ namespace CCServ.Logging.Loggers
                     .CreateDefault()
                     .To(Config.Email.DeveloperDistroAddress)
                     .Subject("Command Central Critical Message")
-                    .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_Plain.txt", model)
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             }
@@ -65,7 +64,6 @@ namespace CCServ.Logging.Loggers
                     .CreateDefault()
                     .To(Config.Email.DeveloperDistroAddress)
                     .Subject("Command Central Fatal Error")
-                    .BodyUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_Plain.txt", model)
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             }
