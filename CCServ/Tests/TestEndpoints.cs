@@ -7,6 +7,11 @@ using CCServ.ClientAccess;
 
 namespace CCServ.Tests
 {
+    /// <summary>
+    /// Contains some test endpoints.
+    /// <para />
+    /// Endpoints in this class should be wrapped in debug statements.
+    /// </summary>
     public static class TestEndpoints
     {
         /// <summary>
