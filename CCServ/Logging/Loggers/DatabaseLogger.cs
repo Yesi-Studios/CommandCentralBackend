@@ -29,8 +29,6 @@ namespace CCServ.Logging.Loggers
         }
 
 
-        public List<MessageTypes> EnabledMessageTypes { get; set; }
-
         public LoggingTargetTypes TargetType
         {
             get

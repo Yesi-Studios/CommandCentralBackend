@@ -9,8 +9,6 @@ namespace CCServ.Logging.Loggers
 {
     class EmailLogger : ILogger
     {
-        public List<MessageTypes> EnabledMessageTypes { get; set; }
-        
         public string Name
         {
             get
@@ -29,44 +27,38 @@ namespace CCServ.Logging.Loggers
 
         public void LogCritical(string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnabledMessageTypes.Contains(MessageTypes.ERROR))
+            var model = new Email.Models.CriticalMessageEmailModel
             {
-                var model = new Email.Models.CriticalMessageEmailModel
-                {
-                    CallerFilePath = callerFilePath,
-                    CallerLineNumber = callerLineNumber,
-                    CallerMemberName = callerMemberName,
-                    Message = message,
-                    Token = token
-                };
+                CallerFilePath = callerFilePath,
+                CallerLineNumber = callerLineNumber,
+                CallerMemberName = callerMemberName,
+                Message = message,
+                Token = token
+            };
 
-                Email.EmailInterface.CCEmailMessage
-                    .CreateDefault()
-                    .To(Config.Email.DeveloperDistroAddress)
-                    .Subject("Command Central Critical Message")
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
-                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-            }
+            Email.EmailInterface.CCEmailMessage
+                .CreateDefault()
+                .To(Config.Email.DeveloperDistroAddress)
+                .Subject("Command Central Critical Message")
+                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
+                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
 
         public void LogException(Exception ex, string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnabledMessageTypes.Contains(MessageTypes.ERROR))
+            var model = new Email.Models.FatalErrorEmailModel
             {
-                var model = new Email.Models.FatalErrorEmailModel
-                {
-                    Exception = ex,
-                    OriginalMessage = message,
-                    Token = token == null ? new MessageToken() : token
-                };
+                Exception = ex,
+                OriginalMessage = message,
+                Token = token == null ? new MessageToken() : token
+            };
 
-                Email.EmailInterface.CCEmailMessage
-                    .CreateDefault()
-                    .To(Config.Email.DeveloperDistroAddress)
-                    .Subject("Command Central Fatal Error")
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
-                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-            }
+            Email.EmailInterface.CCEmailMessage
+                .CreateDefault()
+                .To(Config.Email.DeveloperDistroAddress)
+                .Subject("Command Central Fatal Error")
+                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
+                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
 
         public void LogDebug(string message, MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
