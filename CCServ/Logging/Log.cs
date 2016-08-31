@@ -34,11 +34,14 @@ namespace CCServ.Logging
                 logger.EnabledMessageTypes = new List<MessageTypes>
                     {
                         MessageTypes.CRITICAL,
-                        MessageTypes.DEBUG,
                         MessageTypes.ERROR,
                         MessageTypes.INFORMATION,
                         MessageTypes.WARNING
                     };
+
+                #if DEBUG
+                    logger.EnabledMessageTypes.Add(MessageTypes.DEBUG);
+                #endif
 
                 _loggers.Add(logger);
 
