@@ -1826,10 +1826,8 @@ namespace CCServ.Entities
                                             x.PhysicalAddresses.Any(
                                                 physicalAddress =>
                                                     physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Country.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Route.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.Address.IsInsensitiveLike(term, MatchMode.Anywhere) ||
                                                     physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.StreetNumber.IsInsensitiveLike(term, MatchMode.Anywhere) ||
                                                     physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
                                     }
 
