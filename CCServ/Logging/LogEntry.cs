@@ -57,9 +57,6 @@ namespace CCServ.Logging
         /// </summary>
         public LogEntry()
         {
-            if (Id == default(Guid))
-                Id = Guid.NewGuid();
-
             Time = DateTime.Now;
         }
 
@@ -73,7 +70,7 @@ namespace CCServ.Logging
             /// </summary>
             public LogEntryMapping()
             {
-                Id(x => x.Id).GeneratedBy.Assigned();
+                Id(x => x.Id).GeneratedBy.Guid();
 
                 Map(x => x.Message).Not.Nullable().Length(10000);
                 Map(x => x.CallerMemberName);

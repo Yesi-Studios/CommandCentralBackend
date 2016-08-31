@@ -308,6 +308,17 @@ namespace CCServ.Entities
 
         #endregion
 
+        #region ctors
+
+
+
+        public Person()
+        {
+            UserPreferences = new Dictionary<string, string>();
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -1243,11 +1254,11 @@ namespace CCServ.Entities
             }
 
             //Cool, since everything is good to go, let's also add the account history.
-            newPerson.AccountHistory.Add(new AccountHistoryEvent
+            newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
             {
                 AccountHistoryEventType = AccountHistoryEventTypes.Creation,
                 EventTime = token.CallTime
-            });
+            } };
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -2280,7 +2291,8 @@ namespace CCServ.Entities
                     .AsMap<string>(index =>
                         index.Column("PreferenceKey").Type<string>(), element =>
                         element.Column("PreferenceValue").Type<string>())
-                    .Cascade.All();
+                    .Cascade.All()
+                    .Not.LazyLoad();
                     
             }
         }

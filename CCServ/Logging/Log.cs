@@ -20,6 +20,8 @@ namespace CCServ.Logging
     {
 
         private static ConcurrentBag<ILogger> _loggers = new ConcurrentBag<ILogger>();
+
+        private static List<MessageTypes> enabledMessageTypes = new List<MessageTypes>();
         
         /// <summary>
         /// Registers a logger, returning a boolean indicating if the registration succeeded.
@@ -31,14 +33,17 @@ namespace CCServ.Logging
             try
             {
 
-                logger.EnabledMessageTypes = new List<MessageTypes>
+                enabledMessageTypes = new List<MessageTypes>
                     {
                         MessageTypes.CRITICAL,
-                        MessageTypes.DEBUG,
                         MessageTypes.ERROR,
                         MessageTypes.INFORMATION,
                         MessageTypes.WARNING
                     };
+
+                #if DEBUG
+                    enabledMessageTypes.Add(MessageTypes.DEBUG);
+                #endif
 
                 _loggers.Add(logger);
 
@@ -63,10 +68,13 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Debug(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.DEBUG))
             {
-                logger.LogDebug(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogDebug(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
@@ -80,10 +88,13 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Info(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.INFORMATION))
             {
-                logger.LogInformation(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogInformation(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
@@ -97,10 +108,13 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Warning(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.WARNING))
             {
-                logger.LogWarning(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogWarning(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
@@ -114,10 +128,13 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Critical(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.CRITICAL))
             {
-                logger.LogCritical(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogCritical(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
@@ -132,10 +149,13 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Exception(Exception ex, string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.ERROR))
             {
-                logger.LogException(ex, message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogException(ex, message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>

@@ -10,27 +10,24 @@ namespace CCServ.Logging.Loggers
     public class DatabaseLogger : ILogger
     {
 
-        private NHibernate.ISession _session;
-
         /// <summary>
         /// Ensures that the logging session is initialized and returns a boolean indicating if logging operations using it are valid.
         /// </summary>
         /// <returns></returns>
-        private bool EnsureSession()
+        private bool TryGetSession(out NHibernate.ISession session)
         {
-            if (_session != null)
-                return true;
-
             if (!DataAccess.NHibernateHelper.IsReady)
+            {
+                session = null;
                 return false;
-
-            _session = DataAccess.NHibernateHelper.CreateStatefulSession();
-            
-            return true;
+            }
+            else
+            {
+                session = DataAccess.NHibernateHelper.CreateStatefulSession(); 
+                return true;
+            }
         }
 
-
-        public List<MessageTypes> EnabledMessageTypes { get; set; }
 
         public LoggingTargetTypes TargetType
         {
@@ -58,9 +55,11 @@ namespace CCServ.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogDebug(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnsureSession())
+            if (DataAccess.NHibernateHelper.IsReady)
             {
-                _session.Save(new LogEntry
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    session.Save(new LogEntry
                     {
                         CallerFilePath = callerFilePath,
                         CallerLineNumber = callerLineNumber,
@@ -69,16 +68,17 @@ namespace CCServ.Logging.Loggers
                         Token = token,
                         MessageType = "Debug"
                     });
-
-                _session.Flush();
+                }
             }
         }
 
         public void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnsureSession())
+            if (DataAccess.NHibernateHelper.IsReady)
             {
-                _session.Save(new LogEntry
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    session.Save(new LogEntry
                     {
                         CallerFilePath = callerFilePath,
                         CallerLineNumber = callerLineNumber,
@@ -87,63 +87,67 @@ namespace CCServ.Logging.Loggers
                         Token = token,
                         MessageType = "Information"
                     });
-
-                _session.Flush();
+                }
             }
         }
 
         public void LogCritical(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnsureSession())
+            if (DataAccess.NHibernateHelper.IsReady)
             {
-                _session.Save(new LogEntry
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 {
-                    CallerFilePath = callerFilePath,
-                    CallerLineNumber = callerLineNumber,
-                    CallerMemberName = callerMemberName,
-                    Message = message.Truncate(10000),
-                    Token = token,
-                    MessageType = "Critical"
-                });
-                _session.Flush();
-
+                    session.Save(new LogEntry
+                    {
+                        CallerFilePath = callerFilePath,
+                        CallerLineNumber = callerLineNumber,
+                        CallerMemberName = callerMemberName,
+                        Message = message.Truncate(10000),
+                        Token = token,
+                        MessageType = "Critical"
+                    });
+                }
             }
         }
 
         public void LogWarning(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnsureSession())
+            if (DataAccess.NHibernateHelper.IsReady)
             {
-                _session.Save(new LogEntry
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 {
-                    CallerFilePath = callerFilePath,
-                    CallerLineNumber = callerLineNumber,
-                    CallerMemberName = callerMemberName,
-                    Message = message.Truncate(10000),
-                    Token = token,
-                    MessageType = "Warning"
-                });
-
-                _session.Flush();
+                    session.Save(new LogEntry
+                    {
+                        CallerFilePath = callerFilePath,
+                        CallerLineNumber = callerLineNumber,
+                        CallerMemberName = callerMemberName,
+                        Message = message.Truncate(10000),
+                        Token = token,
+                        MessageType = "Warning"
+                    });
+                }
             }
         }
 
         public void LogException(Exception ex, string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (EnsureSession())
-            {
-                _session.Save(new LogEntry
-                {
-                    CallerFilePath = callerFilePath,
-                    CallerLineNumber = callerLineNumber,
-                    CallerMemberName = callerMemberName,
-                    Message = (message.Truncate(10000) + "||BREAK EXCEPTION||" + ex.ToString()).Truncate(10000),
-                    Token = token,
-                    MessageType = "Exception"
-                });
 
-                _session.Flush();
+            if (DataAccess.NHibernateHelper.IsReady)
+            {
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    session.Save(new LogEntry
+                    {
+                        CallerFilePath = callerFilePath,
+                        CallerLineNumber = callerLineNumber,
+                        CallerMemberName = callerMemberName,
+                        Message = (message.Truncate(10000) + "||BREAK EXCEPTION||" + ex.ToString()).Truncate(10000),
+                        Token = token,
+                        MessageType = "Exception"
+                    });
+                }
             }
+
         }
     }
 }
