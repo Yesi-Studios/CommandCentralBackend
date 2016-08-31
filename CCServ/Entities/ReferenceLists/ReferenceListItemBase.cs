@@ -251,6 +251,7 @@ namespace CCServ.Entities.ReferenceLists
                     var listItem = Activator.CreateInstance(type) as ReferenceListItemBase;
                     listItem.Description = description;
                     listItem.Value = value;
+                    listItem.Id = Guid.NewGuid();
 
                     //Validate it.
                     var validationResult = listItem.Validate();

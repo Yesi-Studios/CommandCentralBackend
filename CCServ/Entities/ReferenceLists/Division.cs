@@ -219,7 +219,7 @@ namespace CCServ.Entities.ReferenceLists
                         description = token.Args["description"] as string;
 
                     //Now put it in the object and then validate it.
-                    Division division = new Division { Value = value, Description = description };
+                    Division division = new Division { Id = Guid.NewGuid(), Value = value, Description = description };
 
                     //Validate it.
                     var validationResult = division.Validate();

@@ -225,7 +225,7 @@ namespace CCServ.Entities.ReferenceLists
                         description = token.Args["description"] as string;
 
                     //Now put it in the object and then validate it.
-                    Department department = new Department { Value = value, Description = description, Divisions = new List<Division>() };
+                    Department department = new Department { Id = Guid.NewGuid(), Value = value, Description = description, Divisions = new List<Division>() };
 
                     //Validate it.
                     var validationResult = department.Validate();
