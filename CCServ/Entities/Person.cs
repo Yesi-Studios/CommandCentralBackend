@@ -2280,7 +2280,8 @@ namespace CCServ.Entities
                     .AsMap<string>(index =>
                         index.Column("PreferenceKey").Type<string>(), element =>
                         element.Column("PreferenceValue").Type<string>())
-                    .Cascade.All();
+                    .Cascade.All()
+                    .Not.LazyLoad();
                     
             }
         }

@@ -777,9 +777,9 @@ namespace CCServ.Entities.Muster
                         LastName = x.LastName,
                         Paygrade = x.Paygrade,
                         Designation = x.Designation == null ? "" : x.Designation.Value, //Designation can be null.
-                        Division = x.Division.Value,
-                        Department = x.Department.Value,
-                        Command = x.Command.Value,
+                        Division = x.Division == null ? "" : x.Division.Value,
+                        Department = x.Department == null ? "" : x.Department.Value,
+                        Command = x.Command == null ? "" : x.Command.Value,
                         UIC = x.UIC == null ? "" : x.UIC.Value, //UIC can also be null.
                         FriendlyName = x.ToString(),
                         CurrentMusterStatus = new
