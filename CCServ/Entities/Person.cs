@@ -1827,9 +1827,24 @@ namespace CCServ.Entities
                                     queryOver = queryOver.Where(disjunction);
                                     break;
                                 }
-                            case "NECAssignments":
+                            case "PrimaryNEC":
                                 {
-                                    token.AddErrorMessage("We do not currently support searching in NECs.  We apologize for the inconvenience.  We promise we're working on it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                    var disjunction = Restrictions.Disjunction();
+                                    foreach (var term in searchTerms)
+                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
+                                    queryOver = queryOver.Where(disjunction);
+                                    break;
+                                }
+                            case "SecondaryNECs":
+                                {
+                                    foreach (var term in searchTerms)
+                                    {
+                                        queryOver = queryOver.Where(x =>
+                                            x.SecondaryNECs.Any(
+                                                nec =>
+                                                    nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere)));
+                                    }
+
                                     break;
                                 }
                             case "EmailAddresses":
