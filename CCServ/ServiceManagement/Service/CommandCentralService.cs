@@ -233,6 +233,48 @@ namespace CCServ.ServiceManagement.Service
 
         #endregion
 
+        #region Statistics
+
+        /// <summary>
+        /// Gets stats about the service.
+        /// </summary>
+        /// <param name="mode"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public string GetStatistics(string mode, string password)
+        {
+            AddHeadersToOutgoingResponse(WebOperationContext.Current);
+
+            if (password != "admin")
+            {
+                return "YOU GET NOTHING";
+            }
+
+            switch (mode.ToLower())
+            {
+                case "messages":
+                    {
+                        using (var session = NHibernateHelper.CreateStatefulSession())
+                        {
+                            return session.QueryOver<MessageToken>().RowCount().ToString();
+                        }
+                    }
+                case "sessions":
+                    {
+                        using (var session = NHibernateHelper.CreateStatefulSession())
+                        {
+                            return session.QueryOver<AuthenticationSession>().RowCount().ToString();
+                        }
+                    }
+                default:
+                    {
+                        return "That mode is not supported.";
+                    }
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -288,6 +330,8 @@ namespace CCServ.ServiceManagement.Service
                 }
             }
         }
+
+        
 
         #endregion
 
