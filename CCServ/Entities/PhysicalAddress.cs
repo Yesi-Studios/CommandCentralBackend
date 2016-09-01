@@ -204,13 +204,6 @@ namespace CCServ.Entities
                 RuleFor(x => x.ZipCode)
                     .NotEmpty().WithMessage("You zip code must not be empty.")
                     .Matches(@"^\d{5}(?:[-\s]\d{4})?$").WithMessage("Your zip code was not valid.");
-
-                Custom(x =>
-                {
-                    //Validate against the US Census.
-
-                    return null;
-                });
             }
         }
 
