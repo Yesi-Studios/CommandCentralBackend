@@ -35,11 +35,21 @@ namespace CCServ.ServiceManagement.Service
         /// </summary>
         public void GetOptions()
         {
-            //Add the headers, this will adequately reply to the options request.
-            AddHeadersToOutgoingResponse(WebOperationContext.Current);
+            try
+            {
+                //Add the headers, this will adequately reply to the options request.
+                AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
-            //Tell the host we received a pre flight.
-            Log.Debug("Received Preflight Request");
+                //Tell the host we received a pre flight.
+                Log.Debug("Received Preflight Request");
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e, "An error occurred during the pre flight options request.");
+
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            }
+            
         }
 
         #endregion
@@ -243,33 +253,45 @@ namespace CCServ.ServiceManagement.Service
         /// <returns></returns>
         public string GetStatistics(string mode, string password)
         {
-            AddHeadersToOutgoingResponse(WebOperationContext.Current);
-
-            if (password != "admin")
+            try
             {
-                return "YOU GET NOTHING";
+                AddHeadersToOutgoingResponse(WebOperationContext.Current);
+
+                if (password != "admin")
+                {
+                    Log.Warning("Received invalid password for statistics request.");
+                    return "YOU GET NOTHING";
+                }
+
+                Log.Debug("Received statistics request.");
+
+                switch (mode.ToLower())
+                {
+                    case "messages":
+                        {
+                            using (var session = NHibernateHelper.CreateStatefulSession())
+                            {
+                                return session.QueryOver<MessageToken>().RowCount().ToString();
+                            }
+                        }
+                    case "sessions":
+                        {
+                            using (var session = NHibernateHelper.CreateStatefulSession())
+                            {
+                                return session.QueryOver<AuthenticationSession>().RowCount().ToString();
+                            }
+                        }
+                    default:
+                        {
+                            return "That mode is not supported.";
+                        }
+                }
             }
-
-            switch (mode.ToLower())
+            catch (Exception e)
             {
-                case "messages":
-                    {
-                        using (var session = NHibernateHelper.CreateStatefulSession())
-                        {
-                            return session.QueryOver<MessageToken>().RowCount().ToString();
-                        }
-                    }
-                case "sessions":
-                    {
-                        using (var session = NHibernateHelper.CreateStatefulSession())
-                        {
-                            return session.QueryOver<AuthenticationSession>().RowCount().ToString();
-                        }
-                    }
-                default:
-                    {
-                        return "That mode is not supported.";
-                    }
+                Log.Exception(e, "An error occurred while trying to serve statistics.");
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                return "A fatal internal error occurred.  Please see the logs.";
             }
         }
 

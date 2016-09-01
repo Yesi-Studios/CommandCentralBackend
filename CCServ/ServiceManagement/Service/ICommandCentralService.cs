@@ -29,7 +29,7 @@ namespace CCServ.ServiceManagement.Service
         void GetOptions();
 
         [OperationContract]
-        [WebGet(UriTemplate = "/statistics/{mode}?password={password}")]
+        [WebGet(UriTemplate = "/statistics/{mode}?password={password}", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare)]
         string GetStatistics(string mode, string password);
 
     }
