@@ -283,7 +283,7 @@ namespace CCServ.ServiceManagement.Service
                         }
                     case "endpoints":
                         {
-                            return new { Count = ServiceEndpoint.EndpointDescriptions.Count, Endpoints = ServiceEndpoint.EndpointDescriptions.Keys }.Serialize(); ;
+                            return new { Count = ServiceEndpoint.EndpointDescriptions.Count, Endpoints = ServiceEndpoint.EndpointDescriptions.Keys.OrderBy(x => x) }.Serialize(); ;
                         }
                     default:
                         {
