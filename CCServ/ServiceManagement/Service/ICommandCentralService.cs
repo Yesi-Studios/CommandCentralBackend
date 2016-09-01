@@ -28,6 +28,12 @@ namespace CCServ.ServiceManagement.Service
         [WebInvoke(Method = "OPTIONS", UriTemplate = "*")]
         void GetOptions();
 
+        /// <summary>
+        /// Gets stats about the service.
+        /// </summary>
+        /// <param name="mode"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         [OperationContract]
         [WebGet(UriTemplate = "/statistics/{mode}?password={password}", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare)]
         string GetStatistics(string mode, string password);

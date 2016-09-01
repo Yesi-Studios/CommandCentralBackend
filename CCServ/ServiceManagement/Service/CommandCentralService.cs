@@ -281,6 +281,10 @@ namespace CCServ.ServiceManagement.Service
                                 return session.QueryOver<AuthenticationSession>().RowCount().ToString();
                             }
                         }
+                    case "endpoints":
+                        {
+                            return new { Count = ServiceEndpoint.EndpointDescriptions.Count, Endpoints = ServiceEndpoint.EndpointDescriptions.Keys }.Serialize(); ;
+                        }
                     default:
                         {
                             return "That mode is not supported.";
