@@ -1365,6 +1365,13 @@ namespace CCServ.Entities
                                     wasSet = true;
                                     break;
                                 }
+                            case "accounthistory":
+                                {
+                                    returnData.Add(propertyName, person.AccountHistory.OrderBy(x => x.EventTime).Take(5).ToList());
+
+                                    wasSet = true;
+                                    break;
+                                }
 
                         }
 
@@ -1666,6 +1673,29 @@ namespace CCServ.Entities
                 }
             }
 
+            //Now let's determine if we're doing a geo query.
+            bool isGeoQuery = false;
+            double centerLat, centerLong, radius;
+
+            //If the client sent any one of the three geoquery paramters, then make sure they sent all of them.
+            if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")) &&
+                !token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
+            {
+                //Ok, we're doing a geo query.
+                isGeoQuery = true;
+
+                //Now parse everything.
+                centerLat = (double)token.Args["centerlat"];
+                centerLong = (double)token.Args["centerlong"];
+                radius = (double)token.Args["radius"];
+            }
+            else
+            {
+                token.AddErrorMessage("If you send any geo query paramter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
             {
@@ -1826,10 +1856,8 @@ namespace CCServ.Entities
                                             x.PhysicalAddresses.Any(
                                                 physicalAddress =>
                                                     physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Country.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Route.IsInsensitiveLike(term, MatchMode.Anywhere) ||
+                                                    physicalAddress.Address.IsInsensitiveLike(term, MatchMode.Anywhere) ||
                                                     physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.StreetNumber.IsInsensitiveLike(term, MatchMode.Anywhere) ||
                                                     physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
                                     }
 
@@ -1881,10 +1909,62 @@ namespace CCServ.Entities
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
-                var result = queryOver.List().Select(returnedPerson =>
+                List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+
+                foreach (var person in queryOver.List())
                 {
+                    //Before we do anything, and if this is a geo query, let's determine if this person passes the geo query.
+                    if (isGeoQuery)
+                    {
+                        //If the person has a home address, then use it for the geo query; however, if the person has no home address,
+                        //then just see if the person has at least a physical address that passes the geo query.
+                        var homeAddress = person.PhysicalAddresses.FirstOrDefault(x => x.IsHomeAddress);
+
+                        if (homeAddress != null)
+                        {
+                            //If the home address's lat or long are null, then they fail the check.
+                            if (!homeAddress.Latitude.HasValue || !homeAddress.Longitude.HasValue)
+                                continue;
+
+                            var distance = Utilities.HaversineDistance(new Utilities.LatitudeAndLongitude { Latitude = homeAddress.Latitude.Value, Longitude = homeAddress.Longitude.Value },
+                                                        new Utilities.LatitudeAndLongitude { Latitude = centerLat, Longitude = centerLong },
+                                                        Utilities.DistanceUnit.Miles);
+
+                            //If they failed the distance check, then skip the person.
+                            if (distance > radius)
+                                continue;
+
+                        }
+                        else
+                        {
+                            //So there's no home address, so let's check against any address.
+                            bool passed = false;
+
+                            foreach (var address in person.PhysicalAddresses)
+                            {
+                                if (address.Latitude.HasValue && address.Longitude.HasValue)
+                                {
+                                    var distance = Utilities.HaversineDistance(new Utilities.LatitudeAndLongitude { Latitude = address.Latitude.Value, Longitude = address.Longitude.Value },
+                                                        new Utilities.LatitudeAndLongitude { Latitude = centerLat, Longitude = centerLong },
+                                                        Utilities.DistanceUnit.Miles);
+
+                                    //If we find one that passes, set passed to true and break.
+                                    if (distance < radius)
+                                    {
+                                        passed = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            //If they didn't pass the geo query, skip this iteration.
+                            if (!passed)
+                                continue;
+                        }
+                    }
+
                     //We need to know the fields the client is allowed to return for this client.
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, returnedPerson).ReturnableFields["Main"]["Person"];
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person).ReturnableFields["Main"]["Person"];
 
                     var returnData = new Dictionary<string, string>();
 
@@ -1894,14 +1974,14 @@ namespace CCServ.Entities
                         //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
                         if (propertyName.ToLower() == "id")
                         {
-                            returnData.Add("Id", personMetadata.GetIdentifier(returnedPerson, NHibernate.EntityMode.Poco).ToString());
+                            returnData.Add("Id", personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco).ToString());
                         }
                         else
                         {
                             //if the client isn't allowed to return this field, replace its value with "redacted"
                             if (returnableFields.Contains(propertyName))
                             {
-                                var value = personMetadata.GetPropertyValue(returnedPerson, propertyName, NHibernate.EntityMode.Poco);
+                                var value = personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco);
                                 returnData.Add(propertyName, value == null ? "" : value.ToString());
                             }
                             else
@@ -1912,8 +1992,8 @@ namespace CCServ.Entities
                         }
                     }
 
-                    return returnData;
-                });
+                    result.Add(returnData);
+                }
 
                 token.SetResult(new 
                 { 
