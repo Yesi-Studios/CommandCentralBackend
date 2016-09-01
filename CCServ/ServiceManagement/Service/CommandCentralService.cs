@@ -67,7 +67,7 @@ namespace CCServ.ServiceManagement.Service
 
             try
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
 

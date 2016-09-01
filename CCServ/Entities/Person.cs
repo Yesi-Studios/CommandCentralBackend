@@ -431,7 +431,7 @@ namespace CCServ.Entities
             {
 
                 //If the token has no error then we need a session and a transaction
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -571,7 +571,7 @@ namespace CCServ.Entities
         {
 
             //Let's do our work in a new session so that we don't affect the authentication information.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -757,7 +757,7 @@ namespace CCServ.Entities
             //Finally, we'll update the profile with an account history event.
             //Then return. ... fuck, ok, here we go.
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -897,7 +897,7 @@ namespace CCServ.Entities
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
 
             //Here we go
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -1260,7 +1260,7 @@ namespace CCServ.Entities
                 EventTime = token.CallTime
             } };
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -1321,7 +1321,7 @@ namespace CCServ.Entities
                 return;
             }
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
                 var person = session.Get<Person>(personId);
@@ -1340,7 +1340,7 @@ namespace CCServ.Entities
 
                 List<string> returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
-                var personMetadata = DataAccess.NHibernateHelper.GetEntityMetadata("Person");
+                var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
                 //Now just set the fields the client is allowed to see.
                 foreach (var propertyName in returnableFields)
@@ -2172,7 +2172,7 @@ namespace CCServ.Entities
         [ServiceManagement.StartMethod(Priority = 7)]
         private static void ReadPersons(CLI.Options.LaunchOptions launchOptions)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -2424,7 +2424,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        Ethnicity ethnicity = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Ethnicity>(x.Id);
+                        Ethnicity ethnicity = NHibernateHelper.CreateStatefulSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
                             return false;
@@ -2437,7 +2437,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        ReligiousPreference pref = DataAccess.NHibernateHelper.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
+                        ReligiousPreference pref = NHibernateHelper.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
                             return false;
@@ -2450,7 +2450,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        Designation designation = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Designation>(x.Id);
+                        Designation designation = NHibernateHelper.CreateStatefulSession().Get<Designation>(x.Id);
 
                         if (designation == null)
                             return false;
@@ -2463,7 +2463,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        Division division = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Division>(x.Id);
+                        Division division = NHibernateHelper.CreateStatefulSession().Get<Division>(x.Id);
 
                         if (division == null)
                             return false;
@@ -2476,7 +2476,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        Department department = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Department>(x.Id);
+                        Department department = NHibernateHelper.CreateStatefulSession().Get<Department>(x.Id);
 
                         if (department == null)
                             return false;
@@ -2489,7 +2489,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        Command command = DataAccess.NHibernateHelper.CreateStatefulSession().Get<Command>(x.Id);
+                        Command command = NHibernateHelper.CreateStatefulSession().Get<Command>(x.Id);
 
                         if (command == null)
                             return false;
@@ -2502,7 +2502,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        NEC nec = DataAccess.NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
+                        NEC nec = NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
@@ -2532,7 +2532,7 @@ namespace CCServ.Entities
                         if (x == null)
                             return true;
 
-                        UIC uic = DataAccess.NHibernateHelper.CreateStatefulSession().Get<UIC>(x.Id);
+                        UIC uic = NHibernateHelper.CreateStatefulSession().Get<UIC>(x.Id);
 
                         if (uic == null)
                             return false;
@@ -2546,11 +2546,12 @@ namespace CCServ.Entities
                     {
                         return x.Keys.Count <= 20;
                     })
-                    .WithMessage("You may not submit more than 20 preferece keys.");
+                    .WithMessage("You may not submit more than 20 preference keys.");
                 RuleForEach(x => x.UserPreferences).Must((person, x) =>
                     {
                         return x.Value.Length <= 1000;
-                    });
+                    })
+                    .WithMessage("No preference value may be more than 1000 characters.");
 
 
                 //Set validations
