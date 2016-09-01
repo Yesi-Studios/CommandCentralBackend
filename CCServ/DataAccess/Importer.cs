@@ -744,27 +744,15 @@ namespace CCServ.DataAccess
 
                                 person.PhysicalAddresses = addressRows.Except(badRows).Select(x =>
                                     {
-                                        string streetNumber = null;
-                                        string route = null;
-                                        if ((x["ADD_line1"] as string).ToLower().Contains("bldg"))
-                                        {
-                                            route = (x["ADD_line1"] as string);
-                                            streetNumber = " ";
-                                        }
-                                        else
-                                        {
-                                            streetNumber = (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).First();
-                                            route = String.Join(" ", (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).Skip(1));
-                                        }
+                                        
+                                        string addr = x["ADD_line1"] as string + x["ADD_line2"] as string;
                                         
                                         var address = new Entities.PhysicalAddress
                                         {
                                             City = x["ADD_city"] as string,
-                                            Country = "United States of America",
                                             Id = Guid.Parse(x["NewId"] as string),
                                             IsHomeAddress = Convert.ToInt32(x["ADD_type"]) == 0,
-                                            StreetNumber = streetNumber,
-                                            Route = route,
+                                            Address = addr,
                                             State = x["ADD_st"] as string,
                                             ZipCode = x["ADD_zip"] as string
                                         };
