@@ -191,7 +191,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The person's duty status
         /// </summary>
-        public virtual DutyStatuses DutyStatus { get; set; }
+        public virtual DutyStatus DutyStatus { get; set; }
 
         /// <summary>
         /// The person's UIC

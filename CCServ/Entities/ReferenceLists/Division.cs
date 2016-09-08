@@ -13,7 +13,7 @@ namespace CCServ.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Division.
     /// </summary>
-    public class Division : IValidatable
+    public class Division
     {
 
         #region Properties
