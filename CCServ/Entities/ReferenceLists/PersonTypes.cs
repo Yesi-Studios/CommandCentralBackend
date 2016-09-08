@@ -10,8 +10,6 @@ namespace CCServ.Entities.ReferenceLists
 {
     public static class PersonTypes
     {
-        /*Civilian, Military*/
-
         static PersonTypes()
         {
             var types = typeof(PersonTypes).GetFields().Where(x => x.FieldType == typeof(PersonType)).Select(x => (PersonType)x.GetValue(null)).ToList();
@@ -20,7 +18,7 @@ namespace CCServ.Entities.ReferenceLists
         }
 
         /// <summary>
-        /// Contains all the muster statuses.
+        /// Contains all the person types.
         /// </summary>
         public static ConcurrentBag<PersonType> AllPersonTypes;
 
@@ -32,7 +30,7 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <param name="options"></param>
         [ServiceManagement.StartMethod(Priority = 12)]
-        private static void EnsureMusterStatusesPersistence(CLI.Options.LaunchOptions options)
+        private static void EnsurePersonTypesPersistence(CLI.Options.LaunchOptions options)
         {
             Logging.Log.Info("Checking person types...");
 
