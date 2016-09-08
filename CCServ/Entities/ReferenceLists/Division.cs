@@ -197,7 +197,7 @@ namespace CCServ.Entities.ReferenceLists
         /// Validates this division object.
         /// </summary>
         /// <returns></returns>
-        public virtual FluentValidation.Results.ValidationResult Validate()
+        public override FluentValidation.Results.ValidationResult Validate()
         {
             return new DivisionValidator().Validate(this);
         }

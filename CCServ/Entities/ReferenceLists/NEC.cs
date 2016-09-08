@@ -170,9 +170,8 @@ namespace CCServ.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
-                Map(x => x.NECType).Nullable();
-
-                Cache.ReadWrite();
+                
+                References(x => x.NECType).LazyLoad(Laziness.False);
             }
         }
 
@@ -186,10 +185,10 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public NECValidator()
             {
-                RuleFor(x => x.Description).Length(0, 40)
-                    .WithMessage("The description of an NEC can be no more than 40 characters.");
-                RuleFor(x => x.Value).Length(1, 10)
-                    .WithMessage("The value of an NEC must be between one and ten characters.");
+                RuleFor(x => x.Description).Length(0, 255)
+                    .WithMessage("The description of an NEC can be no more than 255 characters.");
+                RuleFor(x => x.Value).NotEmpty()
+                    .WithMessage("The value must not be empty.");
             }
         }
 
