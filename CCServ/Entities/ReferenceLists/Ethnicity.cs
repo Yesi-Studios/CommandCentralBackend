@@ -91,7 +91,7 @@ namespace CCServ.Entities.ReferenceLists
                                 session.Update(person);
                             }
 
-                            //Now that everything is cleaned up, drop the designation.
+                            //Now that everything is cleaned up, drop the object.
                             session.Delete(ethnicity);
                         }
                         else

@@ -6,7 +6,7 @@ namespace CCServ.Entities.ReferenceLists
     /// <summary>
     /// Describes a single UIC.
     /// </summary>
-    public class UIC : ReferenceListItemBase
+    public class UIC : EditableReferenceListItemBase
     {
 
         /// <summary>

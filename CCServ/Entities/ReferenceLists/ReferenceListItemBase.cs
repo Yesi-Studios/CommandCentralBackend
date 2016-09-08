@@ -82,7 +82,6 @@ namespace CCServ.Entities.ReferenceLists
 
         #endregion
 
-
         #region Data Access Methods
 
         public abstract void Load(Guid id, MessageToken token);
