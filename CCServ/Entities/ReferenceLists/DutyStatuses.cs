@@ -8,6 +8,9 @@ using AtwoodUtils;
 
 namespace CCServ.Entities.ReferenceLists
 {
+    /// <summary>
+    /// Contains all the duty statuses.
+    /// </summary>
     public static class DutyStatuses
     {
         static DutyStatuses()
@@ -17,6 +20,9 @@ namespace CCServ.Entities.ReferenceLists
             AllDutyStatuses = new ConcurrentBag<DutyStatus>(dutyStatuses);
         }
 
+        /// <summary>
+        /// Contains all the duty statuses.
+        /// </summary>
         public static ConcurrentBag<DutyStatus> AllDutyStatuses;
 
         public static DutyStatus Active = new DutyStatus { Id = Guid.Parse("C06D1123-60D9-4F06-B4DE-DD15EAE724A2"), Value = "Active", Description = "Indicates that a person is a member of the Active Duty component of the US armed forces." };
