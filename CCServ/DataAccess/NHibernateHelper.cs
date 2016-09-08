@@ -49,7 +49,7 @@ namespace CCServ.DataAccess
         /// <param name="printSQL"></param>
         private static void ConfigureNHibernate(string username, string password, string server, string database, bool printSQL)
         {
-            if (printSQL)
+            /*if (printSQL)
             {
                 config = Fluently.Configure().Database(
                 MySQLConfiguration.Standard.ConnectionString(
@@ -75,7 +75,17 @@ namespace CCServ.DataAccess
                     .ProviderClass<SysCacheProvider>())
                 .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                 .BuildConfiguration();
-            }
+            }*/
+
+            config = Fluently.Configure().Database(
+                MySQLConfiguration.Standard.ConnectionString("database=command_central;user=sslclient;password=sslclientpass;" +
+      "Certificate Store Location=LocalMachine;" +
+      "CertificatePassword=password;" +
+      "SSL Mode=Required"))
+                .Cache(x => x.UseQueryCache()
+                    .ProviderClass<SysCacheProvider>())
+                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                .BuildConfiguration();
             
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
@@ -97,7 +107,7 @@ namespace CCServ.DataAccess
                             x.Key.Split('.').Last(),
                             x.Value);
                     })
-                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase));
+                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
         }
 
 

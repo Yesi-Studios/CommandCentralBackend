@@ -117,10 +117,17 @@ namespace CCServ.ServiceManagement
 
                     }).GroupBy(x => x.Priority).OrderByDescending(x => x.Key);
 
+            var multiples = startupMethods.Where(x => x.Count() > 1).ToList();
             //Make sure no methods share the same priority
-            if (startupMethods.Any(x => x.Count() > 1))
+            if (multiples.Any())
             {
-                throw new Exception("One or more start up methods share the same startup priority.");
+                string errors = "";
+                foreach (var group in multiples)
+                {
+                    errors += "{0} - {1}".FormatS(group.Key, String.Join(", ", group.ToList().Select(x => x.Name)));
+                }
+
+                throw new Exception("The following startup methods share the same priorities: {0}".FormatS(errors));
             }
 
             //Now run them all in order.

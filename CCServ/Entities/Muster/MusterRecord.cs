@@ -275,7 +275,7 @@ namespace CCServ.Entities.Muster
                         person.CurrentMusterStatus.DutyStatus = person.DutyStatus.ToString();
                         if (!person.CurrentMusterStatus.HasBeenSubmitted)
                         {
-                            person.CurrentMusterStatus.MusterStatus = MusterStatuses.UA.ToString();
+                            person.CurrentMusterStatus.MusterStatus = ReferenceLists.MusterStatuses.UA.ToString();
                             person.CurrentMusterStatus.SubmitTime = DateTime.Now;
                         }
                         person.CurrentMusterStatus.HasBeenSubmitted = true;
@@ -367,7 +367,7 @@ namespace CCServ.Entities.Muster
         /// <returns></returns>
         public static NHibernate.IQueryOver<Person, Person> GetMusterablePersonsQuery(NHibernate.ISession session)
         {
-            return session.QueryOver<Person>().Where(x => x.DutyStatus != DutyStatuses.Loss);
+            return session.QueryOver<Person>().Where(x => x.DutyStatus != ReferenceLists.DutyStatuses.Loss);
         }
 
         #endregion
@@ -647,8 +647,7 @@ namespace CCServ.Entities.Muster
             }
 
             //Validate the muster statuses
-            MusterStatuses tempStatus;
-            if (musterSubmissions.Values.Any(x => !Enum.TryParse<MusterStatuses>(x, out tempStatus)))
+            if (musterSubmissions.Values.Any(x => !ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x))))
             {
                 token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
@@ -979,12 +978,12 @@ namespace CCServ.Entities.Muster
                 References(x => x.Musterer).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Musteree).Nullable().LazyLoad(Laziness.False);
 
-                Map(x => x.Paygrade).Nullable().Length(40);
-                Map(x => x.Division).Nullable().Length(40);
-                Map(x => x.Department).Nullable().Length(40);
-                Map(x => x.Command).Nullable().Length(40);
-                Map(x => x.MusterStatus).Nullable().Length(40);
-                Map(x => x.DutyStatus).Nullable().Length(40);
+                Map(x => x.Paygrade).Nullable();
+                Map(x => x.Division).Nullable();
+                Map(x => x.Department).Nullable();
+                Map(x => x.Command).Nullable();
+                Map(x => x.MusterStatus).Nullable();
+                Map(x => x.DutyStatus).Nullable();
                 Map(x => x.SubmitTime).Nullable();
                 Map(x => x.MusterDayOfYear).Nullable();
                 Map(x => x.MusterYear).Not.Nullable();

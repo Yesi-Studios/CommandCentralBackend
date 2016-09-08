@@ -8,7 +8,10 @@ using FluentNHibernate.Mapping;
 
 namespace CCServ.Entities.ReferenceLists
 {
-    public class Paygrade : ReferenceListItemBase
+    /// <summary>
+    /// Defines a single account history type and its mapping in the database.
+    /// </summary>
+    public class AccountHistoryType : ReferenceListItemBase
     {
         /// <summary>
         /// Loads all object or a single object if given an Id.
@@ -21,18 +24,24 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<Paygrade>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<AccountHistoryType>().List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<Paygrade>(id) }.ToList();
+                    return new[] { (ReferenceListItemBase)session.Get<AccountHistoryType>(id) }.ToList();
                 }
             }
         }
 
-        public class PaygradeMapping : ClassMap<Paygrade>
+        /// <summary>
+        /// Maps this object to the database.
+        /// </summary>
+        public class AccountHistoryTypeMapping : ClassMap<AccountHistoryType>
         {
-            public PaygradeMapping()
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
+            public AccountHistoryTypeMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
