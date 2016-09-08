@@ -97,7 +97,7 @@ namespace CCServ.DataAccess
                             x.Key.Split('.').Last(),
                             x.Value);
                     })
-                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase));
+                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
         }
 
 

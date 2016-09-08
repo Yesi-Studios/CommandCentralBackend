@@ -121,17 +121,17 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <param name="id"></param>
         /// <param name="token"></param>
-        public override void Load(System.Guid id, ClientAccess.MessageToken token)
+        public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                if (id != default(Guid))
+                if (id == default(Guid))
                 {
-                    token.SetResult(session.Get<Ethnicity>(id));
+                    return session.QueryOver<Ethnicity>().List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    token.SetResult(session.QueryOver<Ethnicity>().List());
+                    return new[] { (ReferenceListItemBase)session.Get<Ethnicity>(id) }.ToList();
                 }
             }
         }

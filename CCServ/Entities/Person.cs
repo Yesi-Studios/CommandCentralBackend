@@ -1202,7 +1202,7 @@ namespace CCServ.Entities
             }
 
             //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase)))
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.CreatePerson.ToString(), StringComparer.CurrentCultureIgnoreCase)))
             {
                 token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
