@@ -11,24 +11,24 @@ namespace CCServ.Entities.ReferenceLists
 {
     public class PersonType : ReferenceListItemBase
     {
-        public override void Delete(string entityName, Guid id, bool forceDelete, MessageToken token)
+        /// <summary>
+        /// Loads all object or a single object if given an Id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        public override void Load(Guid id, MessageToken token)
         {
-            throw new NotImplementedException();
-        }
-
-        public override List<ReferenceListItemBase> Load(string entityName, MessageToken token)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void UpdateOrInsert(string entityName, ReferenceListItemBase item, MessageToken token)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override ValidationResult Validate()
-        {
-            throw new NotImplementedException();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                if (id == default(Guid))
+                {
+                    token.SetResult(session.QueryOver<PersonType>().List());
+                }
+                else
+                {
+                    token.SetResult(session.Get<PersonType>(id));
+                }
+            }
         }
 
         public class PersonTypeMapping : ClassMap<PersonType>

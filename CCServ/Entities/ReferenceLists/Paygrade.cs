@@ -3,17 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CCServ.ClientAccess;
 using FluentNHibernate.Mapping;
-using FluentValidation;
-using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
     public class Paygrade : ReferenceListItemBase
     {
-        public override ValidationResult Validate()
+        /// <summary>
+        /// Loads all object or a single object if given an Id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        public override void Load(Guid id, MessageToken token)
         {
-            throw new NotImplementedException();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                if (id == default(Guid))
+                {
+                    token.SetResult(session.QueryOver<Paygrade>().List());
+                }
+                else
+                {
+                    token.SetResult(session.Get<Paygrade>(id));
+                }
+            }
         }
 
         public class PaygradeMapping : ClassMap<Paygrade>

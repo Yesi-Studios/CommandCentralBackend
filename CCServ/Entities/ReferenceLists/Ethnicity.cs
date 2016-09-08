@@ -88,7 +88,7 @@ namespace CCServ.Entities.ReferenceLists
                             {
                                 person.Ethnicity = null;
 
-                                session.Save(person);
+                                session.Update(person);
                             }
 
                             //Now that everything is cleaned up, drop the designation.
