@@ -3,27 +3,137 @@ using System.Collections.Generic;
 using CCServ.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using AtwoodUtils;
+using System.Linq;
 
 namespace CCServ.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single designation.  This is the job title for civilians, the rate for enlisted and the designator for officers.
     /// </summary>
-    public class Designation : ReferenceListItemBase
+    public class Designation : EditableReferenceListItemBase
     {
-        public override void Delete(string entityName, Guid id, bool forceDelete, MessageToken token)
+        /// <summary>
+        /// Update or insert.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="token"></param>
+        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
-            throw new NotImplementedException();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var designation = item.CastJToken<Designation>();
+
+                    //Validate it.
+                    var result = designation.Validate();
+                    if (!result.IsValid)
+                    {
+                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    var designationFromDB = session.Get<Designation>(designation.Id);
+
+                    if (designationFromDB == null)
+                    {
+                        designation.Id = Guid.NewGuid();
+                        session.Save(designation);
+                    }
+                    else
+                    {
+                        session.Merge(designation);
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
-        public override List<ReferenceListItemBase> Load(string entityName, MessageToken token)
+        /// <summary>
+        /// Delete the designation.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="forceDelete"></param>
+        /// <param name="token"></param>
+        public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            throw new NotImplementedException();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var designation = session.Get<Designation>(id);
+
+                    if (designation == null)
+                    {
+                        token.AddErrorMessage("That designation Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    var persons = session.QueryOver<Person>().Where(x => x.Designation == designation).List();
+
+                    if (persons.Any())
+                    {
+                        if (forceDelete)
+                        {
+                            foreach (var person in persons)
+                            {
+                                person.Designation = null;
+
+                                session.Save(person);
+                            }
+
+                            //Now that everything is cleaned up, drop the designation.
+                            session.Delete(designation);
+                        }
+                        else
+                        {
+                            //There were references but we can't delete them.
+                            token.AddErrorMessage("We were unable to delete the designation, {0}, because it is referenced on {1} profile(s).".FormatS(designation, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        session.Delete(designation);
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
-        public override void UpdateOrInsert(string entityName, ReferenceListItemBase item, MessageToken token)
+        /// <summary>
+        /// Load the designation.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        public override void Load(Guid id, MessageToken token)
         {
-            throw new NotImplementedException();
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                if (id != default(Guid))
+                {
+                    token.SetResult(session.Get<Designation>(id));
+                }
+                else
+                {
+                    token.SetResult(session.QueryOver<Designation>().List());
+                }
+            }
         }
 
         /// <summary>
@@ -49,8 +159,6 @@ namespace CCServ.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
-
-                Cache.ReadWrite();
             }
         }
 
@@ -70,5 +178,7 @@ namespace CCServ.Entities.ReferenceLists
                     .WithMessage("The value must not be empty.");
             }
         }
+
+        
     }
 }
