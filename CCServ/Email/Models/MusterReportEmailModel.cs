@@ -98,14 +98,14 @@ namespace CCServ.Email.Models
                     containers.Add(new MusterGroupContainer
                     {
                         GroupTitle = record.DutyStatus,
-                        Mustered = String.Equals(record.MusterStatus, MusterStatuses.UA.ToString()) ? 0 : 1,
+                        Mustered = String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()) ? 0 : 1,
                         Total = 1
                     });
                 }
                 else
                 {
                     container.Total++;
-                    if (!String.Equals(record.MusterStatus, MusterStatuses.UA.ToString()))
+                    if (!String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()))
                         container.Mustered++;
                 }
             }

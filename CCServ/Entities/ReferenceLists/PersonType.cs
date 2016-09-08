@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using CCServ.ClientAccess;
 using FluentNHibernate.Mapping;
+using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
-    public class Paygrade : ReferenceListItemBase
+    public class PersonType : ReferenceListItemBase
     {
         /// <summary>
         /// Loads all object or a single object if given an Id.
@@ -21,18 +22,18 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<Paygrade>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<PersonType>().List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<Paygrade>(id) }.ToList();
+                    return new[] { (ReferenceListItemBase)session.Get<PersonType>(id) }.ToList();
                 }
             }
         }
 
-        public class PaygradeMapping : ClassMap<Paygrade>
+        public class PersonTypeMapping : ClassMap<PersonType>
         {
-            public PaygradeMapping()
+            public PersonTypeMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 

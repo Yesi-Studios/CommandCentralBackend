@@ -8,7 +8,7 @@ using FluentNHibernate.Mapping;
 
 namespace CCServ.Entities.ReferenceLists
 {
-    public class Paygrade : ReferenceListItemBase
+    public class MusterStatus : ReferenceListItemBase
     {
         /// <summary>
         /// Loads all object or a single object if given an Id.
@@ -21,18 +21,18 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<Paygrade>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<MusterStatus>().List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<Paygrade>(id) }.ToList();
+                    return new[] { (ReferenceListItemBase)session.Get<MusterStatus>(id) }.ToList();
                 }
             }
         }
 
-        public class PaygradeMapping : ClassMap<Paygrade>
+        public class MusterStatusMapping : ClassMap<MusterStatus>
         {
-            public PaygradeMapping()
+            public MusterStatusMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 

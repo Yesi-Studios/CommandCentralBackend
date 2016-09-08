@@ -13,26 +13,10 @@ namespace CCServ.Entities.ReferenceLists
     /// <summary>
     /// Describes a single Department and all of its divisions.
     /// </summary>
-    public class Department : IValidatable
+    public class Department : EditableReferenceListItemBase
     {
         #region Properties
-
-        /// <summary>
-        /// The Department's unique ID
-        /// </summary>
-        public virtual Guid Id { get; set; }
-
-        /// <summary>
-        /// The value of this department.  Eg. C40
-        /// </summary>
-        public virtual string Value { get; set; }
-
-        /// <summary>
-        /// A short description of this department.
-        /// </summary>
-        public virtual string Description { get; set; }
-
-        /// <summary>
+        
         /// The command to which this department belongs.
         /// </summary>
         public virtual Command Command { get; set; }
@@ -44,232 +28,73 @@ namespace CCServ.Entities.ReferenceLists
 
         #endregion
 
-        #region Overrides
-
-        /// <summary>
-        /// Returns the value (name) of this department.
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return Value;
-        }
-
-        /// <summary>
-        /// Compares a fucking department to another department.  What else?
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-
-            if (!(obj is Department))
-                return false;
-
-            var other = (Department)obj;
-            if (other == null)
-                return false;
-
-            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
-        }
-
-        /// <summary>
-        /// Gets the hash code. Ignores dependencies. This kills the hash function.
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = 17;
-
-                hash = hash * 23 + Id.GetHashCode();
-                hash = hash * 23 + (String.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());
-                hash = hash * 23 + (String.IsNullOrEmpty(Description) ? "".GetHashCode() : Description.GetHashCode());
-
-                return hash;
-            }
-        }
-
-        #endregion
-
         #region Helper Methods
 
         /// <summary>
         /// Validates this department object.
         /// </summary>
         /// <returns></returns>
-        public virtual FluentValidation.Results.ValidationResult Validate()
+        public override FluentValidation.Results.ValidationResult Validate()
         {
             return new DepartmentValidator().Validate(this);
         }
 
         #endregion
 
-        #region Client Access
-
         /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// Delete the department.
         /// </summary>
-        /// Loads a single department given the department's Id.
+        /// <param name="id"></param>
+        /// <param name="forceDelete"></param>
         /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadDepartment(MessageToken token)
+        public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            if (!token.Args.ContainsKey("departmentid"))
-            {
-                token.AddErrorMessage("You failed to send a 'departmentid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid departmentId;
-            if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
-            {
-                token.AddErrorMessage("Your 'departmentid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                token.SetResult(session.Get<Department>(departmentId));
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// </summary>
-        /// Loads all departments and their corresponding divisions from the database.
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadDepartments", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadDepartments(MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                //Very easily we're just going to throw back all the departments.
-                token.SetResult(session.QueryOver<Department>().List<Department>());
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// </summary>
-        /// Loads all departments for a single command and their corresponding divisions from the database.
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadDepartmentsByCommand", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadDepartmentsByCommand(MessageToken token)
-        {
-
-            if (!token.Args.ContainsKey("commandid"))
-            {
-                token.AddErrorMessage("You failed to send a 'commandid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid commandId;
-            if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
-            {
-                token.AddErrorMessage("The 'commandid' parameter that you sent was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //We don't need to validate that this command is valid.  Just load all departments by this command.  If we get none because the Id is bad, sucks to suck.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                //Very easily we're just going to throw back all the departments.
-                token.SetResult(session.QueryOver<Department>().Where(x => x.Command.Id == commandId).List<Department>());
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// </summary>
-        /// Adds a department to the database in a given command.
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "AddDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_AddDepartment(MessageToken token)
-        {
-            //First we need to know if the client is logged in and is a client.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to add a department.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
-
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                token.AddErrorMessage("Only developers may add departments.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
+                    //First try to get the department.
+                    var department = session.Get<Department>(id);
 
-                    //Okey dokey.  Now let's get the value and the description the client wants to add.
-                    if (!token.Args.ContainsKey("value"))
+                    if (department == null)
                     {
-                        token.AddErrorMessage("You didn't send a 'value' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-                    string value = token.Args["value"] as string;
-
-                    //Now we need the description from the client.  It is optional.
-                    string description = "";
-                    if (token.Args.ContainsKey("description"))
-                        description = token.Args["description"] as string;
-
-                    //Now put it in the object and then validate it.
-                    Department department = new Department { Id = Guid.NewGuid(), Value = value, Description = description, Divisions = new List<Division>() };
-
-                    //Validate it.
-                    var validationResult = department.Validate();
-
-                    if (validationResult.Errors.Any())
-                    {
-                        token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        token.AddErrorMessage("That department Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
-                    //Ok it passed basic validation.  Now let's also get the command.
-                    if (!token.Args.ContainsKey("commandid"))
+                    //Ok, now find all the entities it's a part of.
+                    var persons = session.QueryOver<Person>().Where(x => x.Department == department).List();
+
+                    if (persons.Any())
                     {
-                        token.AddErrorMessage("You failed to send a 'commandid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        //There are references to deal with.
+                        if (forceDelete)
+                        {
+                            //The client is telling us to force delete the department.  Now we need to clean up everything.
+                            foreach (var person in persons)
+                            {
+                                person.Department = null;
+                                person.Division = null;
 
-                    Guid commandId;
-                    if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
+                                session.Save(person);
+                            }
+
+                            //Now that everything is cleaned up, drop the department.
+                            session.Delete(department);
+                        }
+                        else
+                        {
+                            //There were references but we can't delete them.
+                            token.AddErrorMessage("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                    }
+                    else
                     {
-                        token.AddErrorMessage("The 'commandid' parameter that you sent was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
+                        //There are no references, let's drop the department.
+                        session.Delete(department);
                     }
-
-                    //Ok, let's try to load this command.
-                    var command = session.Get<Command>(commandId);
-                    if (command == null)
-                    {
-                        token.AddErrorMessage("The command Id you sent did not belong to a real command.  Sad face.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
-                    //Well, conveniently, we now have the command here with all its departments.  Let's see if the value is a duplicate.
-                    if (command.Departments.Any(x => x.Value.SafeEquals(department.Value)))
-                    {
-                        token.AddErrorMessage("The command, '{0}', already has a department named, '{1}'.".FormatS(command.Value, department.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
-                    //Ok so this is all ok, let's tell the department how owns it and then add it.
-                    department.Command = command;
-
-                    //Omg, I think we're ready to actually save the department.
-                    session.Save(department);
 
                     transaction.Commit();
                 }
@@ -282,79 +107,96 @@ namespace CCServ.Entities.ReferenceLists
         }
 
         /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// Load the departments.
         /// </summary>
-        /// Edits a given department's value and description. for a given department Id.
+        /// <param name="id"></param>
         /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "EditDepartment", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_EditDepartment(MessageToken token)
+        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            //First we need to know if the client is logged in and is a client.
-            if (token.AuthenticationSession == null)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                token.AddErrorMessage("You must be logged in to edit a department.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+                if (id != default(Guid))
+                {
+                    return new[] { (ReferenceListItemBase)session.Get<Department>(id) }.ToList();
+                }
+                else
+                {
+                    //The id is blank... but were we given a command Id?
+                    if (token.Args.ContainsKey("commandid"))
+                    {
+                        //Yes we were!
+                        Guid commandId;
+                        if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
+                        {
+                            token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return null;
+                        }
 
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                token.AddErrorMessage("Only developers may edit departments.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
+                        //Cool, give them back the departments in this command.
+                        return session.QueryOver<Department>().Where(x => x.Command.Id == commandId).List<ReferenceListItemBase>().ToList();
+                    }
+                    else
+                    {
+                        //Nope, just give them all the departments.
+                        return session.QueryOver<Department>().List<ReferenceListItemBase>().ToList();
+                    }
+                }
             }
+        }
 
-            //Now we need the params from the client.  First up is the Id.
-            if (!token.Args.ContainsKey("departmentid"))
-            {
-                token.AddErrorMessage("You didn't send a 'departmentid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid departmentId;
-            if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
-            {
-                token.AddErrorMessage("The department Id you provided was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Let's load the department and make sure it's real.
+        /// <summary>
+        /// Update or insert.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="token"></param>
+        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
+        {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    var department = session.Get<Department>(departmentId);
-
-                    if (department == null)
+                    //First try to get the command this thing is supposed to be a part of.
+                    Guid commandId;
+                    if (!Guid.TryParse(item.Value<string>("commandid"), out commandId))
                     {
-                        token.AddErrorMessage("The department id that you provided did not resolve to a real department.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
-                    //Ok, so we have the list.  Now let's put the client's values in and ask if they're valid.
-                    if (token.Args.ContainsKey("value"))
-                        department.Value = token.Args["value"] as string;
-                    if (token.Args.ContainsKey("description"))
-                        department.Description = token.Args["description"] as string;
+                    var command = session.Get<Command>(commandId);
+                    if (command == null)
+                    {
+                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
 
-                    //Validation
+                    //Cool the command is legit.  Let's build the department.
+                    var department = item.CastJToken<Department>();
+                    department.Command = command;
+
+                    //Now validate it.
                     var result = department.Validate();
-
                     if (!result.IsValid)
                     {
                         token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
-                    //Also make sure no department has this value.
-                    if (session.CreateCriteria<Department>().Add(Expression.Like("Value", department.Value)).List<Department>().Any(x => x.Id != department.Id))
-                    {
-                        token.AddErrorMessage("A department with that value already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    //Try to get it.
+                    var departmentFromDB = session.Get<Department>(department.Id);
 
-                    //Ok that's all good.  Let's update the department.
-                    session.Update(department);
+                    //If it's null then add it.
+                    if (departmentFromDB == null)
+                    {
+                        department.Id = Guid.NewGuid();
+                        session.Save(department);
+                    }
+                    else
+                    {
+                        //If it's not null, then merge it.
+                        session.Merge(department);
+                    }
 
                     transaction.Commit();
                 }
@@ -365,8 +207,6 @@ namespace CCServ.Entities.ReferenceLists
                 }
             }
         }
-
-        #endregion
 
         /// <summary>
         /// Maps a department to the database.
@@ -380,14 +220,12 @@ namespace CCServ.Entities.ReferenceLists
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.Value).Not.Nullable().Unique().Length(20);
-                Map(x => x.Description).Nullable().Length(50);
+                Map(x => x.Value).Not.Nullable().Unique();
+                Map(x => x.Description);
 
                 HasMany(x => x.Divisions).Cascade.All().Not.LazyLoad();
 
                 References(x => x.Command).LazyLoad(Laziness.False);
-
-                Cache.ReadWrite();
             }
         }
 
@@ -401,12 +239,11 @@ namespace CCServ.Entities.ReferenceLists
             /// </summary>
             public DepartmentValidator()
             {
-                RuleFor(x => x.Description).Length(0, 40)
-                    .WithMessage("The description of a Department must be no more than 40 characters.");
-                RuleFor(x => x.Value).Length(1, 15)
-                    .WithMessage("The value of a Department must be between one and ten characters.");
+                RuleFor(x => x.Description).Length(0, 255)
+                    .WithMessage("The description of a department must be no more than 255 characters.");
+                RuleFor(x => x.Value).NotEmpty()
+                    .WithMessage("The value must not be empty.");
             }
         }
-
     }
 }
