@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
+using CCServ.Entities.ReferenceLists;
 
 namespace CCServ.Entities
 {
@@ -22,7 +23,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The type of history event that occurred.
         /// </summary>
-        public virtual AccountHistoryEventTypes AccountHistoryEventType { get; set; }
+        public virtual AccountHistoryType AccountHistoryEventType { get; set; }
 
         /// <summary>
         /// The time at which this event occurred.

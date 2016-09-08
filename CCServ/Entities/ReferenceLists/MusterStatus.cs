@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using CCServ.ClientAccess;
 using FluentNHibernate.Mapping;
-using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
