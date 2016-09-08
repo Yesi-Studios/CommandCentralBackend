@@ -184,7 +184,7 @@ namespace CCServ.Entities.ReferenceLists
                     }
 
                     //Try to get it.
-                    var departmentFromDB = session.Get<Department>(command.Id);
+                    var departmentFromDB = session.Get<Department>(department.Id);
 
                     //If it's null then add it.
                     if (departmentFromDB == null)
