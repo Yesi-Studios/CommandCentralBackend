@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ
+namespace CCServ.Entities.ReferenceLists
 {
-    public enum PersonTypes
+    public static class Sexes
     {
-        Military,
-        Civilian,
-        None
+        /*Male, Female*/
     }
 }

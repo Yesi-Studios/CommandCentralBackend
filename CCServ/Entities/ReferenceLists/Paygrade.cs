@@ -11,28 +11,6 @@ namespace CCServ.Entities.ReferenceLists
 {
     public class Paygrade : ReferenceListItemBase
     {
-        #region Overrides
-
-        public override string ToString()
-        {
-            return Value;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-                return false;
-
-            var other = obj as Paygrade;
-
-            if (other == null)
-                return false;
-
-            return other.Id == this.Id && other.Value == this.Value && other.Description == this.Description;
-        }
-
-        #endregion
-
         public override ValidationResult Validate()
         {
             throw new NotImplementedException();
