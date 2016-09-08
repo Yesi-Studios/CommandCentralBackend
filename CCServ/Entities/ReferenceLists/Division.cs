@@ -160,13 +160,13 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <param name="id"></param>
         /// <param name="token"></param>
-        public override void Load(Guid id, MessageToken token)
+        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 if (id != default(Guid))
                 {
-                    token.SetResult(session.Get<Division>(id));
+                    return new[] { (ReferenceListItemBase)session.Get<Division>(id) }.ToList();
                 }
                 else
                 {
@@ -178,16 +178,16 @@ namespace CCServ.Entities.ReferenceLists
                         if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
                         {
                             token.AddErrorMessage("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            return null;
                         }
 
                         //Cool, give them back the divisions in this department.
-                        token.SetResult(session.QueryOver<Division>().Where(x => x.Department.Id == departmentId).List());
+                        return session.QueryOver<Division>().Where(x => x.Department.Id == departmentId).List<ReferenceListItemBase>().ToList();
                     }
                     else
                     {
                         //Nope, just give them all the departments.
-                        token.SetResult(session.QueryOver<Division>().List());
+                        return session.QueryOver<Division>().List<ReferenceListItemBase>().ToList();
                     }
                 }
             }

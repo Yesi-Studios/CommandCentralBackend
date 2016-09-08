@@ -16,17 +16,17 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <param name="id"></param>
         /// <param name="token"></param>
-        public override void Load(Guid id, MessageToken token)
+        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {
-                    token.SetResult(session.QueryOver<PhoneNumberType>().List());
+                    return session.QueryOver<PhoneNumberType>().List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    token.SetResult(session.Get<PhoneNumberType>(id));
+                    return new[] { (ReferenceListItemBase)session.Get<PhoneNumberType>(id) }.ToList();
                 }
             }
         }
