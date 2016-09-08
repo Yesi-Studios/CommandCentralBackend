@@ -78,8 +78,7 @@ namespace CCServ.DataAccess
             }*/
 
             config = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString("database=command_central;user=sslclient;password=sslclientpass;" +
-      "Certificate Store Location=LocalMachine;" +
+                MySQLConfiguration.Standard.ConnectionString("server=147.51.62.50;database=command_central;user=sslclient;password=sslclientpass;" +
       "CertificatePassword=password;" +
       "SSL Mode=Required"))
                 .Cache(x => x.UseQueryCache()
