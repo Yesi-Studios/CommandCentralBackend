@@ -65,7 +65,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0}, {2}, {3} {4}".FormatS(Address, City, State, ZipCode);
+            return "{0}, {1}, {2} {3}".FormatS(Address, City, State, ZipCode);
         }
 
         #endregion

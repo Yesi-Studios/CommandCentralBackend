@@ -37,7 +37,7 @@ namespace CCServ.Entities.ReferenceLists
         /// Ensures that all duty statuses are persisted in the database and that they look the same as they do here.
         /// </summary>
         /// <param name="options"></param>
-        [ServiceManagement.StartMethod(Priority = 10)]
+        [ServiceManagement.StartMethod(Priority = 15)]
         private static void EnsureDutyStatusesPersistence(CLI.Options.LaunchOptions options)
         {
             Logging.Log.Info("Checking duty statuses...");

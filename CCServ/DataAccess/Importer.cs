@@ -142,12 +142,16 @@ namespace CCServ.DataAccess
                         oldDatabase.Tables["types"].Rows.Add(new object[] { 0, "None" });
 
                         List<Entities.ReferenceLists.NEC> necs = oldDatabase.Tables["nec"].AsEnumerable().Select(x =>
-                            new Entities.ReferenceLists.NEC
                             {
-                                Description = "",
-                                Id = Guid.Parse(x["NewId"] as string),
-                                NECType = (PersonTypes)Enum.Parse((typeof(PersonTypes)), oldDatabase.Tables["types"].AsEnumerable().First(y => Convert.ToInt32(y["TYPE_id"]) == Convert.ToInt32(x["NEC_type"]))["TYPE_type"] as string),
-                                Value = x["NEC_nec"] as string
+                                string type = oldDatabase.Tables["types"].AsEnumerable().First(y => Convert.ToInt32(y["TYPE_id"]) == Convert.ToInt32(x["NEC_type"]))["TYPE_type"] as string;
+
+                                return new Entities.ReferenceLists.NEC
+                                {
+                                    Description = "",
+                                    Id = Guid.Parse(x["NewId"] as string),
+                                    NECType = PersonTypes.AllPersonTypes.FirstOrDefault(y => y.Value.SafeEquals(type)),
+                                    Value = x["NEC_nec"] as string
+                                };
                             }).ToList();
 
                         Log.Info("Persisting NECs...");
@@ -774,7 +778,7 @@ namespace CCServ.DataAccess
                                 }
                                 else
                                 {
-                                    person.Sex = (Sexes)Enum.Parse(typeof(Sexes), persRow["PERS_sex"] as string);
+                                    person.Sex = Sexes.AllSexes.First(x => x.Value.SafeEquals(persRow["PERS_sex"] as string));
                                 }
                                 
 

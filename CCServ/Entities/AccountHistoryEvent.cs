@@ -68,7 +68,7 @@ namespace CCServ.Entities
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 Map(x => x.EventTime).Not.Nullable();
-                Map(x => x.AccountHistoryEventType).Not.Nullable().Length(50);
+                References(x => x.AccountHistoryEventType).LazyLoad(Laziness.False);
             }
         }
     }

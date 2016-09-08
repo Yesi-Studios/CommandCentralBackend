@@ -81,12 +81,11 @@ namespace CCServ.Entities
                 return DateTime.Today.Year - DateOfBirth.Value.Year;
             }
         }
-             
 
         /// <summary>
         /// The person's sex.
         /// </summary>
-        public virtual Sexes Sex { get; set; }
+        public virtual Sex Sex { get; set; }
 
         /// <summary>
         /// The person's remarks.  This is the primary comments section
@@ -476,7 +475,7 @@ namespace CCServ.Entities
                             //Now we also need to add the event to client's account history.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                AccountHistoryEventType = AccountHistoryEventTypes.FailedLogin,
+                                AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.FailedLogin,
                                 EventTime = token.CallTime
                             });
 
@@ -500,7 +499,7 @@ namespace CCServ.Entities
                             //Also put the account history on the client.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                AccountHistoryEventType = AccountHistoryEventTypes.Login,
+                                AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Login,
                                 EventTime = token.CallTime
                             });
 
@@ -541,7 +540,7 @@ namespace CCServ.Entities
             //Cool, we also need to update the client.
             token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
             {
-                AccountHistoryEventType = AccountHistoryEventTypes.Logout,
+                AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Logout,
                 EventTime = token.CallTime
             });
         }
@@ -677,7 +676,7 @@ namespace CCServ.Entities
                     //Let's also add the account history object here.
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = AccountHistoryEventTypes.RegistrationStarted,
+                        AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.RegistrationStarted,
                         EventTime = token.CallTime
                     });
 
@@ -791,7 +790,7 @@ namespace CCServ.Entities
                     //Also put the account history object on the person.
                     pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = AccountHistoryEventTypes.RegistrationCompleted,
+                        AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.RegistrationCompleted,
                         EventTime = token.CallTime
                     });
 
@@ -928,7 +927,7 @@ namespace CCServ.Entities
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetInitiated,
+                        AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.PasswordResetInitiated,
                         EventTime = token.CallTime
                     });
 
@@ -1044,7 +1043,7 @@ namespace CCServ.Entities
                     //Let's also add the account history. 
                     pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = AccountHistoryEventTypes.PasswordResetCompleted,
+                        AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.PasswordResetCompleted,
                         EventTime = token.CallTime
                     });
 
@@ -1094,7 +1093,7 @@ namespace CCServ.Entities
         [EndpointMethod(EndpointName = "MassCreatePersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_MassCreatePersons(MessageToken token)
         {
-            //Just make sure the client is logged in.
+            /*//Just make sure the client is logged in.
             if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to create persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
@@ -1141,7 +1140,7 @@ namespace CCServ.Entities
                     SSN = x.Value<string>("SSN"),
                     DateOfBirth = x.Value<DateTime>("DateOfBirth"),
                     DateOfArrival = x.Value<DateTime>("DateOfArrival"),
-                    DutyStatus = x.Value<DutyStatuses>("DutyStatus"),
+                    DutyStatus = x.Value<DutyStatus>("DutyStatus"),
                     Id = Guid.NewGuid(),
                     IsClaimed = false,
                     Username = x.Value<string>("Username"),
@@ -1178,7 +1177,7 @@ namespace CCServ.Entities
                     transaction.Rollback();
                     throw;
                 }
-            }
+            }*/
 
         }
 
@@ -1256,7 +1255,7 @@ namespace CCServ.Entities
             //Cool, since everything is good to go, let's also add the account history.
             newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
             {
-                AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
                 EventTime = token.CallTime
             } };
 
@@ -2218,7 +2217,7 @@ namespace CCServ.Entities
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
-                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
                             EventTime = DateTime.Now
                         } };
 
@@ -2282,7 +2281,7 @@ namespace CCServ.Entities
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
-                            AccountHistoryEventType = AccountHistoryEventTypes.Creation,
+                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
                             EventTime = DateTime.Now
                         } };
 
@@ -2341,9 +2340,9 @@ namespace CCServ.Entities
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Paygrade).Not.Nullable().LazyLoad(Laziness.False);
                 References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
-
-                Map(x => x.DutyStatus).Not.Nullable().Not.LazyLoad();
-                Map(x => x.Sex).Not.Nullable().Not.LazyLoad();
+                References(x => x.DutyStatus).Not.Nullable().LazyLoad(Laziness.False);
+                References(x => x.Sex).Not.Nullable().LazyLoad(Laziness.False);
+                
                 Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
                 Map(x => x.FirstName).Not.Nullable().Length(40).Not.LazyLoad();
                 Map(x => x.MiddleName).Nullable().Length(40).Not.LazyLoad();
@@ -2369,7 +2368,6 @@ namespace CCServ.Entities
 
                 References(x => x.PrimaryNEC).LazyLoad(Laziness.False);
                 HasManyToMany(x => x.SecondaryNECs).Not.LazyLoad().Cascade.All();
-
 
                 HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
                 HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
