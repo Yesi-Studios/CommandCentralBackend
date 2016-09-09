@@ -19,7 +19,6 @@ namespace CCServ.DataAccess
     /// </summary>
     public static class NHibernateHelper
     {
-
         private static ISessionFactory _sessionFactory;
 
         private static NHibernate.Tool.hbm2ddl.SchemaExport _schema;
