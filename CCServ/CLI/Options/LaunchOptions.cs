@@ -27,13 +27,19 @@ namespace CCServ.CLI.Options
         [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", Required = true)]
         public string Server { get; set; }
 
+        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
+        public int Port { get; set; }
+
+        [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Required if the --secure option is used.")]
+        public string CertificatePassword { get; set; }
+
+        [Option("secure", HelpText = "Instructs the service to run in secure mode.  In this mode, communication to clients (https) and the database (SSL certs) are secured.", DefaultValue = false)]
+        public bool UseSecureMode { get; set; }
+
         [Option("dropfirst", HelpText = "Instructs the service to attempt to drop the targeted schema before running.", DefaultValue = false)]
         public bool DropFirst { get; set; }
 
         [Option("ingest", HelpText = "Instructs the service to ingest the old database.  This will only happen if the schema has to be created, so please combine this with --dropfirst.", DefaultValue = false)]
         public bool Ingest { get; set; }
-
-        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
-        public int Port { get; set; }
     }
 }
