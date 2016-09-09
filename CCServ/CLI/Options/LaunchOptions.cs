@@ -30,7 +30,7 @@ namespace CCServ.CLI.Options
         [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
         public int Port { get; set; }
 
-        [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Required if the --secure option is used.")]
+        [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Leave blank if not using the --secure option.", DefaultValue = "")]
         public string CertificatePassword { get; set; }
 
         [Option("secure", HelpText = "Instructs the service to run in secure mode.  In this mode, communication to clients (https) and the database (SSL certs) are secured.", DefaultValue = false)]
