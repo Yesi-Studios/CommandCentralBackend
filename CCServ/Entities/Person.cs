@@ -2196,6 +2196,7 @@ namespace CCServ.Entities
                             MiddleName = "Kurt Roger",
                             SSN = "525956681",
                             IsClaimed = false,
+                            Sex = Sexes.Male,
                             EmailAddresses = new List<EmailAddress>()
                             {
                                 new EmailAddress
@@ -2260,6 +2261,7 @@ namespace CCServ.Entities
                             MiddleName = "Laughton",
                             SSN = "888888888",
                             IsClaimed = false,
+                            Sex = Sexes.Male,
                             EmailAddresses = new List<EmailAddress>()
                             {
                                 new EmailAddress
