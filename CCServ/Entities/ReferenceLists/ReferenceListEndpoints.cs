@@ -39,19 +39,47 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (editableOnly)
                 {
+                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => (typeof(EditableReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
+                        .Select(x => x.Key);
+
                     using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                     {
-                        token.SetResult(session.QueryOver<EditableReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
-                            .ToDictionary(x => x.Key, x => x.ToList()));
+                        var result = session.QueryOver<EditableReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
+                            .ToDictionary(x => x.Key, x => x.ToList());
+
+                        foreach (var name in names)
+                        {
+                            if (!result.ContainsKey(name))
+                            {
+                                result.Add(name, new List<EditableReferenceListItemBase>());
+                            }
+                        }
+
+                        token.SetResult(result);
                         return;
                     }
                 }
                 else
                 {
+                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => (typeof(ReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
+                        .Select(x => x.Key);
+
                     using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                     {
-                        token.SetResult(session.QueryOver<ReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
-                            .ToDictionary(x => x.Key, x => x.ToList()));
+                        var result = session.QueryOver<ReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
+                            .ToDictionary(x => x.Key, x => x.ToList());
+
+                        foreach (var name in names)
+                        {
+                            if (!result.ContainsKey(name))
+                            {
+                                result.Add(name, new List<ReferenceListItemBase>());
+                            }
+                        }
+
+                        token.SetResult(result);
                         return;
                     }
                 }
@@ -98,7 +126,7 @@ namespace CCServ.Entities.ReferenceLists
                 return;
             }
 
-            List<ReferenceListItemBase> results = new List<ReferenceListItemBase>();
+            Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
             //Cool we have a real item and an Id.  Now let's call its loader.
             foreach (var metadata in metadataWithEntityNames)
             {
@@ -107,10 +135,10 @@ namespace CCServ.Entities.ReferenceLists
                 if (token.HasError)
                     return;
 
-                results.AddRange(lists);
+                results.Add(metadata.Name, lists);
             }
 
-            token.SetResult(results.GroupBy(x => x.GetType().Name).ToDictionary(x => x.Key, x => x.ToList()));
+            token.SetResult(results);
         }
 
         /// <summary>
