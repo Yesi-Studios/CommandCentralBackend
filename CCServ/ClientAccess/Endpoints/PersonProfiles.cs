@@ -19,7 +19,7 @@ using CCServ.Entities.Muster;
 
 namespace CCServ.ClientAccess.Endpoints
 {
-    public static class PersonProfiles
+    static class PersonProfiles
     {
         #region Create
 

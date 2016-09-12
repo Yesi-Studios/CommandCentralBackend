@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -23,6 +24,11 @@ namespace CCServ.ServiceManagement
         private static WebServiceHost _host = null;
 
         private static CLI.Options.LaunchOptions _options = null;
+
+        /// <summary>
+        /// The list of all endpoints contained throughout the application.
+        /// </summary>
+        public static ConcurrentDictionary<string, ClientAccess.ServiceEndpoint> EndpointDescriptions { get; set; }
 
         /// <summary>
         /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.

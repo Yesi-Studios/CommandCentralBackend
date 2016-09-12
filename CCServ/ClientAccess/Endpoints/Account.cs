@@ -10,7 +10,7 @@ using NHibernate.Transform;
 
 namespace CCServ.ClientAccess.Endpoints
 {
-    public static class Account
+    static class Account
     {
         #region Login/Logout
 
