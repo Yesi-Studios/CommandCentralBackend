@@ -50,25 +50,28 @@ namespace CCServ.ServiceManagement
                 }
 
                 //Ok, so now we have a valid port.  Let's set up the service.
-                #if DEBUG
-                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + launchOptions.Port));
-                _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.None }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
-                ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
-                stp.HttpHelpPageEnabled = false;
-                #else
-                _host = new WebServiceHost(typeof(CommandCentralService), new Uri("https://localhost:" + launchOptions.Port));
-                _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.Transport }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
-                ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
-                stp.HttpHelpPageEnabled = false;
-                #endif
-
+                if (launchOptions.UseSecureMode)
+                {
+                    _host = new WebServiceHost(typeof(CommandCentralService), new Uri("https://localhost:" + launchOptions.Port));
+                    _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.Transport }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
+                    ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
+                    stp.HttpHelpPageEnabled = false;
+                }
+                else
+                {
+                    _host = new WebServiceHost(typeof(CommandCentralService), new Uri("http://localhost:" + launchOptions.Port));
+                    _host.AddServiceEndpoint(typeof(ICommandCentralService), new WebHttpBinding() { Security = new WebHttpSecurity { Mode = WebHttpSecurityMode.None }, MaxBufferPoolSize = 2147483647, MaxReceivedMessageSize = 2147483647, MaxBufferSize = 2147483647, TransferMode = TransferMode.Streamed }, "");
+                    ServiceDebugBehavior stp = _host.Description.Behaviors.Find<ServiceDebugBehavior>();
+                    stp.HttpHelpPageEnabled = false;
+                }
+                
                 _host.Open();
 
                 Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
             }
             catch (Exception e)
             {
-                Logging.Log.Exception(e, "An error occurred during service start up");
+                Log.Exception(e, "An error occurred during service start up");
             }
         }
 

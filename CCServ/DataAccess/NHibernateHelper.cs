@@ -19,7 +19,6 @@ namespace CCServ.DataAccess
     /// </summary>
     public static class NHibernateHelper
     {
-
         private static ISessionFactory _sessionFactory;
 
         private static NHibernate.Tool.hbm2ddl.SchemaExport _schema;
@@ -42,50 +41,30 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Initializes the NHibernate Helper with the given connection settings.
         /// </summary>
-        /// <param name="username"></param>
-        /// <param name="password"></param>
-        /// <param name="server"></param>
-        /// <param name="database"></param>
-        /// <param name="printSQL"></param>
-        private static void ConfigureNHibernate(string username, string password, string server, string database, bool printSQL)
+        /// <param name="options"></param>
+        private static void ConfigureNHibernate(CLI.Options.LaunchOptions options)
         {
-            /*if (printSQL)
+            string connectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
+                .FormatS(options.Server, options.Database, options.Username, options.Password, options.CertificatePassword, options.UseSecureMode ? "VerifyFull" : "None");
+
+            if (options.PrintSQL)
             {
-                config = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database(database)
-                        .Username(username)
-                        .Password(password)
-                        .Server(server))
-                    .ShowSql())
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
+                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString)
+                            .ShowSql())
+                            .Cache(x => x.UseQueryCache()
+                            .ProviderClass<SysCacheProvider>())
+                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                            .BuildConfiguration();
             }
             else
             {
-                config = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString(
-                    builder => builder.Database(database)
-                        .Username(username)
-                        .Password(password)
-                        .Server(server)))
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
-            }*/
+                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString))
+                            .Cache(x => x.UseQueryCache()
+                            .ProviderClass<SysCacheProvider>())
+                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                            .BuildConfiguration();
+            }
 
-            config = Fluently.Configure().Database(
-                MySQLConfiguration.Standard.ConnectionString("server=147.51.62.50;database=command_central;user=sslclient;password=sslclientpass;" +
-      "CertificatePassword=password;" +
-      "SSL Mode=Required"))
-                .Cache(x => x.UseQueryCache()
-                    .ProviderClass<SysCacheProvider>())
-                .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                .BuildConfiguration();
-            
             //We're going to save the schema in case the host wants to use it later.
             _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
         }
@@ -241,7 +220,7 @@ namespace CCServ.DataAccess
                             Log.Info("Database schema found.");
 
                             Log.Info("Configuring NHibernate...");
-                            ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
+                            ConfigureNHibernate(launchOptions);
                             Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
                             Log.Info("Scanning for associated tables...");
@@ -289,7 +268,7 @@ namespace CCServ.DataAccess
                             Log.Info("Database created.");
 
                             Log.Info("Configuring NHibernate...");
-                            ConfigureNHibernate(launchOptions.Username, launchOptions.Password, launchOptions.Server, launchOptions.Database, launchOptions.PrintSQL);
+                            ConfigureNHibernate(launchOptions);
                             Log.Info("Finished configuring NHibernate. {0} class map(s) found.".FormatS(config.ClassMappings.Count));
 
                             //Since the database was just created, let's go ahead and populate it.
