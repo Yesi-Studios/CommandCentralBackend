@@ -44,6 +44,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes))
+                    .IfInChainOfCommand()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
                     x => x.FirstName,
@@ -78,7 +79,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks));
+                    x => x.ContactRemarks))
+                    .IfInChainOfCommand();
 
             CanAccessModule("Muster");
         }
