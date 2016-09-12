@@ -92,37 +92,6 @@ namespace CCServ.ClientAccess
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Returns all endpoints being served by the service.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "GetEndpoints", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadEndpoints(MessageToken token)
-        {
-            //Just make sure the client is logged in.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to manage endpoints.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            token.SetResult(EndpointDescriptions.Select(x => new
-            {
-                x.Value.EndpointMethodAttribute.EndpointName,
-                x.Value.IsActive
-            }).ToList());
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
         /// Given the name of an endpoint, switches it from active to inactive or vice versa.
         /// </summary>
         /// <param name="token"></param>
