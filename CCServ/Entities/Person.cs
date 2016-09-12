@@ -2256,12 +2256,12 @@ namespace CCServ.Entities
                         var person = new Person()
                         {
                             Id = Guid.NewGuid(),
+                            Sex = Sexes.Male,
                             LastName = "McLean",
                             FirstName = "Angus",
                             MiddleName = "Laughton",
                             SSN = "888888888",
                             IsClaimed = false,
-                            Sex = Sexes.Male,
                             EmailAddresses = new List<EmailAddress>()
                             {
                                 new EmailAddress
