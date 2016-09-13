@@ -774,12 +774,12 @@ namespace CCServ.Entities.Muster
                         FirstName = x.FirstName,
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
-                        Paygrade = x.Paygrade,
-                        Designation = x.Designation == null ? "" : x.Designation.Value, //Designation can be null.
-                        Division = x.Division == null ? "" : x.Division.Value,
-                        Department = x.Department == null ? "" : x.Department.Value,
-                        Command = x.Command == null ? "" : x.Command.Value,
-                        UIC = x.UIC == null ? "" : x.UIC.Value, //UIC can also be null.
+                        Paygrade = x.Paygrade == null ? "" : x.Paygrade.ToString(),
+                        Designation = x.Designation == null ? "" : x.Designation.ToString(), //Designation can be null.
+                        Division = x.Division == null ? "" : x.Division.ToString(),
+                        Department = x.Department == null ? "" : x.Department.ToString(),
+                        Command = x.Command == null ? "" : x.Command.ToString(),
+                        UIC = x.UIC == null ? "" : x.UIC.ToString(), //UIC can also be null.
                         FriendlyName = x.ToString(),
                         CurrentMusterStatus = new
                         {
