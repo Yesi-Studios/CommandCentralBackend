@@ -297,12 +297,12 @@ namespace CCServ.Entities
         #region Overrides
 
         /// <summary>
-        /// Returns a friendly name for this user in the form: CTI2 Atwood, Daniel Kurt Roger
+        /// Returns a friendly name for this user in the form: Atwood, Daniel Kurt Roger
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("{0} {1}, {2} {3}", Designation == null ? "" : Designation.Value, LastName, FirstName, MiddleName);
+            return string.Format("{0}, {1} {2}", LastName, FirstName, MiddleName);
         }
 
         #endregion
