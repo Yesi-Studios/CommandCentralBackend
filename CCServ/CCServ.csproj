@@ -138,6 +138,7 @@
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\Account.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
+    <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonProfiles.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
@@ -152,6 +153,7 @@
     <Compile Include="CLI\Program.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\Email.cs" />
+    <Compile Include="Config\Muster.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="DataAccess\Importer.cs" />
