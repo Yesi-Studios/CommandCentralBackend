@@ -39,8 +39,6 @@ namespace CCServ.Entities.ReferenceLists
             return new DepartmentValidator().Validate(this);
         }
 
-        #endregion
-
         /// <summary>
         /// Delete the department.
         /// </summary>
@@ -207,6 +205,8 @@ namespace CCServ.Entities.ReferenceLists
                 }
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Maps a department to the database.
