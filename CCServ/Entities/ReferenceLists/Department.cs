@@ -223,7 +223,7 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
 
-                HasMany(x => x.Divisions).Cascade.All().Not.LazyLoad();
+                HasMany(x => x.Divisions).Not.LazyLoad().Cascade.DeleteOrphan();
 
                 References(x => x.Command).LazyLoad(Laziness.False);
             }
