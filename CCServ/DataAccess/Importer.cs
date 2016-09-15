@@ -96,20 +96,31 @@ namespace CCServ.DataAccess
                             }
                         };
 
-                        commands.First().Departments = new List<Entities.ReferenceLists.Department>(
+                        //And now that we have all of these, let's go ahead and save them.
+                        Log.Info("Persisting commands...");
+                        commands.ForEach(x => session.Save(x));
+                        session.Flush();
+
+                        new List<Entities.ReferenceLists.Department>(
                             oldDatabase.Tables["dept"].Rows.Cast<DataRow>().Where(y => Convert.ToBoolean(y["DEPT_actv"])).Select(y =>
                                 new Entities.ReferenceLists.Department
                                 {
                                     Command = commands.First(),
                                     Description = "",
                                     Id = Guid.Parse(y["NewId"] as string),
-                                    Value = y["DEPT_dept"] as string
+                                    Value = y["DEPT_dept"] as string,
+                                    Divisions = new List<Entities.ReferenceLists.Division>()
                                 })
-                        );
+                        ).ForEach(x => commands.First().Departments.Add(x));
+
+                        //Now save all the departments.
+                        Log.Info("Persisting departments...");
+                        commands.SelectMany(x => x.Departments).ToList().ForEach(x => session.Save(x));
+                        session.Flush();
 
                         foreach (var department in commands.First().Departments)
                         {
-                            department.Divisions = oldDatabase.Tables["div"].Rows.Cast<DataRow>()
+                            oldDatabase.Tables["div"].Rows.Cast<DataRow>()
                                 .Where(x => Convert.ToBoolean(x["DIV_actv"]) &&
                                     Convert.ToInt32(x["DIV_dept"]) == Convert.ToInt32(oldDatabase.Tables["dept"].AsEnumerable().First(y => y["NewId"] as string == department.Id.ToString())["DEPT_id"]))
                                 .Select(x =>
@@ -119,12 +130,12 @@ namespace CCServ.DataAccess
                                         Description = "",
                                         Id = Guid.Parse(x["NewId"] as string),
                                         Value = x["DIV_div"] as string
-                                    }).ToList();
+                                    }).ToList().ForEach(x => department.Divisions.Add(x));
                         }
 
-                        //And now that we have all of these, let's go ahead and save them.
-                        Log.Info("Persisting commands...");
-                        commands.ForEach(x => session.Save(x));
+                        //Now save the divisions.
+                        Log.Info("Persisting them divisions...");
+                        commands.SelectMany(x => x.Departments).SelectMany(x => x.Divisions).ToList().ForEach(x => session.Save(x));
                         session.Flush();
 
                         //Now let's do NECs
