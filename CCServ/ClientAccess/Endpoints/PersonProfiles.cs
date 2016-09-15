@@ -14,7 +14,6 @@ using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
 using CCServ.Entities;
-using static CCServ.Entities.Person;
 using CCServ.Entities.Muster;
 
 namespace CCServ.ClientAccess.Endpoints
@@ -186,7 +185,7 @@ namespace CCServ.ClientAccess.Endpoints
             newPerson.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
 
             //Now for validation!
-            var results = new PersonValidator().Validate(newPerson);
+            var results = new Person.PersonValidator().Validate(newPerson);
 
             if (results.Errors.Any())
             {
