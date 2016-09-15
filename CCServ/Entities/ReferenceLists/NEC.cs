@@ -5,6 +5,7 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using AtwoodUtils;
 using System.Linq;
+using NHibernate.Criterion;
 
 namespace CCServ.Entities.ReferenceLists
 {
@@ -84,7 +85,12 @@ namespace CCServ.Entities.ReferenceLists
                         return;
                     }
 
-                    var persons = session.QueryOver<Person>().Where(x => x.PrimaryNEC == nec || x.SecondaryNECs.Any(y => y == nec)).List();
+                    NEC necAlias = null;
+
+                    var persons = session.QueryOver<Person>()
+                        .JoinAlias(x => x.SecondaryNECs, () => necAlias)
+                        .Where(Restrictions.Disjunction().Add<Person>(x => x.PrimaryNEC == nec).Add(() => necAlias.Id == nec.Id))
+                        .List();
 
                     if (persons.Any())
                     {

@@ -188,7 +188,7 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
 
-                HasMany(x => x.Departments).Not.LazyLoad().Cascade.All();
+                HasMany(x => x.Departments).Not.LazyLoad().Cascade.DeleteOrphan();
             }
         }
 
