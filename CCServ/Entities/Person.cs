@@ -449,11 +449,11 @@ namespace CCServ.Entities
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
-                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
+                            AccountHistoryEventType = AccountHistoryTypes.Creation,
                             EventTime = DateTime.Now
                         } };
 
-                        session.Save(person);
+                        session.SaveOrUpdate(person);
 
                         Log.Info("Atwood's profile created.  Id : {0}".FormatS(person.Id));
                     }
@@ -479,7 +479,7 @@ namespace CCServ.Entities
                         .Where(x => x.FirstName == "Angus" && x.LastName == "McLean" && x.MiddleName == "Laughton")
                         .SingleOrDefault();
 
-                    //We're also going to look to see if mclean's profile exists.
+                    //We're also going to look to see if McLean's profile exists.
                     if (mcleanProfile == null)
                     {
                         Log.Warning("McLean's profile was not found in the database.  Creating it now...");
@@ -572,7 +572,7 @@ namespace CCServ.Entities
                 References(x => x.Command).Nullable().LazyLoad(Laziness.False);
                 References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
                 References(x => x.Paygrade).Not.Nullable().LazyLoad(Laziness.False);
-                References(x => x.CurrentMusterStatus).Cascade.All().Nullable().LazyLoad(Laziness.False);
+                References(x => x.CurrentMusterStatus).Cascade.All().Not.Nullable().LazyLoad(Laziness.False);
                 References(x => x.DutyStatus).Not.Nullable().LazyLoad(Laziness.False);
                 References(x => x.Sex).Not.Nullable().LazyLoad(Laziness.False);
                 
