@@ -20,75 +20,101 @@ namespace CCServ.Logging
     {
 
         private static ConcurrentBag<ILogger> _loggers = new ConcurrentBag<ILogger>();
+
+        private static List<MessageTypes> enabledMessageTypes = new List<MessageTypes>();
         
         /// <summary>
         /// Registers a logger, returning a boolean indicating if the registration succeeded.
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
-        public static bool RegisterLogger(ILogger logger)
+        public static void RegisterLogger(ILogger logger)
         {
-            if (logger.IsValid())
+            try
             {
-                logger.EnabledMessageTypes = new List<MessageTypes>
-                {
-                    MessageTypes.CRITICAL,
-                    MessageTypes.DEBUG,
-                    MessageTypes.ERROR,
-                    MessageTypes.INFORMATION,
-                    MessageTypes.WARNING
-                };
+
+                enabledMessageTypes = new List<MessageTypes>
+                    {
+                        MessageTypes.CRITICAL,
+                        MessageTypes.ERROR,
+                        MessageTypes.INFORMATION,
+                        MessageTypes.WARNING
+                    };
+
+                #if DEBUG
+                    enabledMessageTypes.Add(MessageTypes.DEBUG);
+                #endif
 
                 _loggers.Add(logger);
 
                 Log.Info("Hello {0}, you were registered successfully!".FormatS(logger.Name), null);
 
-                return true;
+            }
+            catch
+            {
+                throw;
             }
 
-            return false;
         }
 
         /// <summary>
-        /// Logs the message, but only if debug logging is true.  This value is set in the Logger class.
+        /// Logs a debug message.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="source">The name of the app/process calling the logging method. If not provided,
-        /// an attempt will be made to get the name of the calling process.</param>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="source"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public static void Debug(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.DEBUG))
             {
-                logger.LogDebug(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogDebug(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
         /// Logs the information.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="source">The name of the app/process calling the logging method. If not provided,
-        /// an attempt will be made to get the name of the calling process.</param>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="source"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public static void Info(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.INFORMATION))
             {
-                logger.LogInformation(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogInformation(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
-        /// Logs the warning.
+        /// Logs a warning.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="source">The name of the app/process calling the logging method. If not provided,
-        /// an attempt will be made to get the name of the calling process.</param>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="source"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public static void Warning(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.WARNING))
             {
-                logger.LogWarning(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogWarning(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
@@ -102,31 +128,41 @@ namespace CCServ.Logging
         /// <param name="callerFilePath"></param>
         public static void Critical(string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.CRITICAL))
             {
-                logger.LogCritical(message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogCritical(message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
-        /// Logs the exception.
+        /// Logs an exception.
         /// </summary>
-        /// <param name="ex">The ex.</param>
-        /// <param name="token">The message token representing the transaction during which the exception occurred.</param>
-        /// <param name="source">The name of the app/process calling the logging method. If not provided,
-        /// an attempt will be made to get the name of the calling process.</param>
+        /// <param name="ex"></param>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="source"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public static void Exception(Exception ex, string message, MessageToken token = null, string source = "", [CallerMemberName] string callerMemberName = "unknown", [CallerLineNumber] int callerLineNumber = 0, [CallerFilePath] string callerFilePath = "")
         {
-            Parallel.ForEach<ILogger>(_loggers, logger =>
+            if (enabledMessageTypes.Contains(MessageTypes.ERROR))
             {
-                logger.LogException(ex, message, token, callerMemberName, callerLineNumber, callerFilePath);
-            });
+                Parallel.ForEach<ILogger>(_loggers, logger =>
+                {
+                    logger.LogException(ex, message, token, callerMemberName, callerLineNumber, callerFilePath);
+                });
+            }
         }
 
         /// <summary>
         /// Ensures that the log message entry text length does not exceed the given length.  If it does, a friendly string is appended to the end and the message is truncated.
         /// </summary>
         /// <param name="logMessage"></param>
+        /// <param name="maxMessageLength"></param>
         /// <returns></returns>
         private static string EnsureLogMessageLimit(string logMessage, int maxMessageLength)
         {

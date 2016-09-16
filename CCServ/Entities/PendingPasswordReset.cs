@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
+using AtwoodUtils;
 
 namespace CCServ.Entities
 {
@@ -41,7 +42,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(Time) > _maxAge;
+            return DateTime.Now.Subtract(Time) < _maxAge;
         }
 
         #endregion

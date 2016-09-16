@@ -38,9 +38,14 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.WorkRoom,
                     x => x.Shift,
                     x => x.CurrentMusterStatus,
-                    x => x.EmailAddresses,
-                    x => x.PhoneNumbers,
-                    x => x.EmergencyContactInstructions))
+                    x => x.EmergencyContactInstructions,
+                    x => x.Division,
+                    x => x.Department,
+                    x => x.Command,
+                    x => x.Paygrade,
+                    x => x.UIC,
+                    x => x.Designation,
+                    x => x.Sex))
                 .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
@@ -58,7 +63,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Division,
                     x => x.Department,
                     x => x.Command,
-                    x => x.NECAssignments,
+                    x => x.PrimaryNEC,
+                    x => x.SecondaryNECs,
                     x => x.Supervisor,
                     x => x.WorkCenter,
                     x => x.WorkRoom,
@@ -80,7 +86,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Username,
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
-                    x => x.Changes))
+                    x => x.Changes,
+                    x => x.UserPreferences))
                     .IfSelf()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
@@ -93,7 +100,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.UserPreferences))
                     .IfSelf();
         }
     }
