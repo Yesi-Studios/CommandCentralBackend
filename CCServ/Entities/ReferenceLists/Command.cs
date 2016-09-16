@@ -37,8 +37,6 @@ namespace CCServ.Entities.ReferenceLists
             return new CommandValidator().Validate(this);
         }
 
-        #endregion
-
         /// <summary>
         /// Update or insert.
         /// </summary>
@@ -172,6 +170,8 @@ namespace CCServ.Entities.ReferenceLists
                 }
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Maps a command to the database.
