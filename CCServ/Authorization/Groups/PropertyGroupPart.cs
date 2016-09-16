@@ -50,7 +50,7 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public PropertyGroupPart IfSelf()
         {
-            Disjunctions.Add(new Rules.RuleDisjunction() { Rules = new List<Rules.AuthorizationRuleBase> { new Rules.IfSelfRule() } });
+            Disjunctions.Add(new Rules.RuleDisjunction() { Rules = new List<Rules.AuthorizationRuleBase> { new Rules.IfSelfRule { ParentPropertyGroup = this } } });
             return this;
         }
 
@@ -60,7 +60,7 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public PropertyGroupPart IfInChainOfCommand()
         {
-            Disjunctions.Add(new Rules.RuleDisjunction() { Rules = new List<Rules.AuthorizationRuleBase> { new Rules.IfInChainOfCommandRule() } });
+            Disjunctions.Add(new Rules.RuleDisjunction() { Rules = new List<Rules.AuthorizationRuleBase> { new Rules.IfInChainOfCommandRule { ParentPropertyGroup = this } } });
             return this;
         }
 

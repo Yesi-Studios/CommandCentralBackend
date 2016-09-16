@@ -36,7 +36,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The type of this phone. eg. Mobile, Home, Work
         /// </summary>
-        public virtual PhoneNumberTypes PhoneType { get; set; }
+        public virtual PhoneNumberType PhoneType { get; set; }
 
         #endregion
 
@@ -84,7 +84,8 @@ namespace CCServ.Entities
                 Map(x => x.Number).Not.Nullable().Length(15);
                 Map(x => x.IsContactable).Not.Nullable();
                 Map(x => x.IsPreferred).Not.Nullable();
-                Map(x => x.PhoneType).Not.Nullable();
+                
+                References(x => x.PhoneType).Not.Nullable().LazyLoad(Laziness.False);
             }
         }
 

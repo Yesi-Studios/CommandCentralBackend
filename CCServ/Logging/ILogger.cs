@@ -9,13 +9,9 @@ namespace CCServ.Logging
 {
     public interface ILogger
     {
-        List<MessageTypes> EnabledMessageTypes { get; set; }
-                                                          
         LoggingTargetTypes TargetType { get; }
 
         string Name { get; }
-
-        bool IsValid();
 
         void LogDebug(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath);
 

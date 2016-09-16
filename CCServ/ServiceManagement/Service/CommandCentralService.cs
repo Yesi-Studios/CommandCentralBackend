@@ -35,11 +35,21 @@ namespace CCServ.ServiceManagement.Service
         /// </summary>
         public void GetOptions()
         {
-            //Add the headers, this will adequately reply to the options request.
-            AddHeadersToOutgoingResponse(WebOperationContext.Current);
+            try
+            {
+                //Add the headers, this will adequately reply to the options request.
+                AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
-            //Tell the host we received a pre flight.
-            Log.Debug("Received Preflight Request");
+                //Tell the host we received a pre flight.
+                Log.Debug("Received Preflight Request");
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e, "An error occurred during the pre flight options request.");
+
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            }
+            
         }
 
         #endregion
@@ -67,7 +77,7 @@ namespace CCServ.ServiceManagement.Service
 
             try
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
 
@@ -84,7 +94,7 @@ namespace CCServ.ServiceManagement.Service
 
                         //Get the endpoint
                         ServiceEndpoint description;
-                        if (!ServiceEndpoint.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                        if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                         {
                             token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                 "and you've checked your spelling, yell at the developers.  For further issues, please call the developers at {0}.".FormatS(Config.ContactDetails.DEV_PHONE_NUMBER), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
@@ -233,6 +243,64 @@ namespace CCServ.ServiceManagement.Service
 
         #endregion
 
+        #region Statistics
+
+        /// <summary>
+        /// Gets stats about the service.
+        /// </summary>
+        /// <param name="mode"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public string GetStatistics(string mode, string password)
+        {
+            try
+            {
+                AddHeadersToOutgoingResponse(WebOperationContext.Current);
+
+                if (password != "admin")
+                {
+                    Log.Warning("Received invalid password for statistics request.");
+                    return "YOU GET NOTHING";
+                }
+
+                Log.Debug("Received statistics request.");
+
+                switch (mode.ToLower())
+                {
+                    case "messages":
+                        {
+                            using (var session = NHibernateHelper.CreateStatefulSession())
+                            {
+                                return session.QueryOver<MessageToken>().RowCount().ToString();
+                            }
+                        }
+                    case "sessions":
+                        {
+                            using (var session = NHibernateHelper.CreateStatefulSession())
+                            {
+                                return session.QueryOver<AuthenticationSession>().RowCount().ToString();
+                            }
+                        }
+                    case "endpoints":
+                        {
+                            return new { Count = ServiceManager.EndpointDescriptions.Count, Endpoints = ServiceManager.EndpointDescriptions.Keys.OrderBy(x => x) }.Serialize(); ;
+                        }
+                    default:
+                        {
+                            return "That mode is not supported.";
+                        }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e, "An error occurred while trying to serve statistics.");
+                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                return "A fatal internal error occurred.  Please see the logs.";
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -288,6 +356,8 @@ namespace CCServ.ServiceManagement.Service
                 }
             }
         }
+
+        
 
         #endregion
 

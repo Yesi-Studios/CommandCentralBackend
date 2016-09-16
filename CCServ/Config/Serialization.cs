@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ
+namespace CCServ.Config
 {
-    public enum PersonTypes
+    public static class Serialization
     {
-        Military,
-        Civilian,
-        None
     }
 }

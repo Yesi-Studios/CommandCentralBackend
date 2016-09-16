@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Net;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
 using FluentValidation;
@@ -19,14 +21,9 @@ namespace CCServ.Entities
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The street number.
+        /// The street number + route address.
         /// </summary>
-        public virtual string StreetNumber { get; set; }
-
-        /// <summary>
-        /// The Route...
-        /// </summary>
-        public virtual string Route { get; set; }
+        public virtual string Address { get; set; }
 
         /// <summary>
         /// The city.
@@ -42,11 +39,6 @@ namespace CCServ.Entities
         /// The zip code.
         /// </summary>
         public virtual string ZipCode { get; set; }
-
-        /// <summary>
-        /// The country.
-        /// </summary>
-        public virtual string Country { get; set; }
 
         /// <summary>
         /// Indicates whether or not the person lives at this address
@@ -68,18 +60,21 @@ namespace CCServ.Entities
         #region 
 
         /// <summary>
-        /// Returns the address in this format: 123 Fake Street, Happyville, TX 54321, United States
+        /// Returns the address in this format: 123 Fake Street, Happyville, TX 54321
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} {1}, {2}, {3} {4}, {5}".FormatS(StreetNumber, Route, City, State, ZipCode, Country);
+            return "{0}, {1}, {2} {3}".FormatS(Address, City, State, ZipCode);
         }
 
         #endregion
 
         #region ctors
 
+        /// <summary>
+        /// Creates a new physical address, setting in the Id to a new Guid.
+        /// </summary>
         public PhysicalAddress()
         {
             if (Id == default(Guid))
@@ -100,26 +95,52 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.StreetNumber).Not.Nullable().Length(45);
-                Map(x => x.Route).Not.Nullable().Length(45);
-                Map(x => x.City).Not.Nullable().Length(45);
-                Map(x => x.State).Not.Nullable().Length(45);
-                Map(x => x.ZipCode).Not.Nullable().Length(45);
-                Map(x => x.Country).Not.Nullable().Length(45);
+                Map(x => x.Address).Not.Nullable();
+                Map(x => x.City).Not.Nullable();
+                Map(x => x.State).Not.Nullable();
+                Map(x => x.ZipCode).Not.Nullable();
                 Map(x => x.IsHomeAddress).Not.Nullable();
                 Map(x => x.Latitude).Nullable();
                 Map(x => x.Longitude).Nullable();
-
             }
         }
 
+        /// <summary>
+        /// Validates a physical address
+        /// </summary>
         public class PhysicalAddressValidator : AbstractValidator<PhysicalAddress>
         {
+            /// <summary>
+            /// Validates a physical address
+            /// </summary>
             public PhysicalAddressValidator()
             {
-                //TODO
-            }
+                CascadeMode = CascadeMode.StopOnFirstFailure;
 
+                /*RuleFor(x => x.Latitude)
+                        //.NotEmpty().WithMessage("Your latitude must not be empty")
+                        .Must(x => x >= -90 && x <= 90).WithMessage("Your latitude must be between -90 and 90, inclusive.");
+
+                RuleFor(x => x.Longitude)
+                    //.NotEmpty().WithMessage("Your longitude must not be empty")
+                    .Must(x => x >= -180 && x <= 180).WithMessage("Your longitude must be between -180 and 180, inclusive.");*/
+
+                RuleFor(x => x.Address)
+                    .NotEmpty().WithMessage("Your address must not be empty.")
+                    .Length(1, 255).WithMessage("The address must be between 1 and 255 characters.");
+
+                RuleFor(x => x.City)
+                    .NotEmpty().WithMessage("Your city must not be empty.")
+                    .Length(1, 255).WithMessage("The city must be between 1 and 255 characters.");
+
+                RuleFor(x => x.State)
+                    .NotEmpty().WithMessage("Your state must not be empty.")
+                    .Length(1, 255).WithMessage("The state must be between 1 and 255 characters.");
+
+                RuleFor(x => x.ZipCode)
+                    .NotEmpty().WithMessage("You zip code must not be empty.")
+                    .Matches(@"^\d{5}(?:[-\s]\d{4})?$").WithMessage("Your zip code was not valid.");
+            }
         }
 
     }

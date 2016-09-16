@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Logging;
+using NHibernate.Criterion;
 
 namespace CCServ.Authorization.Groups
 {
@@ -51,7 +52,7 @@ namespace CCServ.Authorization.Groups
         /// <summary>
         /// A list of those permission groups this permission group can edit the membership of.
         /// </summary>
-        public List<PermissionGroup> GroupsCanEditMembershipOf { get; set; }
+        public List<string> GroupsCanEditMembershipOf { get; set; }
 
         #endregion
 
@@ -65,7 +66,7 @@ namespace CCServ.Authorization.Groups
             GroupName = this.GetType().Name;
             Modules = new List<ModulePart>();
             AccessibleSubModules = new List<string>();
-            GroupsCanEditMembershipOf = new List<PermissionGroup>();
+            GroupsCanEditMembershipOf = new List<string>();
         }
 
         #endregion
@@ -124,13 +125,23 @@ namespace CCServ.Authorization.Groups
         }
 
         /// <summary>
+        /// Declares optional submodules this permission group can access.
+        /// </summary>
+        /// <param name="subModules"></param>
+        /// <returns></returns>
+        public void CanAccessSubModules(params SubModules[] subModules)
+        {
+            AccessibleSubModules = subModules.Select(x => x.ToString()).ToList();
+        }
+
+        /// <summary>
         /// Declares the permission groups whose memership this client can edit.
         /// </summary>
         /// <param name="permissionGroups"></param>
         /// <returns></returns>
-        public void CanEditMembershipOf(params PermissionGroup[] permissionGroups)
+        public void CanEditMembershipOf(params Type[] permissionGroups)
         {
-            GroupsCanEditMembershipOf = permissionGroups.ToList();
+            GroupsCanEditMembershipOf = permissionGroups.Select(x => x.Name).ToList();
         }
 
         #endregion
@@ -147,16 +158,17 @@ namespace CCServ.Authorization.Groups
         {
             Log.Info("Collecting permissions...");
 
-            var fields = typeof(Authorization.Groups.Definitions.DefinitionsManager).GetFields().Where(x => typeof(Groups.PermissionGroup).IsAssignableFrom(x.FieldType)).ToList();
-
-            List<PermissionGroup> groups = fields.Select(x => x.GetValue(null) as PermissionGroup).ToList();
+            var groups = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(x => typeof(PermissionGroup).IsAssignableFrom(x) && x != typeof(PermissionGroup))
+                .Select(x => (PermissionGroup)Activator.CreateInstance(x))
+                .ToList();
 
             if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
                 throw new Exception("No two groups may have the same name.");
 
             AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
 
-            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(",", AllPermissionGroups.Select(x => x.GroupName))));
+            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(", ", AllPermissionGroups.Select(x => x.GroupName))));
         }
 
         #endregion
