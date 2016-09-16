@@ -118,11 +118,11 @@ namespace CCServ.Entities
                 CascadeMode = CascadeMode.StopOnFirstFailure;
 
                 RuleFor(x => x.Latitude)
-                        .NotEmpty().WithMessage("Your latitude must not be empty")
+                        //.NotEmpty().WithMessage("Your latitude must not be empty")
                         .Must(x => x >= -90 && x <= 90).WithMessage("Your latitude must be between -90 and 90, inclusive.");
 
                 RuleFor(x => x.Longitude)
-                    .NotEmpty().WithMessage("Your longitude must not be empty")
+                    //.NotEmpty().WithMessage("Your longitude must not be empty")
                     .Must(x => x >= -180 && x <= 180).WithMessage("Your longitude must be between -180 and 180, inclusive.");
 
                 RuleFor(x => x.Address)
