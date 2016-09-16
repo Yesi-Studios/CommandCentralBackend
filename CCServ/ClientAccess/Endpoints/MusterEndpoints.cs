@@ -9,6 +9,7 @@ using CCServ.Authorization;
 using CCServ.Logging;
 using CCServ.Entities.Muster;
 using CCServ.Entities;
+using Newtonsoft.Json.Linq;
 
 namespace CCServ.ClientAccess.Endpoints
 {
@@ -74,7 +75,8 @@ namespace CCServ.ClientAccess.Endpoints
                     musterRecord.MusterYear,
                     musterRecord.Paygrade,
                     musterRecord.SubmitTime,
-                    musterRecord.UIC
+                    musterRecord.UIC,
+                    musterRecord.Remarks
                 });
             }
         }
@@ -129,7 +131,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.MusterYear,
                     x.Paygrade,
                     x.SubmitTime,
-                    x.UIC
+                    x.UIC,
+                    x.Remarks
                 }));
             }
         }
@@ -184,7 +187,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.MusterYear,
                     x.Paygrade,
                     x.SubmitTime,
-                    x.UIC
+                    x.UIC,
+                    x.Remarks
                 }));
             }
         }
@@ -245,7 +249,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.MusterYear,
                     x.Paygrade,
                     x.SubmitTime,
-                    x.UIC
+                    x.UIC,
+                    x.Remarks
                 }));
             }
         }
@@ -276,11 +281,11 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
-            Dictionary<Guid, string> musterSubmissions = null;
+            Dictionary<Guid, JToken> musterSubmissions = null;
             //When we try to parse the JSON from the request, we'll do it in a try catch because there's no convenient, performant TryParse implementation for this.
             try
             {
-                musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>();
+                musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, JToken>>();
             }
             catch (Exception e)
             {
@@ -289,7 +294,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x))))
+            if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
             {
                 token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
@@ -320,9 +325,10 @@ namespace CCServ.ClientAccess.Endpoints
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
                     persons[x].CurrentMusterStatus.MusterDayOfYear = MusterRecord.GetMusterDay(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterStatus.MusterStatus = musterSubmissions.ElementAt(x).Value;
+                    persons[x].CurrentMusterStatus.MusterStatus = musterSubmissions.ElementAt(x).Value.Value<string>("status");
                     persons[x].CurrentMusterStatus.MusterYear = MusterRecord.GetMusterYear(token.CallTime);
                     persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
+                    persons[x].CurrentMusterStatus.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
                     //And once we're done resetting their current muster status, let's update them.
                     session.Update(persons[x]);
@@ -438,7 +444,8 @@ namespace CCServ.ClientAccess.Endpoints
                             x.CurrentMusterStatus.MusterYear,
                             x.CurrentMusterStatus.Paygrade,
                             x.CurrentMusterStatus.SubmitTime,
-                            x.CurrentMusterStatus.UIC
+                            x.CurrentMusterStatus.UIC,
+                            x.CurrentMusterStatus.Remarks
                         },
                         CanMuster = MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x),
                         HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
