@@ -132,7 +132,7 @@ namespace AtwoodUtils
             if (DateTime.TryParse(input, out date))
                 return true;
 
-            if (DateTime.TryParseExact(input, "yyyy-MM-ddThh:mm:ss'UTC'zzz", CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal, out date))
+            if (DateTime.TryParseExact(input, "yyyy-MM-ddThh:mm:ss'.'fffzzz", CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
                 return true;
 
             return false;
