@@ -714,7 +714,7 @@ namespace CCServ.DataAccess
                                 {
                                     PhoneNumberType type = null;
 
-                                    switch ((int)x["PH_type"])
+                                    switch (Int32.Parse(x["PH_type"] as string))
                                     {
                                         case 0:
                                             {
