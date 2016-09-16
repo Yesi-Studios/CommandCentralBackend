@@ -13,7 +13,7 @@ namespace AtwoodUtils
             PreserveReferencesHandling = PreserveReferencesHandling.All,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.Indented,
-            DateFormatString = "yyyy-MM-ddThh:mm:ss'UTC'zzz"
+            DateFormatString = "yyyy-MM-ddThh:mm:ss:fffzzz"
         };
 
         public class NHibernateContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver

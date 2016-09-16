@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -124,6 +125,17 @@ namespace AtwoodUtils
                     yield return type;
                 }
             }
+        }
+
+        public static bool TryParseDateTime(string input, out DateTime date)
+        {
+            if (DateTime.TryParse(input, out date))
+                return true;
+
+            if (DateTime.TryParseExact(input, "yyyy-MM-ddThh:mm:ss'UTC'zzz", CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal, out date))
+                return true;
+
+            return false;
         }
 
         /// <summary>
