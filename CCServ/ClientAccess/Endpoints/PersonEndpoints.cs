@@ -15,10 +15,11 @@ using CCServ.ServiceManagement;
 using CCServ.Logging;
 using CCServ.Entities;
 using CCServ.Entities.Muster;
+using System.Reflection;
 
 namespace CCServ.ClientAccess.Endpoints
 {
-    static class PersonProfiles
+    static class PersonEndpoints
     {
         #region Create
 
@@ -434,48 +435,56 @@ namespace CCServ.ClientAccess.Endpoints
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
+                var queryProvider = new Person.PersonQueryProvider();
+
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
-                var queryOver = session.QueryOver<Person>();
-                foreach (string term in searchTerms)
+                var resultToken = queryProvider.CreateSimpleSearchQuery(searchTerms);
+
+                if (resultToken.HasErrors)
                 {
-                    queryOver = queryOver.Where(Restrictions.Disjunction()
-                        .Add<Person>(x => x.LastName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<Person>(x => x.FirstName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<Person>(x => x.MiddleName.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)))
-                        .Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id))));
+                    token.AddErrorMessages(resultToken.Errors, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
                 }
 
+                var simpleSearchMembers = queryProvider.GetSimpleSearchableMembers();
+                
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
-                var results = queryOver.List().Select(x =>
+                var results = resultToken.Query.UnderlyingCriteria.List<Person>().Select(x =>
                 {
 
                     //Do our permissions check here for each person.
                     var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, x).ReturnableFields["Main"]["Person"];
 
-                    return new
+                    Dictionary<string, string> result = new Dictionary<string, string>();
+                    result.Add("Id", x.Id.ToString());
+                    foreach (var member in simpleSearchMembers)
                     {
-                        x.Id,
-                        LastName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name) ? x.LastName : "REDACTED",
-                        MiddleName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name) ? x.MiddleName : "REDACTED",
-                        FirstName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name) ? x.FirstName : "REDACTED",
-                        Paygrade = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Paygrade).First().Name) ? x.Paygrade.ToString() : "REDACTED",
-                        Designation = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Designation).First().Name) ? ((x.Designation == null) ? "" : x.Designation.Value) : "REDACTED",
-                        UIC = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.UIC).First().Name) ? ((x.UIC == null) ? "" : x.UIC.Value) : "REDACTED",
-                        Command = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Command).First().Name) ? ((x.Command == null) ? "" : x.Command.Value) : "REDACTED",
-                        Department = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Department).First().Name) ? ((x.Department == null) ? "" : x.Department.Value) : "REDACTED",
-                        Division = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Division).First().Name) ? ((x.Division == null) ? "" : x.Division.Value) : "REDACTED"
-                    };
+                        if (returnableFields.Contains(member.Name))
+                        {
+                            var value = (member as PropertyInfo).GetValue(x);
+
+                            if (value == null)
+                            {
+                                result.Add(member.Name, "");
+                            }
+                            else
+                            {
+                                result.Add(member.Name, value.ToString());
+                            }
+                        }
+                        else
+                        {
+                            result.Add(member.Name, "REDACTED");
+                        }
+                    }
+
+                    return result;
                 });
 
                 token.SetResult(new
                 {
                     Results = results,
-                    Fields = new[] { "FirstName", "MiddleName", "LastName", "Paygrade", "Designation", "UIC", "Command", "Department", "Division" }
+                    Fields = simpleSearchMembers.Select(x => x.Name)
                 });
             }
         }
@@ -615,12 +624,17 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Now let's determine if we're doing a geo query.
             bool isGeoQuery = false;
-            double centerLat, centerLong, radius;
+            double centerLat = -1, centerLong = -1, radius = -1;
 
             //If the client sent any one of the three geoquery paramters, then make sure they sent all of them.
-            if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")) &&
-                !token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
+            if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")))
             {
+                if (!token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
+                {
+                    token.AddErrorMessage("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+
                 //Ok, we're doing a geo query.
                 isGeoQuery = true;
 
@@ -629,12 +643,6 @@ namespace CCServ.ClientAccess.Endpoints
                 centerLong = (double)token.Args["centerlong"];
                 radius = (double)token.Args["radius"];
             }
-            else
-            {
-                token.AddErrorMessage("If you send any geo query paramter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
 
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
@@ -691,182 +699,23 @@ namespace CCServ.ClientAccess.Endpoints
                     }
                 }
 
-                foreach (var filter in filters)
+                var convertedFilters = filters.ToDictionary(
+                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key), 
+                    x => x.Value.Split((char[])null).ToList());
+
+                var resultQueryToken = new Person.PersonQueryProvider().CreateQueryFor(convertedFilters, queryOver);
+
+                if (resultQueryToken.HasErrors)
                 {
-                    var searchTerms = filter.Value.Split((char[])null);
-
-                    var property = personMetadata.GetPropertyType(filter.Key);
-
-                    //If it's any besides a basic type, then we need to declare the search strategy for each one.
-                    if (property.IsAssociationType || property.IsCollectionType || property.IsComponentType)
-                    {
-                        //For now we're going to provide options for every property and a default.
-                        switch (filter.Key)
-                        {
-                            case "Paygrade":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "Designation":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "UIC":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "Command":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "Department":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "Division":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "Ethnicity":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "ReligiousPreference":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "PrimaryNEC":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "SecondaryNECs":
-                                {
-                                    foreach (var term in searchTerms)
-                                    {
-                                        queryOver = queryOver.Where(x =>
-                                            x.SecondaryNECs.Any(
-                                                nec =>
-                                                    nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere)));
-                                    }
-
-                                    break;
-                                }
-                            case "EmailAddresses":
-                                {
-                                    EmailAddress addressAlias = null;
-                                    queryOver = queryOver
-                                        .JoinAlias(x => x.EmailAddresses, () => addressAlias)
-                                        .Fetch(x => x.EmailAddresses).Eager;
-
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(() => addressAlias.Address.IsInsensitiveLike(term, MatchMode.Anywhere));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "PhysicalAddresses":
-                                {
-
-                                    //Physical addresses allow a simple search across the object.
-
-                                    foreach (string term in searchTerms)
-                                    {
-                                        queryOver = queryOver.Where(x =>
-                                            x.PhysicalAddresses.Any(
-                                                physicalAddress =>
-                                                    physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Address.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
-                                    }
-
-                                    break;
-                                }
-                            case "PhoneNumbers":
-                                {
-                                    var disjunction = Restrictions.Disjunction();
-                                    foreach (var term in searchTerms)
-                                        disjunction.Add(Restrictions.Where<Person>(x => x.PhoneNumbers.Any(phoneNumber => phoneNumber.Number.IsInsensitiveLike(term, MatchMode.Anywhere))));
-                                    queryOver = queryOver.Where(disjunction);
-                                    break;
-                                }
-                            case "CurrentMusterStatus":
-                                {
-                                    //A search in current muster status is a simple search across multiple fields with a filter parameter for the current days.
-                                    foreach (string term in searchTerms)
-                                    {
-                                        queryOver = queryOver.Where(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
-                                        .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
-                                        .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
-                                        .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(token.CallTime) && x.MusterYear == MusterRecord.GetMusterYear(token.CallTime))
-                                        .Select(x => x.Id)));
-                                    }
-
-                                    break;
-                                }
-                            default:
-                                {
-                                    //If the client tried to search in something that isn't supported, then fuck em.
-                                    token.AddErrorMessage("Your request to search in the field, '{0}', is not supported.  We do not currently provide a search strategy for this property.  If you think we should provide the ability to search in this property, please contact the development team with your suggestion.".FormatS(filter.Key), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                    return;
-                                }
-                        }
-                    }
-                    else
-                    {
-                        var disjunction = Restrictions.Disjunction();
-                        foreach (var term in searchTerms)
-                            disjunction.Add(Restrictions.InsensitiveLike(filter.Key, term, MatchMode.Anywhere));
-                        queryOver = queryOver.Where(disjunction);
-                    }
+                    token.AddErrorMessages(resultQueryToken.Errors, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
                 }
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
                 List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
 
-                foreach (var person in queryOver.List())
+                foreach (var person in resultQueryToken.Query.UnderlyingCriteria.List<Person>())
                 {
                     //Before we do anything, and if this is a geo query, let's determine if this person passes the geo query.
                     if (isGeoQuery)
@@ -926,24 +775,17 @@ namespace CCServ.ClientAccess.Endpoints
                     //Now just set the fields the client is allowed to see.
                     foreach (var propertyName in returnableFields)
                     {
-                        //There's a stupid thing with NHibernate where it sees Ids as, well... Ids instead of as Properties.  So we do need a special case for it.
-                        if (propertyName.ToLower() == "id")
+                        var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName);
+
+                        //if the client isn't allowed to return this field, replace its value with "redacted"
+                        if (returnableFields.Contains(propertyName))
                         {
-                            returnData.Add("Id", personMetadata.GetIdentifier(person, NHibernate.EntityMode.Poco).ToString());
+                            var value = propertyInfo.GetValue(person);
+                            returnData.Add(propertyInfo.Name, value == null ? "" : value.ToString());
                         }
                         else
                         {
-                            //if the client isn't allowed to return this field, replace its value with "redacted"
-                            if (returnableFields.Contains(propertyName))
-                            {
-                                var value = personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco);
-                                returnData.Add(propertyName, value == null ? "" : value.ToString());
-                            }
-                            else
-                            {
-                                returnData.Add(propertyName, "REDACTED");
-                            }
-
+                            returnData.Add(propertyInfo.Name, "REDACTED");
                         }
                     }
 

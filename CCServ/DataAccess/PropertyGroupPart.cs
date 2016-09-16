@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using NHibernate;
+using NHibernate.Criterion;
 
 namespace CCServ.DataAccess
 {
@@ -14,11 +15,28 @@ namespace CCServ.DataAccess
 
         public List<MemberInfo> Properties { get; set; }
 
-        public Func<IEnumerable<string>, IQueryOver<T>, IQueryOver<T>> QueryProvider { get; set; }
+        public Action<IndividualQueryToken<T>> QueryProvider { get; set; }
 
-        public void UseStrategy(Func<IEnumerable<string>, IQueryOver<T>, IQueryOver<T>> strategy)
+        public SearchDataTypesEnum SearchType { get; set; }
+
+        public bool IsSimpleSearchable { get; set; }
+
+        public PropertyGroupPart<T> UseStrategy(Action<IndividualQueryToken<T>> strategy)
         {
             QueryProvider = strategy;
+            return this;
+        }
+
+        public PropertyGroupPart<T> AsType(SearchDataTypesEnum type)
+        {
+            SearchType = type;
+            return this;
+        }
+
+        public PropertyGroupPart<T> SimpleSearchable()
+        {
+            IsSimpleSearchable = true;
+            return this;
         }
     }
 }

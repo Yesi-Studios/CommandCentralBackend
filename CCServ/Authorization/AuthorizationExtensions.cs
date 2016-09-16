@@ -27,7 +27,7 @@ namespace CCServ.Authorization
         }
 
         /// <summary>
-        /// Resolves a list of permission groups into a resolved permission for the give person.
+        /// Resolves a list of permission groups into a resolved permission for the given person.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="client"></param>
