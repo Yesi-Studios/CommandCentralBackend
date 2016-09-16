@@ -13,7 +13,7 @@ namespace AtwoodUtils
             PreserveReferencesHandling = PreserveReferencesHandling.All,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.Indented,
-            DateFormatString = "YYYY-MM-DDTHH:mm:ss.sssZ",
+            DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
         };
 
