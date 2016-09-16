@@ -102,21 +102,10 @@ namespace CCServ.Entities
         /// </summary>
         public virtual ReligiousPreference ReligiousPreference { get; set; }
 
-        private Paygrade _paygrade;
         /// <summary>
         /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
         /// </summary>
-        public virtual Paygrade Paygrade
-        {
-            get
-            {
-                return _paygrade;
-            }
-            set
-            {
-                _paygrade = Paygrades.AllPaygrades.First(x => x.Value.SafeEquals(value.Value));
-            }
-        }
+        public virtual Paygrade Paygrade { get; set; }
 
         /// <summary>
         /// The person's Designation (CTI2, CTR1, 1114, Job title)
@@ -792,12 +781,6 @@ namespace CCServ.Entities
                     .SetCollectionValidator(new PhoneNumber.PhoneNumberValidator());
                 RuleFor(x => x.PhysicalAddresses)
                     .SetCollectionValidator(new PhysicalAddress.PhysicalAddressValidator());
-                
-                    
-               
-
-
-
             }
 
         }
