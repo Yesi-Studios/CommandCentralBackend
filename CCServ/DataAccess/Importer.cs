@@ -8,6 +8,7 @@ using System.Data;
 using AtwoodUtils;
 using CCServ.Logging;
 using System.Globalization;
+using CCServ.Entities.ReferenceLists;
 
 namespace CCServ.DataAccess
 {
@@ -19,9 +20,16 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Ingests the old database into the new database.  NHibernate must be configured prior to calling this method.
         /// </summary>
-        public static void IngestOldDatabase()
+        [ServiceManagement.StartMethod(Priority = 8)]
+        private static void IngestOldDatabase(CLI.Options.LaunchOptions options)
         {
+            if (!options.Ingest)
+            {
+                Log.Info("Skipping ingest...");
+                return;
+            }
 
+            Log.Info("Beginning ingest...");
             DataSet oldDatabase = new DataSet();
 
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -88,20 +96,31 @@ namespace CCServ.DataAccess
                             }
                         };
 
-                        commands.First().Departments = new List<Entities.ReferenceLists.Department>(
+                        //And now that we have all of these, let's go ahead and save them.
+                        Log.Info("Persisting commands...");
+                        commands.ForEach(x => session.Save(x));
+                        session.Flush();
+
+                        new List<Entities.ReferenceLists.Department>(
                             oldDatabase.Tables["dept"].Rows.Cast<DataRow>().Where(y => Convert.ToBoolean(y["DEPT_actv"])).Select(y =>
                                 new Entities.ReferenceLists.Department
                                 {
                                     Command = commands.First(),
                                     Description = "",
                                     Id = Guid.Parse(y["NewId"] as string),
-                                    Value = y["DEPT_dept"] as string
+                                    Value = y["DEPT_dept"] as string,
+                                    Divisions = new List<Entities.ReferenceLists.Division>()
                                 })
-                        );
+                        ).ForEach(x => commands.First().Departments.Add(x));
+
+                        //Now save all the departments.
+                        Log.Info("Persisting departments...");
+                        commands.SelectMany(x => x.Departments).ToList().ForEach(x => session.Save(x));
+                        session.Flush();
 
                         foreach (var department in commands.First().Departments)
                         {
-                            department.Divisions = oldDatabase.Tables["div"].Rows.Cast<DataRow>()
+                            oldDatabase.Tables["div"].Rows.Cast<DataRow>()
                                 .Where(x => Convert.ToBoolean(x["DIV_actv"]) &&
                                     Convert.ToInt32(x["DIV_dept"]) == Convert.ToInt32(oldDatabase.Tables["dept"].AsEnumerable().First(y => y["NewId"] as string == department.Id.ToString())["DEPT_id"]))
                                 .Select(x =>
@@ -111,12 +130,12 @@ namespace CCServ.DataAccess
                                         Description = "",
                                         Id = Guid.Parse(x["NewId"] as string),
                                         Value = x["DIV_div"] as string
-                                    }).ToList();
+                                    }).ToList().ForEach(x => department.Divisions.Add(x));
                         }
 
-                        //And now that we have all of these, let's go ahead and save them.
-                        Log.Info("Persisting commands...");
-                        commands.ForEach(x => session.Save(x));
+                        //Now save the divisions.
+                        Log.Info("Persisting them divisions...");
+                        commands.SelectMany(x => x.Departments).SelectMany(x => x.Divisions).ToList().ForEach(x => session.Save(x));
                         session.Flush();
 
                         //Now let's do NECs
@@ -134,12 +153,16 @@ namespace CCServ.DataAccess
                         oldDatabase.Tables["types"].Rows.Add(new object[] { 0, "None" });
 
                         List<Entities.ReferenceLists.NEC> necs = oldDatabase.Tables["nec"].AsEnumerable().Select(x =>
-                            new Entities.ReferenceLists.NEC
                             {
-                                Description = "",
-                                Id = Guid.Parse(x["NewId"] as string),
-                                NECType = (PersonTypes)Enum.Parse((typeof(PersonTypes)), oldDatabase.Tables["types"].AsEnumerable().First(y => Convert.ToInt32(y["TYPE_id"]) == Convert.ToInt32(x["NEC_type"]))["TYPE_type"] as string),
-                                Value = x["NEC_nec"] as string
+                                string type = oldDatabase.Tables["types"].AsEnumerable().First(y => Convert.ToInt32(y["TYPE_id"]) == Convert.ToInt32(x["NEC_type"]))["TYPE_type"] as string;
+
+                                return new Entities.ReferenceLists.NEC
+                                {
+                                    Description = "",
+                                    Id = Guid.Parse(x["NewId"] as string),
+                                    NECType = PersonTypes.AllPersonTypes.FirstOrDefault(y => y.Value.SafeEquals(type)),
+                                    Value = x["NEC_nec"] as string
+                                };
                             }).ToList();
 
                         Log.Info("Persisting NECs...");
@@ -411,14 +434,22 @@ namespace CCServ.DataAccess
                         var memberRows = oldDatabase.Tables["person"].AsEnumerable().Where(x => ids.Contains(Convert.ToInt32(x["PERS_id"]))).ToList();
 
 
-
+                        List<string> errorsLog = new List<string> { "The following errors occurred while importing old data:" };
                         List<Entities.Person> persons = memberRows.Select(persRow =>
                             {
                                 var person = new Entities.Person();
 
                                 var adminRow = oldDatabase.Tables["admin_info"].AsEnumerable().First(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"]));
                                 var workRow = oldDatabase.Tables["work_info"].AsEnumerable().First(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"]));
+                                person.FirstName = Utilities.FirstCharacterToUpper((persRow["PERS_fname"] as string).ToLower());
+                                person.Id = Guid.Parse(persRow["NewId"] as string);
 
+                                person.IsClaimed = false;
+
+                                person.JobTitle = workRow["WORK_title"] as string;
+                                person.LastName = Utilities.FirstCharacterToUpper((persRow["PERS_lname"] as string).ToLower());
+
+                                person.MiddleName = Utilities.FirstCharacterToUpper((persRow["PERS_mi"] as string).ToLower());
 
                                 person.AccountHistory = new List<Entities.AccountHistoryEvent>();
                                 person.Changes = new List<Entities.Change>();
@@ -429,8 +460,8 @@ namespace CCServ.DataAccess
                                 var doa = adminRow["ADM_cmddoa"] as string;
                                 if (string.IsNullOrEmpty(doa))
                                 {
-                                    person.DateOfArrival = DateTime.Now;
-                                    //TODO LOG ME
+                                    person.DateOfArrival = new DateTime(1775, 10, 13);
+                                    errorsLog.Add(string.Format("{0}'s date of arrival was empty, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
                                 }
                                 else
                                 {
@@ -442,8 +473,8 @@ namespace CCServ.DataAccess
                                         person.DateOfArrival = temp;
                                     else
                                     {
-                                        person.DateOfArrival = DateTime.Now;
-                                        //TODO LOG ME
+                                        person.DateOfArrival = new DateTime(1775, 10, 13);
+                                        errorsLog.Add(string.Format("{0}'s date of arrival was invalid, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
                                     }
                                 }
 
@@ -451,7 +482,7 @@ namespace CCServ.DataAccess
                                 if (string.IsNullOrEmpty(dob))
                                 {
                                     person.DateOfBirth = new DateTime(1775, 10, 13);
-                                    //TODO LOG ME
+                                    errorsLog.Add(string.Format("{0}'s date of birth was empty, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
                                 }
                                 else
                                 {
@@ -464,7 +495,7 @@ namespace CCServ.DataAccess
                                     else
                                     {
                                         person.DateOfBirth = new DateTime(1775, 10, 13);
-                                        //TODO LOG ME
+                                        errorsLog.Add(string.Format("{0}'s date of birth was invalid, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
                                     }
                                 }
 
@@ -481,6 +512,11 @@ namespace CCServ.DataAccess
                                         DateTimeStyles.None,
                                         out temp))
                                         person.DateOfDeparture = temp;
+                                    else
+                                    {
+                                        person.DateOfDeparture = new DateTime(1775, 10, 13);
+                                        errorsLog.Add(string.Format("{0}'s date of departure was invalid, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
+                                    }
                                 }
 
                                 if (Convert.ToInt32(workRow["RATE_id"]) != 0)
@@ -576,6 +612,11 @@ namespace CCServ.DataAccess
                                         DateTimeStyles.None,
                                         out temp))
                                         person.EAOS = temp;
+                                    else
+                                    {
+                                        person.EAOS = new DateTime(1775, 10, 13);
+                                        errorsLog.Add(string.Format("{0}'s EAOS was invalid, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
+                                    }
                                 }
 
                                 //email type 0 = work, 1 = home - but I'm not using it. lol.
@@ -598,15 +639,7 @@ namespace CCServ.DataAccess
                                 }
                                 
 
-                                person.FirstName = Utilities.FirstCharacterToUpper((persRow["PERS_fname"] as string).ToLower());
-                                person.Id = Guid.Parse(persRow["NewId"] as string);
-
-                                person.IsClaimed = false;
-
-                                person.JobTitle = workRow["WORK_title"] as string;
-                                person.LastName = Utilities.FirstCharacterToUpper((persRow["PERS_lname"] as string).ToLower());
-
-                                person.MiddleName = Utilities.FirstCharacterToUpper((persRow["PERS_mi"] as string).ToLower());
+                                
 
                                 //Primary is 0, secondary is 1
                                 var necRows = oldDatabase.Tables["pers_necs"].AsEnumerable().Where(x => Convert.ToInt32(x["WORK_id"]) == Convert.ToInt32(workRow["WORK_id"])).ToList();
@@ -621,38 +654,99 @@ namespace CCServ.DataAccess
                                     }
                                     else
                                     {
-                                        person.Paygrade = (Paygrades)Enum.Parse(typeof(Paygrades), rank);
+                                        person.Paygrade = Paygrades.AllPaygrades.First(x => x.Value.SafeEquals(rank));
                                     }
+                                }
+
+                                //Did we get a paygrade?  If not set it to e1.
+                                if (person.Paygrade == null)
+                                {
+                                    errorsLog.Add("{0} had no valid rank.  It was set to E1.".FormatS(person.ToString()));
+                                    person.Paygrade = Paygrades.E1;
                                 }
 
                                 //home is 0, work is 1, cell is 2
                                 var phoneRows = oldDatabase.Tables["phone"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
 
-                                person.NECAssignments = necRows.Select(nec =>
+
+                                
+                                necRows.ForEach(nec =>
                                    {
                                        var necNewId = oldDatabase.Tables["nec"].AsEnumerable().First(x => Convert.ToInt32(x["NEC_id"]) == Convert.ToInt32(nec["NEC_id"]))["NewId"] as string;
 
-                                       var necToPerson = new Entities.NECAssignment
+                                       //If is primary
+                                       if ((nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0")
                                        {
-                                           Id = Guid.NewGuid(),
-                                           IsPrimary = (nec["PNEC_type"] as string) == "Primary" || (nec["PNEC_type"] as string) == "0",
-                                           NEC = necs.First(x => x.Id.ToString().SafeEquals(necNewId)),
-                                           Person = person
-                                       };
+                                           if (person.PrimaryNEC != null)
+                                           {
+                                               if (person.SecondaryNECs == null)
+                                               {
+                                                   person.SecondaryNECs = new List<Entities.ReferenceLists.NEC>();
+                                               }
+                                               person.SecondaryNECs.Add(necs.First(x => x.Id.ToString().SafeEquals(necNewId)));
+                                               errorsLog.Add("The person, '{0}', has multiple primary NECs.  The NEC, {1}, was made a secondary NEC instead.".FormatS(person.ToString(), necs.First(x => x.Id.ToString().SafeEquals(necNewId)).Value));
+                                           }
+                                           else
+                                           {
+                                               person.PrimaryNEC = necs.First(x => x.Id.ToString().SafeEquals(necNewId));
+                                           }
+                                           
+                                       }
+                                       else
+                                       {
+                                           if (person.SecondaryNECs == null)
+                                           {
+                                               person.SecondaryNECs = new List<Entities.ReferenceLists.NEC>();
+                                           }
+                                           person.SecondaryNECs.Add(necs.First(x => x.Id.ToString().SafeEquals(necNewId)));
+                                       }
+                                   });
 
-                                       return necToPerson;
-                                   }).ToList();
+                                if (person.PrimaryNEC == null)
+                                {
+                                    errorsLog.Add("{0} has no primary NEC.".FormatS(person.ToString()));
+                                }
 
-                               
-
+                                // 0 is mobile
+                                // 1 is work
+                                // 2 is home
                                 person.PhoneNumbers = phoneRows.Select(x =>
                                 {
+                                    PhoneNumberType type = null;
+
+                                    switch (Int32.Parse(x["PH_type"] as string))
+                                    {
+                                        case 0:
+                                            {
+                                                type = PhoneNumberTypes.Mobile;
+                                                break;
+                                            }
+                                        case 1:
+                                            {
+                                                type = PhoneNumberTypes.Work;
+                                                break;
+                                            }
+                                        case 2:
+                                            {
+                                                type = PhoneNumberTypes.Home;
+                                                break;
+                                            }
+                                        default:
+                                            {
+                                                type = PhoneNumberTypes.Home;
+                                                errorsLog.Add("{0}'s phone number was set to 'Home'.".FormatS(person.ToString()));
+
+                                                break;
+                                            }
+                                    }
+
                                     var phone = new Entities.PhoneNumber
                                     {
                                         Id = Guid.Parse(x["NewId"] as string),
                                         IsContactable = false,
                                         IsPreferred = false,
-                                        Number = new String((x["PH_number"] as string).Where(Char.IsLetter).ToArray())
+                                        PhoneType = type,
+                                        Number = new String((x["PH_areacode"] as string).Where(Char.IsNumber).ToArray()) + new String((x["PH_number"] as string).Where(Char.IsNumber).ToArray())
                                     };
 
                                     switch (Convert.ToInt32(x["PH_type"]))
@@ -685,36 +779,27 @@ namespace CCServ.DataAccess
 
                                
 
-                                //TODO
                                 //Home is 0
                                 var addressRows = oldDatabase.Tables["address"].AsEnumerable().Where(x => Convert.ToInt32(x["PERS_id"]) == Convert.ToInt32(persRow["PERS_id"])).ToList();
 
-                                //TODO LOG ME
-                                var badRows = addressRows.Where(x => String.IsNullOrEmpty(x["ADD_line1"] as string));
+                                var badRows = addressRows.Where(x => String.IsNullOrEmpty(x["ADD_line1"] as string)).ToList();
+                                
+                                badRows.ForEach(x =>
+                                    {
+                                        errorsLog.Add(string.Format("One of {0}'s addresses contained no address (just a city, in most cases); the address was dropped.", person.ToString()));
+                                    });
 
                                 person.PhysicalAddresses = addressRows.Except(badRows).Select(x =>
                                     {
-                                        string streetNumber = null;
-                                        string route = null;
-                                        if ((x["ADD_line1"] as string).ToLower().Contains("bldg"))
-                                        {
-                                            route = (x["ADD_line1"] as string);
-                                            streetNumber = " ";
-                                        }
-                                        else
-                                        {
-                                            streetNumber = (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).First();
-                                            route = String.Join(" ", (x["ADD_line1"] as string).Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries).Skip(1));
-                                        }
+                                        
+                                        string addr = x["ADD_line1"] as string + x["ADD_line2"] as string;
                                         
                                         var address = new Entities.PhysicalAddress
                                         {
                                             City = x["ADD_city"] as string,
-                                            Country = "United States of America",
                                             Id = Guid.Parse(x["NewId"] as string),
                                             IsHomeAddress = Convert.ToInt32(x["ADD_type"]) == 0,
-                                            StreetNumber = streetNumber,
-                                            Route = route,
+                                            Address = addr,
                                             State = x["ADD_st"] as string,
                                             ZipCode = x["ADD_zip"] as string
                                         };
@@ -736,7 +821,7 @@ namespace CCServ.DataAccess
                                 }
                                 else
                                 {
-                                    person.Sex = (Sexes)Enum.Parse(typeof(Sexes), persRow["PERS_sex"] as string);
+                                    person.Sex = Sexes.AllSexes.First(x => x.Value.SafeEquals(persRow["PERS_sex"] as string));
                                 }
                                 
 
@@ -757,29 +842,25 @@ namespace CCServ.DataAccess
                                 return person;
                             }).ToList();
 
-                        //Finally, we're going to make some decisions here.
-
-
-                        
-
-                        int fails = 0;
+                        int total = persons.Count;
+                        int current = 0;
 
                         //Persist the persons.
                         Log.Info("Persisting all members of the command...");
                         persons.ForEach(x =>
                             {
-                                try
+                                session.SaveOrUpdate(x);
+                                session.Flush();
+                                current++;
+
+                                if ((current % 50) == 0)
                                 {
-                                    session.SaveOrUpdate(x);
-                                    session.Flush();
+                                    Log.Info("{0}% completed...".FormatS(Math.Round(((double)current/(double)total) * 100, 2)));
                                 }
-                                catch
-                                {
-                                    fails++;
-                                    Log.Info("{0} have failed so far.".FormatS(fails));
-                                }
-                                
                             });
+
+                        //All of that went well, so let's log the failures.
+                        Log.Critical(String.Join("||BREAK||", errorsLog));
 
                     }
 
@@ -793,17 +874,17 @@ namespace CCServ.DataAccess
                     {
                         case 0:
                             {
-                                Log.Warning("Old database could not be contacted!");
+                                Log.Critical("Old database could not be contacted!");
                                 break;
                             }
                         case 1045:
                             {
-                                Log.Warning("The Username/password combination for the old database was invalid!");
+                                Log.Critical("The Username/password combination for the old database was invalid!");
                                 break;
                             }
                         case 1042:
                             {
-                                Log.Warning("The old database was either offline or otherwise non-contactable.");
+                                Log.Critical("The old database was either offline or otherwise non-contactable.");
                                 break;
                             }
                         default:

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -9,8 +12,10 @@ namespace AtwoodUtils
 {
     public static class ExtensionMethods
     {
-        public static string Truncate(this string str, int length)
+        public static string Truncate(this string str, int length, string message = "|| MESSAGE TRUNCATED ||")
         {
+
+
             if (length < 0)
             {
                 throw new ArgumentOutOfRangeException("length", "Length must be greater than or equal to 0!");
@@ -21,8 +26,36 @@ namespace AtwoodUtils
                 return null;
             }
 
-            int maxLength = Math.Min(str.Length, length);
-            return str.Substring(0, maxLength);
+            if (str.Length >= length)
+            {
+                str = str.Substring(0, length - message.Length);
+                str += message;
+            }
+
+            return str;
+        }
+
+        /// <summary>
+        /// Deep copies an object, copying value data only - not reference data.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static T Clone<T>(this object obj) where T : ISerializable
+        {
+            if (obj == null)
+                return default(T);
+
+            using (var stream = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(stream, obj);
+                stream.Seek(0, SeekOrigin.Begin);
+
+                T result = (T)formatter.Deserialize(stream);
+
+                return result;
+            }
         }
 
         /// <summary>

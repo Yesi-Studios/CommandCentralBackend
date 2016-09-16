@@ -38,13 +38,25 @@ namespace CCServ.ClientAccess
 
         private string _rawRequestBody = "";
         /// <summary>
-        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters.
+        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters or set to REDACTED if the service endpoint doesn't allow its logging.
         /// </summary>
-        public virtual string RawRequestBody
+        public virtual string RawRequestBodyForLogging
         {
             get
             {
-                return _rawRequestBody.Truncate(10000);
+                bool allowLogging = false;
+
+                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowArgumentLogging)
+                    allowLogging = true;
+
+                if (allowLogging)
+                {
+                    return _rawRequestBody.Truncate(10000);
+                }
+                else
+                {
+                    return "REDACTED";
+                }
             }
             set
             {
@@ -100,7 +112,19 @@ namespace CCServ.ClientAccess
         {
             get
             {
-                return ConstructResponseString().Truncate(10000);
+                bool allowLogging = false;
+
+                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowResponseLogging)
+                    allowLogging = true;
+
+                if (allowLogging)
+                {
+                    return ConstructResponseString().Truncate(10000);
+                }
+                else
+                {
+                    return "REDACTED";
+                }
             }
         }
 
@@ -164,6 +188,7 @@ namespace CCServ.ClientAccess
             //Initialize the status code to OK.  If the error message is ever set, then that'll change.
             StatusCode = System.Net.HttpStatusCode.OK;
             ErrorType = ErrorTypes.Null;
+            APIKey = new APIKey();
         }
 
         #endregion
@@ -177,7 +202,7 @@ namespace CCServ.ClientAccess
         /// <param name="convert" />
         public virtual void SetRequestBody(string body, bool convert)
         {
-            RawRequestBody = body;
+            RawRequestBodyForLogging = body;
 
             if (convert)
             {
@@ -288,7 +313,7 @@ namespace CCServ.ClientAccess
                 References(x => x.AuthenticationSession).LazyLoad(Laziness.False);
 
                 Map(x => x.CallTime);
-                Map(x => x.RawRequestBody).Length(10000);
+                Map(x => x.RawRequestBodyForLogging).Length(10000);
                 Map(x => x.CalledEndpoint);
                 Map(x => x.HasError).Access.ReadOnly();
                 Map(x => x.ErrorType);
@@ -300,7 +325,7 @@ namespace CCServ.ClientAccess
 
                 HasMany(x => x.ErrorMessages)
                     .KeyColumn("MessageTokenId")
-                    .Element("ErrorMessage")
+                    .Element("ErrorMessage", map => map.Length(10000))
                     .Not.LazyLoad();
 
             }

@@ -27,8 +27,6 @@ namespace CCServ
         public WindowsServiceEntry()
         {
             InitializeComponent();
-
-            ServiceName = "CCSERV";
         }
 
         /// <summary>
@@ -49,21 +47,33 @@ namespace CCServ
             ServiceManagement.ServiceManager.StartService(_launchOptions);
         }
 
+        /// <summary>
+        /// Fires when the service manager instructs our service to stop.
+        /// </summary>
         protected override void OnStop()
         {
             ServiceManagement.ServiceManager.StopService();
         }
 
+        /// <summary>
+        /// When the service manager instructs the service to shutdown.
+        /// </summary>
         protected override void OnShutdown()
         {
             ServiceManagement.ServiceManager.StopService();
         }
 
+        /// <summary>
+        /// When our service is paused.
+        /// </summary>
         protected override void OnPause()
         {
             ServiceManagement.ServiceManager.StopService();
         }
 
+        /// <summary>
+        /// The service was paused... and then continued, this fires.
+        /// </summary>
         protected override void OnContinue()
         {
             ServiceManagement.ServiceManager.StartService(_launchOptions);
