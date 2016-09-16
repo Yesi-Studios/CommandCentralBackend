@@ -90,6 +90,11 @@ namespace CCServ.Entities.Muster
         /// </summary>
         public virtual bool HasBeenSubmitted { get; set; }
 
+        /// <summary>
+        /// A free text field for clients to put comments in.
+        /// </summary>
+        public virtual string Remarks { get; set; }
+
         #endregion
 
         #region Overrides
@@ -480,19 +485,20 @@ namespace CCServ.Entities.Muster
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Musterer).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Musteree).Nullable().LazyLoad(Laziness.False);
+                References(x => x.Musterer).LazyLoad(Laziness.False);
+                References(x => x.Musteree).LazyLoad(Laziness.False);
 
-                Map(x => x.Paygrade).Nullable();
-                Map(x => x.Division).Nullable();
-                Map(x => x.Department).Nullable();
-                Map(x => x.Command).Nullable();
-                Map(x => x.MusterStatus).Nullable();
-                Map(x => x.DutyStatus).Nullable();
-                Map(x => x.SubmitTime).Nullable();
-                Map(x => x.MusterDayOfYear).Nullable();
+                Map(x => x.Paygrade);
+                Map(x => x.Division);
+                Map(x => x.Department);
+                Map(x => x.Command);
+                Map(x => x.MusterStatus);
+                Map(x => x.DutyStatus);
+                Map(x => x.SubmitTime);
+                Map(x => x.MusterDayOfYear).Not.Nullable();
                 Map(x => x.MusterYear).Not.Nullable();
-                Map(x => x.HasBeenSubmitted).Nullable();
+                Map(x => x.HasBeenSubmitted).Not.Nullable();
+                Map(x => x.Remarks);
             }
         }
 
