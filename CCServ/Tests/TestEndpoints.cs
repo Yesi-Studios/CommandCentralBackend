@@ -71,10 +71,15 @@ namespace CCServ.Tests
                 return;
             }
 
-            DateTime temp;
-            bool result = Utilities.TryParseDateTime(token.Args["date"] as string, out temp);
-
-            token.SetResult(result);
+            try
+            {
+                token.SetResult((DateTime)token.Args["date"]);
+            }
+            catch
+            {
+                token.SetResult("failed");
+            }
+            
         }
     }
 }
