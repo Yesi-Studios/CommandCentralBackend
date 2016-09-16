@@ -126,18 +126,7 @@ namespace AtwoodUtils
                 }
             }
         }
-
-        public static bool TryParseDateTime(string input, out DateTime date)
-        {
-            if (DateTime.TryParse(input, out date))
-                return true;
-
-            if (DateTime.TryParseExact(input, "yyyy-MM-ddThh:mm:ss'.'fffzzz", CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
-                return true;
-
-            return false;
-        }
-
+        
         /// <summary>
         /// Reads all text from a stream.
         /// </summary>
