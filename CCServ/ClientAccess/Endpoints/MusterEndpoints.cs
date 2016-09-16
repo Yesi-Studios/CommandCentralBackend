@@ -294,7 +294,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
+            if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Id == Guid.Parse(x.Value<string>("status")))))
             {
                 token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
@@ -325,7 +325,7 @@ namespace CCServ.ClientAccess.Endpoints
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
                     persons[x].CurrentMusterStatus.MusterDayOfYear = MusterRecord.GetMusterDay(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterStatus.MusterStatus = musterSubmissions.ElementAt(x).Value.Value<string>("status");
+                    persons[x].CurrentMusterStatus.MusterStatus = Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.First(y => y.Id == Guid.Parse(musterSubmissions.ElementAt(x).Value.Value<string>("status"))).Value;
                     persons[x].CurrentMusterStatus.MusterYear = MusterRecord.GetMusterYear(token.CallTime);
                     persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
                     persons[x].CurrentMusterStatus.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
