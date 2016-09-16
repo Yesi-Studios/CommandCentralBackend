@@ -138,7 +138,7 @@
     <Compile Include="ClientAccess\Endpoints\Account.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
-    <Compile Include="ClientAccess\Endpoints\PersonProfiles.cs" />
+    <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
@@ -159,7 +159,10 @@
     <Compile Include="DataAccess\Importer.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\PropertyGroupPart.cs" />
+    <Compile Include="DataAccess\QueryResultToken.cs" />
     <Compile Include="DataAccess\QueryStrategy.cs" />
+    <Compile Include="DataAccess\IndividualQueryToken.cs" />
+    <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
     <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
