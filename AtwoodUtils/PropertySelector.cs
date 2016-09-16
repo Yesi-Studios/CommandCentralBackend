@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using AtwoodUtils;
 
-namespace CCServ.Authorization.Groups
+namespace AtwoodUtils
 {
     /// <summary>
     /// A static class that cleans up property selection from a given type.
@@ -24,5 +24,7 @@ namespace CCServ.Authorization.Groups
         {
             return expressions.Select(x => x.GetProperty()).ToList();
         }
+
+        public static List<MemberInfo> SelectPropertiesFrom(Type type, )
     }
 }

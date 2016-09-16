@@ -379,7 +379,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
                 bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
-                    .ReturnableFields["Main"]["Person"].Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
+                    .ReturnableFields["Main"]["Person"].Contains(PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
 
                 if (!canView)
                 {
@@ -460,15 +460,15 @@ namespace CCServ.ClientAccess.Endpoints
                     return new
                     {
                         x.Id,
-                        LastName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name) ? x.LastName : "REDACTED",
-                        MiddleName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name) ? x.MiddleName : "REDACTED",
-                        FirstName = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name) ? x.FirstName : "REDACTED",
-                        Paygrade = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Paygrade).First().Name) ? x.Paygrade.ToString() : "REDACTED",
-                        Designation = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Designation).First().Name) ? ((x.Designation == null) ? "" : x.Designation.Value) : "REDACTED",
-                        UIC = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.UIC).First().Name) ? ((x.UIC == null) ? "" : x.UIC.Value) : "REDACTED",
-                        Command = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Command).First().Name) ? ((x.Command == null) ? "" : x.Command.Value) : "REDACTED",
-                        Department = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Department).First().Name) ? ((x.Department == null) ? "" : x.Department.Value) : "REDACTED",
-                        Division = returnableFields.Contains(Authorization.Groups.PropertySelector.SelectPropertiesFrom<Person>(y => y.Division).First().Name) ? ((x.Division == null) ? "" : x.Division.Value) : "REDACTED"
+                        LastName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name) ? x.LastName : "REDACTED",
+                        MiddleName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name) ? x.MiddleName : "REDACTED",
+                        FirstName = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name) ? x.FirstName : "REDACTED",
+                        Paygrade = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Paygrade).First().Name) ? x.Paygrade.ToString() : "REDACTED",
+                        Designation = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Designation).First().Name) ? ((x.Designation == null) ? "" : x.Designation.Value) : "REDACTED",
+                        UIC = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.UIC).First().Name) ? ((x.UIC == null) ? "" : x.UIC.Value) : "REDACTED",
+                        Command = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Command).First().Name) ? ((x.Command == null) ? "" : x.Command.Value) : "REDACTED",
+                        Department = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Department).First().Name) ? ((x.Department == null) ? "" : x.Department.Value) : "REDACTED",
+                        Division = returnableFields.Contains(PropertySelector.SelectPropertiesFrom<Person>(y => y.Division).First().Name) ? ((x.Division == null) ? "" : x.Division.Value) : "REDACTED"
                     };
                 });
 
