@@ -14,7 +14,7 @@ namespace AtwoodUtils
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.Indented,
             DateFormatString = "YYYY-MM-DDTHH:mm:ss.sssZ",
-            DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind
+            DateTimeZoneHandling = DateTimeZoneHandling.Utc
         };
 
         public class NHibernateContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
