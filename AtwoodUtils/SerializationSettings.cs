@@ -12,7 +12,8 @@ namespace AtwoodUtils
             ContractResolver = new NHibernateContractResolver(),
             PreserveReferencesHandling = PreserveReferencesHandling.All,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            Formatting = Formatting.Indented
+            Formatting = Formatting.Indented,
+            DateFormatString = "yyyy-MM-ddThh:mm:ss'UTC'zzz"
         };
 
         public class NHibernateContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
