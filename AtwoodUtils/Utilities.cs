@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -125,7 +126,7 @@ namespace AtwoodUtils
                 }
             }
         }
-
+        
         /// <summary>
         /// Reads all text from a stream.
         /// </summary>

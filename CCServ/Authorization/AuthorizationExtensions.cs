@@ -52,8 +52,8 @@ namespace CCServ.Authorization
 
                 //Add the editable permission groups.
                 foreach (var editPermissionGroup in group.GroupsCanEditMembershipOf)
-                    if (!resolvedPermissions.EditablePermissionGroups.Contains(editPermissionGroup.GroupName))
-                        resolvedPermissions.EditablePermissionGroups.Add(editPermissionGroup.GroupName);
+                    if (!resolvedPermissions.EditablePermissionGroups.Contains(editPermissionGroup))
+                        resolvedPermissions.EditablePermissionGroups.Add(editPermissionGroup);
 
                 //And the accessible submodules.
                 foreach (var accessibleSubmodule in group.AccessibleSubModules)

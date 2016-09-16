@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CCServ</RootNamespace>
-    <AssemblyName>CCServ</AssemblyName>
+    <AssemblyName>ccserv</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\CCServ.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\ccserv.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -118,7 +118,6 @@
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\Definitions\Admin.cs" />
     <Compile Include="Authorization\Groups\Definitions\CommandLeadership.cs" />
-    <Compile Include="Authorization\Groups\Definitions\DefinitionsManager.cs" />
     <Compile Include="Authorization\Groups\Definitions\DepartmentLeadership.cs" />
     <Compile Include="Authorization\Groups\Definitions\Developers.cs" />
     <Compile Include="Authorization\Groups\Definitions\DivisionLeadership.cs" />
@@ -137,6 +136,10 @@
     <Compile Include="ClientAccess\APIKey.cs" />
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
+    <Compile Include="ClientAccess\Endpoints\Account.cs" />
+    <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
+    <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\PersonProfiles.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
@@ -150,10 +153,11 @@
     <Compile Include="CLI\Program.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\Email.cs" />
+    <Compile Include="Config\Muster.cs" />
     <Compile Include="Config\ParamNames.cs" />
+    <Compile Include="Config\Serialization.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="DataAccess\Importer.cs" />
-    <Compile Include="DataAccess\ImportError.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
@@ -171,8 +175,6 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />
-    <Compile Include="Entities\Muster\MusterReport.cs" />
-    <Compile Include="Entities\NECAssignment.cs" />
     <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
@@ -180,28 +182,36 @@
     <Compile Include="Entities\PhoneNumber.cs" />
     <Compile Include="Entities\PhysicalAddress.cs" />
     <Compile Include="Entities\ProfileLock.cs" />
+    <Compile Include="Entities\ReferenceLists\AccountHistoryType.cs" />
+    <Compile Include="Entities\ReferenceLists\AccountHistoryTypes.cs" />
     <Compile Include="Entities\ReferenceLists\Command.cs" />
     <Compile Include="Entities\ReferenceLists\Department.cs" />
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
     <Compile Include="Entities\ReferenceLists\Division.cs" />
+    <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
+    <Compile Include="Entities\ReferenceLists\DutyStatuses.cs" />
+    <Compile Include="Entities\ReferenceLists\EditableReferenceListItemBase.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
+    <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
+    <Compile Include="Entities\ReferenceLists\MusterStatuses.cs" />
     <Compile Include="Entities\ReferenceLists\NEC.cs" />
+    <Compile Include="Entities\ReferenceLists\Paygrade.cs" />
+    <Compile Include="Entities\ReferenceLists\Paygrades.cs" />
+    <Compile Include="Entities\ReferenceLists\PersonType.cs" />
+    <Compile Include="Entities\ReferenceLists\PersonTypes.cs" />
+    <Compile Include="Entities\ReferenceLists\PhoneNumberType.cs" />
+    <Compile Include="Entities\ReferenceLists\PhoneNumberTypes.cs" />
+    <Compile Include="Entities\ReferenceLists\ReferenceListEndpoints.cs" />
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
+    <Compile Include="Entities\ReferenceLists\Sex.cs" />
+    <Compile Include="Entities\ReferenceLists\Sexes.cs" />
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\Variance.cs" />
-    <Compile Include="Enums\AccountHistoryTypesEnum.cs" />
-    <Compile Include="Enums\ChangeEventLevelsEnum.cs" />
-    <Compile Include="Enums\DutyStatusesEnum.cs" />
-    <Compile Include="Enums\MusterStatusesEnum.cs" />
-    <Compile Include="Enums\PersonTypeEnum.cs" />
-    <Compile Include="Enums\PaygradesEnum.cs" />
-    <Compile Include="Enums\PhoneNumberTypesEnum.cs" />
-    <Compile Include="Enums\SexesEnum.cs" />
-    <Compile Include="Entities\ReferenceLists\IValidatable.cs" />
     <Compile Include="Logging\ILogger.cs" />
-    <Compile Include="Logging\LogEntity.cs" />
+    <Compile Include="Logging\LogEntry.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Logging\Loggers\ConsoleLogger.cs" />
+    <Compile Include="Logging\Loggers\DatabaseLogger.cs" />
     <Compile Include="Logging\Loggers\EmailLogger.cs" />
     <Compile Include="Logging\LoggingTargetsEnum.cs" />
     <Compile Include="Logging\MessageTypesEnum.cs" />
@@ -253,28 +263,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\AccountConfirmation_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\BeginPasswordReset_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\CompletedAccountRegistration_HTML.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\CompletedAccountRegistration_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\FailedAccountLogin_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\FatalError_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\MusterReport_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\ReregistrationError_Plain.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\FailedAccountLogin_HTML.html">
@@ -288,19 +280,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\BeginPasswordReset_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\CriticalMessage_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\CriticalMessage_Plain.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\FinishPasswordReset_HTML.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\FinishPasswordReset_Plain.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

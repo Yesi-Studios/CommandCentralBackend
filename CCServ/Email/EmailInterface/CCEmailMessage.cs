@@ -258,21 +258,6 @@ namespace CCServ.Email.EmailInterface
         }
 
         /// <summary>
-        /// Uses a template embedded in the assembly.  The templates are cached, so if the template has already been used once, it doesn't have to be loaded.
-        /// </summary>
-        /// <param name="resourcePath"></param>
-        /// <param name="model"></param>
-        /// <param name="assembly"></param>
-        /// <returns></returns>
-        public CCEmailMessage BodyUsingTemplateFromEmbedded(string resourcePath, object model, bool isBodyHTML = false, Assembly assembly = null)
-        {
-            assembly = assembly ?? Assembly.GetCallingAssembly();
-            Message.Body = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
-            Message.IsBodyHtml = isBodyHTML;
-            return this;
-        }
-
-        /// <summary>
         /// Uses a template embedded in the assembly to generate an alternate view with the given HTML.  The templates are cached, so if the template has already been used once, it doesn't have to be loaded again.
         /// </summary>
         /// <param name="resourcePath"></param>

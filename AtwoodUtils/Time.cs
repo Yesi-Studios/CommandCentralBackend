@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace AtwoodUtils
 {
     /// <summary>
-    /// Represents a Time with no date because, for whatever reason, the .NET framework doens't have that.
+    /// Represents a Time with no date because, for whatever reason, the .NET framework doesn't have that.
     /// </summary>
     public class Time
     {
