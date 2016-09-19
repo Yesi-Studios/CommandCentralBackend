@@ -135,7 +135,7 @@ namespace CCServ.Authorization.Groups
         }
 
         /// <summary>
-        /// Declares the permission groups whose memership this client can edit.
+        /// Declares the permission groups whose membership this client can edit.
         /// </summary>
         /// <param name="permissionGroups"></param>
         /// <returns></returns>
