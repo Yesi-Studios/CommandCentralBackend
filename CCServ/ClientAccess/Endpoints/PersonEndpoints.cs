@@ -306,6 +306,29 @@ namespace CCServ.ClientAccess.Endpoints
                                     wasSet = true;
                                     break;
                                 }
+                            case "currentmusterstatus":
+                                {
+                                    returnData.Add(propertyName, new
+                                    {
+                                        person.CurrentMusterStatus.Command,
+                                        person.CurrentMusterStatus.Department,
+                                        person.CurrentMusterStatus.Division,
+                                        person.CurrentMusterStatus.DutyStatus,
+                                        person.CurrentMusterStatus.HasBeenSubmitted,
+                                        person.CurrentMusterStatus.Id,
+                                        person.CurrentMusterStatus.MusterDayOfYear,
+                                        Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
+                                        Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
+                                        person.CurrentMusterStatus.MusterStatus,
+                                        person.CurrentMusterStatus.MusterYear,
+                                        person.CurrentMusterStatus.Paygrade,
+                                        person.CurrentMusterStatus.SubmitTime,
+                                        person.CurrentMusterStatus.UIC
+                                    });
+
+                                    wasSet = true;
+                                    break;
+                                }
                             case "accounthistory":
                                 {
                                     returnData.Add(propertyName, person.AccountHistory.OrderBy(x => x.EventTime).Take(5).ToList());
@@ -446,10 +469,10 @@ namespace CCServ.ClientAccess.Endpoints
                     return;
                 }
 
-                var simpleSearchMembers = queryProvider.GetSimpleSearchableMembers();
+                var simpleSearchMembers = queryProvider.GetMembersThatAreUsedIn(QueryTypes.Simple);
                 
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
-                var results = resultToken.Query.UnderlyingCriteria.List<Person>().Select(x =>
+                var results = resultToken.Query.GetExecutableQueryOver(session).List<Person>().Select(x =>
                 {
 
                     //Do our permissions check here for each person.
@@ -701,9 +724,9 @@ namespace CCServ.ClientAccess.Endpoints
 
                 var convertedFilters = filters.ToDictionary(
                     x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key), 
-                    x => x.Value.Split((char[])null).ToList());
+                    x => x.Value.Split((char[])null).Cast<object>());
 
-                var resultQueryToken = new Person.PersonQueryProvider().CreateQueryFor(convertedFilters, queryOver);
+                var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQueryFor(convertedFilters, queryOver);
 
                 if (resultQueryToken.HasErrors)
                 {
@@ -715,7 +738,9 @@ namespace CCServ.ClientAccess.Endpoints
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
                 List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
 
-                foreach (var person in resultQueryToken.Query.UnderlyingCriteria.List<Person>())
+                var rawResults = resultQueryToken.Query.GetExecutableQueryOver(session).List<Person>();
+
+                foreach (var person in rawResults)
                 {
                     //Before we do anything, and if this is a geo query, let's determine if this person passes the geo query.
                     if (isGeoQuery)
@@ -907,7 +932,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var variances = session.GetDirtyProperties(personFromDB).ToList();
 
                     //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
-                    var results = new Entities.Person.PersonValidator().Validate(personFromDB);
+                    var results = new Person.PersonValidator().Validate(personFromDB);
 
                     //If there are any errors with the validation, let's throw those back to the client.
                     if (results.Errors.Any())

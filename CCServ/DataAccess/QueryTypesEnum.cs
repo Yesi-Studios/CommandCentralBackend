@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace CCServ.DataAccess
 {
-    public enum SearchDataTypes
+    public enum QueryTypes
     {
-        String,
-        Boolean,
-        DateTime
+        Advanced,
+        Simple
     }
 }
