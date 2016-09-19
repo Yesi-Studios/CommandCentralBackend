@@ -707,14 +707,46 @@ namespace CCServ.DataAccess
                                     errorsLog.Add("{0} has no primary NEC.".FormatS(person.ToString()));
                                 }
 
+                                // 0 is mobile
+                                // 1 is work
+                                // 2 is home
                                 person.PhoneNumbers = phoneRows.Select(x =>
                                 {
+                                    PhoneNumberType type = null;
+
+                                    switch (Int32.Parse(x["PH_type"] as string))
+                                    {
+                                        case 0:
+                                            {
+                                                type = PhoneNumberTypes.Mobile;
+                                                break;
+                                            }
+                                        case 1:
+                                            {
+                                                type = PhoneNumberTypes.Work;
+                                                break;
+                                            }
+                                        case 2:
+                                            {
+                                                type = PhoneNumberTypes.Home;
+                                                break;
+                                            }
+                                        default:
+                                            {
+                                                type = PhoneNumberTypes.Home;
+                                                errorsLog.Add("{0}'s phone number was set to 'Home'.".FormatS(person.ToString()));
+
+                                                break;
+                                            }
+                                    }
+
                                     var phone = new Entities.PhoneNumber
                                     {
                                         Id = Guid.Parse(x["NewId"] as string),
                                         IsContactable = false,
                                         IsPreferred = false,
-                                        Number = new String((x["PH_number"] as string).Where(Char.IsNumber).ToArray())
+                                        PhoneType = type,
+                                        Number = new String((x["PH_areacode"] as string).Where(Char.IsNumber).ToArray()) + new String((x["PH_number"] as string).Where(Char.IsNumber).ToArray())
                                     };
 
                                     switch (Convert.ToInt32(x["PH_type"]))
