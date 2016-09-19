@@ -12,7 +12,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// <summary>
         /// The Chiefs permission group. Should be given to all division and department Chiefs, so they can manage sailors in their charge.
         /// </summary>
-        public DivisionLeadership()
+        public DivisionLeadership() 
         {
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
 
