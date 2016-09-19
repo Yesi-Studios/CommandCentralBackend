@@ -32,7 +32,7 @@ namespace CCServ.Config
             }
         }
 
-        public static System.Net.Mail.MailAddress McLean
+        public static System.Net.Mail.MailAddress McLeanAddress
         {
             get
             {
