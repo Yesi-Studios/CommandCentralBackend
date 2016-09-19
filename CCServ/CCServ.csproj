@@ -118,9 +118,12 @@
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\Definitions\Admin.cs" />
     <Compile Include="Authorization\Groups\Definitions\CommandLeadership.cs" />
+    <Compile Include="Authorization\Groups\Definitions\CommandMuster.cs" />
     <Compile Include="Authorization\Groups\Definitions\DepartmentLeadership.cs" />
+    <Compile Include="Authorization\Groups\Definitions\DepartmentMuster.cs" />
     <Compile Include="Authorization\Groups\Definitions\Developers.cs" />
     <Compile Include="Authorization\Groups\Definitions\DivisionLeadership.cs" />
+    <Compile Include="Authorization\Groups\Definitions\DivisionMuster.cs" />
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
