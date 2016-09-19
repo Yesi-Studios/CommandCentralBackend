@@ -15,28 +15,38 @@ namespace CCServ.DataAccess
 
         public List<MemberInfo> Properties { get; set; }
 
-        public Action<IndividualQueryToken<T>> QueryProvider { get; set; }
+        public Func<QueryToken<T>, ICriterion> CriteriaProvider { get; set; }
 
-        public SearchDataTypesEnum SearchType { get; set; }
+        public SearchDataTypes SearchType { get; set; }
 
-        public bool IsSimpleSearchable { get; set; }
+        public List<QueryTypes> QueryTypesUsedIn { get; set; }
 
-        public PropertyGroupPart<T> UseStrategy(Action<IndividualQueryToken<T>> strategy)
+        public bool CanSearchIn(QueryTypes type)
         {
-            QueryProvider = strategy;
+            return QueryTypesUsedIn.Contains(type);
+        }
+
+        public PropertyGroupPart<T> UsingStrategy(Func<QueryToken<T>, ICriterion> strat)
+        {
+            CriteriaProvider = strat;
             return this;
         }
 
-        public PropertyGroupPart<T> AsType(SearchDataTypesEnum type)
+        public PropertyGroupPart<T> CanBeUsedIn(params QueryTypes[] usedIn)
+        {
+            QueryTypesUsedIn = usedIn.ToList();
+            return this;
+        }
+
+        public PropertyGroupPart<T> AsType(SearchDataTypes type)
         {
             SearchType = type;
             return this;
         }
 
-        public PropertyGroupPart<T> SimpleSearchable()
+        public PropertyGroupPart()
         {
-            IsSimpleSearchable = true;
-            return this;
+            QueryTypesUsedIn = new List<QueryTypes>();
         }
     }
 }

@@ -14,67 +14,75 @@ namespace CCServ.DataAccess
     {
         List<PropertyGroupPart<T>> PropertyGroups { get; set; }
 
+        /// <summary>
+        /// Creates a new query strat and initializes the property groups to an empty collection.
+        /// </summary>
+        public QueryStrategy()
+        {
+            PropertyGroups = new List<PropertyGroupPart<T>>();
+        }
+
         public PropertyGroupPart<T> ForProperties(IEnumerable<MemberInfo> members)
         {
             PropertyGroupPart<T> part = new PropertyGroupPart<T>
             {
                 ParentQueryStrategy = this,
                 Properties = members.ToList(),
-                QueryProvider = null //TODO maybe provider a default here.
+                CriteriaProvider = null //TODO maybe provider a default here.
             };
+
+            PropertyGroups.Add(part);
 
             return part;
         }
 
-        public IEnumerable<MemberInfo> GetSimpleSearchableMembers()
+        public IEnumerable<MemberInfo> GetMembersThatAreUsedIn(QueryTypes type)
         {
-            return PropertyGroups.Where(x => x.IsSimpleSearchable).SelectMany(x => x.Properties);
+            return PropertyGroups.Where(x => x.CanSearchIn(type)).SelectMany(x => x.Properties);
         }
 
-        public QueryResultToken<T> CreateSimpleSearchQuery(IEnumerable<string> terms)
+        public QueryResultToken<T> CreateSimpleSearchQuery(IEnumerable<object> terms)
         {
-            return CreateQueryFor(terms, PropertyGroups.Where(x => x.IsSimpleSearchable).SelectMany(x => x.Properties));
-        }
+            QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), SearchParameters = GetMembersThatAreUsedIn(QueryTypes.Simple).ToDictionary(x => x, x => terms) };
 
-        public QueryResultToken<T> CreateQueryFor(IEnumerable<string> terms, params MemberInfo[] members)
-        {
-            return CreateQueryFor(terms, members);
-        }
-
-        public QueryResultToken<T> CreateQueryFor(IEnumerable<string> terms, params string[] members)
-        {
-            return CreateQueryFor(terms, PropertySelector.SelectPropertiesFrom<T>(members, StringComparison.CurrentCultureIgnoreCase));
-        }
-
-        public QueryResultToken<T> CreateQueryFor(IEnumerable<string> terms, IEnumerable<MemberInfo> members)
-        {
-            QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), MembersToSearch = members.ToList()};
-
-            foreach (var member in result.MembersToSearch)
+            foreach (var term in terms)
             {
-                var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Properties.Any(y => y.Equals(member)));
+                var disjunction = Restrictions.Disjunction();
 
-                if (propertyGroup == null)
+                foreach (var member in result.SearchParameters.Keys)
                 {
-                    result.Errors.Add("The member, {0}, declared no search strategy!  This is most likely because it is not searchable.  If you believe this is in error, please contact us.".FormatS(member.Name));
-                }
-                else
-                {
-                    var token = new IndividualQueryToken<T> { Member = member, Query = result.Query, Terms = terms };
+                    var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Properties.Any(y => y.Equals(member)));
 
-                    propertyGroup.QueryProvider(token);
+                    if (propertyGroup == null)
+                    {
+                        result.Errors.Add("The member, {0}, declared no search strategy!  This is most likely because it is not searchable.  If you believe this is in error, please contact us.".FormatS(member.Name));
+                    }
+                    else
+                    {
+                        var token = new QueryToken<T> { Query = result.Query, SearchParameter = new KeyValuePair<MemberInfo, object>(member, term) };
 
-                    if (token.HasErrors)
-                        result.Errors.AddRange(token.Errors);
+                        var criteria = propertyGroup.CriteriaProvider(token);
+
+                        if (token.HasErrors)
+                        {
+                            result.Errors.AddRange(token.Errors);
+                            return null;
+                        }
+
+                        disjunction.Add(criteria);
+
+                    }
                 }
+
+                result.Query.Where(disjunction);
             }
 
             return result;
         }
 
-        public QueryResultToken<T> CreateQueryFor(Dictionary<MemberInfo, List<string>> filters, IQueryOver<T, T> query)
+        public QueryResultToken<T> CreateAdvancedQueryFor(Dictionary<MemberInfo, IEnumerable<object>> filters, IQueryOver<T, T> query = null)
         {
-            QueryResultToken<T> result = new QueryResultToken<T> { Query = (QueryOver<T, T>)query, MembersToSearch = filters.Keys.ToList() };
+            QueryResultToken<T> result = new QueryResultToken<T> { Query = query == null ? QueryOver.Of<T>() : (QueryOver<T, T>)query, SearchParameters = filters };
 
             foreach (var filter in filters)
             {
@@ -86,12 +94,24 @@ namespace CCServ.DataAccess
                 }
                 else
                 {
-                    var token = new IndividualQueryToken<T> { Member = filter.Key, Query = result.Query, Terms = filter.Value };
+                    var disjunction = Restrictions.Disjunction();
 
-                    propertyGroup.QueryProvider(token);
+                    foreach (var term in filter.Value)
+                    {
+                        var token = new QueryToken<T> { Query = result.Query, SearchParameter = new KeyValuePair<MemberInfo, object>(filter.Key, term) };
 
-                    if (token.HasErrors)
-                        result.Errors.AddRange(token.Errors);
+                        var criteria = propertyGroup.CriteriaProvider(token);
+
+                        if (token.HasErrors)
+                        {
+                            result.Errors.AddRange(token.Errors);
+                            return result;
+                        }
+
+                        disjunction.Add(criteria);
+                    }
+
+                    result.Query.Where(disjunction);
                 }
             }
 

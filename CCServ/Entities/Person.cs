@@ -809,27 +809,22 @@ namespace CCServ.Entities
                     x => x.JobTitle,
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Restrictions.InsensitiveLike(token.Member.Name, term, MatchMode.Anywhere));
-                    token.Query = token.Query.Where(disjunction);
+                    return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Restrictions.InsensitiveLike(token.Member.Name, term, MatchMode.Anywhere));
-                    token.Query = token.Query.Where(disjunction);
+                    return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
@@ -838,220 +833,170 @@ namespace CCServ.Entities
                     x => x.DateOfArrival,
                     x => x.EAOS,
                     x => x.DateOfDeparture))
-                .AsType(SearchDataTypesEnum.DateTime)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.DateTime)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Restrictions.InsensitiveLike(token.Member.Name, term, MatchMode.Anywhere));
-                    token.Query = token.Query.Where(disjunction);
+                    token.Errors.Add("Date searches are not currently supported.  We apologize for the inconvenience.");
+                    return null;
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Sex))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Ethnicity))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.ReligiousPreference))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Paygrade))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Designation))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Division))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Department))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Command))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.PrimaryNEC))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.SecondaryNECs))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
+                    NEC necAlias = null;
 
-                    foreach (var term in token.Terms)
-                    {
-                        disjunction.Add<Person>(x =>
-                                            x.SecondaryNECs.Any(
-                                                nec =>
-                                                    nec.Value.IsInsensitiveLike(term, MatchMode.Anywhere)));
-                    }
+                    token.Query = token.Query.JoinAlias(x => x.SecondaryNECs, () => necAlias);
 
-                    token.Query.Where(disjunction);
+                    return Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.DutyStatus))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.UIC))
-                .SimpleSearchable()
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(term, MatchMode.Anywhere).Select(x => x.Id)));
-                    token.Query = token.Query.Where(disjunction);
+                    return Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.CurrentMusterStatus))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
-
-                    foreach (string term in token.Terms)
-                    {
-                        disjunction.Add(Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
-                        .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(term, MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(term, MatchMode.Anywhere)))
+                    return Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
+                        .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                        .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere)))
                         .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(DateTime.Now) && x.MusterYear == MusterRecord.GetMusterYear(DateTime.Now))
-                        .Select(x => x.Id)));
-                    }
-
-                    token.Query.Where(disjunction);
+                        .Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.EmailAddresses))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
                     EmailAddress addressAlias = null;
-                    token.Query = token.Query
-                        .JoinAlias(x => x.EmailAddresses, () => addressAlias)
-                        .Fetch(x => x.EmailAddresses).Eager;
+                    token.Query = token.Query.JoinAlias(x => x.EmailAddresses, () => addressAlias);
 
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var term in token.Terms)
-                        disjunction.Add(() => addressAlias.Address.IsInsensitiveLike(term, MatchMode.Anywhere));
-                    token.Query = token.Query.Where(disjunction);
+                    return Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.PhysicalAddresses))
-                .AsType(SearchDataTypesEnum.String)
-                .UseStrategy(token =>
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
                 {
-                    var disjunction = Restrictions.Disjunction();
+                    PhysicalAddress addressAlias = null;
+                    token.Query = token.Query.JoinAlias(x => x.PhysicalAddresses, () => addressAlias);
 
-                    foreach (string term in token.Terms)
-                    {
-                        disjunction.Add<Person>(x =>
-                                            x.PhysicalAddresses.Any(
-                                                physicalAddress =>
-                                                    physicalAddress.City.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.Address.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.State.IsInsensitiveLike(term, MatchMode.Anywhere) ||
-                                                    physicalAddress.ZipCode.IsInsensitiveLike(term, MatchMode.Anywhere)));
-                    }
-
-                    token.Query.Where(disjunction);
+                    return Restrictions.Disjunction().Add(Restrictions.On(() => addressAlias.City).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                                                     .Add(Restrictions.On(() => addressAlias.State).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                                                     .Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
+                                                     .Add(Restrictions.On(() => addressAlias.ZipCode).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
                 });
             }
         }

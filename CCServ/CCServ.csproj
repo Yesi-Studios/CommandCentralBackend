@@ -161,7 +161,8 @@
     <Compile Include="DataAccess\PropertyGroupPart.cs" />
     <Compile Include="DataAccess\QueryResultToken.cs" />
     <Compile Include="DataAccess\QueryStrategy.cs" />
-    <Compile Include="DataAccess\IndividualQueryToken.cs" />
+    <Compile Include="DataAccess\QueryToken.cs" />
+    <Compile Include="DataAccess\QueryTypesEnum.cs" />
     <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
