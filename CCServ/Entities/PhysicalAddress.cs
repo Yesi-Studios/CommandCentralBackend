@@ -41,6 +41,11 @@ namespace CCServ.Entities
         public virtual string ZipCode { get; set; }
 
         /// <summary>
+        /// The country.
+        /// </summary>
+        public virtual string Country { get; set; }
+
+        /// <summary>
         /// Indicates whether or not the person lives at this address
         /// </summary>
         public virtual bool IsHomeAddress { get; set; }
@@ -99,6 +104,7 @@ namespace CCServ.Entities
                 Map(x => x.City).Not.Nullable();
                 Map(x => x.State).Not.Nullable();
                 Map(x => x.ZipCode).Not.Nullable();
+                Map(x => x.Country);
                 Map(x => x.IsHomeAddress).Not.Nullable();
                 Map(x => x.Latitude).Nullable();
                 Map(x => x.Longitude).Nullable();
@@ -136,6 +142,9 @@ namespace CCServ.Entities
                 RuleFor(x => x.State)
                     .NotEmpty().WithMessage("Your state must not be empty.")
                     .Length(1, 255).WithMessage("The state must be between 1 and 255 characters.");
+
+                RuleFor(x => x.Country)
+                    .Length(0, 255).WithMessage("The country may be no more than 200 characters.");
 
                 RuleFor(x => x.ZipCode)
                     .NotEmpty().WithMessage("You zip code must not be empty.")
