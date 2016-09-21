@@ -7,11 +7,11 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class DivisionMuster : PermissionGroup
+    public class DivisionMuster : PermissionGroup
     {
         public DivisionMuster()
         {
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
+            CanEditMembershipOf(typeof(DivisionMuster));
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
