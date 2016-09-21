@@ -801,7 +801,8 @@ namespace CCServ.DataAccess
                                             IsHomeAddress = Convert.ToInt32(x["ADD_type"]) == 0,
                                             Address = addr,
                                             State = x["ADD_st"] as string,
-                                            ZipCode = x["ADD_zip"] as string
+                                            ZipCode = x["ADD_zip"] as string,
+                                            Country = "United States of America"
                                         };
 
                                         return address;
