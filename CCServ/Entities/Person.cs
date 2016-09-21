@@ -404,9 +404,9 @@ namespace CCServ.Entities
             return this.Paygrade.ToString().Contains("E") && !IsOfficer();
         }
 
-        public virtual Dictionary<string, object> GetChainOfCommand()
+        public virtual Dictionary<string, Dictionary<string, object>> GetChainOfCommand()
         {
-            Dictionary<string, object> result = new Dictionary<string, object>();
+            var result = new Dictionary<string, Dictionary<string, object>>();
 
 
 
@@ -470,6 +470,13 @@ namespace CCServ.Entities
                         };
 
                         person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        if (!launchOptions.UseSecureMode)
+                        {
+                            person.Username = "dkatwoo";
+                            person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
+                            person.IsClaimed = true;
+                        }
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
@@ -536,6 +543,13 @@ namespace CCServ.Entities
                         };
 
                         person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        if (!launchOptions.UseSecureMode)
+                        {
+                            person.Username = "anguslmm";
+                            person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
+                            person.IsClaimed = true;
+                        }
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {

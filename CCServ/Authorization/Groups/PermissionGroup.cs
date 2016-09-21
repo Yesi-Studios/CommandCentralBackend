@@ -54,6 +54,11 @@ namespace CCServ.Authorization.Groups
         /// </summary>
         public List<string> GroupsCanEditMembershipOf { get; set; }
 
+        /// <summary>
+        /// Marks this permission group as a collateral group.  Default false.  If false, assumed to me the main permissions line.
+        /// </summary>
+        public bool IsCollateral { get; set; }
+
         #endregion
 
         #region ctors
@@ -67,6 +72,7 @@ namespace CCServ.Authorization.Groups
             Modules = new List<ModulePart>();
             AccessibleSubModules = new List<string>();
             GroupsCanEditMembershipOf = new List<string>();
+            IsCollateral = false;
         }
 
         #endregion
