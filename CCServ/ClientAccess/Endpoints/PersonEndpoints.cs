@@ -351,7 +351,8 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     Person = returnData,
                     IsMyProfile = token.AuthenticationSession.Person.Id == person.Id,
-                    ResolvedPermissions = resolvedPermissions
+                    ResolvedPermissions = resolvedPermissions,
+                    FriendlyName = person.ToString()
                 });
             }
         }
