@@ -41,6 +41,11 @@ namespace CCServ.DataAccess
             return PropertyGroups.Where(x => x.CanSearchIn(type)).SelectMany(x => x.Properties);
         }
 
+        public IEnumerable<MemberInfo> GetIdentifiers()
+        {
+            return PropertyGroups.Where(x => x.AreIdintifiers).SelectMany(x => x.Properties);
+        }
+
         public QueryResultToken<T> CreateSimpleSearchQuery(IEnumerable<object> terms)
         {
             QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), SearchParameters = GetMembersThatAreUsedIn(QueryTypes.Simple).ToDictionary(x => x, x => terms) };
