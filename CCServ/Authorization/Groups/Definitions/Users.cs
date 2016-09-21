@@ -76,6 +76,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DateOfArrival,
                     x => x.JobTitle,
                     x => x.EAOS,
+                    x => x.PRD,
                     x => x.DateOfDeparture,
                     x => x.CurrentMusterStatus,
                     x => x.EmailAddresses,

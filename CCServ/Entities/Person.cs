@@ -204,6 +204,11 @@ namespace CCServ.Entities
         public virtual DateTime? EAOS { get; set; }
 
         /// <summary>
+        /// The member's projected rotation date.
+        /// </summary>
+        public virtual DateTime? PRD { get; set; }
+
+        /// <summary>
         /// The date/time that the client left/will leave the command.
         /// </summary>
         public virtual DateTime? DateOfDeparture { get; set; }
@@ -399,6 +404,15 @@ namespace CCServ.Entities
             return this.Paygrade.ToString().Contains("E") && !IsOfficer();
         }
 
+        public virtual Dictionary<string, object> GetChainOfCommand()
+        {
+            Dictionary<string, object> result = new Dictionary<string, object>();
+
+
+
+            return result;
+        }
+
         #endregion
         
         #region Startup Methods
@@ -449,6 +463,7 @@ namespace CCServ.Entities
                             DateOfBirth = new DateTime(1992, 04, 24),
                             DateOfArrival = new DateTime(2013, 08, 23),
                             EAOS = new DateTime(2018, 1, 27),
+                            PRD = new DateTime(2017, 3, 15),
                             Paygrade = Paygrades.E5,
                             DutyStatus = DutyStatuses.Active,
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
@@ -514,6 +529,7 @@ namespace CCServ.Entities
                             DateOfBirth = new DateTime(1992, 04, 24),
                             DateOfArrival = new DateTime(2013, 08, 23),
                             EAOS = new DateTime(2018, 1, 27),
+                            PRD = new DateTime(2017, 3, 15),
                             Paygrade = Paygrades.E5,
                             DutyStatus = DutyStatuses.Active,
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
@@ -598,7 +614,8 @@ namespace CCServ.Entities
                 Map(x => x.WorkRemarks).Nullable().Length(150).Not.LazyLoad();
                 Map(x => x.DateOfArrival).Not.Nullable().Not.LazyLoad();
                 Map(x => x.JobTitle).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.EAOS).Nullable().Not.LazyLoad();
+                Map(x => x.EAOS).Not.LazyLoad();
+                Map(x => x.PRD).Not.Nullable().Not.LazyLoad();
                 Map(x => x.DateOfDeparture).Nullable().Not.LazyLoad();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150).Not.LazyLoad();
                 Map(x => x.ContactRemarks).Nullable().Length(150).Not.LazyLoad();
@@ -654,6 +671,8 @@ namespace CCServ.Entities
                 RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid and contain only numbers.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
+                    .WithMessage("The DOB must not be left blank.");
+                RuleFor(x => x.PRD).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
                 RuleFor(x => x.Sex).NotNull()
                     .WithMessage("The sex must not be left blank.");
@@ -852,7 +871,8 @@ namespace CCServ.Entities
                     x => x.GTCTrainingDate,
                     x => x.DateOfArrival,
                     x => x.EAOS,
-                    x => x.DateOfDeparture))
+                    x => x.DateOfDeparture,
+                    x => x.PRD))
                 .AsType(SearchDataTypes.DateTime)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
