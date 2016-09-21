@@ -9,16 +9,12 @@ namespace CCServ.Authorization.Groups.Definitions
 {
     public class Admin : PermissionGroup
     {
-        /// <summary>
-        /// The developers permission group. This permission group is to be granted exclusively to developers, and no one else under any circumstanes.
-        /// <para />
-        /// These high permissions are necessary for testing and high level management. No one else should ever require this.
-        /// </summary>
         public Admin()
         {
             CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
 
-            CanEditMembershipOf(typeof(Groups.Definitions.Users), typeof(Groups.Definitions.DivisionLeadership), typeof(Groups.Definitions.DepartmentLeadership), typeof(Groups.Definitions.Admin));
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin),
+                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
 
             HasAccessLevel(PermissionGroupLevels.Command);
 
@@ -35,6 +31,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DateOfArrival,
                     x => x.JobTitle,
                     x => x.EAOS,
+                    x => x.PRD,
                     x => x.DateOfDeparture,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
@@ -80,7 +77,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.EAOS,
+                    x => x.PRD))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");

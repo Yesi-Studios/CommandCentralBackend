@@ -21,6 +21,8 @@ namespace CCServ.DataAccess
 
         public List<QueryTypes> QueryTypesUsedIn { get; set; }
 
+        public bool AreIdintifiers { get; set; }
+
         public bool CanSearchIn(QueryTypes type)
         {
             return QueryTypesUsedIn.Contains(type);
@@ -41,6 +43,12 @@ namespace CCServ.DataAccess
         public PropertyGroupPart<T> AsType(SearchDataTypes type)
         {
             SearchType = type;
+            return this;
+        }
+
+        public PropertyGroupPart<T> UsedAsIdentifiers()
+        {
+            AreIdintifiers = true;
             return this;
         }
 

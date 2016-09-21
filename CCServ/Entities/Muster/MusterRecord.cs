@@ -16,8 +16,6 @@ namespace CCServ.Entities.Muster
     public class MusterRecord
     {
 
-        
-
         #region Properties
 
         /// <summary>
@@ -40,6 +38,11 @@ namespace CCServ.Entities.Muster
         /// </summary>
         public virtual string Paygrade { get; set; }
 
+        /// <summary>
+        /// The person's designation at the time of muster.
+        /// </summary>
+        public virtual string Designation { get; set; }
+        
         /// <summary>
         /// The person being mustered's UIC.  Fucking Mustard x 2.
         /// </summary>
@@ -259,9 +262,9 @@ namespace CCServ.Entities.Muster
                     //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person person in persons)
                     {
-                        person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.Value;
-                        person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.Value;
-                        person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.Value;
+                        person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.ToString();
+                        person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.ToString();
+                        person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.ToString();
                         person.CurrentMusterStatus.DutyStatus = person.DutyStatus.ToString();
                         if (!person.CurrentMusterStatus.HasBeenSubmitted)
                         {
@@ -270,7 +273,8 @@ namespace CCServ.Entities.Muster
                         }
                         person.CurrentMusterStatus.HasBeenSubmitted = true;
                         person.CurrentMusterStatus.Paygrade = person.Paygrade.ToString();
-                        person.CurrentMusterStatus.UIC = person.UIC == null ? "" : person.UIC.Value;
+                        person.CurrentMusterStatus.UIC = person.UIC == null ? "" : person.UIC.ToString();
+                        person.CurrentMusterStatus.Designation = person.Designation == null ? "" : person.Designation.ToString();
 
                         session.Save(person);
                     }
@@ -361,8 +365,6 @@ namespace CCServ.Entities.Muster
         }
 
         #endregion
-
-        
 
         #region Startup Methods
 
@@ -499,6 +501,7 @@ namespace CCServ.Entities.Muster
                 Map(x => x.MusterYear).Not.Nullable();
                 Map(x => x.HasBeenSubmitted).Not.Nullable();
                 Map(x => x.Remarks);
+                Map(x => x.Designation);
             }
         }
 

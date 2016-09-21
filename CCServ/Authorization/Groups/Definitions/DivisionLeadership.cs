@@ -14,7 +14,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public DivisionLeadership()
         {
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DivisionMuster));
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
@@ -31,6 +31,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DateOfArrival,
                     x => x.JobTitle,
                     x => x.EAOS,
+                    x => x.PRD,
                     x => x.DateOfDeparture,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
@@ -72,6 +73,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Command,
                     x => x.DutyStatus,
                     x => x.UIC,
+                    x => x.EAOS,
+                    x => x.PRD,
                     x => x.PrimaryNEC,
                     x => x.SecondaryNECs))
                     .IfInChainOfCommand();

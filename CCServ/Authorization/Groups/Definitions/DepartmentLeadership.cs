@@ -14,7 +14,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public DepartmentLeadership()
         {
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership));
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(DivisionMuster), typeof(DepartmentMuster));
 
             HasAccessLevel(PermissionGroupLevels.Department);
 
@@ -40,7 +40,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes,
-                    x => x.SSN))
+                    x => x.SSN,
+                    x => x.PRD))
                     .IfInChainOfCommand()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
@@ -72,7 +73,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DutyStatus,
                     x => x.UIC,
                     x => x.PrimaryNEC,
-                    x => x.SecondaryNECs))
+                    x => x.SecondaryNECs,
+                    x => x.PRD,
+                    x => x.EAOS))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");

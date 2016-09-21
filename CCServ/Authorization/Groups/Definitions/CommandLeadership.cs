@@ -16,7 +16,9 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
 
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership));
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership),
+                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster)); 
+
 
             HasAccessLevel(PermissionGroupLevels.Command);
 
@@ -32,6 +34,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DateOfArrival,
                     x => x.JobTitle,
                     x => x.EAOS,
+                    x => x.PRD,
                     x => x.DateOfDeparture,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
@@ -74,7 +77,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DutyStatus,
                     x => x.UIC,
                     x => x.PrimaryNEC,
-                    x => x.SecondaryNECs))
+                    x => x.SecondaryNECs,
+                    x => x.EAOS,
+                    x => x.PRD))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
