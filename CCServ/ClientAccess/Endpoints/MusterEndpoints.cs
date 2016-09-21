@@ -76,7 +76,8 @@ namespace CCServ.ClientAccess.Endpoints
                     musterRecord.Paygrade,
                     musterRecord.SubmitTime,
                     musterRecord.UIC,
-                    musterRecord.Remarks
+                    musterRecord.Remarks,
+                    musterRecord.Designation
                 });
             }
         }
@@ -132,7 +133,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.Paygrade,
                     x.SubmitTime,
                     x.UIC,
-                    x.Remarks
+                    x.Remarks,
+                    x.Designation
                 }));
             }
         }
@@ -188,7 +190,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.Paygrade,
                     x.SubmitTime,
                     x.UIC,
-                    x.Remarks
+                    x.Remarks,
+                    x.Designation
                 }));
             }
         }
@@ -250,7 +253,8 @@ namespace CCServ.ClientAccess.Endpoints
                     x.Paygrade,
                     x.SubmitTime,
                     x.UIC,
-                    x.Remarks
+                    x.Remarks,
+                    x.Designation
                 }));
             }
         }
@@ -447,7 +451,8 @@ namespace CCServ.ClientAccess.Endpoints
                             x.CurrentMusterStatus.Paygrade,
                             x.CurrentMusterStatus.SubmitTime,
                             x.CurrentMusterStatus.UIC,
-                            x.CurrentMusterStatus.Remarks
+                            x.CurrentMusterStatus.Remarks,
+                            x.CurrentMusterStatus.Designation
                         },
                         CanMuster = MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x),
                         HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
