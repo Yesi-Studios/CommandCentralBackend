@@ -16,8 +16,6 @@ namespace CCServ.Entities.Muster
     public class MusterRecord
     {
 
-        
-
         #region Properties
 
         /// <summary>
@@ -39,7 +37,7 @@ namespace CCServ.Entities.Muster
         /// The Person being mustered's paygrade. Fucking Mustard.
         /// </summary>
         public virtual string Paygrade { get; set; }
-
+        
         /// <summary>
         /// The person being mustered's UIC.  Fucking Mustard x 2.
         /// </summary>
@@ -361,8 +359,6 @@ namespace CCServ.Entities.Muster
         }
 
         #endregion
-
-        
 
         #region Startup Methods
 

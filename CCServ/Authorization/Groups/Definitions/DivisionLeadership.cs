@@ -14,7 +14,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public DivisionLeadership()
         {
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
+            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DivisionMuster));
 
             HasAccessLevel(PermissionGroupLevels.Division);
 

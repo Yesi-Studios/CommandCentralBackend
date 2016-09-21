@@ -14,6 +14,7 @@ using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
 using CCServ.Entities.Muster;
+using System.Reflection;
 
 namespace CCServ.Entities
 {
@@ -326,6 +327,24 @@ namespace CCServ.Entities
                 Id = this.Id,
                 FriendlyName = this.ToString()
             };
+        }
+
+        /// <summary>
+        /// Casts the person object to a DTO consisting of its identifiers.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Dictionary<string, string> ToIdentificationDTO()
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            foreach (var identifier in new PersonQueryProvider().GetIdentifiers())
+            {
+                var value = ((PropertyInfo)identifier).GetValue(this);
+
+                result.Add(identifier.Name, value == null ? "" : value.ToString());
+            }
+
+            return result;
         }
         
         /// <summary>
@@ -830,6 +849,7 @@ namespace CCServ.Entities
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -881,6 +901,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Paygrade))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -890,6 +911,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Designation))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -899,6 +921,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Division))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -908,6 +931,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Department))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -918,6 +942,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Command))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -958,6 +983,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.UIC))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>

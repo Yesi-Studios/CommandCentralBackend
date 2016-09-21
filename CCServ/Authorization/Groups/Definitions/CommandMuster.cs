@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
-    class CommandMuster : PermissionGroup
+    public class CommandMuster : PermissionGroup
     {
         public CommandMuster()
         {
-            CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership));
+            CanEditMembershipOf(typeof(CommandMuster), typeof(DepartmentMuster), typeof(DivisionMuster));
 
             HasAccessLevel(PermissionGroupLevels.Command);
 
