@@ -606,6 +606,7 @@ namespace CCServ.Entities
                 Map(x => x.DateOfArrival).Not.Nullable().Not.LazyLoad();
                 Map(x => x.JobTitle).Nullable().Length(40).Not.LazyLoad();
                 Map(x => x.EAOS).Not.LazyLoad();
+                Map(x => x.PRD).Not.Nullable().Not.LazyLoad();
                 Map(x => x.DateOfDeparture).Nullable().Not.LazyLoad();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150).Not.LazyLoad();
                 Map(x => x.ContactRemarks).Nullable().Length(150).Not.LazyLoad();

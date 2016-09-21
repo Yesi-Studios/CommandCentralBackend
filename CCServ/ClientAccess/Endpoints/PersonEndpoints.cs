@@ -420,6 +420,32 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Returns a person's chain of command.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "GetChainOfCommandOfPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetChainOfCommandOfPerson(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("personid"))
+            {
+                token.AddErrorMessage("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Conducts a simple search.  Simple search uses a list of search terms and returns all those rows in which each term appears at least once in each of the search fields.
         /// <para/>
         /// In this case those fields are FirstName, LastName, MiddleName, UIC, Paygrade, Designation, Command, Department and Division.
