@@ -160,7 +160,7 @@ namespace CCServ.ClientAccess.Endpoints
             var personFromClient = token.Args["person"].CastJToken<Person>();
 
             //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
-            //For security we're going to take only the parameters that we need explicilty from the client.  All others will be thrown out. #whitelisting
+            //For security we're going to take only the parameters that we need explicitly from the client.  All others will be thrown out. #whitelisting
             Person newPerson = new Person
             {
                 FirstName = personFromClient.FirstName,
@@ -178,7 +178,8 @@ namespace CCServ.ClientAccess.Endpoints
                 DateOfArrival = personFromClient.DateOfArrival,
                 DutyStatus = personFromClient.DutyStatus,
                 Id = Guid.NewGuid(),
-                IsClaimed = false
+                IsClaimed = false,
+                PRD = personFromClient.PRD
             };
             newPerson.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
@@ -197,7 +198,7 @@ namespace CCServ.ClientAccess.Endpoints
             //Cool, since everything is good to go, let's also add the account history.
             newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
             {
-                AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.Creation,
+                AccountHistoryEventType = AccountHistoryTypes.Creation,
                 EventTime = token.CallTime
             } };
 
@@ -209,7 +210,7 @@ namespace CCServ.ClientAccess.Endpoints
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
                     session.Save(newPerson);
 
-                    //And now return the perosn's Id.
+                    //And now return the person's Id.
                     token.SetResult(newPerson.Id);
 
                     transaction.Commit();
