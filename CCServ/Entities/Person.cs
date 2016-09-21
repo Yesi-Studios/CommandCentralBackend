@@ -324,6 +324,10 @@ namespace CCServ.Entities
             };
         }
 
+        /// <summary>
+        /// Casts the person object to a DTO consisting of its identifiers.
+        /// </summary>
+        /// <returns></returns>
         public virtual Dictionary<string, string> ToIdentificationDTO()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
@@ -886,6 +890,7 @@ namespace CCServ.Entities
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
                     x => x.Paygrade))
+                .UsedAsIdentifiers()
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
