@@ -34,6 +34,12 @@ namespace CCServ.Entities.ReferenceLists
                 editableOnly = (bool)token.Args["editable"];
             }
 
+            bool exclude = false;
+            if (token.Args.ContainsKey("exclude"))
+            {
+                exclude = (bool)token.Args["exclude"];
+            }
+
             //If the client gives no entity names, give back all lists.
             if (!entityNames.Any())
             {
@@ -85,26 +91,53 @@ namespace CCServ.Entities.ReferenceLists
                 }
             }
 
-            
-            //Ok so we were given an entity name, let's make sure that it is both a reference list and a real entity.
-            var metadataWithEntityNames = entityNames.Select(x => new { Metadata = DataAccess.NHibernateHelper.GetEntityMetadata(x), Name = x }).ToList();
+            var metadataWithEntityNames = new Dictionary<string, IClassMetadata>();
 
-            if (editableOnly)
+            if (exclude)
             {
-                //Ok, now let's see if it's all reference lists or editable lists - depending on the flag.
-                if (!metadataWithEntityNames.All(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Metadata.GetMappedClass(NHibernate.EntityMode.Poco))))
+                //Here the client wants all reference list types that aren't the given ones.
+                if (editableOnly)
                 {
-                    token.AddErrorMessage("One or more of your entity names were not valid editable reference lists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
+                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+
+                    foreach (var metadata in metadatas)
+                    {
+                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
+                    }
+                }
+                else
+                {
+                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+
+                    foreach (var metadata in metadatas)
+                    {
+                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
+                    }
                 }
             }
             else
             {
-                //Ok, now let's see if it's all reference lists or editable lists - depending on the flag.
-                if (!metadataWithEntityNames.All(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Metadata.GetMappedClass(NHibernate.EntityMode.Poco))))
+                if (editableOnly)
                 {
-                    token.AddErrorMessage("One or more of your entity names were not valid reference lists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
+                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+
+                    foreach (var metadata in metadatas)
+                    {
+                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
+                    }
+                }
+                else
+                {
+                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+
+                    foreach (var metadata in metadatas)
+                    {
+                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
+                    }
                 }
             }
 
@@ -130,12 +163,12 @@ namespace CCServ.Entities.ReferenceLists
             //Cool we have a real item and an Id.  Now let's call its loader.
             foreach (var metadata in metadataWithEntityNames)
             {
-                var lists = (Activator.CreateInstance(metadata.Metadata.GetMappedClass(NHibernate.EntityMode.Poco)) as ReferenceListItemBase).Load(id, token);
+                var lists = (Activator.CreateInstance(metadata.Value.GetMappedClass(NHibernate.EntityMode.Poco)) as ReferenceListItemBase).Load(id, token);
 
                 if (token.HasError)
                     return;
 
-                results.Add(metadata.Name, lists);
+                results.Add(metadata.Key, lists);
             }
 
             token.SetResult(results);
