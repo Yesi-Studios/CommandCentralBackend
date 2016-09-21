@@ -418,8 +418,13 @@ namespace CCServ.Entities
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
-                //session.QueryOver<Person>().Where(x => x.PermissionGroupNames.Contains())
-
+                var query = session.QueryOver<Person>();
+                var disjunction = Restrictions.Disjunction();
+                foreach (var name in commandGroups.Select(x => x.GroupName))
+                {
+                    disjunction.Add<Person>(x => x.PermissionGroupNames.Contains(name));
+                }
+                query.Where(disjunction);
             }
 
             return result;
