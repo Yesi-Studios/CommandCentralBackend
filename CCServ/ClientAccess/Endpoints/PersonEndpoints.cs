@@ -440,6 +440,14 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
+            Guid personId;
+            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
+            {
+                token.AddErrorMessage("Your person id parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+
 
         }
 

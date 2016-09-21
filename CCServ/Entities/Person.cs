@@ -404,6 +404,15 @@ namespace CCServ.Entities
             return this.Paygrade.ToString().Contains("E") && !IsOfficer();
         }
 
+        public virtual Dictionary<string, object> GetChainOfCommand()
+        {
+            Dictionary<string, object> result = new Dictionary<string, object>();
+
+
+
+            return result;
+        }
+
         #endregion
         
         #region Startup Methods
