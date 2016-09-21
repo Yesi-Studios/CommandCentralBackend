@@ -75,11 +75,20 @@ namespace CCServ.ClientAccess
                             EndpointMethodAttribute = endpointMethodAttribute,
                             IsActive = true
                         };
-                    }).ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
+                    });
 
-            Log.Info("Found {0} endpoint methods.".FormatS(endpoints.Count));
+            var groupings = endpoints.GroupBy(x => x.EndpointMethodAttribute.EndpointName);
 
-            ServiceManagement.ServiceManager.EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(endpoints, StringComparer.OrdinalIgnoreCase);
+            if (groupings.Any(x => x.Count() != 1))
+            {
+                throw new Exception("Two endpoints may not be named the same thing.  Endpoints with multiple entries: {0}.".FormatS(String.Join(", ", groupings.Where(x => x.Count() != 1).Select(x => x.Key))));
+            }
+            
+            var finalEndpoints = endpoints.ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
+
+            Log.Info("Found {0} endpoint methods.".FormatS(finalEndpoints.Count));
+
+            ServiceManagement.ServiceManager.EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(finalEndpoints, StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion

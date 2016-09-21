@@ -210,7 +210,6 @@
     <Compile Include="Entities\ReferenceLists\PersonTypes.cs" />
     <Compile Include="Entities\ReferenceLists\PhoneNumberType.cs" />
     <Compile Include="Entities\ReferenceLists\PhoneNumberTypes.cs" />
-    <Compile Include="Entities\ReferenceLists\ReferenceListEndpoints.cs" />
     <Compile Include="Entities\ReferenceLists\ReligiousPreference.cs" />
     <Compile Include="Entities\ReferenceLists\Sex.cs" />
     <Compile Include="Entities\ReferenceLists\Sexes.cs" />
