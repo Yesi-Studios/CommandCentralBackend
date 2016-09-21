@@ -35,6 +35,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DateOfArrival,
                     x => x.JobTitle,
                     x => x.EAOS,
+                    x => x.PRD,
                     x => x.DateOfDeparture,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
@@ -80,7 +81,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.EAOS,
+                    x => x.PRD))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
