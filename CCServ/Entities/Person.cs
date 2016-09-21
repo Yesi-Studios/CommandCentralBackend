@@ -404,11 +404,23 @@ namespace CCServ.Entities
             return this.Paygrade.ToString().Contains("E") && !IsOfficer();
         }
 
+        /// <summary>
+        /// Gets this person's chain of command.
+        /// </summary>
+        /// <returns></returns>
         public virtual Dictionary<string, Dictionary<string, object>> GetChainOfCommand()
         {
             var result = new Dictionary<string, Dictionary<string, object>>();
 
+            result.Add("Command", new Dictionary<string, object>());
 
+            var commandGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.AccessLevel == Authorization.Groups.PermissionGroupLevels.Command);
+
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            {
+                //session.QueryOver<Person>().Where(x => x.PermissionGroupNames.Contains())
+
+            }
 
             return result;
         }
@@ -422,7 +434,7 @@ namespace CCServ.Entities
         /// <para />
         /// Also, this method will assert that Atwood exists in the database.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 7)]
+        [StartMethod(Priority = 7)]
         private static void ReadPersons(CLI.Options.LaunchOptions launchOptions)
         {
             using (var session = NHibernateHelper.CreateStatefulSession())
