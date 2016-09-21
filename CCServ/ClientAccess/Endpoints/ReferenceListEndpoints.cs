@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CCServ.ClientAccess;
 using CCServ.Authorization;
 using AtwoodUtils;
+using NHibernate.Metadata;
 
 namespace CCServ.Entities.ReferenceLists
 {
