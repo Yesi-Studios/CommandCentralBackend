@@ -69,7 +69,7 @@ namespace CCServ.Entities
             /// </summary>
             public ProfileLockMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Owner).Not.Nullable();
                 References(x => x.LockedPerson).Not.Nullable().Unique();

@@ -91,6 +91,38 @@ namespace CCServ.ClientAccess.Endpoints
                                 session.Update(profileLock);
                             }
                         }
+
+                        //In all cases, we want to tell the client about the profile lock.
+                        token.SetResult(new
+                        {
+                            profileLock.Id,
+                            profileLock.SubmitTime,
+                            Owner = profileLock.Owner.ToBasicPerson(),
+                            LockedPerson = profileLock.LockedPerson.ToBasicPerson()
+                        });
+                    }
+                    else
+                    {
+                        //If we're here, then there's no profile lock and we need to make one.
+                        var newLock = new ProfileLock
+                        {
+                            Id = Guid.NewGuid(),
+                            LockedPerson = person,
+                            Owner = token.AuthenticationSession.Person,
+                            SubmitTime = token.CallTime
+                        };
+
+                        //Save the lock.
+                        session.Save(newLock);
+
+                        //And then give it to the client.
+                        token.SetResult(new
+                        {
+                            newLock.Id,
+                            newLock.SubmitTime,
+                            Owner = newLock.Owner.ToBasicPerson(),
+                            LockedPerson = newLock.LockedPerson.ToBasicPerson()
+                        });
                     }
 
                     transaction.Commit();
