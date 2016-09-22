@@ -10,13 +10,12 @@ using CCServ.Logging;
 using CCServ.Entities.Muster;
 using CCServ.Entities;
 using Newtonsoft.Json.Linq;
+using CCServ.Entities.ReferenceLists;
 
 namespace CCServ.ClientAccess.Endpoints
 {
     static class MusterEndpoints
     {
-        #region Client Access
-
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
@@ -374,7 +373,6 @@ namespace CCServ.ClientAccess.Endpoints
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-
                 //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
                 var queryOver = session.QueryOver<Person>();
 
@@ -507,7 +505,5 @@ namespace CCServ.ClientAccess.Endpoints
             //So we should be good to finalize the muster.
             MusterRecord.FinalizeMuster(token.AuthenticationSession.Person);
         }
-
-        #endregion
     }
 }
