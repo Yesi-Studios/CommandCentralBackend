@@ -942,6 +942,13 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
+                    //We also require the lock to be valid.
+                    if (!profileLock.IsValid())
+                    {
+                        token.AddErrorMessage("Your lock on this profile is no longer valid.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                        return;
+                    }
+
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
                     {
