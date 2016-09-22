@@ -522,7 +522,8 @@ namespace CCServ.DataAccess
                                 var prd = adminRow["ADM_prd"] as string;
                                 if (string.IsNullOrEmpty(prd))
                                 {
-                                    person.PRD = null;
+                                    person.PRD = new DateTime(1775, 10, 13);
+                                    errorsLog.Add(string.Format("{0}'s PRD was empty, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
                                 }
                                 else
                                 {
