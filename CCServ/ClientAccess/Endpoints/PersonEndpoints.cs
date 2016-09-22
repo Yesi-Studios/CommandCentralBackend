@@ -424,15 +424,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "GetChainOfCommandOfPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        [EndpointMethod(EndpointName = "GetChainOfCommandOfPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_GetChainOfCommandOfPerson(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            /*if (token.AuthenticationSession == null)
+            if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }*/
+            }
 
             if (!token.Args.ContainsKey("personid"))
             {

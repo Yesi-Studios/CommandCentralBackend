@@ -15,6 +15,8 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
+            InChainsOfCommand(ChainsOfCommand.Muster);
+
             CanAccessModule("Muster");
         }
     }

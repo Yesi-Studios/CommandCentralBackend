@@ -423,23 +423,29 @@ namespace CCServ.Entities
                 }
             }
 
+            var permissionGroupNamesProperty = PropertySelector.SelectPropertiesFrom<Person>(x => x.PermissionGroupNames).First();
+
             foreach (var groupLevel in new[] { Authorization.Groups.PermissionGroupLevels.Command, 
                                           Authorization.Groups.PermissionGroupLevels.Department, 
                                           Authorization.Groups.PermissionGroupLevels.Division })
             {
                 var permissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups
-                                        .Where(x => x.AccessLevel == groupLevel);
+                                        .Where(x => x.AccessLevel == groupLevel)
+                                        .ToList();
 
                 IList<Person> persons;
                 using (var session = NHibernateHelper.CreateStatefulSession())
                 {
-                    var query = session.QueryOver<Person>();
-                    var disjunction = Restrictions.Disjunction();
-                    foreach (var name in permissionGroups.Select(x => x.GroupName))
+                    var queryString = "from Person as person where (";
+                    for (var x = 0; x < permissionGroups.Count(); x++)
                     {
-                        disjunction.Add<Person>(x => x.PermissionGroupNames.Contains(name));
+                        queryString += " '{0}' in elements(person.{1}) ".FormatS(permissionGroups[x].GroupName, permissionGroupNamesProperty.Name);
+                        if (x + 1 != permissionGroups.Count)
+                            queryString += " or ";
                     }
-                    query.Where(disjunction);
+                    queryString += " ) ";
+
+                    NHibernate.IQuery query;
 
                     switch (groupLevel)
                     {
@@ -448,7 +454,9 @@ namespace CCServ.Entities
                                 if (this.Command == null)
                                     continue;
 
-                                query = query.Where(x => x.Command == this.Command);
+                                queryString += " and person.Command = :command";
+                                query = session.CreateQuery(queryString)
+                                    .SetParameter("command", this.Command);
                                 break;
                             }
                         case Authorization.Groups.PermissionGroupLevels.Department:
@@ -456,7 +464,10 @@ namespace CCServ.Entities
                                 if (this.Command == null || this.Department == null)
                                     continue;
 
-                                query = query.Where(x => x.Command == this.Command && x.Department == this.Department);
+                                queryString += " and person.Command = :command and person.Department = :department";
+                                query = session.CreateQuery(queryString)
+                                    .SetParameter("command", this.Command)
+                                    .SetParameter("department", this.Department);
                                 break;
                             }
                         case Authorization.Groups.PermissionGroupLevels.Division:
@@ -464,9 +475,11 @@ namespace CCServ.Entities
                                 if (this.Command == null || this.Department == null || this.Division == null)
                                     continue;
 
-                                query = query.Where(x => x.Command == this.Command && 
-                                                         x.Department == this.Department && 
-                                                         x.Division == this.Division);
+                                queryString += " and person.Command = :command and person.Department = :department and person.Division = :division";
+                                query = session.CreateQuery(queryString)
+                                    .SetParameter("command", this.Command)
+                                    .SetParameter("department", this.Department)
+                                    .SetParameter("division", this.Division);
                                 break;
                             }
                         default:
@@ -475,7 +488,7 @@ namespace CCServ.Entities
                             }
                     }
 
-                    persons = query.List();
+                    persons = query.List<Person>();;
                 }
 
                 //Go through all the results.
@@ -498,13 +511,11 @@ namespace CCServ.Entities
                         }
                     }
 
-
                     //Now just add them to the corresponding lists.
                     foreach (var highestLevel in highestLevels)
                     {
                         result[highestLevel.Key][highestLevel.Value].Add(person.ToBasicPerson());
                     }
-
                 }
             }
 

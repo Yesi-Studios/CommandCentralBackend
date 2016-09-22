@@ -17,6 +17,8 @@ namespace CCServ.Authorization.Groups.Definitions
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(DivisionMuster), typeof(DepartmentMuster));
 
             HasAccessLevel(PermissionGroupLevels.Department);
+            
+            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

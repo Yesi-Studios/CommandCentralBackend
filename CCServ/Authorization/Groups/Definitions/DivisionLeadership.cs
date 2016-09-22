@@ -18,6 +18,8 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(PermissionGroupLevels.Division);
 
+            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
+
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.DateOfBirth,
