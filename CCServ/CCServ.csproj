@@ -143,6 +143,7 @@
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\ProfileLockEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ReferenceListEndpoints.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
     <Compile Include="ClientAccess\MessageStatesEnum.cs" />
@@ -159,6 +160,7 @@
     <Compile Include="Config\Email.cs" />
     <Compile Include="Config\Muster.cs" />
     <Compile Include="Config\ParamNames.cs" />
+    <Compile Include="Config\ProfileLocks.cs" />
     <Compile Include="Config\Serialization.cs" />
     <Compile Include="Config\Version.cs" />
     <Compile Include="DataAccess\Importer.cs" />
