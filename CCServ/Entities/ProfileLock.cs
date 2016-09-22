@@ -12,8 +12,6 @@ namespace CCServ.Entities
     /// </summary>
     public class ProfileLock
     {
-
-
         #region Properties
 
         /// <summary>
