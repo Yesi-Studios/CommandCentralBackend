@@ -519,6 +519,26 @@ namespace CCServ.DataAccess
                                     }
                                 }
 
+                                var prd = adminRow["ADM_prd"] as string;
+                                if (string.IsNullOrEmpty(prd))
+                                {
+                                    person.PRD = null;
+                                }
+                                else
+                                {
+                                    DateTime temp;
+                                    if (DateTime.TryParseExact(prd, "yyyy-MM-dd",
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.None,
+                                        out temp))
+                                        person.PRD = temp;
+                                    else
+                                    {
+                                        person.PRD = new DateTime(1775, 10, 13);
+                                        errorsLog.Add(string.Format("{0}'s PRD was invalid, set to {1}.", person.ToString(), new DateTime(1775, 10, 13)));
+                                    }
+                                }
+
                                 if (Convert.ToInt32(workRow["RATE_id"]) != 0)
                                 {
                                     var designationNewId = oldDatabase.Tables["rate"].AsEnumerable().First(x => Convert.ToInt32(x["RATE_id"]) == Convert.ToInt32(workRow["RATE_id"]))["NewId"] as string;

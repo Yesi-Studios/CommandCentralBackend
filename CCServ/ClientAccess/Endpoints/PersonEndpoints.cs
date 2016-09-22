@@ -424,15 +424,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "GetChainOfCommandOfPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        [EndpointMethod(EndpointName = "GetChainOfCommandOfPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_GetChainOfCommandOfPerson(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
+            /*if (token.AuthenticationSession == null)
             {
                 token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
-            }
+            }*/
 
             if (!token.Args.ContainsKey("personid"))
             {
@@ -446,9 +446,21 @@ namespace CCServ.ClientAccess.Endpoints
                 token.AddErrorMessage("Your person id parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
+            Person person;
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                person = session.Get<Person>(personId);
+            }
 
+            if (person == null)
+            {
+                token.AddErrorMessage("Your person id parameter was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
 
+            var result = person.GetChainOfCommand();
 
+            token.SetResult(result);
         }
 
         /// <summary>

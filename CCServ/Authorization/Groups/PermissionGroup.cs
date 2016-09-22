@@ -53,6 +53,8 @@ namespace CCServ.Authorization.Groups
         /// A list of those permission groups this permission group can edit the membership of.
         /// </summary>
         public List<string> GroupsCanEditMembershipOf { get; set; }
+
+        public List<ChainsOfCommand> ChainsOfCommandMemberOf { get; set; }
         
         #endregion
 
@@ -67,6 +69,7 @@ namespace CCServ.Authorization.Groups
             Modules = new List<ModulePart>();
             AccessibleSubModules = new List<string>();
             GroupsCanEditMembershipOf = new List<string>();
+            ChainsOfCommandMemberOf = new List<ChainsOfCommand>();
         }
 
         #endregion
@@ -121,7 +124,7 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public void CanAccessSubModules(params string[] subModules)
         {
-            AccessibleSubModules = subModules.ToList();
+            AccessibleSubModules.AddRange(subModules);
         }
 
         /// <summary>
@@ -131,7 +134,7 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public void CanAccessSubModules(params SubModules[] subModules)
         {
-            AccessibleSubModules = subModules.Select(x => x.ToString()).ToList();
+            AccessibleSubModules.AddRange(subModules.Select(x => x.ToString()));
         }
 
         /// <summary>
@@ -141,7 +144,12 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public void CanEditMembershipOf(params Type[] permissionGroups)
         {
-            GroupsCanEditMembershipOf = permissionGroups.Select(x => x.Name).ToList();
+            GroupsCanEditMembershipOf.AddRange(permissionGroups.Select(x => x.Name));
+        }
+
+        public void InChainsOfCommand(params ChainsOfCommand[] chainsOfCommand)
+        {
+            ChainsOfCommandMemberOf.AddRange(chainsOfCommand.ToList());
         }
 
         #endregion

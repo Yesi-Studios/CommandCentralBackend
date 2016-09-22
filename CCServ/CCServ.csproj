@@ -115,6 +115,7 @@
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\AuthorizationUtilities.cs" />
+    <Compile Include="Authorization\ChainsOfCommandEnum.cs" />
     <Compile Include="Authorization\Groups\AccessCategoryEnum.cs" />
     <Compile Include="Authorization\Groups\Definitions\Admin.cs" />
     <Compile Include="Authorization\Groups\Definitions\CommandLeadership.cs" />

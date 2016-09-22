@@ -408,23 +408,104 @@ namespace CCServ.Entities
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<string, Dictionary<string, object>> GetChainOfCommand()
+        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<object>>> GetChainOfCommand()
         {
-            var result = new Dictionary<string, Dictionary<string, object>>();
+            //Our result
+            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<object>>>();
 
-            result.Add("Command", new Dictionary<string, object>());
-
-            var commandGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.AccessLevel == Authorization.Groups.PermissionGroupLevels.Command);
-
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            //Populate the dictionary
+            foreach (var chainOfCommand in Enum.GetValues(typeof(ChainsOfCommand)).Cast<ChainsOfCommand>())
             {
-                var query = session.QueryOver<Person>();
-                var disjunction = Restrictions.Disjunction();
-                foreach (var name in commandGroups.Select(x => x.GroupName))
+                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.PermissionGroupLevels,List<object>>());
+                foreach (var level in Enum.GetValues(typeof(Authorization.Groups.PermissionGroupLevels)).Cast<Authorization.Groups.PermissionGroupLevels>())
                 {
-                    disjunction.Add<Person>(x => x.PermissionGroupNames.Contains(name));
+                    result[chainOfCommand].Add(level, new List<object>());
                 }
-                query.Where(disjunction);
+            }
+
+            foreach (var groupLevel in new[] { Authorization.Groups.PermissionGroupLevels.Command, 
+                                          Authorization.Groups.PermissionGroupLevels.Department, 
+                                          Authorization.Groups.PermissionGroupLevels.Division })
+            {
+                var permissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups
+                                        .Where(x => x.AccessLevel == groupLevel);
+
+                IList<Person> persons;
+                using (var session = NHibernateHelper.CreateStatefulSession())
+                {
+                    var query = session.QueryOver<Person>();
+                    var disjunction = Restrictions.Disjunction();
+                    foreach (var name in permissionGroups.Select(x => x.GroupName))
+                    {
+                        disjunction.Add<Person>(x => x.PermissionGroupNames.Contains(name));
+                    }
+                    query.Where(disjunction);
+
+                    switch (groupLevel)
+                    {
+                        case Authorization.Groups.PermissionGroupLevels.Command:
+                            {
+                                if (this.Command == null)
+                                    continue;
+
+                                query = query.Where(x => x.Command == this.Command);
+                                break;
+                            }
+                        case Authorization.Groups.PermissionGroupLevels.Department:
+                            {
+                                if (this.Command == null || this.Department == null)
+                                    continue;
+
+                                query = query.Where(x => x.Command == this.Command && x.Department == this.Department);
+                                break;
+                            }
+                        case Authorization.Groups.PermissionGroupLevels.Division:
+                            {
+                                if (this.Command == null || this.Department == null || this.Division == null)
+                                    continue;
+
+                                query = query.Where(x => x.Command == this.Command && 
+                                                         x.Department == this.Department && 
+                                                         x.Division == this.Division);
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("Hit default in the chain of command switch.");
+                            }
+                    }
+
+                    persons = query.List();
+                }
+
+                //Go through all the results.
+                foreach (var person in persons)
+                {
+                    //Collect the person's highest level permission in each chain of command.
+                    var highestLevels = new Dictionary<ChainsOfCommand, Authorization.Groups.PermissionGroupLevels>();
+
+                    foreach (var group in permissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)))
+                    {
+                        foreach (var chainOfCommand in group.ChainsOfCommandMemberOf)
+                        {
+                            //This is just a check to make sure we're doing this right.
+                            if (group.AccessLevel != groupLevel)
+                                throw new Exception("During the GetChaindOfCommand check, we accessed a group level that was unintended.");
+
+                            //Now here we need to ask "Is the person in the same access level as the person in question?"
+                            //Meaning, if the access level is division, are they in the same division?
+                            highestLevels[chainOfCommand] = group.AccessLevel;
+                        }
+                    }
+
+
+                    //Now just add them to the corresponding lists.
+                    foreach (var highestLevel in highestLevels)
+                    {
+                        result[highestLevel.Key][highestLevel.Value].Add(person.ToBasicPerson());
+                    }
+
+                }
             }
 
             return result;
