@@ -183,6 +183,10 @@ namespace CCServ.ServiceManagement.Service
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
+                        //If the endpoint method didn't set a result, go ahead and set the result.  Assume everything was ok.
+                        if (token.Result == null && !token.HasError)
+                            token.SetResult("Success");
+
                         Log.Debug(token.ToString());
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.

@@ -142,6 +142,7 @@
     <Compile Include="ClientAccess\Endpoints\Account.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\NewsItemEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ProfileLockEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ReferenceListEndpoints.cs" />
