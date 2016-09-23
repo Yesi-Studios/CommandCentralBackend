@@ -41,5 +41,8 @@ namespace CCServ.CLI.Options
 
         [Option("ingest", HelpText = "Instructs the service to ingest the old database.  This will only happen if the schema has to be created, so please combine this with --dropfirst.", DefaultValue = false)]
         public bool Ingest { get; set; }
+
+        [Option("gigo", HelpText = "Instructs the service to fill the database with 10000 records filled with random data.", DefaultValue = false)]
+        public bool GIGO { get; set; }
     }
 }

@@ -140,7 +140,8 @@ namespace CCServ.ServiceManagement
             }
 
             //Now run them all in order.
-            Log.Info("Executing {0} startup method(s).".FormatS(startupMethods.Count()));
+            Log.Info("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
+            Console.WriteLine("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
             foreach (var group in startupMethods)
             {
                 //We can say first because we know there's only one.

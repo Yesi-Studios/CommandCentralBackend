@@ -197,12 +197,10 @@ namespace CCServ.ServiceManagement.Service
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
 
-                        string finalResponse = token.ConstructResponseString();
-
                         //Everything good?  Commit the transaction right before we release.
                         transaction.Commit();
 
-                        return finalResponse;
+                        return token.FinalResult;
                     }
                     catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                     {

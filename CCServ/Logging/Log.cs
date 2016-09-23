@@ -32,7 +32,6 @@ namespace CCServ.Logging
         {
             try
             {
-
                 enabledMessageTypes = new List<MessageTypes>
                     {
                         MessageTypes.CRITICAL,

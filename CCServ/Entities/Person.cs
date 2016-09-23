@@ -523,8 +523,138 @@ namespace CCServ.Entities
         }
 
         #endregion
-        
+
         #region Startup Methods
+
+        /// <summary>
+        /// Fills the database with random, garbage data.
+        /// </summary>
+        [StartMethod(Priority = 3)]
+        private static void GIGO(CLI.Options.LaunchOptions launchOptions)
+        {
+            if (!launchOptions.GIGO)
+            {
+                Log.Info("Skipping GIGO...");
+                return;
+            }
+
+            Log.Info("Beginning GIGO.");
+
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    List<Command> commands = new List<Command>();
+                    for (int x = 0; x < Utilities.GetRandomNumber(1, 1); x++)
+                    {
+                        commands.Add(new Command
+                        {
+                            Departments = new List<Department>(),
+                            Description = Utilities.RandomString(8),
+                            Value = Utilities.RandomString(8),
+                            Id = Guid.NewGuid()
+                        });
+
+                        session.Save(commands.Last());
+                        session.Flush();
+
+                        for (int y = 0; y < Utilities.GetRandomNumber(2, 5); y++)
+                        {
+                            commands.Last().Departments.Add(new Department
+                            {
+                                Command = commands.Last(),
+                                Description = Utilities.RandomString(8),
+                                Divisions = new List<Division>(),
+                                Id = Guid.NewGuid(),
+                                Value = Utilities.RandomString(8)
+                            });
+
+                            session.Save(commands.Last().Departments.Last());
+                            session.Flush();
+
+                            for (int z = 0; z < Utilities.GetRandomNumber(2, 5); z ++)
+                            {
+                                commands.Last().Departments.Last().Divisions.Add(new Division
+                                {
+                                     Department = commands.Last().Departments.Last(),
+                                     Description = Utilities.RandomString(8),
+                                     Id = Guid.NewGuid(),
+                                     Value = Utilities.RandomString(8)
+                                });
+
+                                session.Save(commands.Last().Departments.Last().Divisions.Last());
+                                session.Flush();
+                            }
+                        }
+                    }
+
+
+                    for (int x = 0; x < 5000; x++)
+                    {
+                        var permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
+                            .OrderBy(y => Utilities.GetRandomNumber(0, 100))
+                            .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count))
+                            .Select(y => y.GroupName)
+                            .ToList();
+
+                        Command command = commands.ElementAt(Utilities.GetRandomNumber(0, commands.Count - 1));
+                        Department department = command.Departments.ElementAt(Utilities.GetRandomNumber(0, command.Departments.Count - 1));
+                        Division division = department.Divisions.ElementAt(Utilities.GetRandomNumber(0, department.Divisions.Count - 1));
+
+                        var person = new Person()
+                        {
+                            Id = Guid.NewGuid(),
+                            LastName = Utilities.RandomString(8),
+                            FirstName = Utilities.RandomString(8),
+                            MiddleName = Utilities.RandomString(8),
+                            Command = command,
+                            Department = department,
+                            Division = division,
+                            SSN = Utilities.GenerateSSN(),
+                            IsClaimed = true,
+                            Username = Utilities.RandomString(12),
+                            PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf"),
+                            Sex = Sexes.AllSexes.ElementAt(Utilities.GetRandomNumber(0, Sexes.AllSexes.Count - 1)),
+                            EmailAddresses = new List<EmailAddress>()
+                            {
+                                new EmailAddress
+                                {
+                                    Address = "{0}@{1}.com".FormatS(Utilities.RandomString(6), Utilities.RandomString(6)),
+                                    IsContactable = true,
+                                    IsPreferred = true
+                                }
+                            },
+                            DateOfBirth = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
+                            DateOfArrival = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
+                            EAOS = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
+                            PRD = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
+                            Paygrade = Paygrades.AllPaygrades.ElementAt(Utilities.GetRandomNumber(0, Paygrades.AllPaygrades.Count - 1)),
+                            DutyStatus = DutyStatuses.AllDutyStatuses.ElementAt(Utilities.GetRandomNumber(0, DutyStatuses.AllDutyStatuses.Count - 1)),
+                            PermissionGroupNames = permissionGroupNames
+                        };
+
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = AccountHistoryTypes.Creation,
+                            EventTime = DateTime.Now
+                        } };
+
+                        session.Save(person);
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    return;
+                }
+            }
+            
+        }
 
         /// <summary>
         /// Loads all persons from the database, thus initializing most of the 2nd level cache, and tells the host how many persons we have in the database.
@@ -712,63 +842,60 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Ethnicity).Nullable().LazyLoad(Laziness.False);
-                References(x => x.ReligiousPreference).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Designation).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Division).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Department).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Command).Nullable().LazyLoad(Laziness.False);
-                References(x => x.UIC).Nullable().LazyLoad(Laziness.False);
-                References(x => x.Paygrade).Not.Nullable().LazyLoad(Laziness.False);
-                References(x => x.CurrentMusterStatus).Cascade.All().Not.Nullable().LazyLoad(Laziness.False);
-                References(x => x.DutyStatus).Not.Nullable().LazyLoad(Laziness.False);
-                References(x => x.Sex).Not.Nullable().LazyLoad(Laziness.False);
-                
-                Map(x => x.LastName).Not.Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.FirstName).Not.Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.MiddleName).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.SSN).Not.Nullable().Length(40).Unique().Not.LazyLoad();
-                Map(x => x.DateOfBirth).Not.Nullable().Not.LazyLoad();
-                Map(x => x.Remarks).Nullable().Length(150).Not.LazyLoad();
-                Map(x => x.Supervisor).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.WorkCenter).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.WorkRoom).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.Shift).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.WorkRemarks).Nullable().Length(150).Not.LazyLoad();
-                Map(x => x.DateOfArrival).Not.Nullable().Not.LazyLoad();
-                Map(x => x.JobTitle).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.EAOS).Not.LazyLoad();
-                Map(x => x.PRD).Not.Nullable().Not.LazyLoad();
-                Map(x => x.DateOfDeparture).Nullable().Not.LazyLoad();
-                Map(x => x.EmergencyContactInstructions).Nullable().Length(150).Not.LazyLoad();
-                Map(x => x.ContactRemarks).Nullable().Length(150).Not.LazyLoad();
-                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString()).Not.LazyLoad();
-                Map(x => x.Username).Nullable().Length(40).Unique().Not.LazyLoad();
-                Map(x => x.PasswordHash).Nullable().Length(100).Not.LazyLoad();
-                Map(x => x.Suffix).Nullable().Length(40).Not.LazyLoad();
-                Map(x => x.GTCTrainingDate).Nullable().Not.LazyLoad();
+                References(x => x.Ethnicity).Nullable();
+                References(x => x.ReligiousPreference).Nullable();
+                References(x => x.Designation).Nullable();
+                References(x => x.Division).Nullable();
+                References(x => x.Department).Nullable();
+                References(x => x.Command).Nullable();
+                References(x => x.UIC).Nullable();
+                References(x => x.Paygrade).Not.Nullable();
+                References(x => x.CurrentMusterStatus).Cascade.All().Not.Nullable();
+                References(x => x.DutyStatus).Not.Nullable();
+                References(x => x.Sex).Not.Nullable();
 
-                References(x => x.PrimaryNEC).LazyLoad(Laziness.False);
-                HasManyToMany(x => x.SecondaryNECs).Not.LazyLoad().Cascade.All();
+                Map(x => x.LastName).Not.Nullable().Length(40);
+                Map(x => x.FirstName).Not.Nullable().Length(40);
+                Map(x => x.MiddleName).Nullable().Length(40);
+                Map(x => x.SSN).Not.Nullable().Length(40).Unique();
+                Map(x => x.DateOfBirth).Not.Nullable();
+                Map(x => x.Remarks).Nullable().Length(150);
+                Map(x => x.Supervisor).Nullable().Length(40);
+                Map(x => x.WorkCenter).Nullable().Length(40);
+                Map(x => x.WorkRoom).Nullable().Length(40);
+                Map(x => x.Shift).Nullable().Length(40);
+                Map(x => x.WorkRemarks).Nullable().Length(150);
+                Map(x => x.DateOfArrival).Not.Nullable();
+                Map(x => x.JobTitle).Nullable().Length(40);
+                Map(x => x.EAOS);
+                Map(x => x.PRD).Not.Nullable();
+                Map(x => x.DateOfDeparture).Nullable();
+                Map(x => x.EmergencyContactInstructions).Nullable().Length(150);
+                Map(x => x.ContactRemarks).Nullable().Length(150);
+                Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString());
+                Map(x => x.Username).Nullable().Length(40).Unique();
+                Map(x => x.PasswordHash).Nullable().Length(100);
+                Map(x => x.Suffix).Nullable().Length(40);
+                Map(x => x.GTCTrainingDate).Nullable();
 
-                HasMany(x => x.AccountHistory).Not.LazyLoad().Cascade.All();
-                HasMany(x => x.Changes).Not.LazyLoad().Cascade.All();
-                HasMany(x => x.EmailAddresses).Not.LazyLoad().Cascade.All();
-                HasMany(x => x.PhoneNumbers).Not.LazyLoad().Cascade.All();
-                HasMany(x => x.PhysicalAddresses).Not.LazyLoad().Cascade.All();
+                References(x => x.PrimaryNEC);
+                HasManyToMany(x => x.SecondaryNECs).Cascade.All();
+
+                HasMany(x => x.AccountHistory).Cascade.All();
+                HasMany(x => x.Changes).Cascade.All();
+                HasMany(x => x.EmailAddresses).Cascade.All();
+                HasMany(x => x.PhoneNumbers).Cascade.All();
+                HasMany(x => x.PhysicalAddresses).Cascade.All();
 
                 HasMany(x => x.PermissionGroupNames)
                     .KeyColumn("PersonId")
-                    .Element("PermissionGroupName")
-                    .Not.LazyLoad();
+                    .Element("PermissionGroupName");
 
                 HasMany(x => x.UserPreferences)
                     .AsMap<string>(index =>
                         index.Column("PreferenceKey").Type<string>(), element =>
                         element.Column("PreferenceValue").Type<string>())
-                    .Cascade.All()
-                    .Not.LazyLoad();
-                    
+                    .Cascade.All();
             }
         }
 

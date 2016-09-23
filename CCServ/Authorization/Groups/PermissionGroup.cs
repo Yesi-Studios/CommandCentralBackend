@@ -161,7 +161,7 @@ namespace CCServ.Authorization.Groups
         /// <para />
         /// Validates that no two permission groups have the same name.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 3)]
+        [ServiceManagement.StartMethod(Priority = 17)]
         private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
         {
             Log.Info("Collecting permissions...");

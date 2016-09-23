@@ -106,6 +106,11 @@ namespace CCServ.ClientAccess
         public virtual object Result { get; set; }
 
         /// <summary>
+        /// The final result, set by SetResult, is the string intended to be returned to the client. 
+        /// </summary>
+        public virtual string FinalResult { get; set; }
+
+        /// <summary>
         /// Gets raw response body of this request.  This is simple a property accessor to this.ConstructResponse() for logging purposes.
         /// </summary>
         public virtual string RawResponseBody
@@ -253,6 +258,8 @@ namespace CCServ.ClientAccess
 
         /// <summary>
         /// Sets the result for this message token.  An exception will be thrown if you attempt to set the result on a message that has errors.
+        /// <para/>
+        /// Additionally, if lazy loading is required, the message token must be set within its associated session.
         /// </summary>
         /// <param name="result"></param>
         public virtual void SetResult(object result)
@@ -261,6 +268,8 @@ namespace CCServ.ClientAccess
                 throw new Exception("You can not set the result on a message that has errors.");
 
             Result = result;
+
+            FinalResult = ConstructResponseString();
         }
 
         /// <summary>
@@ -283,7 +292,7 @@ namespace CCServ.ClientAccess
         /// Returns the return container that should be returned to the client.
         /// </summary>
         /// <returns></returns>
-        public virtual ReturnContainer ContructReturnContainer()
+        public virtual ReturnContainer ConstructReturnContainer()
         {
             return new ReturnContainer
             {
