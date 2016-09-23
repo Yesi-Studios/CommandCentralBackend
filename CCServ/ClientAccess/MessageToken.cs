@@ -238,6 +238,8 @@ namespace CCServ.ClientAccess
             ErrorMessages.Add(message);
             this.ErrorType = error;
             this.StatusCode = status;
+
+            FinalResult = ConstructResponseString();
         }
 
         /// <summary>
@@ -254,6 +256,8 @@ namespace CCServ.ClientAccess
             messages.ToList().ForEach(x => ErrorMessages.Add(x));
             this.ErrorType = error;
             this.StatusCode = status;
+
+            FinalResult = ConstructResponseString();
         }
 
         /// <summary>
