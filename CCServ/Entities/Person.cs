@@ -868,7 +868,7 @@ namespace CCServ.Entities
                 Map(x => x.DateOfArrival).Not.Nullable();
                 Map(x => x.JobTitle).Nullable().Length(40);
                 Map(x => x.EAOS);
-                Map(x => x.PRD).Not.Nullable();
+                Map(x => x.PRD);
                 Map(x => x.DateOfDeparture).Nullable();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150);
                 Map(x => x.ContactRemarks).Nullable().Length(150);
