@@ -183,6 +183,10 @@ namespace CCServ.ServiceManagement.Service
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
+                        //If the endpoint method didn't set a result, go ahead and set the result.  Assume everything was ok.
+                        if (token.Result == null && !token.HasError)
+                            token.SetResult("Success");
+
                         Log.Debug(token.ToString());
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
@@ -197,12 +201,10 @@ namespace CCServ.ServiceManagement.Service
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
 
-                        string finalResponse = token.ConstructResponseString();
-
                         //Everything good?  Commit the transaction right before we release.
                         transaction.Commit();
 
-                        return finalResponse;
+                        return token.FinalResult;
                     }
                     catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                     {

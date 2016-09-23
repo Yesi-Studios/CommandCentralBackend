@@ -193,6 +193,12 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     var profileLock = session.Get<ProfileLock>(profileLockId);
 
+                    if (profileLock == null)
+                    {
+                        token.AddErrorMessage("That profile lock id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
                     //Ok if the client doesn't own the profile lock, then we need to see if we can force it to release.
                     if (forceRelease)
                     {
