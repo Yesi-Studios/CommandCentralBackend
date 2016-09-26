@@ -24,17 +24,15 @@ namespace CCServ.Email.Models
             }
         }
 
+        public string ReportLink
+        {
+            get
+            {
+                return "https://commandcentral/#/muster/archive/" + ReportISODateString;
+            }
+        }
+
         public string CreatorName { get; set; }
-
-        /// <summary>
-        /// The day of the year for which this muster report was created.
-        /// </summary>
-        public int MusterDayOfYear { get; set; }
-
-        /// <summary>
-        /// The year for which this muster report was created.
-        /// </summary>
-        public int MusterYear { get; set; }
 
         private DateTime MusterDateTime { get; set; }
 
@@ -43,6 +41,9 @@ namespace CCServ.Email.Models
         /// </summary>
         public Time RollOverTime { get; set; }
 
+        /// <summary>
+        /// The date to display.
+        /// </summary>
         public string DisplayDay
         {
             get
@@ -78,18 +79,13 @@ namespace CCServ.Email.Models
             if (records == null || !records.Any())
                 throw new ArgumentException("The 'records' parameter must contain records.");
 
-            //First, let's do some validation and ensure that all the records are from the same day and there are no duplicates.
-            //To determine the day, we'll just take the first record and assume that is the day we must be on.
-            MusterYear = records.First().MusterYear;
-            MusterDayOfYear = records.First().MusterDayOfYear;
-
             var containers = new List<MusterGroupContainer>();
 
             foreach (var record in records)
             {
 
-                if (record.MusterDayOfYear != MusterDayOfYear || record.MusterYear != MusterYear)
-                    throw new ArgumentException("One or more records were from different days or years.  A muster report may only be built from the records from the same time frame.");
+                if (record.MusterDate.Date != musterDateTime.Date)
+                    throw new ArgumentException("One or more records were from different dates.  A muster report may only be built from the records from the same time frame.");
 
                 var container = containers.FirstOrDefault(x => x.GroupTitle.SafeEquals(record.DutyStatus));
 

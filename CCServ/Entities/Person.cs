@@ -590,8 +590,7 @@ namespace CCServ.Entities
                     }
 
                     int current = 0;
-                    int total = 5000;
-                    for (int x = 0; x < total; x++)
+                    for (int x = 0; x < Config.Gigo.Total; x++)
                     {
                         var permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
                             .OrderBy(y => Utilities.GetRandomNumber(0, 100))
@@ -647,7 +646,7 @@ namespace CCServ.Entities
 
                         if (current % 100 == 0)
                         {
-                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)total) * 100, 2)));
+                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)Config.Gigo.Total) * 100, 2)));
                         }
                         session.Save(person);
                     }
@@ -1271,7 +1270,7 @@ namespace CCServ.Entities
                         .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere)))
-                        .And(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(DateTime.Now) && x.MusterYear == MusterRecord.GetMusterYear(DateTime.Now))
+                        .And(x => x.MusterDate == MusterRecord.GetMusterDate(DateTime.Now))
                         .Select(x => x.Id));
                 });
 

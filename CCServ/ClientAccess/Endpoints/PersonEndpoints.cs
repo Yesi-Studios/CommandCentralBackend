@@ -317,11 +317,10 @@ namespace CCServ.ClientAccess.Endpoints
                                         person.CurrentMusterStatus.DutyStatus,
                                         person.CurrentMusterStatus.HasBeenSubmitted,
                                         person.CurrentMusterStatus.Id,
-                                        person.CurrentMusterStatus.MusterDayOfYear,
+                                        person.CurrentMusterStatus.MusterDate,
                                         Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
                                         Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
                                         person.CurrentMusterStatus.MusterStatus,
-                                        person.CurrentMusterStatus.MusterYear,
                                         person.CurrentMusterStatus.Paygrade,
                                         person.CurrentMusterStatus.SubmitTime,
                                         person.CurrentMusterStatus.UIC

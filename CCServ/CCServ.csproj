@@ -159,6 +159,7 @@
     <Compile Include="CLI\Program.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\Email.cs" />
+    <Compile Include="Config\Gigo.cs" />
     <Compile Include="Config\Muster.cs" />
     <Compile Include="Config\ParamNames.cs" />
     <Compile Include="Config\ProfileLocks.cs" />

@@ -16,184 +16,6 @@ namespace CCServ.ClientAccess.Endpoints
 {
     static class MusterEndpoints
     {
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Loads a muster record for a given id and returns null if none exists.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     musterrecordid - the Id of the muster record we want to load.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadMusterRecord", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterRecord(MessageToken token)
-        {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("musterrecordid"))
-            {
-                token.AddErrorMessage("You must send a 'musterrecordid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid musterRecordId;
-            if (!Guid.TryParse(token.Args["musterrecordid"] as string, out musterRecordId))
-            {
-                token.AddErrorMessage("Your muster record id was not legitsky.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                var musterRecord = session.Get<MusterRecord>(musterRecordId);
-
-                if (musterRecord == null)
-                {
-                    token.SetResult(null);
-                    return;
-                }
-
-                //Create a DTO for the client.
-                token.SetResult(new
-                {
-                    musterRecord.Command,
-                    musterRecord.Department,
-                    musterRecord.Division,
-                    musterRecord.DutyStatus,
-                    musterRecord.HasBeenSubmitted,
-                    musterRecord.Id,
-                    musterRecord.MusterDayOfYear,
-                    Musteree = musterRecord.Musteree.ToBasicPerson(),
-                    Musterer = musterRecord.Musterer.ToBasicPerson(),
-                    musterRecord.MusterStatus,
-                    musterRecord.MusterYear,
-                    musterRecord.Paygrade,
-                    musterRecord.SubmitTime,
-                    musterRecord.UIC,
-                    musterRecord.Remarks,
-                    musterRecord.Designation
-                });
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Loads all muster records for a given person in which the person was the Musteree - the one being le mustered.  
-        /// <para />
-        /// Client Parameters: <para />
-        ///     mustereeId - the Id of the person for whom to load muster records where the person is the one being mustered.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadMusterRecordsByMusteree", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterRecordsByMusteree(MessageToken token)
-        {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("mustereeid"))
-            {
-                token.AddErrorMessage("You must send a 'mustereeid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid mustereeId;
-            if (!Guid.TryParse(token.Args["mustereeid"] as string, out mustereeId))
-            {
-                token.AddErrorMessage("Your 'mustereeid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                //Set the result.
-                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId).List().Select(x => new
-                {
-                    x.Command,
-                    x.Department,
-                    x.Division,
-                    x.DutyStatus,
-                    x.HasBeenSubmitted,
-                    x.Id,
-                    x.MusterDayOfYear,
-                    Musteree = x.Musteree.ToBasicPerson(),
-                    Musterer = x.Musterer.ToBasicPerson(),
-                    x.MusterStatus,
-                    x.MusterYear,
-                    x.Paygrade,
-                    x.SubmitTime,
-                    x.UIC,
-                    x.Remarks,
-                    x.Designation
-                }));
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Loads all muster records for a given person in which the person was the Musterer - the one doing le mustering.  
-        /// <para />
-        /// Client Parameters: <para />
-        ///     mustererId - the Id of the person for whom to load muster records where the person is the one doing the mustering.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadMusterRecordsByMusterer", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterRecordsByMusterer(MessageToken token)
-        {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("mustererid"))
-            {
-                token.AddErrorMessage("You must send a 'mustererid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid mustererId;
-            if (!Guid.TryParse(token.Args["mustererid"] as string, out mustererId))
-            {
-                token.AddErrorMessage("Your 'mustererid' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                //Set the result.
-                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.Musterer.Id == mustererId).List().Select(x => new
-                {
-                    x.Command,
-                    x.Department,
-                    x.Division,
-                    x.DutyStatus,
-                    x.HasBeenSubmitted,
-                    x.Id,
-                    x.MusterDayOfYear,
-                    Musteree = x.Musteree.ToBasicPerson(),
-                    Musterer = x.Musterer.ToBasicPerson(),
-                    x.MusterStatus,
-                    x.MusterYear,
-                    x.Paygrade,
-                    x.SubmitTime,
-                    x.UIC,
-                    x.Remarks,
-                    x.Designation
-                }));
-            }
-        }
 
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
@@ -235,7 +57,7 @@ namespace CCServ.ClientAccess.Endpoints
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Get all records where the day of the year is the given day's muster day and the year the same.
-                var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDayOfYear == MusterRecord.GetMusterDay(musterDate) && x.MusterYear == musterDate.Year).List();
+                var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDate == musterDate.Date).List();
                 token.SetResult(records.Select(x => new
                 {
                     x.Command,
@@ -244,11 +66,10 @@ namespace CCServ.ClientAccess.Endpoints
                     x.DutyStatus,
                     x.HasBeenSubmitted,
                     x.Id,
-                    x.MusterDayOfYear,
                     Musteree = x.Musteree.ToBasicPerson(),
                     Musterer = x.Musterer == null ? null : x.Musterer.ToBasicPerson(),
                     x.MusterStatus,
-                    x.MusterYear,
+                    x.MusterDate,
                     x.Paygrade,
                     x.SubmitTime,
                     x.UIC,
@@ -328,10 +149,9 @@ namespace CCServ.ClientAccess.Endpoints
                 for (int x = 0; x < persons.Count; x++)
                 {
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
-                    persons[x].CurrentMusterStatus.MusterDayOfYear = MusterRecord.GetMusterDay(token.CallTime);
+                    persons[x].CurrentMusterStatus.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterStatus.MusterStatus = Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.ElementAt(x).Value.Value<string>("status"))).Value;
-                    persons[x].CurrentMusterStatus.MusterYear = MusterRecord.GetMusterYear(token.CallTime);
+                    persons[x].CurrentMusterStatus.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.ElementAt(x).Value.Value<string>("status"))).Value;
                     persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
                     persons[x].CurrentMusterStatus.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
@@ -441,11 +261,10 @@ namespace CCServ.ClientAccess.Endpoints
                             x.CurrentMusterStatus.DutyStatus,
                             x.CurrentMusterStatus.HasBeenSubmitted,
                             x.CurrentMusterStatus.Id,
-                            x.CurrentMusterStatus.MusterDayOfYear,
                             Musteree = x.CurrentMusterStatus.Musteree.ToBasicPerson(),
                             Musterer = x.CurrentMusterStatus.Musterer == null ? null : x.CurrentMusterStatus.Musterer.ToBasicPerson(),
                             x.CurrentMusterStatus.MusterStatus,
-                            x.CurrentMusterStatus.MusterYear,
+                            x.CurrentMusterStatus.MusterDate,
                             x.CurrentMusterStatus.Paygrade,
                             x.CurrentMusterStatus.SubmitTime,
                             x.CurrentMusterStatus.UIC,
@@ -460,8 +279,7 @@ namespace CCServ.ClientAccess.Endpoints
                 //And now build the final DTO that's going out the door.
                 token.SetResult(new
                 {
-                    CurrentYear = MusterRecord.GetMusterYear(token.CallTime),
-                    CurrentDay = MusterRecord.GetMusterDay(token.CallTime),
+                    CurrentDate = MusterRecord.GetMusterDate(token.CallTime),
                     Musters = results,
                     RolloverTime = Config.Muster.RolloverTime.ToString(),
                     ExpectedCompletionTime = Config.Muster.DueTime.ToString()
