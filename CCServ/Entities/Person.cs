@@ -589,8 +589,9 @@ namespace CCServ.Entities
                         }
                     }
 
-
-                    for (int x = 0; x < 5000; x++)
+                    int current = 0;
+                    int total = 5000;
+                    for (int x = 0; x < total; x++)
                     {
                         var permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
                             .OrderBy(y => Utilities.GetRandomNumber(0, 100))
@@ -642,6 +643,12 @@ namespace CCServ.Entities
                             EventTime = DateTime.Now
                         } };
 
+                        current++;
+
+                        if (current % 100 == 0)
+                        {
+                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)total) * 100, 2)));
+                        }
                         session.Save(person);
                     }
 
