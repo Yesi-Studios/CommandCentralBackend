@@ -194,7 +194,7 @@ namespace CCServ.ClientAccess.Endpoints
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
-                var queryOver = session.QueryOver<Person>();
+                var queryOver = MusterRecord.GetMusterablePersonsQuery(session);
 
                 //Switch on the highest level in muster and then add the query accordingly.
                 switch (highestLevelInMuster)
