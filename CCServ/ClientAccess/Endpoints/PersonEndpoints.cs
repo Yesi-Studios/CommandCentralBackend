@@ -309,22 +309,29 @@ namespace CCServ.ClientAccess.Endpoints
                                 }
                             case "currentmusterstatus":
                                 {
-                                    returnData.Add(propertyName, new
+                                    if (person.CurrentMusterStatus == null)
                                     {
-                                        person.CurrentMusterStatus.Command,
-                                        person.CurrentMusterStatus.Department,
-                                        person.CurrentMusterStatus.Division,
-                                        person.CurrentMusterStatus.DutyStatus,
-                                        person.CurrentMusterStatus.HasBeenSubmitted,
-                                        person.CurrentMusterStatus.Id,
-                                        person.CurrentMusterStatus.MusterDate,
-                                        Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
-                                        Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
-                                        person.CurrentMusterStatus.MusterStatus,
-                                        person.CurrentMusterStatus.Paygrade,
-                                        person.CurrentMusterStatus.SubmitTime,
-                                        person.CurrentMusterStatus.UIC
-                                    });
+                                        returnData.Add(propertyName, null);
+                                    }
+                                    else
+                                    {
+                                        returnData.Add(propertyName, new
+                                        {
+                                            person.CurrentMusterStatus.Command,
+                                            person.CurrentMusterStatus.Department,
+                                            person.CurrentMusterStatus.Division,
+                                            person.CurrentMusterStatus.DutyStatus,
+                                            person.CurrentMusterStatus.HasBeenSubmitted,
+                                            person.CurrentMusterStatus.Id,
+                                            person.CurrentMusterStatus.MusterDate,
+                                            Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
+                                            Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
+                                            person.CurrentMusterStatus.MusterStatus,
+                                            person.CurrentMusterStatus.Paygrade,
+                                            person.CurrentMusterStatus.SubmitTime,
+                                            person.CurrentMusterStatus.UIC
+                                        });
+                                    }
 
                                     wasSet = true;
                                     break;

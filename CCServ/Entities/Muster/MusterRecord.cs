@@ -230,6 +230,9 @@ namespace CCServ.Entities.Muster
                     //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person person in persons)
                     {
+                        if (person.CurrentMusterStatus == null)
+                            throw new Exception("{0}'s current muster status was null.".FormatS(person.ToString()));
+
                         person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.ToString();
                         person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.ToString();
                         person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.ToString();

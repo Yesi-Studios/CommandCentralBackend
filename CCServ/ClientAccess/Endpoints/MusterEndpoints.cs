@@ -148,6 +148,22 @@ namespace CCServ.ClientAccess.Endpoints
                 //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
                 for (int x = 0; x < persons.Count; x++)
                 {
+                    //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
+                    if (persons[x].CurrentMusterStatus == null)
+                    {
+                        if (persons[x].DutyStatus == DutyStatuses.Loss)
+                        {
+                            token.AddErrorMessage("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+                        else
+                        {
+                            //If the person's duty status is NOT Loss, then somehow this person never got a muster record.  This isn't good.
+                            if (persons[x].CurrentMusterStatus == null)
+                                throw new Exception("{0}'s current muster status was null.  This is unexpected.".FormatS(persons[x].ToString()));
+                        }
+                    }
+
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
                     persons[x].CurrentMusterStatus.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
@@ -240,6 +256,10 @@ namespace CCServ.ClientAccess.Endpoints
                 //Because Atwood is a good code monkey. Oh yes he is.
                 var results = musterablePersons.Select(x =>
                 {
+                    //If the person's current muster status is null, throw an error.  This is not expected.
+                    if (x.CurrentMusterStatus == null)
+                        throw new Exception("{0}'s current muster status is null!".FormatS(x.ToString()));
+
                     return new
                     {
                         Id = x.Id,
