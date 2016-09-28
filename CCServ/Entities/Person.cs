@@ -1163,8 +1163,8 @@ namespace CCServ.Entities
                     foreach (var pair in dates)
                     {
                         disjunction.Add(Restrictions.And(
-                            Restrictions.Le(token.SearchParameter.Key.Name, pair.From),
-                            Restrictions.Ge(token.SearchParameter.Key.Name, pair.To)
+                            Restrictions.Ge(token.SearchParameter.Key.Name, pair.From),
+                            Restrictions.Le(token.SearchParameter.Key.Name, pair.To)
                         ));
                     }
 
