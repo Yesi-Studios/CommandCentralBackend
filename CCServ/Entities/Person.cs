@@ -856,7 +856,7 @@ namespace CCServ.Entities
                 References(x => x.Command).Nullable();
                 References(x => x.UIC).Nullable();
                 References(x => x.Paygrade).Not.Nullable();
-                References(x => x.CurrentMusterStatus).Cascade.All().Not.Nullable();
+                References(x => x.CurrentMusterStatus).Cascade.All().Nullable();
                 References(x => x.DutyStatus).Not.Nullable();
                 References(x => x.Sex).Not.Nullable();
 
