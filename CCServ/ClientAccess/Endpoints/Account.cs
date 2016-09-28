@@ -154,6 +154,28 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
+            //First we need to release any profile locks owned by this person.
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var profileLocks = session.QueryOver<ProfileLock>().Where(x => x.Owner == token.AuthenticationSession.Person).List();
+
+                    foreach (var profileLock in profileLocks)
+                    {
+                        session.Delete(profileLock);
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
             token.AuthenticationSession.IsActive = false;
 
             //Cool, we also need to update the client.

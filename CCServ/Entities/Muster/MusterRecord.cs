@@ -360,6 +360,7 @@ namespace CCServ.Entities.Muster
                     {
                         Log.Info("Correcting {0} persons with incorrect muster records...".FormatS(personsWithIncorrectRecords.Count));
 
+                        int current = 0;
                         //Ok so each of these people's current muster records are for the wrong day.
                         //What we need to do is look up that day's muster record for this person and see if they have one.
                         //If they don't have one, the muster needs to get updated.
@@ -398,7 +399,13 @@ namespace CCServ.Entities.Muster
                                     throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterStatus.MusterDate, person.ToString()));
                                 }
                             }
-                            
+
+                            current++;
+                            if (current % 2 == 0)
+                            {
+                                Log.Info("Fixed {0}% of muster records...".FormatS(Math.Round(((double)current / (double)personsWithIncorrectRecords.Count) * 100, 2)));
+                            }
+
                             session.Save(person);
                         }
 

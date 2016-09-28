@@ -532,13 +532,13 @@ namespace CCServ.Entities
         [StartMethod(Priority = 3)]
         private static void GIGO(CLI.Options.LaunchOptions launchOptions)
         {
-            if (!launchOptions.GIGO)
+            if (launchOptions.GIGO <= 0)
             {
                 Log.Info("Skipping GIGO...");
                 return;
             }
 
-            Log.Info("Beginning GIGO.");
+            Log.Info("Beginning GIGO.  We will now create {0} record(s).".FormatS(launchOptions.GIGO));
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -590,7 +590,7 @@ namespace CCServ.Entities
                     }
 
                     int current = 0;
-                    for (int x = 0; x < Config.Gigo.Total; x++)
+                    for (int x = 0; x < launchOptions.GIGO; x++)
                     {
                         var permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
                             .OrderBy(y => Utilities.GetRandomNumber(0, 100))
@@ -646,7 +646,7 @@ namespace CCServ.Entities
 
                         if (current % 100 == 0)
                         {
-                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)Config.Gigo.Total) * 100, 2)));
+                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)launchOptions.GIGO) * 100, 2)));
                         }
                         session.Save(person);
                     }

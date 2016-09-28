@@ -238,7 +238,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 }
                             case "accounthistory":
                                 {
-                                    returnData.Add(propertyName, person.AccountHistory.OrderBy(x => x.EventTime).Take(5).ToList());
+                                    returnData.Add(propertyName, person.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList());
 
                                     wasSet = true;
                                     break;
