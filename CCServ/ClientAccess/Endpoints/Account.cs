@@ -7,6 +7,7 @@ using CCServ.Authorization;
 using CCServ.DataAccess;
 using CCServ.Entities;
 using NHibernate.Transform;
+using AtwoodUtils;
 
 namespace CCServ.ClientAccess.Endpoints
 {
@@ -686,6 +687,60 @@ namespace CCServ.ClientAccess.Endpoints
                     token.SetResult("Success");
 
                     transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Changes a client's password by confirming the account password and assigning a new one.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "ChangePassword", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_ChangePassword(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to change your password.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKeys("oldpassword", "newpassword"))
+            {
+                token.AddErrorMessage("You must send an oldpassword and newpassword parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            string oldPassword = token.Args["oldpassword"] as string;
+            string newPassword = token.Args["newpassword"] as string;
+
+            //First let's confirm the old password is actually the client's old password.
+            var correct = PasswordHash.ValidatePassword(oldPassword, token.AuthenticationSession.Person.PasswordHash);
+            if (!correct)
+            {
+                token.AddErrorMessage("Your old password was incorrect.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                return;
+            }
+
+            //Now we need to do the password update work in another session
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var self = session.Get<Person>(token.AuthenticationSession.Person.Id);
+
+                    self.PasswordHash = PasswordHash.CreateHash(newPassword);
+
+                    session.Update(self);
                 }
                 catch
                 {

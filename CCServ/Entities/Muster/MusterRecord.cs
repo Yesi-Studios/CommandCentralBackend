@@ -230,6 +230,9 @@ namespace CCServ.Entities.Muster
                     //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person person in persons)
                     {
+                        if (person.CurrentMusterStatus == null)
+                            throw new Exception("{0}'s current muster status was null.".FormatS(person.ToString()));
+
                         person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.ToString();
                         person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.ToString();
                         person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.ToString();
@@ -351,7 +354,7 @@ namespace CCServ.Entities.Muster
                 {
                     var persons = GetMusterablePersonsQuery(session).List();
 
-                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.Now)).ToList();
+                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus == null || x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.Now)).ToList();
 
                     if (personsWithIncorrectRecords.Any())
                     {
@@ -362,33 +365,40 @@ namespace CCServ.Entities.Muster
                         //If they don't have one, the muster needs to get updated.
                         foreach (var person in personsWithIncorrectRecords)
                         {
-                            var musterRecordsFromDayInQuestion = session.QueryOver<MusterRecord>().Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterStatus.MusterDate).List();
-
-                            //Ok now we have a list of all the muster records for this person from the day that is on their current muster record.
-                            //If there is only one, then the current one needs to be archived, and a new one needs to be assigned.
-                            if (musterRecordsFromDayInQuestion.Count == 1)
+                            if (person.CurrentMusterStatus == null)
                             {
-                                person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
-                            }
-                            else if (musterRecordsFromDayInQuestion.Count == 2)
-                            {
-                                //If there are two, then that means that the current record is here, but there's also another one that has already been archived.
-                                //In this case, just reset the current muster record and make it a current one.
-                                session.Delete(person.CurrentMusterStatus);
-                                session.Flush();
-                                person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
-                            }
-                            else if (musterRecordsFromDayInQuestion.Count == 0)
-                            {
-                                //If we're here then this person doesn't have a muster record.  That's weird.  Give them one.
                                 person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
                             }
                             else
                             {
-                                //Who the fuck knows what happened if we got here.
-                                throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterStatus.MusterDate, person.ToString()));
-                            }
+                                var musterRecordsFromDayInQuestion = session.QueryOver<MusterRecord>().Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterStatus.MusterDate).List();
 
+                                //Ok now we have a list of all the muster records for this person from the day that is on their current muster record.
+                                //If there is only one, then the current one needs to be archived, and a new one needs to be assigned.
+                                if (musterRecordsFromDayInQuestion.Count == 1)
+                                {
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                }
+                                else if (musterRecordsFromDayInQuestion.Count == 2)
+                                {
+                                    //If there are two, then that means that the current record is here, but there's also another one that has already been archived.
+                                    //In this case, just reset the current muster record and make it a current one.
+                                    session.Delete(person.CurrentMusterStatus);
+                                    session.Flush();
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                }
+                                else if (musterRecordsFromDayInQuestion.Count == 0)
+                                {
+                                    //If we're here then this person doesn't have a muster record.  That's weird.  Give them one.
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                }
+                                else
+                                {
+                                    //Who the fuck knows what happened if we got here.
+                                    throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterStatus.MusterDate, person.ToString()));
+                                }
+                            }
+                            
                             session.Save(person);
                         }
 

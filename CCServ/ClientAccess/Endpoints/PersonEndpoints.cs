@@ -26,106 +26,6 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Creates a list of persons, and registers all of them.
-        /// <para/>
-        /// NOTE: This method is intended only for testing and is only enabled if the environment is interactable and if we're debugging.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "MassCreatePersons", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_MassCreatePersons(MessageToken token)
-        {
-            /*//Just make sure the client is logged in.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to create persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains("createperson", StringComparer.CurrentCultureIgnoreCase) &&
-             x.AccessibleSubModules.Contains("admintools", StringComparer.CurrentCultureIgnoreCase)))
-            {
-                token.AddErrorMessage("You don't have permission to create persons and/or access admin tools..", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Let's also make sure this isntance is debugging and interactive.
-            if (!Environment.UserInteractive || !System.Diagnostics.Debugger.IsAttached)
-            {
-                token.AddErrorMessage("This endpoint is only accessible if the service is in debug mode.", ErrorTypes.Authorization, System.Net.HttpStatusCode.MethodNotAllowed);
-                return;
-            }
-
-            //Ok let's do the thing.
-            if (!token.Args.ContainsKey("persons"))
-            {
-                token.AddErrorMessage("You failed to send a 'persons' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            var personsFromClient = (Newtonsoft.Json.Linq.JArray)token.Args["persons"];
-
-            var personsToCreate = personsFromClient.Select(x =>
-                new Person
-                {
-                    FirstName = x.Value<string>("FirstName"),
-                    MiddleName = x.Value<string>("MiddleName"),
-                    LastName = x.Value<string>("LastName"),
-                    Division = x.Value<Division>("Division"),
-                    Department = x.Value<Department>("Department"),
-                    Command = x.Value<Command>("Command"),
-                    Paygrade = x.Value<Paygrade>("Paygrade"),
-                    UIC = x.Value<UIC>("UIC"),
-                    Designation = x.Value<Designation>("Designation"),
-                    Sex = x.Value<Sexes>("Sex"),
-                    SSN = x.Value<string>("SSN"),
-                    DateOfBirth = x.Value<DateTime>("DateOfBirth"),
-                    DateOfArrival = x.Value<DateTime>("DateOfArrival"),
-                    DutyStatus = x.Value<DutyStatus>("DutyStatus"),
-                    Id = Guid.NewGuid(),
-                    IsClaimed = false,
-                    Username = x.Value<string>("Username"),
-                    PasswordHash = ClientAccess.PasswordHash.CreateHash(x.Value<string>("Password")),
-                    EmailAddresses = new List<EmailAddress>
-                    {
-                        new EmailAddress
-                        {
-                            Address = x.Value<EmailAddress>("EmailAddress").Address,
-                            IsContactable = x.Value<EmailAddress>("EmailAddress").IsContactable,
-                            IsPreferred = x.Value<EmailAddress>("EmailAddress").IsPreferred
-                        }
-                    },
-                    PermissionGroupNames = x.Value<List<string>>("PermissionGroupNames")
-                }
-            );
-
-            using (var session = NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-
-                    foreach (var person in personsToCreate)
-                    {
-                        session.Save(person);
-                        Log.Warning("Created a person through the create persons testing endpoint. Person: {0}".FormatS(person));
-                    }
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }*/
-
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
         /// Creates a new person in the database by taking a person object from the client, picking out only the properties we want, and saving them.  Then it returns the Id we assigned to the person.
         /// <para />
         /// Client Parameters: <para />
@@ -309,22 +209,29 @@ namespace CCServ.ClientAccess.Endpoints
                                 }
                             case "currentmusterstatus":
                                 {
-                                    returnData.Add(propertyName, new
+                                    if (person.CurrentMusterStatus == null)
                                     {
-                                        person.CurrentMusterStatus.Command,
-                                        person.CurrentMusterStatus.Department,
-                                        person.CurrentMusterStatus.Division,
-                                        person.CurrentMusterStatus.DutyStatus,
-                                        person.CurrentMusterStatus.HasBeenSubmitted,
-                                        person.CurrentMusterStatus.Id,
-                                        person.CurrentMusterStatus.MusterDate,
-                                        Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
-                                        Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
-                                        person.CurrentMusterStatus.MusterStatus,
-                                        person.CurrentMusterStatus.Paygrade,
-                                        person.CurrentMusterStatus.SubmitTime,
-                                        person.CurrentMusterStatus.UIC
-                                    });
+                                        returnData.Add(propertyName, null);
+                                    }
+                                    else
+                                    {
+                                        returnData.Add(propertyName, new
+                                        {
+                                            person.CurrentMusterStatus.Command,
+                                            person.CurrentMusterStatus.Department,
+                                            person.CurrentMusterStatus.Division,
+                                            person.CurrentMusterStatus.DutyStatus,
+                                            person.CurrentMusterStatus.HasBeenSubmitted,
+                                            person.CurrentMusterStatus.Id,
+                                            person.CurrentMusterStatus.MusterDate,
+                                            Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
+                                            Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
+                                            person.CurrentMusterStatus.MusterStatus,
+                                            person.CurrentMusterStatus.Paygrade,
+                                            person.CurrentMusterStatus.SubmitTime,
+                                            person.CurrentMusterStatus.UIC
+                                        });
+                                    }
 
                                     wasSet = true;
                                     break;
@@ -446,7 +353,7 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
             Person person;
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 person = session.Get<Person>(personId);
             }
@@ -500,6 +407,12 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
+            bool showHidden = false;
+            if (token.Args.ContainsKey("showhidden"))
+            {
+                showHidden = (bool)token.Args["showhidden"];
+            }
+
             //And now we're going to split the search term by any white space into a list of search terms.
             var searchTerms = searchTerm.Split((char[])null);
 
@@ -517,6 +430,13 @@ namespace CCServ.ClientAccess.Endpoints
                 }
 
                 var simpleSearchMembers = queryProvider.GetMembersThatAreUsedIn(QueryTypes.Simple);
+
+                //If we weren't told to show hidden, then hide hidden members.
+                if (!showHidden)
+                {
+                    resultToken.Query = resultToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
+                }
+                
                 
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
                 var results = resultToken.Query.GetExecutableQueryOver(session).List<Person>().Select(x =>
@@ -722,6 +642,13 @@ namespace CCServ.ClientAccess.Endpoints
             }
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
+            //Instruct us to show hidden profiles, or hide them.
+            bool showHidden = false;
+            if (token.Args.ContainsKey("showhidden"))
+            {
+                showHidden = (bool)token.Args["showhidden"];
+            }
+
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
@@ -774,6 +701,12 @@ namespace CCServ.ClientAccess.Endpoints
                     x => x.Value.Split((char[])null).Cast<object>());
 
                 var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQueryFor(convertedFilters, queryOver);
+
+                //The client is telling us to show hidden profiles or not.
+                if (!showHidden)
+                {
+                    resultQueryToken.Query = resultQueryToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
+                }
 
                 if (resultQueryToken.HasErrors)
                 {
