@@ -172,7 +172,7 @@ namespace CCServ.Authorization.Groups
                 .ToList();
 
             if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
-                throw new Exception("No two groups may have the same name.");
+                throw new Exception("Atwood, you gave two groups the same name again.  Fix it; this is embarrassing.  I will not start up until you do.");
 
             AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
 
