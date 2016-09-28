@@ -94,22 +94,34 @@ namespace CCServ.ClientAccess.Endpoints
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
+                var query = session.QueryOver<NewsItem>();
+
+                if (token.Args.ContainsKey("limit"))
+                {
+                    var limit = (int)token.Args["limit"];
+
+                    if (limit <= 0)
+                    {
+                        token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    query = (NHibernate.IQueryOver<NewsItem, NewsItem>)query.OrderBy(x => x.CreationTime).Desc.Take(limit);
+                }
+
                 //Set the result.
-                token.SetResult(session.QueryOver<NewsItem>().List().Select(x =>
+                token.SetResult(query.List().Select(x =>
                 {
                     return new
                     {
                         x.Id,
                         x.CreationTime,
                         Creator = x.Creator.ToBasicPerson(),
-                        CreatorId = x.Creator.Id,
                         x.Paragraphs,
                         x.Title
                     };
                 }));
             }
-
-
         }
 
         /// <summary>
