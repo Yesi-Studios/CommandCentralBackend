@@ -1135,6 +1135,9 @@ namespace CCServ.Entities
                 {
                     token.Errors.Add("Date searches are not currently supported.  We apologize for the inconvenience.");
                     return null;
+
+                    //var value = token.SearchParameter.Value.CastJToken();
+
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
