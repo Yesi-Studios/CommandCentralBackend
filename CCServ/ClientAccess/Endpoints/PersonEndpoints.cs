@@ -446,7 +446,7 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
             Person person;
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 person = session.Get<Person>(personId);
             }
