@@ -730,8 +730,24 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
-            //Ok the old password was correct, awesome.  Now let's swap the new password in.
-            token.AuthenticationSession.Person.PasswordHash = PasswordHash.CreateHash(newPassword);
+            //Now we need to do the password update work in another session
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var self = session.Get<Person>(token.AuthenticationSession.Person.Id);
+
+                    self.PasswordHash = PasswordHash.CreateHash(newPassword);
+
+                    session.Update(self);
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
         #endregion
