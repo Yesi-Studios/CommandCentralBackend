@@ -1133,10 +1133,42 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    token.Errors.Add("Date searches are not currently supported.  We apologize for the inconvenience.");
-                    return null;
+                    //First cast the value given to a JSON array.
+                    var values = (Newtonsoft.Json.Linq.JArray)token.SearchParameter.Value.CastJToken();
 
-                    //var value = token.SearchParameter.Value.CastJToken();
+                    //Now we're going to go across each element given to us, get the to/from and then validate those properties.
+                    var dates = values.Select(x =>
+                    {
+                        var pair = new
+                        {
+                            From = x.Value<DateTime>("from"),
+                            To = x.Value<DateTime>("to")
+                        };
+
+                        //Do the validation.
+                        if (pair.From >= pair.To)
+                        {
+                            token.Errors.Add("The dates, From:'' and To:'', were invalid.  From may not be after To.".FormatS(pair.From, pair.To));
+                        }
+
+                        return pair;
+                    });
+
+                    if (token.HasErrors)
+                        return null;
+
+                    //Ok so we have the dates we need, now let's see about making them into a query.
+                    var disjunction = Restrictions.Disjunction();
+
+                    foreach (var pair in dates)
+                    {
+                        disjunction.Add(Restrictions.And(
+                            Restrictions.Le(token.SearchParameter.Key.Name, pair.From),
+                            Restrictions.Ge(token.SearchParameter.Key.Name, pair.To)
+                        ));
+                    }
+
+                    return disjunction;
 
                 });
 
