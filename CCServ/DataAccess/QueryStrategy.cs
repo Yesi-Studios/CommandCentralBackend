@@ -46,6 +46,16 @@ namespace CCServ.DataAccess
             return PropertyGroups.Where(x => x.AreIdintifiers).SelectMany(x => x.Properties);
         }
 
+        public SearchDataTypes? GetSearchDataTypeForProperty(PropertyInfo property)
+        {
+            var group = PropertyGroups.FirstOrDefault(x => x.Properties.Contains(property));
+
+            if (group == null)
+                return null;
+
+            return group.SearchType;
+        }
+
         public QueryResultToken<T> CreateSimpleSearchQuery(IEnumerable<object> terms)
         {
             QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), SearchParameters = GetMembersThatAreUsedIn(QueryTypes.Simple).ToDictionary(x => x, x => terms) };

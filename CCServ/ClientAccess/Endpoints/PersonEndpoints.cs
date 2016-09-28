@@ -953,5 +953,39 @@ namespace CCServ.ClientAccess.Endpoints
         }
 
         #endregion
+
+        #region 
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Gets the metadata associated with the person object. Metadata describes the different properties of a person, how to search them, and more.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "GetPersonMetadata", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_GetPersonMetadata(MessageToken token)
+        {
+            //Just make sure the client is logged in.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to access this endpoint.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            var searchStrategy = new Person.PersonQueryProvider();
+            Dictionary<string, object> result = new Dictionary<string, object>();
+            foreach (var info in typeof(Person).GetProperties())
+            {
+                result.Add(info.Name, new
+                {
+                    SearchDataType = searchStrategy.GetSearchDataTypeForProperty(PropertySelector.SelectPropertyFrom<Person>(info.Name))
+                });
+            }
+
+            token.SetResult(result);
+        }
+
+        #endregion
     }
 }
