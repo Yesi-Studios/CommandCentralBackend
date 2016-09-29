@@ -24,8 +24,6 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(PermissionGroupLevels.Self);
 
-            CanAccessModule("Muster");
-
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
