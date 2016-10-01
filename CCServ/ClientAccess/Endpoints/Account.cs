@@ -763,6 +763,8 @@ namespace CCServ.ClientAccess.Endpoints
                     self.PasswordHash = PasswordHash.CreateHash(newPassword);
 
                     session.Update(self);
+
+                    transaction.Commit();
                 }
                 catch
                 {
