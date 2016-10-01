@@ -1067,6 +1067,14 @@ namespace CCServ.Entities
                     })
                     .WithMessage("No preference value may be more than 1000 characters.");
 
+                When(x => x.IsClaimed, () =>
+                {
+                    RuleFor(x => x.EmailAddresses).Must((person, x) =>
+                    {
+                        return x.Any(y => y.IsDodEmailAddress);
+                    }).WithMessage("You must have at least one mail.mil address.");
+                });
+
 
                 //Set validations
                 RuleFor(x => x.EmailAddresses)
