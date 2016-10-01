@@ -98,7 +98,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                 if (token.Args.ContainsKey("limit"))
                 {
-                    var limit = (int)token.Args["limit"];
+                    var limit = Convert.ToInt32(token.Args["limit"]);
 
                     if (limit <= 0)
                     {
