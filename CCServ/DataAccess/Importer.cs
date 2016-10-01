@@ -455,7 +455,7 @@ namespace CCServ.DataAccess
                                 person.Changes = new List<Entities.Change>();
                                 person.Command = commands.First();
                                 person.ContactRemarks = "";
-                                person.CurrentMusterStatus = Entities.Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                person.CurrentMusterStatus = Entities.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                                 var doa = adminRow["ADM_cmddoa"] as string;
                                 if (string.IsNullOrEmpty(doa))

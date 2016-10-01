@@ -187,7 +187,7 @@
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
-    <Compile Include="Entities\Muster\MusterRecord.cs" />
+    <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />

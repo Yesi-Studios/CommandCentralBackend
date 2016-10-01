@@ -14,7 +14,6 @@ using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
 using CCServ.Entities;
-using CCServ.Entities.Muster;
 using System.Reflection;
 
 namespace CCServ.ClientAccess.Endpoints

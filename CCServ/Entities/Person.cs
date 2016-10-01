@@ -13,7 +13,6 @@ using NHibernate.Linq;
 using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
-using CCServ.Entities.Muster;
 using System.Reflection;
 
 namespace CCServ.Entities
@@ -216,7 +215,7 @@ namespace CCServ.Entities
         /// <summary>
         /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
         /// </summary>
-        public virtual Muster.MusterRecord CurrentMusterStatus { get; set; }
+        public virtual MusterRecord CurrentMusterStatus { get; set; }
 
         #endregion
 
@@ -714,7 +713,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                         if (!launchOptions.UseSecureMode)
                         {
@@ -787,7 +786,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = Muster.MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
                         if (!launchOptions.UseSecureMode)
                         {

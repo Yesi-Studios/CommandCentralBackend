@@ -7,7 +7,6 @@ using System.Linq;
 using NHibernate.Criterion;
 using CCServ.Authorization;
 using CCServ.Logging;
-using CCServ.Entities.Muster;
 using CCServ.Entities;
 using Newtonsoft.Json.Linq;
 using CCServ.Entities.ReferenceLists;

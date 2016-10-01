@@ -8,7 +8,7 @@ using NHibernate.Criterion;
 using CCServ.Authorization;
 using CCServ.Logging;
 
-namespace CCServ.Entities.Muster
+namespace CCServ.Entities
 {
     /// <summary>
     /// Describes a single muster record, intended to archive the fact that a person claimed that another person was in a given state at a given time.
@@ -460,6 +460,7 @@ namespace CCServ.Entities.Muster
                 Map(x => x.HasBeenSubmitted).Not.Nullable();
                 Map(x => x.Remarks);
                 Map(x => x.Designation);
+                Map(x => x.UIC);
             }
         }
 

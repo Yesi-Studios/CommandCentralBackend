@@ -53,7 +53,7 @@ namespace CCServ.Email.Models
             }
         }
 
-        public List<Entities.Muster.MusterRecord> Records { get; set; }
+        public List<Entities.MusterRecord> Records { get; set; }
 
         private List<MusterGroupContainer> Containers { get; set; }
 
@@ -67,7 +67,7 @@ namespace CCServ.Email.Models
             }
         }
 
-        public MusterReportEmailModel(IEnumerable<Entities.Muster.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
+        public MusterReportEmailModel(IEnumerable<Entities.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
         {
             MusterDateTime = musterDateTime;
 
