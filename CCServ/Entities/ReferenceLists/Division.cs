@@ -182,12 +182,17 @@ namespace CCServ.Entities.ReferenceLists
                         }
 
                         //Cool, give them back the divisions in this department.
-                        return session.QueryOver<Division>().Where(x => x.Department.Id == departmentId).List<ReferenceListItemBase>().ToList();
+                        return session.QueryOver<Division>()
+                            .Where(x => x.Department.Id == departmentId)
+                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                            .List<ReferenceListItemBase>().ToList();
                     }
                     else
                     {
                         //Nope, just give them all the departments.
-                        return session.QueryOver<Division>().List<ReferenceListItemBase>().ToList();
+                        return session.QueryOver<Division>()
+                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                            .List<ReferenceListItemBase>().ToList();
                     }
                 }
             }
@@ -220,6 +225,8 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Description);
 
                 References(x => x.Department).LazyLoad(Laziness.False);
+
+                Cache.ReadWrite();
             }
         }
 

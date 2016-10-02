@@ -127,7 +127,9 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<ReligiousPreference>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<ReligiousPreference>()
+                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                        .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
@@ -158,6 +160,8 @@ namespace CCServ.Entities.ReferenceLists
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
+
+                Cache.ReadWrite();
             }
         }
 

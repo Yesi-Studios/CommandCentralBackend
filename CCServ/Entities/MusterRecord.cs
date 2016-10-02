@@ -352,7 +352,9 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    var persons = GetMusterablePersonsQuery(session).List();
+                    var persons = GetMusterablePersonsQuery(session)
+                        .Fetch(x => x.CurrentMusterStatus).Eager
+                        .List();
 
                     var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus == null || x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.Now)).ToList();
 
@@ -461,6 +463,8 @@ namespace CCServ.Entities
                 Map(x => x.Remarks);
                 Map(x => x.Designation);
                 Map(x => x.UIC);
+
+                Cache.ReadWrite();
             }
         }
 

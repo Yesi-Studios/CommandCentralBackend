@@ -7,27 +7,11 @@ using AtwoodUtils;
 
 namespace CCServ.Logging.Loggers
 {
+    /// <summary>
+    /// The logger that writes messages to the database.
+    /// </summary>
     public class DatabaseLogger : ILogger
     {
-
-        /// <summary>
-        /// Ensures that the logging session is initialized and returns a boolean indicating if logging operations using it are valid.
-        /// </summary>
-        /// <returns></returns>
-        private bool TryGetSession(out NHibernate.ISession session)
-        {
-            if (!DataAccess.NHibernateHelper.IsReady)
-            {
-                session = null;
-                return false;
-            }
-            else
-            {
-                session = DataAccess.NHibernateHelper.CreateStatefulSession(); 
-                return true;
-            }
-        }
-
 
         public LoggingTargetTypes TargetType
         {
@@ -58,16 +42,26 @@ namespace CCServ.Logging.Loggers
             if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    session.Save(new LogEntry
+                    try
                     {
-                        CallerFilePath = callerFilePath,
-                        CallerLineNumber = callerLineNumber,
-                        CallerMemberName = callerMemberName,
-                        Message = message.Truncate(10000),
-                        Token = token,
-                        MessageType = "Debug"
-                    });
+                        session.Save(new LogEntry
+                        {
+                            CallerFilePath = callerFilePath,
+                            CallerLineNumber = callerLineNumber,
+                            CallerMemberName = callerMemberName,
+                            Message = message.Truncate(10000),
+                            Token = token,
+                            MessageType = "Debug"
+                        });
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
@@ -77,16 +71,26 @@ namespace CCServ.Logging.Loggers
             if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    session.Save(new LogEntry
+                    try
                     {
-                        CallerFilePath = callerFilePath,
-                        CallerLineNumber = callerLineNumber,
-                        CallerMemberName = callerMemberName,
-                        Message = message.Truncate(10000),
-                        Token = token,
-                        MessageType = "Information"
-                    });
+                        session.Save(new LogEntry
+                        {
+                            CallerFilePath = callerFilePath,
+                            CallerLineNumber = callerLineNumber,
+                            CallerMemberName = callerMemberName,
+                            Message = message.Truncate(10000),
+                            Token = token,
+                            MessageType = "Information"
+                        });
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
@@ -96,16 +100,26 @@ namespace CCServ.Logging.Loggers
             if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    session.Save(new LogEntry
+                    try
                     {
-                        CallerFilePath = callerFilePath,
-                        CallerLineNumber = callerLineNumber,
-                        CallerMemberName = callerMemberName,
-                        Message = message.Truncate(10000),
-                        Token = token,
-                        MessageType = "Critical"
-                    });
+                        session.Save(new LogEntry
+                        {
+                            CallerFilePath = callerFilePath,
+                            CallerLineNumber = callerLineNumber,
+                            CallerMemberName = callerMemberName,
+                            Message = message.Truncate(10000),
+                            Token = token,
+                            MessageType = "Critical"
+                        });
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
@@ -115,16 +129,26 @@ namespace CCServ.Logging.Loggers
             if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    session.Save(new LogEntry
+                    try
                     {
-                        CallerFilePath = callerFilePath,
-                        CallerLineNumber = callerLineNumber,
-                        CallerMemberName = callerMemberName,
-                        Message = message.Truncate(10000),
-                        Token = token,
-                        MessageType = "Warning"
-                    });
+                        session.Save(new LogEntry
+                        {
+                            CallerFilePath = callerFilePath,
+                            CallerLineNumber = callerLineNumber,
+                            CallerMemberName = callerMemberName,
+                            Message = message.Truncate(10000),
+                            Token = token,
+                            MessageType = "Warning"
+                        });
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
@@ -135,16 +159,26 @@ namespace CCServ.Logging.Loggers
             if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
                 {
-                    session.Save(new LogEntry
+                    try
                     {
-                        CallerFilePath = callerFilePath,
-                        CallerLineNumber = callerLineNumber,
-                        CallerMemberName = callerMemberName,
-                        Message = (message.Truncate(10000) + "||BREAK EXCEPTION||" + ex.ToString()).Truncate(10000),
-                        Token = token,
-                        MessageType = "Exception"
-                    });
+                        session.Save(new LogEntry
+                        {
+                            CallerFilePath = callerFilePath,
+                            CallerLineNumber = callerLineNumber,
+                            CallerMemberName = callerMemberName,
+                            Message = (message.Truncate(10000) + "||BREAK EXCEPTION||" + ex.ToString()).Truncate(10000),
+                            Token = token,
+                            MessageType = "Exception"
+                        });
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
 

@@ -51,7 +51,7 @@ namespace CCServ.DataAccess
             {
                 config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString)
                             .ShowSql())
-                            .Cache(x => x.UseQueryCache()
+                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
                             .ProviderClass<SysCacheProvider>())
                             .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                             .BuildConfiguration();
@@ -59,7 +59,7 @@ namespace CCServ.DataAccess
             else
             {
                 config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString))
-                            .Cache(x => x.UseQueryCache()
+                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
                             .ProviderClass<SysCacheProvider>())
                             .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
                             .BuildConfiguration();

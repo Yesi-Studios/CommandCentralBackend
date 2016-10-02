@@ -52,7 +52,9 @@ namespace CCServ.Entities.ReferenceLists
 
                     using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                     {
-                        var result = session.QueryOver<EditableReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
+                        var result = session.QueryOver<EditableReferenceListItemBase>()
+                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                            .List().GroupBy(x => x.GetType().Name)
                             .ToDictionary(x => x.Key, x => x.ToList());
 
                         foreach (var name in names)
@@ -75,7 +77,9 @@ namespace CCServ.Entities.ReferenceLists
 
                     using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                     {
-                        var result = session.QueryOver<ReferenceListItemBase>().List().GroupBy(x => x.GetType().Name)
+                        var result = session.QueryOver<ReferenceListItemBase>()
+                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                            .List().GroupBy(x => x.GetType().Name)
                             .ToDictionary(x => x.Key, x => x.ToList());
 
                         foreach (var name in names)

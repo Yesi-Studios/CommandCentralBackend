@@ -144,7 +144,9 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<NEC>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<NEC>()
+                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                        .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
@@ -177,7 +179,9 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
                 
-                References(x => x.NECType).LazyLoad(Laziness.False);
+                References(x => x.NECType);
+
+                Cache.ReadWrite();
             }
         }
 

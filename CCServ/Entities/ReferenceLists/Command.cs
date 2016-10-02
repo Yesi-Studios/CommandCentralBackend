@@ -162,7 +162,9 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<Command>().List<ReferenceListItemBase>().ToList();
+                    return session.QueryOver<Command>()
+                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                        .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
@@ -189,6 +191,8 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Description);
 
                 HasMany(x => x.Departments).Not.LazyLoad().Cascade.DeleteOrphan();
+
+                Cache.ReadWrite();
             }
         }
 
