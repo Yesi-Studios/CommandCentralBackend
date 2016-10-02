@@ -762,6 +762,12 @@ namespace CCServ.ClientAccess.Endpoints
 
                     self.PasswordHash = PasswordHash.CreateHash(newPassword);
 
+                    self.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.PasswordChanged,
+                        EventTime = token.CallTime
+                    });
+
                     session.Update(self);
 
                     transaction.Commit();
