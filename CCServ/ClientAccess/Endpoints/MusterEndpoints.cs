@@ -19,6 +19,89 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Loads all muster records for a given musteree using the given limit.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "LoadMusterRecordsByMusteree", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_LoadMusterRecordsByMusteree(MessageToken token)
+        {
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("mustereeid"))
+            {
+                token.AddErrorMessage("You failed to send a 'mustereeid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Guid mustereeId;
+            if (!Guid.TryParse(token.Args["mustereeid"] as string, out mustereeId))
+            {
+                token.AddErrorMessage("Your mustereeid parameter was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var query = session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId);
+
+                    if (token.Args.ContainsKey("limit"))
+                    {
+                        var limit = Convert.ToInt32(token.Args["limit"]);
+
+                        if (limit <= 0)
+                        {
+                            token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        query = (NHibernate.IQueryOver<MusterRecord, MusterRecord>)query.OrderBy(x => x.MusterDate).Desc.Take(limit);
+                    }
+
+                    //Set the result.
+                    token.SetResult(query.List().Select(x =>
+                    {
+                        return new
+                        {
+                            x.Command,
+                            x.Department,
+                            x.Designation,
+                            x.Division,
+                            x.DutyStatus,
+                            x.HasBeenSubmitted,
+                            x.Id,
+                            x.MusterDate,
+                            Musteree = x.Musteree == null ? null : x.Musteree.ToBasicPerson(),
+                            Musterer = x.Musterer == null ? null : x.Musterer.ToBasicPerson(),
+                            x.MusterStatus,
+                            x.Paygrade,
+                            x.Remarks,
+                            x.SubmitTime,
+                            x.UIC
+                        };
+                    }));
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Loads all muster records for a given muster date. This will be converted to a muster date based on the rollover time shift.  Recommend that you submit the date time without a time portion or with the time portion set to midnight - although it doesn't matter.
         /// <para />
         /// Client Parameters: <para />
@@ -65,7 +148,7 @@ namespace CCServ.ClientAccess.Endpoints
                     x.DutyStatus,
                     x.HasBeenSubmitted,
                     x.Id,
-                    Musteree = x.Musteree.ToBasicPerson(),
+                    Musteree = x.Musteree == null ? null : x.Musteree.ToBasicPerson(),
                     Musterer = x.Musterer == null ? null : x.Musterer.ToBasicPerson(),
                     x.MusterStatus,
                     x.MusterDate,

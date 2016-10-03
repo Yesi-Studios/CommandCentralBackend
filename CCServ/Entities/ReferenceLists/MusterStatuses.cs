@@ -33,7 +33,8 @@ namespace CCServ.Entities.ReferenceLists
         public static MusterStatus Transferred = new MusterStatus { Id = Guid.Parse("{F81F05DF-EDC5-4925-94D2-AA6B8E3276F8}"), Value = "Transferred", Description = "" };
         public static MusterStatus TAD = new MusterStatus { Id = Guid.Parse("{3F4E9C19-C578-4C8D-A5A3-3A63F5BE4281}"), Value = "TAD", Description = "" };
         public static MusterStatus SpecialLiberty = new MusterStatus { Id = Guid.Parse("{B6743325-8B30-4DBC-9F19-7B7745B8F2DA}"), Value = "Special Liberty", Description = "" };
-
+        public static MusterStatus NotScheduled = new MusterStatus { Id = Guid.Parse("{E8391B17-8554-43AC-B5E8-8D0555B6228B"), Value = "Not Scheduled", Description = "" };
+        
         /// <summary>
         /// Ensures that all muster statuses are persisted in the database and that they look the same as they do here.
         /// </summary>
