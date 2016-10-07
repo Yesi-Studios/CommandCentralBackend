@@ -544,6 +544,21 @@ namespace CCServ.Entities
             {
                 try
                 {
+
+                    List<UIC> uics = new List<UIC>();
+                    for(int i = 0; i < Utilities.GetRandomNumber(5, 10); i++)
+                    {
+                        uics.Add(new UIC
+                        {
+                            Value = Utilities.RandomString(5),
+                            Description = Utilities.RandomString(8),
+                            Id = Guid.NewGuid()
+                        });
+
+                        session.Save(uics.Last());
+                        session.Flush();
+                    }
+
                     List<Command> commands = new List<Command>();
                     for (int x = 0; x < Utilities.GetRandomNumber(1, 1); x++)
                     {
@@ -600,6 +615,7 @@ namespace CCServ.Entities
                         Command command = commands.ElementAt(Utilities.GetRandomNumber(0, commands.Count - 1));
                         Department department = command.Departments.ElementAt(Utilities.GetRandomNumber(0, command.Departments.Count - 1));
                         Division division = department.Divisions.ElementAt(Utilities.GetRandomNumber(0, department.Divisions.Count - 1));
+                        UIC uic = uics.ElementAt(Utilities.GetRandomNumber(0, uics.Count - 1));
 
                         var person = new Person()
                         {
@@ -610,6 +626,7 @@ namespace CCServ.Entities
                             Command = command,
                             Department = department,
                             Division = division,
+                            UIC = uic,
                             SSN = Utilities.GenerateSSN(),
                             IsClaimed = true,
                             Username = Utilities.RandomString(12),
