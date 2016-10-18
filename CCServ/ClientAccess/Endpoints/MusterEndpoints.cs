@@ -194,6 +194,7 @@ namespace CCServ.ClientAccess.Endpoints
                 musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>()
                     .Select(x => new KeyValuePair<Guid, JToken>(x.Key, new { status = x.Value, remarks = "" }.Serialize().DeserializeToJObject()))
                     .ToDictionary(x => x.Key, x => x.Value);
+                int asdf = 0;
             }
             catch (Exception e)
             {
@@ -249,7 +250,7 @@ namespace CCServ.ClientAccess.Endpoints
                     persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
                     persons[x].CurrentMusterStatus.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
                     persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterStatus.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.ElementAt(x).Value.Value<string>("status"))).Value;
+                    persons[x].CurrentMusterStatus.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
                     persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
                     persons[x].CurrentMusterStatus.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
