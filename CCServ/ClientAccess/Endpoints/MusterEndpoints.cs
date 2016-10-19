@@ -194,7 +194,6 @@ namespace CCServ.ClientAccess.Endpoints
                 musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>()
                     .Select(x => new KeyValuePair<Guid, JToken>(x.Key, new { status = x.Value, remarks = "" }.Serialize().DeserializeToJObject()))
                     .ToDictionary(x => x.Key, x => x.Value);
-                int asdf = 0;
             }
             catch (Exception e)
             {
