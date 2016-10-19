@@ -30,11 +30,10 @@ namespace CCServ.Entities.ReferenceLists
         public static MusterStatus Leave = new MusterStatus { Id = Guid.Parse("{17451BAC-8E95-4C66-B83C-435B1073F1C7}"), Value = "Leave", Description = "" };
         public static MusterStatus SIQ = new MusterStatus { Id = Guid.Parse("{7F28A561-F961-498E-B9AD-32B1D78A820F}"), Value = "SIQ", Description = "" };
         public static MusterStatus UA = new MusterStatus { Id = Guid.Parse("{A8025EB5-BCCB-4045-9E59-F6F81A81FC31}"), Value = "UA", Description = "" };
-        public static MusterStatus Transferred = new MusterStatus { Id = Guid.Parse("{F81F05DF-EDC5-4925-94D2-AA6B8E3276F8}"), Value = "Transferred", Description = "" };
         public static MusterStatus TAD = new MusterStatus { Id = Guid.Parse("{3F4E9C19-C578-4C8D-A5A3-3A63F5BE4281}"), Value = "TAD", Description = "" };
-        public static MusterStatus SpecialLiberty = new MusterStatus { Id = Guid.Parse("{B6743325-8B30-4DBC-9F19-7B7745B8F2DA}"), Value = "Special Liberty", Description = "" };
-        public static MusterStatus NotScheduled = new MusterStatus { Id = Guid.Parse("{E8391B17-8554-43AC-B5E8-8D0555B6228B}"), Value = "Not Scheduled", Description = "" };
-        
+        public static MusterStatus AA = new MusterStatus { Id = Guid.Parse("{670e888f-14b5-42aa-ba4b-0b947bb41003}"), Value = "AA", Description = "" };
+        public static MusterStatus Deployed = new MusterStatus { Id = Guid.Parse("{012dbd01-e7c9-4d72-b4e0-cd8e1acc0858}"), Value = "Deployed", Description = "" };
+
         /// <summary>
         /// Ensures that all muster statuses are persisted in the database and that they look the same as they do here.
         /// </summary>
