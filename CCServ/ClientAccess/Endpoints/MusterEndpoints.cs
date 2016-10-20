@@ -180,6 +180,12 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
+            if (Config.Muster.IsMusterFinalized)
+            {
+                token.AddErrorMessage("The current muster is closed.  The muster will reopen at {0}.".FormatS(Config.Muster.RolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
             //Did we get what we needed?
             if (!token.Args.ContainsKey("mustersubmissions"))
             {
