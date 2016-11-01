@@ -732,12 +732,9 @@ namespace CCServ.Entities
 
                         person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
-                        if (!launchOptions.UseSecureMode)
-                        {
-                            person.Username = "dkatwoo";
-                            person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
-                            person.IsClaimed = true;
-                        }
+                        person.Username = "dkatwoo";
+                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
+                        person.IsClaimed = true;
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
@@ -805,12 +802,9 @@ namespace CCServ.Entities
 
                         person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
 
-                        if (!launchOptions.UseSecureMode)
-                        {
-                            person.Username = "anguslmm";
-                            person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
-                            person.IsClaimed = true;
-                        }
+                        person.Username = "anguslmm";
+                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
+                        person.IsClaimed = true;
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {

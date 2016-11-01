@@ -33,8 +33,8 @@ namespace CCServ.CLI.Options
         [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Leave blank if not using the --secure option.", DefaultValue = "")]
         public string CertificatePassword { get; set; }
 
-        [Option("secure", HelpText = "Instructs the service to run in secure mode.  In this mode, communication to clients (https) and the database (SSL certs) are secured.", DefaultValue = false)]
-        public bool UseSecureMode { get; set; }
+        [Option("securitymode", HelpText = "Indicates which security mode should be used by the service.", DefaultValue = SecurityModes.None)]
+        public SecurityModes SecurityMode { get; set; }
 
         [Option("dropfirst", HelpText = "Instructs the service to attempt to drop the targeted schema before running.", DefaultValue = false)]
         public bool DropFirst { get; set; }

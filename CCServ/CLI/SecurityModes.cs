@@ -9,7 +9,7 @@ namespace CCServ.CLI
     public enum SecurityModes
     {
         None,
-        HTTPOnly,
+        HTTPSOnly,
         DBOnly,
         Both
     }

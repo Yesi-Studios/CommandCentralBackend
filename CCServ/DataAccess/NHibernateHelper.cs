@@ -45,7 +45,7 @@ namespace CCServ.DataAccess
         private static void ConfigureNHibernate(CLI.Options.LaunchOptions options)
         {
             string connectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
-                .FormatS(options.Server, options.Database, options.Username, options.Password, options.CertificatePassword, options.UseSecureMode ? "Required" : "None");
+                .FormatS(options.Server, options.Database, options.Username, options.Password, options.CertificatePassword, options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.DBOnly ? "Required" : "None");
 
             if (options.PrintSQL)
             {
