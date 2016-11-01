@@ -781,5 +781,93 @@ namespace CCServ.ClientAccess.Endpoints
         }
 
         #endregion
+
+        #region Forgot Username
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Sends the user an email containing their username.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "ForgotUsername", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void EndpointMethod_ForgotUsername(MessageToken token)
+        {
+            if (!token.Args.ContainsKey("ssn"))
+            {
+                token.AddErrorMessage("You failed to send an 'ssn' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            string ssn = token.Args["ssn"] as string;
+
+            if (string.IsNullOrWhiteSpace(ssn))
+            {
+                token.AddErrorMessage("The ssn must not be null or empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now let's go load the user with this ssn.
+            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault();
+
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("That ssn was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    if (!person.IsClaimed)
+                    {
+                        token.AddErrorMessage("Please register your account first!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    //Now let's get the client's DOD email address.
+                    var emailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
+
+                    if (emailAddress == null)
+                    {
+                        throw new Exception("The user, '{0}', has a claimed account but no DOD email address.  Somehow.".FormatS(person.ToString()));
+                    }
+
+                    var model = new Email.Models.ForgotPasswordModel
+                    {
+                        FriendlyName = person.ToString(),
+                        Username = person.Username
+                    };
+
+                    //Ok, so we have an email we can use to contact the person!
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(new System.Net.Mail.MailAddress(emailAddress.Address, emailAddress.ToString()))
+                        .Subject("Forgot Username")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ForgotUsername_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
+                    person.AccountHistory.Add(new AccountHistoryEvent
+                    {
+                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.UsernameForgotten,
+                        EventTime = token.CallTime
+                    });
+
+                    session.Save(person);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        #endregion
     }
 }

@@ -181,6 +181,7 @@
     <Compile Include="Email\Models\FailedAccountLoginEmailModel.cs" />
     <Compile Include="Email\Models\FatalErrorEmailModel.cs" />
     <Compile Include="Email\Models\FinishPasswordResetEmailModel.cs" />
+    <Compile Include="Email\Models\ForgotPasswordModel.cs" />
     <Compile Include="Email\Models\MusterReportEmailModel.cs" />
     <Compile Include="Email\EmailInterface\CCEmailMessage.cs" />
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
@@ -296,6 +297,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\FinishPasswordReset_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\ForgotUsername_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

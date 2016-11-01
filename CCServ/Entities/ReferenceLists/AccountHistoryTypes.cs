@@ -34,6 +34,7 @@ namespace CCServ.Entities.ReferenceLists
         public static AccountHistoryType PasswordResetInitiated = new AccountHistoryType { Id = Guid.Parse("{214B8471-5087-4C64-A91C-2FCC0232CE9F}"), Value = "Password Reset Initiated", Description = "The beginning of the password reset process, during which the user receives an email with instructions for password reset." };
         public static AccountHistoryType PasswordResetCompleted = new AccountHistoryType { Id = Guid.Parse("{609D71A8-5FB7-44A7-B5E8-242C3BE20079}"), Value = "Password Reset Completed", Description = "The end of the password reset process." };
         public static AccountHistoryType PasswordChanged = new AccountHistoryType { Id = Guid.Parse("{BA03299F-CA2E-40B2-BBA1-6BC377E4D75C}"), Value = "Password Changed", Description = "The account password was changed." };
+        public static AccountHistoryType UsernameForgotten = new AccountHistoryType { Id = Guid.Parse("{80123747-55E3-40B2-A834-E31CBC2DEA72}"), Value = "Username Forgotten", Description = "The client indicated that he or she forgot the account's username, and it was emailed to the user." };
 
         /// <summary>
         /// Ensures that all account history types are persisted in the database and that they look the same as they do here.
