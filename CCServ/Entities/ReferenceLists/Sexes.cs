@@ -27,7 +27,13 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         public static ConcurrentBag<Sex> AllSexes;
 
+        /// <summary>
+        /// The male
+        /// </summary>
         public static Sex Male = new Sex { Id = Guid.Parse("{649A70D4-CFE1-446D-B028-2E223CB60C11}"), Value = "Male", Description = "" };
+        /// <summary>
+        /// The female
+        /// </summary>
         public static Sex Female = new Sex { Id = Guid.Parse("{8EF19709-1402-4401-B0E2-03F978E11251}"), Value = "Female", Description = "" };
 
         /// <summary>

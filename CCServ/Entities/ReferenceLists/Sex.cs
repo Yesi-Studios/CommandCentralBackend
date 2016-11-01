@@ -9,6 +9,9 @@ using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
+    /// <summary>
+    /// Indicates the sex of a given person.
+    /// </summary>
     public class Sex : ReferenceListItemBase
     {
         /// <summary>
