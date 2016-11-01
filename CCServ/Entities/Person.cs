@@ -1156,22 +1156,46 @@ namespace CCServ.Entities
                     //First cast the value given to a JSON array.
                     var value = ((Dictionary<string, DateTime>)token.SearchParameter.Value);
 
-                    var range = new
-                    {
-                        From = value.First(x => x.Key.SafeEquals("from")).Value,
-                        To = value.First(x => x.Key.SafeEquals("to")).Value
-                    };
+                    DateTime? from = null;
+                    DateTime? to = null;
 
-                    //Do the validation.
-                    if (range.From >= range.To)
+                    if (value.ContainsKey("From"))
                     {
-                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(range.From, range.To));
+                        from = value["From"];
+                    }
+
+                    if (value.ContainsKey("To"))
+                    {
+                        to = value["To"];
+                    }
+
+                    if (to == null && from == null)
+                    {
+                        token.Errors.Add("Both dates in your range may not be empty.");
                         return null;
                     }
 
-                    return Restrictions.And(
-                            Restrictions.Ge(token.SearchParameter.Key.Name, range.From),
-                            Restrictions.Le(token.SearchParameter.Key.Name, range.To));
+                    //Do the validation.
+                    if ((from.HasValue && to.HasValue) && from >= to)
+                    {
+                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to));
+                        return null;
+                    }
+
+                    if (from == null)
+                    {
+                        return Restrictions.Le(token.SearchParameter.Key.Name, to);
+                    }
+                    else if (to == null)
+                    {
+                        return Restrictions.Ge(token.SearchParameter.Key.Name, from);
+                    }
+                    else
+                    {
+                        return Restrictions.And(
+                                Restrictions.Ge(token.SearchParameter.Key.Name, from),
+                                Restrictions.Le(token.SearchParameter.Key.Name, to));
+                    }
 
                 });
 
