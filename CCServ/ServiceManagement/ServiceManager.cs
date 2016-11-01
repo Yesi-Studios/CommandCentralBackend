@@ -86,7 +86,8 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static void StopService()
         {
-            _host.Close();
+            if (_host != null && _host.State != CommunicationState.Closed)
+                _host.Close();
         }
 
         /// <summary>
