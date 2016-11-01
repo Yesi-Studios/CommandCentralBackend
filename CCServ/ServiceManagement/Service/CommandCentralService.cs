@@ -179,7 +179,7 @@ namespace CCServ.ServiceManagement.Service
                             Log.Debug(token.ToString());
                         }
 
-                        //Invoke the data method to which the endpoint points. Point
+                        //Invoke the data method of the endpoint.
                         description.EndpointMethod(token);
                         token.State = MessageStates.Invoked;
 
@@ -208,15 +208,17 @@ namespace CCServ.ServiceManagement.Service
                     }
                     catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                     {
-                        //If an issue occurred very first thing we do is roll anything back we may have done.  It shouldn't actually be anything unless we failed right at the end but whatever.
-                        transaction.Rollback();
-
                         //Set the message state
                         token.State = MessageStates.FatalError;
 
                         //Add the error message
                         token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+
+                        //Save the token
+                        session.Save(token);
+
+                        transaction.Commit();
 
                         //Log what happened.
                         Log.Exception(e, "A fatal, unknown error occurred in the backend service.", token);

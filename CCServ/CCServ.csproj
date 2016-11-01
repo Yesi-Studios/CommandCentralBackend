@@ -158,6 +158,7 @@
     <Compile Include="CLI\Options\MainOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
+    <Compile Include="CLI\SecurityModes.cs" />
     <Compile Include="Config\ContactDetails.cs" />
     <Compile Include="Config\Email.cs" />
     <Compile Include="Config\Muster.cs" />
