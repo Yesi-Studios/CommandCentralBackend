@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 using CCServ.ClientAccess;
 using CCServ.Entities;
 using AtwoodUtils;
+using CCServ.Authorization;
 
-namespace CCServ.Authorization
+namespace CCServ.ClientAccess.Endpoints
 {
     static class AuthorizationEndpoints
     {
@@ -21,7 +22,7 @@ namespace CCServ.Authorization
         [EndpointMethod(EndpointName = "LoadPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_GetPermissionGroups(MessageToken token)
         {
-            token.SetResult(Groups.PermissionGroup.AllPermissionGroups.ToList());
+            token.SetResult(Authorization.Groups.PermissionGroup.AllPermissionGroups.ToList());
         }
 
         /// <summary>
@@ -64,8 +65,8 @@ namespace CCServ.Authorization
                 }
 
                 //Get the person's permissions and then add the defaults.
-                var groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName))
-                    .Concat(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault));
+                var groups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName))
+                    .Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault));
 
                 //The editable permissions are all those they can edit.
                 var editableGroups = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
@@ -76,7 +77,7 @@ namespace CCServ.Authorization
                     CurrentPermissionGroups = groups.Select(x => x.GroupName),
                     EditablePermissionGroups = editableGroups,
                     FriendlyName = person.ToString(),
-                    AllPermissionGroups = Groups.PermissionGroup.AllPermissionGroups.Select(x => x.GroupName).ToList()
+                    AllPermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Select(x => x.GroupName).ToList()
                 });
             }
         }
@@ -148,7 +149,7 @@ namespace CCServ.Authorization
                     }
 
                     //Get the current permission groups the person is a part of.
-                    var currentGroups = person.PermissionGroupNames.Concat(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
+                    var currentGroups = person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
 
                     //Now get the resolved permissions of our client.
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
@@ -178,7 +179,7 @@ namespace CCServ.Authorization
                     }
 
                     //Now make sure we don't try to save the default permissions.
-                    person.PermissionGroupNames = Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
+                    person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
 
                     session.Update(person);
 

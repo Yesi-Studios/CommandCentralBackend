@@ -7,7 +7,7 @@ using CCServ.ClientAccess;
 using AtwoodUtils;
 using System.Globalization;
 
-namespace CCServ.Tests
+namespace CCServ.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains some test endpoints.

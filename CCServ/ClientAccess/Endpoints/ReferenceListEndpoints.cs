@@ -7,8 +7,9 @@ using CCServ.ClientAccess;
 using CCServ.Authorization;
 using AtwoodUtils;
 using NHibernate.Metadata;
+using CCServ.Entities.ReferenceLists;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CCServ.ClientAccess.Endpoints
 {
     static class ReferenceListEndpoints
     {
