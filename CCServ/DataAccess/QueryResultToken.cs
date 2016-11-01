@@ -12,7 +12,7 @@ namespace CCServ.DataAccess
     {
         public QueryOver<T, T> Query { get; set; }
 
-        public Dictionary<MemberInfo, IEnumerable<object>> SearchParameters { get; set; }
+        public Dictionary<MemberInfo, object> SearchParameter { get; set; }
 
         public List<string> Errors { get; set; }
 
@@ -27,7 +27,7 @@ namespace CCServ.DataAccess
         public QueryResultToken()
         {
             Errors = new List<string>();
-            SearchParameters = new Dictionary<MemberInfo, IEnumerable<object>>();
+            SearchParameter = new Dictionary<MemberInfo, object>();
         }
     }
 }

@@ -56,15 +56,15 @@ namespace CCServ.DataAccess
             return group.SearchType;
         }
 
-        public QueryResultToken<T> CreateSimpleSearchQuery(IEnumerable<object> terms)
+        public QueryResultToken<T> CreateSimpleSearchQuery(object rawTerm)
         {
-            QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), SearchParameters = GetMembersThatAreUsedIn(QueryTypes.Simple).ToDictionary(x => x, x => terms) };
+            QueryResultToken<T> result = new QueryResultToken<T> { Query = QueryOver.Of<T>(), SearchParameter = GetMembersThatAreUsedIn(QueryTypes.Simple).ToDictionary(x => x, x => rawTerm) };
 
-            foreach (var term in terms)
+            foreach (var term in (rawTerm as string).Split(null))
             {
                 var disjunction = Restrictions.Disjunction();
 
-                foreach (var member in result.SearchParameters.Keys)
+                foreach (var member in result.SearchParameter.Keys)
                 {
                     var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Properties.Any(y => y.Equals(member)));
 
@@ -95,9 +95,9 @@ namespace CCServ.DataAccess
             return result;
         }
 
-        public QueryResultToken<T> CreateAdvancedQueryFor(Dictionary<MemberInfo, IEnumerable<object>> filters, IQueryOver<T, T> query = null)
+        public QueryResultToken<T> CreateAdvancedQueryFor(Dictionary<MemberInfo, object> filters, IQueryOver<T, T> query = null)
         {
-            QueryResultToken<T> result = new QueryResultToken<T> { Query = query == null ? QueryOver.Of<T>() : (QueryOver<T, T>)query, SearchParameters = filters };
+            QueryResultToken<T> result = new QueryResultToken<T> { Query = query == null ? QueryOver.Of<T>() : (QueryOver<T, T>)query, SearchParameter = filters };
 
             foreach (var filter in filters)
             {
@@ -111,9 +111,37 @@ namespace CCServ.DataAccess
                 {
                     var disjunction = Restrictions.Disjunction();
 
-                    foreach (var term in filter.Value)
+                    List<object> values;
+
+                    switch (propertyGroup.SearchType)
                     {
-                        var token = new QueryToken<T> { Query = result.Query, SearchParameter = new KeyValuePair<MemberInfo, object>(filter.Key, term) };
+                        case SearchDataTypes.String:
+                            {
+                                var rawValue = (filter.Value as string);
+                                if (string.IsNullOrWhiteSpace(rawValue))
+                                {
+                                    result.Errors.Add("Your search value must not be blank.");
+                                }
+
+                                values = rawValue.Split(null).Cast<object>().ToList();
+
+                                break;
+                            }
+                        case SearchDataTypes.DateTime:
+                            {
+                                values = filter.Value.CastJToken<List<Dictionary<string, DateTime>>>().Cast<object>().ToList();
+
+                                break;
+                            }
+                        default:
+                            {
+                                throw new NotImplementedException("An unrecognized query type was used in the switch in the CreateAdvancedQueryFor method.");
+                            }
+                    }
+
+                    foreach (var value in values)
+                    {
+                        var token = new QueryToken<T> { Query = result.Query, SearchParameter = new KeyValuePair<MemberInfo, object>(filter.Key, value) };
 
                         var criteria = propertyGroup.CriteriaProvider(token);
 

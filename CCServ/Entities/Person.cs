@@ -1160,41 +1160,24 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                 {
                     //First cast the value given to a JSON array.
-                    var values = (Newtonsoft.Json.Linq.JArray)token.SearchParameter.Value.CastJToken();
+                    var value = ((Dictionary<string, DateTime>)token.SearchParameter.Value);
 
-                    //Now we're going to go across each element given to us, get the to/from and then validate those properties.
-                    var dates = values.Select(x =>
+                    var range = new
                     {
-                        var pair = new
-                        {
-                            From = x.Value<DateTime>("from"),
-                            To = x.Value<DateTime>("to")
-                        };
+                        From = value.First(x => x.Key.SafeEquals("from")).Value,
+                        To = value.First(x => x.Key.SafeEquals("to")).Value
+                    };
 
-                        //Do the validation.
-                        if (pair.From >= pair.To)
-                        {
-                            token.Errors.Add("The dates, From:'' and To:'', were invalid.  From may not be after To.".FormatS(pair.From, pair.To));
-                        }
-
-                        return pair;
-                    });
-
-                    if (token.HasErrors)
+                    //Do the validation.
+                    if (range.From >= range.To)
+                    {
+                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(range.From, range.To));
                         return null;
-
-                    //Ok so we have the dates we need, now let's see about making them into a query.
-                    var disjunction = Restrictions.Disjunction();
-
-                    foreach (var pair in dates)
-                    {
-                        disjunction.Add(Restrictions.And(
-                            Restrictions.Ge(token.SearchParameter.Key.Name, pair.From),
-                            Restrictions.Le(token.SearchParameter.Key.Name, pair.To)
-                        ));
                     }
 
-                    return disjunction;
+                    return Restrictions.And(
+                            Restrictions.Ge(token.SearchParameter.Key.Name, range.From),
+                            Restrictions.Le(token.SearchParameter.Key.Name, range.To));
 
                 });
 

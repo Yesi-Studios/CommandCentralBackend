@@ -412,15 +412,12 @@ namespace CCServ.ClientAccess.Endpoints
                 showHidden = (bool)token.Args["showhidden"];
             }
 
-            //And now we're going to split the search term by any white space into a list of search terms.
-            var searchTerms = searchTerm.Split((char[])null);
-
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 var queryProvider = new Person.PersonQueryProvider();
 
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
-                var resultToken = queryProvider.CreateSimpleSearchQuery(searchTerms);
+                var resultToken = queryProvider.CreateSimpleSearchQuery(searchTerm);
 
                 if (resultToken.HasErrors)
                 {
@@ -506,7 +503,7 @@ namespace CCServ.ClientAccess.Endpoints
                 token.AddErrorMessage("You didn't send a 'filters' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
-            Dictionary<string, string> filters = token.Args["filters"].CastJToken<Dictionary<string, string>>();
+            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
             //Ok, let's figure out what fields the client is allowed to search.
             //This is determined, in part by the existence of the searchlevel parameter.
@@ -696,8 +693,8 @@ namespace CCServ.ClientAccess.Endpoints
                 }
 
                 var convertedFilters = filters.ToDictionary(
-                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key), 
-                    x => x.Value.Split((char[])null).Cast<object>());
+                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key),
+                    x => x.Value);
 
                 var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQueryFor(convertedFilters, queryOver);
 
