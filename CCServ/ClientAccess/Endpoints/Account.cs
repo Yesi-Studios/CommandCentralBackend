@@ -610,9 +610,6 @@ namespace CCServ.ClientAccess.Endpoints
                     throw;
                 }
             }
-
-
-
         }
 
         /// <summary>
