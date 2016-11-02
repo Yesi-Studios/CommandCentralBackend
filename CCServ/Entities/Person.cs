@@ -1176,13 +1176,19 @@ namespace CCServ.Entities
                     }
 
                     //Do the validation.
-                    if ((from.HasValue && to.HasValue) && from >= to)
+                    if ((from.HasValue && to.HasValue) && from > to)
                     {
                         token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to));
                         return null;
                     }
 
-                    if (from == null)
+                    if (from == to)
+                    {
+                        return Restrictions.And(
+                                Restrictions.Ge(token.SearchParameter.Key.Name, from.Value.Date),
+                                Restrictions.Le(token.SearchParameter.Key.Name, from.Value.Date.AddHours(24)));
+                    }
+                    else if (from == null)
                     {
                         return Restrictions.Le(token.SearchParameter.Key.Name, to);
                     }
