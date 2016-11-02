@@ -1154,7 +1154,7 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                 {
                     //First cast the value given to a JSON array.
-                    var value = ((Dictionary<string, DateTime>)token.SearchParameter.Value);
+                    var value = ((Dictionary<string, DateTime?>)token.SearchParameter.Value);
 
                     DateTime? from = null;
                     DateTime? to = null;

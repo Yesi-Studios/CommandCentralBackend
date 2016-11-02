@@ -129,7 +129,7 @@ namespace CCServ.DataAccess
                             }
                         case SearchDataTypes.DateTime:
                             {
-                                values = filter.Value.CastJToken<List<Dictionary<string, DateTime>>>().Cast<object>().ToList();
+                                values = filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>().ToList();
 
                                 break;
                             }
