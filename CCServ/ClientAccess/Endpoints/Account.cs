@@ -564,7 +564,13 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
-                    //Let's also make sure the client has a dod email address.
+                    //Ok, let's wipe out any old password reset attempts the person might have.
+                    foreach (var pendingReset in session.QueryOver<PendingPasswordReset>().Where(x => x.Person == person).List())
+                    {
+                        session.Delete(pendingReset);
+                    }
+
+                    session.Flush();
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
@@ -593,14 +599,14 @@ namespace CCServ.ClientAccess.Endpoints
                         PasswordResetLink = continueLink
                     };
 
+                    var dodEmailAddress = person.EmailAddresses.First(x => x.IsDodEmailAddress);
+
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                        .To(new System.Net.Mail.MailAddress(dodEmailAddress.Address, person.ToString()))
                         .Subject("Password Reset")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-
-                    token.SetResult("Success");
 
                     transaction.Commit();
                 }
@@ -610,9 +616,6 @@ namespace CCServ.ClientAccess.Endpoints
                     throw;
                 }
             }
-
-
-
         }
 
         /// <summary>
