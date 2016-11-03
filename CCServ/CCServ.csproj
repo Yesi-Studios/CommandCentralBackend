@@ -111,6 +111,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChangeEventSystem\ChangeEventArgsBase.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEventArgs\NameChangedEventArgs.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEventBase.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEventManager.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
     <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
