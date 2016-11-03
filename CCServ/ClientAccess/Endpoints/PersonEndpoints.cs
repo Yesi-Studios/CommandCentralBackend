@@ -106,6 +106,15 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
+                    //Let's make sure no one with that SSN exists...
+                    var result = session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).SingleOrDefault();
+
+                    if (result != null)
+                    {
+                        token.AddErrorMessage("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
                     session.Save(newPerson);
 
