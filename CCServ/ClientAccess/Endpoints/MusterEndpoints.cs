@@ -388,6 +388,7 @@ namespace CCServ.ClientAccess.Endpoints
                 //And now build the final DTO that's going out the door.
                 token.SetResult(new
                 {
+                    MusterFinalized = Config.Muster.IsMusterFinalized,
                     CurrentDate = MusterRecord.GetMusterDate(token.CallTime),
                     Musters = results,
                     RolloverTime = Config.Muster.RolloverTime.ToString(),
