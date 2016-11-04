@@ -69,7 +69,7 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public static CCEmailMessage From(string address, string displayName = "")
         {
-            return new CCEmailMessage { Message = new MailMessage { From = new MailAddress(address) } };
+            return new CCEmailMessage { Message = new MailMessage { From = new MailAddress(address, displayName) } };
         }
 
         /// <summary>
