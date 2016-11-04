@@ -45,7 +45,7 @@ namespace CCServ.Email.EmailInterface
         {
             return CCEmailMessage
                     .From(Config.Email.DeveloperDistroAddress)
-                    .BCC(Config.Email.AtwoodAddress)  //TODO remove me when I don't need this anymore.
+                    .BCC(Config.Email.DeveloperDistroAddress)
                     .ReplyTo(Config.Email.DeveloperDistroAddress)
                     .HighProperty()
                     .UsingSMTPHosts(Config.Email.DODSMTPAddress, "localhost");
@@ -69,7 +69,7 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public static CCEmailMessage From(string address, string displayName = "")
         {
-            return new CCEmailMessage { Message = new MailMessage { From = new MailAddress(address) } };
+            return new CCEmailMessage { Message = new MailMessage { From = new MailAddress(address, displayName) } };
         }
 
         /// <summary>

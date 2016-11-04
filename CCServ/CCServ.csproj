@@ -147,6 +147,7 @@
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\Account.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
+    <Compile Include="ClientAccess\Endpoints\Feedback.cs" />
     <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\NewsItemEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
@@ -185,6 +186,7 @@
     <Compile Include="Email\Models\CompletedAccountRegistrationEmailModel.cs" />
     <Compile Include="Email\Models\CriticalMessageEmailModel.cs" />
     <Compile Include="Email\Models\FailedAccountLoginEmailModel.cs" />
+    <Compile Include="Email\Models\FeedbackEmailModel.cs" />
     <Compile Include="Email\Models\FatalErrorEmailModel.cs" />
     <Compile Include="Email\Models\FinishPasswordResetEmailModel.cs" />
     <Compile Include="Email\Models\ForgotPasswordModel.cs" />
@@ -311,7 +313,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\Feedback_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
