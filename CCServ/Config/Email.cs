@@ -24,7 +24,7 @@ namespace CCServ.Config
             }
         }
 
-        public static System.Net.Mail.MailAddress AtwoodAddress
+        public static System.Net.Mail.MailAddress AtwoodGmailAddress
         {
             get
             {
@@ -32,7 +32,7 @@ namespace CCServ.Config
             }
         }
 
-        public static System.Net.Mail.MailAddress McLeanAddress
+        public static System.Net.Mail.MailAddress McLeanGmailAddress
         {
             get
             {
