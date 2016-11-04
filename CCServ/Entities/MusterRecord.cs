@@ -258,7 +258,14 @@ namespace CCServ.Entities
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(Config.Email.DeveloperDistroAddress)
+                        .To(Config.Email.DeveloperDistroAddress,
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-muster@mail.mil", "Muster Distro"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-n11@mail.mil", "N11"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-chiefs@mail.mil", "Department Chiefs"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-heads@mail.mil", "Department Heads"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-co@mail.mil", "CO"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
                         .Subject("Muster Report")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
