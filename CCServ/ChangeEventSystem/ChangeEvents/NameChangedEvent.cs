@@ -11,7 +11,12 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
 
         public override void RaiseEvent(ChangeEventArgsBase eventArgs)
         {
-            throw new NotImplementedException();
+            var args = eventArgs as ChangeEventArgs.NameChangedEventArgs;
+
+            if (args == null)
+                throw new ArgumentException("The event args were either of the wrong type or null.");
+
+            
         }
 
         public NameChangedEvent()

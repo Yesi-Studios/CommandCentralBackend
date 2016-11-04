@@ -8,5 +8,6 @@ namespace CCServ.ChangeEventSystem.ChangeEventArgs
 {
     public class NameChangedEventArgs : ChangeEventArgsBase
     {
+
     }
 }
