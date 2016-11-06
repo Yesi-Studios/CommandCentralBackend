@@ -56,6 +56,7 @@ namespace CCServ.Logging.Loggers
             Email.EmailInterface.CCEmailMessage
                 .CreateDefault()
                 .To(Config.Email.DeveloperDistroAddress)
+                .CC(Config.Email.AtwoodGmailAddress, Config.Email.McLeanGmailAddress)
                 .Subject("Command Central Fatal Error")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
