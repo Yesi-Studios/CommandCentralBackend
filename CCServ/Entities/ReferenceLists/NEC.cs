@@ -140,19 +140,23 @@ namespace CCServ.Entities.ReferenceLists
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
         {
+            List<ReferenceListItemBase> value;
+
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<NEC>()
+                    value = session.QueryOver<NEC>()
                         .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
                         .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<NEC>(id) }.ToList();
+                    value = new[] { (ReferenceListItemBase)session.Get<NEC>(id) }.ToList();
                 }
             }
+
+            return value;
         }
 
         /// <summary>
@@ -179,7 +183,7 @@ namespace CCServ.Entities.ReferenceLists
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
                 
-                References(x => x.NECType);
+                References(x => x.NECType).Not.LazyLoad();
 
                 Cache.ReadWrite();
             }

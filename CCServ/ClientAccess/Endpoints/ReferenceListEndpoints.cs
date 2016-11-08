@@ -174,6 +174,8 @@ namespace CCServ.ClientAccess.Endpoints
                 if (token.HasError)
                     return;
 
+                lists.ForEach(x => NHibernate.NHibernateUtil.Initialize(x));
+
                 results.Add(metadata.Key, lists);
             }
 
