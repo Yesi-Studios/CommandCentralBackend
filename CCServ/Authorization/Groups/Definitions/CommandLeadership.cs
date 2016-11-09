@@ -14,7 +14,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public CommandLeadership()
         {
-            CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
+            CanAccessSubModules(SubModules.AdminTools, SubModules.CreatePerson);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership),
                 typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
