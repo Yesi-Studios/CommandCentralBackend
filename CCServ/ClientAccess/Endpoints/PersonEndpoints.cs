@@ -906,19 +906,7 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
-                    //Here we determine any events we need to raise.  Prepare them here so that we can raise them later.
-                    //Maybe make these changes when the variances have been figured out?
-                    List<Action> changeEvents = new List<Action>();
-
-                    if (personFromClient.ToString() != personFromDB.ToString())
-                    {
-                        changeEvents.Add(() => new ChangeEventSystem.ChangeEvents.NameChangedEvent().RaiseEvent(new Email.Models.NameChangedEventEmailModel
-                        {
-                            NewName = personFromClient.ToString(),
-                            OldName = personFromDB.ToString(),
-                            PersonId = personFromDB.Id.ToString()
-                        }, personFromDB));
-                    }
+                    
 
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
@@ -953,6 +941,20 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                         return;
+                    }
+
+                    //Here we determine any events we need to raise.  All variances are assumed to be correct.
+                    List<Action> changeEvents = new List<Action>();
+
+                    if (variances.Any(x => PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName, y => y.LastName, y => y.MiddleName)
+                        .Select(y => y.Name).Any(y => x.PropertyName.SafeEquals(y))))
+                    {
+                        changeEvents.Add(() => new ChangeEventSystem.ChangeEvents.NameChangedEvent().RaiseEvent(new Email.Models.NameChangedEventEmailModel
+                        {
+                            NewName = personFromClient.ToString(),
+                            OldName = personFromDB.ToString(),
+                            PersonId = personFromDB.Id.ToString()
+                        }, personFromDB));
                     }
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
