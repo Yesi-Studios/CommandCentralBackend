@@ -111,9 +111,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChangeEventSystem\ChangeEventArgsBase.cs" />
-    <Compile Include="ChangeEventSystem\ChangeEventArgs\NameChangedEventArgs.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventBase.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
     <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
@@ -180,6 +179,7 @@
     <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
+    <Compile Include="Email\Models\AssignmentChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
     <Compile Include="Email\Models\BeginRegistrationErrorEmailModel.cs" />
     <Compile Include="Email\Models\CompletedAccountRegistrationEmailModel.cs" />
@@ -192,6 +192,7 @@
     <Compile Include="Email\Models\MusterReportEmailModel.cs" />
     <Compile Include="Email\EmailInterface\CCEmailMessage.cs" />
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
+    <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\EmailAddress.cs" />

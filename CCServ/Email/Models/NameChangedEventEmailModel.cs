@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ChangeEventSystem.ChangeEventArgs
+namespace CCServ.Email.Models
 {
     /// <summary>
-    /// The arguments that are used during a change name event.
+    /// The email model to be used for a name changed event.
     /// </summary>
-    public class NameChangedEventArgs : ChangeEventArgsBase
+    public class NameChangedEventEmailModel
     {
         /// <summary>
         /// The name of the person prior to the event.

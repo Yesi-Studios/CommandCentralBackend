@@ -19,7 +19,7 @@ namespace CCServ.ChangeEventSystem
 
         public Dictionary<string, Dictionary<string, List<string>>> RequiredFields { protected set; get; }
 
-        public abstract void RaiseEvent(ChangeEventArgsBase eventArgs);
+        public abstract void RaiseEvent(object state);
 
         #endregion
 
