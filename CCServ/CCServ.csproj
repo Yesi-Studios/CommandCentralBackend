@@ -112,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChangeEventSystem\ChangeEventBase.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
     <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
@@ -178,6 +179,7 @@
     <Compile Include="DataAccess\QueryTypesEnum.cs" />
     <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
+    <Compile Include="DTOs\BasicPersonDTO.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
     <Compile Include="Email\Models\AssignmentChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
@@ -317,6 +319,9 @@
     <EmbeddedResource Include="Email\Templates\Feedback_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Email\Templates\NameChangedEvent_HTML.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
