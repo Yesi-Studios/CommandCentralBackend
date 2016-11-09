@@ -217,6 +217,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual MusterRecord CurrentMusterStatus { get; set; }
 
+        /// <summary>
+        /// The person's watch qualification.
+        /// </summary>
+        public virtual IList<WatchQualification> WatchQualifications { get; set; }
+
         #endregion
 
         #region Contacts Properties
@@ -902,6 +907,7 @@ namespace CCServ.Entities
                 HasMany(x => x.EmailAddresses).Cascade.All();
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
+                HasMany(x => x.WatchQualifications).Cascade.All();
 
                 HasMany(x => x.PermissionGroupNames)
                     .KeyColumn("PersonId")
@@ -1303,6 +1309,19 @@ namespace CCServ.Entities
                     token.Query = token.Query.JoinAlias(x => x.SecondaryNECs, () => necAlias);
 
                     return Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
+                });
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                    x => x.WatchQualifications))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    WatchQualification qualAlias = null;
+
+                    token.Query = token.Query.JoinAlias(x => x.WatchQualifications, () => qualAlias);
+
+                    return Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(

@@ -79,7 +79,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks,
                     x => x.EAOS,
-                    x => x.PRD))
+                    x => x.PRD,
+                    x => x.WatchQualifications))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");

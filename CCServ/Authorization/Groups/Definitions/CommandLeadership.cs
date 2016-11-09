@@ -80,7 +80,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PrimaryNEC,
                     x => x.SecondaryNECs,
                     x => x.EAOS,
-                    x => x.PRD))
+                    x => x.PRD,
+                    x => x.WatchQualifications))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
