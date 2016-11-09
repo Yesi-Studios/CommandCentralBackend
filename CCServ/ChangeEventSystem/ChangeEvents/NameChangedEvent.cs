@@ -6,9 +6,16 @@ using System.Threading.Tasks;
 
 namespace CCServ.ChangeEventSystem.ChangeEvents
 {
+    /// <summary>
+    /// The name changed event, meant to be raised if a person's name changes.
+    /// </summary>
     public class NameChangedEvent : ChangeEventBase
     {
 
+        /// <summary>
+        /// Raises the name changed event.
+        /// </summary>
+        /// <param name="eventArgs"></param>
         public override void RaiseEvent(ChangeEventArgsBase eventArgs)
         {
             var args = eventArgs as ChangeEventArgs.NameChangedEventArgs;
@@ -19,6 +26,9 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
             
         }
 
+        /// <summary>
+        /// Set up the name changed event.
+        /// </summary>
         public NameChangedEvent()
         {
             Name = "Name Changed Event";
