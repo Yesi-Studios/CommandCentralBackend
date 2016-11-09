@@ -104,6 +104,8 @@ namespace CCServ.Entities
                     .WithMessage("Your phone number must only be 10 digits.");
 
                 RuleFor(x => x.PhoneType).NotEmpty()
+                    .WithMessage("The phone number type must not be left blank.")
+                    .Must(x => x.Id != Guid.Empty)
                     .WithMessage("The phone number type must not be left blank.");
             }
         }
