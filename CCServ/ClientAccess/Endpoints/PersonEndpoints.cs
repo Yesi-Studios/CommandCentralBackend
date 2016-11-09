@@ -907,6 +907,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Here we determine any events we need to raise.  Prepare them here so that we can raise them later.
+                    //Maybe make these changes when the variances have been figured out?
                     List<Action> changeEvents = new List<Action>();
 
                     if (personFromClient.ToString() != personFromDB.ToString())
