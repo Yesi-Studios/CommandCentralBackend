@@ -35,7 +35,7 @@ namespace CCServ.Entities.ReferenceLists
         /// Ensures that all watch qualifications are persisted in the database and that they look the same as they do here.
         /// </summary>
         /// <param name="options"></param>
-        [ServiceManagement.StartMethod(Priority = 11)]
+        [ServiceManagement.StartMethod(Priority = 16)]
         private static void EnsureWatchQualificationPersistence(CLI.Options.LaunchOptions options)
         {
             Logging.Log.Info("Checking watch qualifications...");

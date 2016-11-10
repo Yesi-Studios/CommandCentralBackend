@@ -907,7 +907,8 @@ namespace CCServ.Entities
                 HasMany(x => x.EmailAddresses).Cascade.All();
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
-                HasMany(x => x.WatchQualifications).Cascade.All();
+
+                HasManyToMany(x => x.WatchQualifications).Cascade.All();
 
                 HasMany(x => x.PermissionGroupNames)
                     .KeyColumn("PersonId")
