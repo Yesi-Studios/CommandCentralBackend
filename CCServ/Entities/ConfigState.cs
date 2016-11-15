@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.CustomDBTypes;
+using CCServ.CustomTypes;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
+using System.IO;
+using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CCServ.Entities
 {
@@ -14,127 +18,152 @@ namespace CCServ.Entities
     /// </summary>
     public class ConfigState
     {
-        /// <summary>
-        /// This config state's Id.
-        /// </summary>
-        public virtual Guid Id { get; set; }
-
-        /// <summary>
-        /// The name of the config state.
-        /// </summary>
-        public virtual string Name { get; set; }
+        #region Properties
 
         /// <summary>
         /// The address at which the DOD's SMTP server can be found.  This is the address through which we should send emails.
         /// </summary>
-        public virtual string DODSMTPAddress { get; set; }
+        public string DODSMTPAddress { get; set; }
 
         /// <summary>
         /// The email address of the developer distro from which all emails should be sent and CCed.
         /// </summary>
-        public virtual string DeveloperDistroAddress { get; set; }
+        public string DeveloperDistroAddress { get; set; }
 
         /// <summary>
         /// The display name for the developer distro.
         /// </summary>
-        public virtual string DeveloperDistroDisplayName { get; set; }
+        public string DeveloperDistroDisplayName { get; set; }
         
         /// <summary>
         /// Atwood's email address.
         /// </summary>
-        public virtual string AtwoodGmailAddress { get; set; }
+        public string AtwoodGmailAddress { get; set; }
         
         /// <summary>
         /// McLean's email address.
         /// </summary>
-        public virtual string McLeanGmailAddress { get; set; }
+        public string McLeanGmailAddress { get; set; }
 
         /// <summary>
         /// The email host of a DOD email address.
         /// </summary>
-        public virtual string DODEmailHost { get; set; }
+        public string DODEmailHost { get; set; }
 
         /// <summary>
         /// The time at which a muster should rollover.
         /// </summary>
-        public virtual Time MusterRolloverTime { get; set; }
+        public Time MusterRolloverTime { get; set; }
 
         /// <summary>
         /// The time by which the muster is expected to have been completed.
         /// </summary>
-        public virtual Time MusterDueTime { get; set; }
+        public Time MusterDueTime { get; set; }
 
         /// <summary>
         /// Indicates if the muster is in a finalized state.
         /// </summary>
-        public virtual bool IsMusterFinalized { get; set; }
+        public bool IsMusterFinalized { get; set; }
 
         /// <summary>
         /// The max age of a profile lock.
         /// </summary>
-        public virtual TimeSpan ProfileLockMaxAge { get; set; }
+        public TimeSpan ProfileLockMaxAge { get; set; }
 
         /// <summary>
         /// The current version of the application.
         /// </summary>
-        public virtual string Version { get; set; }
+        public string Version { get; set; }
+
+        #endregion
+
+        #region Helper Methods
 
         /// <summary>
-        /// Maps a config state to the database.
+        /// Returns a default config object.
         /// </summary>
-        public class CurrentConfigStateMapping : ClassMap<ConfigState>
+        /// <returns></returns>
+        public static ConfigState GetDefault()
         {
-            /// <summary>
-            /// Maps a config state to the database.
-            /// </summary>
-            public CurrentConfigStateMapping()
+            return new Entities.ConfigState
             {
-                Id(x => x.Id).GeneratedBy.Guid();
-
-                Map(x => x.Name).Unique();
-                Map(x => x.DODSMTPAddress);
-                Map(x => x.DeveloperDistroAddress);
-                Map(x => x.DeveloperDistroDisplayName);
-                Map(x => x.AtwoodGmailAddress);
-                Map(x => x.McLeanGmailAddress);
-                Map(x => x.DODEmailHost);
-                Map(x => x.MusterRolloverTime).CustomType<CustomDBTypes.DBTime>();
-                Map(x => x.MusterDueTime).CustomType<CustomDBTypes.DBTime>();
-                Map(x => x.IsMusterFinalized);
-                Map(x => x.ProfileLockMaxAge);
-                Map(x => x.Version);
-            }
+                AtwoodGmailAddress = "sundevilgoalie13@gmail.com",
+                DeveloperDistroAddress = "usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil",
+                DeveloperDistroDisplayName = "Command Central Communications",
+                DODEmailHost = "mail.mil",
+                DODSMTPAddress = "smtp.gordon.army.mil",
+                IsMusterFinalized = false,
+                McLeanGmailAddress = "anguslmm@gmail.com",
+                MusterDueTime = new Time(13, 30, 00),
+                MusterRolloverTime = new Time(20, 0, 0),
+                ProfileLockMaxAge = TimeSpan.FromMinutes(20),
+                Version = "1.0.0"
+            };
         }
+
+        #endregion
 
         #region Startup Method
 
         /// <summary>
-        /// Loads the config from the database.
+        /// Loads the config from the config file.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 98)]
+        [ServiceManagement.StartMethod(Priority = 100)]
         private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
+            //Alright, we're going to try to load the config.  If anything fails, or happens along the way, we'll replace the config file with a default one.
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), launchOptions.ConfigPath);
+
+            if (!File.Exists(path))
             {
+                var defaultConfig = ConfigState.GetDefault();
+
+                File.WriteAllText(path, JsonConvert.SerializeObject(defaultConfig,
+                    new JsonSerializerSettings
+                    {
+                        Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
+                        ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                        Formatting = Formatting.Indented,
+                        DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
+                        DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                    }));
+
+                ServiceManagement.ServiceManager.CurrentConfigState = defaultConfig;
+
+                "The config file didn't exist!  A new one was created at '{0}'!".FormatS(path).WriteLine();
+            }
+            else
+            {
+                //Ok so the file exists, let's get its text.
+                var rawText = File.ReadAllText(path);
+
+                //Now let's try to turn it into a config state object. 
                 try
                 {
-                    var configStates = session.QueryOver<ConfigState>().WhereRestrictionOn(x => x.Name).IsInsensitiveLike(launchOptions.ConfigName).List();
+                    var configState = JsonConvert.DeserializeObject<ConfigState>(rawText);
 
-                    if (configStates.Count != 1)
-                        throw new Exception("The desired config name, '{0}', resulted in multiple matches ({1}).  Please narrow the name to result in only one match."
-                            .FormatS(launchOptions.ConfigName, String.Join(", ", configStates.Select(x => x.Name))));
+                    ServiceManagement.ServiceManager.CurrentConfigState = configState;
 
-                    ServiceManagement.ServiceManager.CurrentConfigState = configStates.First();
-
-                    Logging.Log.Info("Config state, '{0}', successfully loaded.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.Name));
-
-                    transaction.Commit();
+                    "Config file was loaded!.".WriteLine();
                 }
                 catch
                 {
-                    transaction.Rollback();
-                    throw;
+                    //Something went wrong, let's redo the config file.
+                    var defaultConfig = ConfigState.GetDefault();
+
+                    File.WriteAllText(path, JsonConvert.SerializeObject(defaultConfig,
+                        new JsonSerializerSettings
+                        {
+                            Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
+                            ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                            Formatting = Formatting.Indented,
+                            DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
+                            DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                        }));
+
+                    ServiceManagement.ServiceManager.CurrentConfigState = defaultConfig;
+
+                    "Something was wrong with the config file.  It was overwritten with the default config.".WriteLine();
                 }
             }
         }

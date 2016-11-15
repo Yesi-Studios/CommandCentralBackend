@@ -45,7 +45,7 @@ namespace CCServ.Entities
                 if (!elements.Any())
                     return false;
 
-                return elements.Last().SafeEquals(Config.Email.DODEmailHost);
+                return elements.Last().SafeEquals(ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost);
             }
         }
 

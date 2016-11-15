@@ -180,9 +180,9 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
-            if (Config.Muster.IsMusterFinalized)
+            if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
-                token.AddErrorMessage("The current muster is closed.  The muster will reopen at {0}.".FormatS(Config.Muster.RolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -388,11 +388,11 @@ namespace CCServ.ClientAccess.Endpoints
                 //And now build the final DTO that's going out the door.
                 token.SetResult(new
                 {
-                    MusterFinalized = Config.Muster.IsMusterFinalized,
+                    MusterFinalized = ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized,
                     CurrentDate = MusterRecord.GetMusterDate(token.CallTime),
                     Musters = results,
-                    RolloverTime = Config.Muster.RolloverTime.ToString(),
-                    ExpectedCompletionTime = Config.Muster.DueTime.ToString()
+                    RolloverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString(),
+                    ExpectedCompletionTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterDueTime.ToString()
                 });
             }
         }
@@ -424,7 +424,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
-            if (Config.Muster.IsMusterFinalized)
+            if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
                 token.AddErrorMessage("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;

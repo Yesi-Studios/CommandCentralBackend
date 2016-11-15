@@ -26,7 +26,7 @@ namespace CCServ.CLI.Options
         public string GetUsage(string verb)
         {
             var help = HelpText.AutoBuild(this, verb);
-            help.Heading = new HeadingInfo("Command Central Service CLI", Config.Version.RELEASE_VERSION);
+            help.Heading = new HeadingInfo("Command Central Service CLI", ServiceManagement.ServiceManager.CurrentConfigState.Version);
             help.Copyright = new CopyrightInfo(true, "U.S. Navy", 2016);
             help.AdditionalNewLineAfterOption = true;
             help.AddDashesToOption = true;

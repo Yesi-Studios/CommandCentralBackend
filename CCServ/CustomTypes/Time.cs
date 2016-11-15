@@ -5,16 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.CustomDBTypes
+namespace CCServ.CustomTypes
 {
     /// <summary>
     /// Represents a Time with no date because, for whatever reason, the .NET framework doesn't have that.
     /// </summary>
     public class Time
     {
-        public int Hours { get; private set; }
-        public int Minutes { get; private set; }
-        public int Seconds { get; private set; }
+        public int Hours { get; set; }
+        public int Minutes { get; set; }
+        public int Seconds { get; set; }
 
         public Time(uint h, uint m, uint s)
         {

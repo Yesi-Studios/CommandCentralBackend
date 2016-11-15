@@ -163,8 +163,7 @@
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
-    <Compile Include="CustomDBTypes\DBTime.cs" />
-    <Compile Include="CustomDBTypes\Time.cs" />
+    <Compile Include="CustomTypes\Time.cs" />
     <Compile Include="DataAccess\Importer.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\PropertyGroupPart.cs" />
@@ -316,6 +315,11 @@
     <EmbeddedResource Include="Email\Templates\Feedback_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

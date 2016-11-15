@@ -271,7 +271,9 @@ namespace CCServ.ClientAccess.Endpoints
 
                         Email.EmailInterface.CCEmailMessage
                             .CreateDefault()
-                            .CC(Config.Email.DeveloperDistroAddress)
+                            .CC(new System.Net.Mail.MailAddress(
+                                ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                                ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Security Alert : Reregistration Attempt")
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
@@ -510,7 +512,7 @@ namespace CCServ.ClientAccess.Endpoints
                 return;
             }
 
-            if (mailAddress.Host != Config.Email.DODEmailHost)
+            if (mailAddress.Host != ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost)
             {
                 token.AddErrorMessage("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;

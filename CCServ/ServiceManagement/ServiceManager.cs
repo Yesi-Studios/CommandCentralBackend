@@ -30,37 +30,10 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static ConcurrentDictionary<string, ClientAccess.ServiceEndpoint> EndpointDescriptions { get; set; }
 
-        private static Entities.ConfigState _currentConfigState = new Entities.ConfigState
-        {
-            AtwoodGmailAddress = "sundevilgoalie13@gmail.com",
-            DeveloperDistroAddress = "usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil",
-            DeveloperDistroDisplayName = "Command Central Communications",
-            DODEmailHost = "mail.mil",
-            DODSMTPAddress = "smtp.gordon.army.mil",
-            Id = Guid.Empty,
-            IsMusterFinalized = false,
-            McLeanGmailAddress = "anguslmm@gmail.com",
-            MusterDueTime = new CustomDBTypes.Time(13, 30, 00),
-            MusterRolloverTime = new CustomDBTypes.Time(20, 0, 0),
-            Name = "Default",
-            ProfileLockMaxAge = TimeSpan.FromMinutes(20),
-            Version = "1.0.0"
-        };
-
         /// <summary>
         /// The current config state that should be used by the application.
         /// </summary>
-        public static Entities.ConfigState CurrentConfigState
-        {
-            get
-            {
-                return _currentConfigState;
-            }
-            set
-            {
-                _currentConfigState = value;
-            }
-        }
+        public static Entities.ConfigState CurrentConfigState { get; set; }
 
         /// <summary>
         /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.

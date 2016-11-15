@@ -45,8 +45,8 @@ namespace CCServ.CLI.Options
         [Option("gigo", HelpText = "Instructs the service to fill the database with x records filled with random data.", DefaultValue = 0)]
         public int GIGO { get; set; }
 
-        [Option("config", HelpText = "Instructs the service to use a particular config setting from the database.", DefaultValue = "Default")]
-        public string ConfigName { get; set; }
+        [Option("configpath", HelpText = "Instructs the service to use a particular config file.  Path is relative to the executing directory.", DefaultValue = "config.txt")]
+        public string ConfigPath { get; set; }
 
     }
 }

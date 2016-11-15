@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CustomDBTypes;
+using CCServ.CustomTypes;
 
 namespace CCServ.Email.Models
 {

@@ -53,7 +53,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(SubmitTime) < Config.ProfileLocks.MaxAge;
+            return DateTime.Now.Subtract(SubmitTime) < ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge;
         }
 
         #endregion

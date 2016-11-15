@@ -44,11 +44,17 @@ namespace CCServ.Email.EmailInterface
         public static CCEmailMessage CreateDefault()
         {
             return CCEmailMessage
-                    .From(Config.Email.DeveloperDistroAddress)
-                    .BCC(Config.Email.DeveloperDistroAddress)
-                    .ReplyTo(Config.Email.DeveloperDistroAddress)
+                    .From(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .BCC(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .ReplyTo(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
-                    .UsingSMTPHosts(Config.Email.DODSMTPAddress, "localhost");
+                    .UsingSMTPHosts(ServiceManagement.ServiceManager.CurrentConfigState.DODSMTPAddress, "localhost");
         }
 
         /// <summary>

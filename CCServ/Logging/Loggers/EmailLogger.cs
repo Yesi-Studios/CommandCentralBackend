@@ -38,7 +38,9 @@ namespace CCServ.Logging.Loggers
 
             Email.EmailInterface.CCEmailMessage
                 .CreateDefault()
-                .To(Config.Email.DeveloperDistroAddress)
+                .To(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                 .Subject("Command Central Critical Message")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
@@ -55,8 +57,11 @@ namespace CCServ.Logging.Loggers
 
             Email.EmailInterface.CCEmailMessage
                 .CreateDefault()
-                .To(Config.Email.DeveloperDistroAddress)
-                .CC(Config.Email.AtwoodGmailAddress, Config.Email.McLeanGmailAddress)
+                .To(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                .CC(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress, 
+                    ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress)
                 .Subject("Command Central Fatal Error")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
