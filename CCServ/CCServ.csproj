@@ -190,7 +190,7 @@
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
-    <Compile Include="Entities\ConfigState.cs" />
+    <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="Entities\NewsItem.cs" />
@@ -318,7 +318,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="config.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

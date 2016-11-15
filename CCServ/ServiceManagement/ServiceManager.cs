@@ -33,7 +33,7 @@ namespace CCServ.ServiceManagement
         /// <summary>
         /// The current config state that should be used by the application.
         /// </summary>
-        public static Entities.ConfigState CurrentConfigState { get; set; }
+        public static ConfigState CurrentConfigState { get; set; }
 
         /// <summary>
         /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.

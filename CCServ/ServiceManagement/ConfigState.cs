@@ -11,7 +11,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace CCServ.Entities
+namespace CCServ.ServiceManagement
 {
     /// <summary>
     /// Stores a config state and maps a config state to the database.
@@ -85,7 +85,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public static ConfigState GetDefault()
         {
-            return new Entities.ConfigState
+            return new ConfigState
             {
                 AtwoodGmailAddress = "sundevilgoalie13@gmail.com",
                 DeveloperDistroAddress = "usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil",
@@ -142,9 +142,31 @@ namespace CCServ.Entities
                 {
                     var configState = JsonConvert.DeserializeObject<ConfigState>(rawText);
 
-                    ServiceManagement.ServiceManager.CurrentConfigState = configState;
+                    if (configState == null)
+                    {
+                        //Something went wrong, let's redo the config file.
+                        var defaultConfig = ConfigState.GetDefault();
 
-                    "Config file was loaded!.".WriteLine();
+                        File.WriteAllText(path, JsonConvert.SerializeObject(defaultConfig,
+                            new JsonSerializerSettings
+                            {
+                                Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
+                                ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                                Formatting = Formatting.Indented,
+                                DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
+                                DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                            }));
+
+                        ServiceManagement.ServiceManager.CurrentConfigState = defaultConfig;
+
+                        "Something was wrong with the config file.  It was overwritten with the default config.".WriteLine();
+                    }
+                    else
+                    {
+                        ServiceManagement.ServiceManager.CurrentConfigState = configState;
+
+                        "Config file was loaded!.".WriteLine();
+                    }
                 }
                 catch
                 {
