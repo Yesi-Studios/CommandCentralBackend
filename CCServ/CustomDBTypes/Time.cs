@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CustomDBTypes
+namespace CCServ.CustomDBTypes
 {
     /// <summary>
     /// Represents a Time with no date because, for whatever reason, the .NET framework doesn't have that.
