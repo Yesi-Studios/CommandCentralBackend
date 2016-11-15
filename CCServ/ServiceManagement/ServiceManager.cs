@@ -30,6 +30,8 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static ConcurrentDictionary<string, ClientAccess.ServiceEndpoint> EndpointDescriptions { get; set; }
 
+        public static Entities.ConfigState CurrentConfigState { get; set; }
+
         /// <summary>
         /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.
         /// </summary>

@@ -163,11 +163,6 @@
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
-    <Compile Include="Config\Email.cs" />
-    <Compile Include="Config\Muster.cs" />
-    <Compile Include="Config\ParamNames.cs" />
-    <Compile Include="Config\ProfileLocks.cs" />
-    <Compile Include="Config\Version.cs" />
     <Compile Include="CustomDBTypes\DBTime.cs" />
     <Compile Include="CustomDBTypes\Time.cs" />
     <Compile Include="DataAccess\Importer.cs" />
@@ -196,7 +191,7 @@
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
-    <Compile Include="Entities\CurrentConfigState.cs" />
+    <Compile Include="Entities\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="Entities\NewsItem.cs" />

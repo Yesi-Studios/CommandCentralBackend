@@ -128,14 +128,14 @@ namespace CCServ.ServiceManagement.Service
                         }
 
                         //Get the apikey.
-                        if (!token.Args.ContainsKey(Config.ParamNames.API_KEY))
-                            token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS(Config.ParamNames.API_KEY), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        if (!token.Args.ContainsKey("apikey"))
+                            token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         else
                         {
                             //Ok, so there is an apikey!  Is it legit?
                             Guid apiKey;
-                            if (!Guid.TryParse(token.Args[Config.ParamNames.API_KEY] as string, out apiKey))
-                                token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS(Config.ParamNames.API_KEY), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
+                                token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             else
                             {
                                 //Ok, well it's a GUID.   Do we have it in the database?...
@@ -331,14 +331,14 @@ namespace CCServ.ServiceManagement.Service
         {
 
             //Get the authenticationtoken.
-            if (!token.Args.ContainsKey(Config.ParamNames.AUTHENTICATION_TOKEN))
-                token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS(Config.ParamNames.AUTHENTICATION_TOKEN), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+            if (!token.Args.ContainsKey("authenticationtoken"))
+                token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS("authenticationtoken"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
             else
             {
                 //Ok, so there is an authenticationtoken!  Is it legit?
                 Guid authenticationToken;
-                if (!Guid.TryParse(token.Args[Config.ParamNames.AUTHENTICATION_TOKEN] as string, out authenticationToken))
-                    token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS(Config.ParamNames.AUTHENTICATION_TOKEN), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                if (!Guid.TryParse(token.Args["authenticationtoken"] as string, out authenticationToken))
+                    token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS("authenticationtoken"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 else
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...
