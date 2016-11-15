@@ -97,7 +97,7 @@ namespace CCServ.ServiceManagement.Service
                         if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                         {
                             token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                "and you've checked your spelling, yell at the developers.  For further issues, please call the developers at {0}.".FormatS(Config.ContactDetails.DEV_PHONE_NUMBER), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                                "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(Config.Email.DeveloperDistroAddress.Address), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                             WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
                             return token.ConstructResponseString();
                         }

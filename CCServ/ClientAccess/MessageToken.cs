@@ -187,7 +187,7 @@ namespace CCServ.ClientAccess
         public MessageToken()
         {
             Id = Guid.NewGuid();
-            CallTime = DateTime.Now;
+            CallTime = DateTime.UtcNow;
             ErrorMessages = new List<string>();
             State = MessageStates.Received;
             //Initialize the status code to OK.  If the error message is ever set, then that'll change.
