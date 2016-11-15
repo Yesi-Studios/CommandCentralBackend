@@ -13,6 +13,9 @@ using AtwoodUtils;
 using CCServ.Logging;
 using CCServ.ServiceManagement;
 using CCServ.ServiceManagement.Service;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CCServ.ServiceManagement
 {
@@ -91,6 +94,19 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static void StopService()
         {
+            //Before we shut down the service, we need to flush the current config to the config file.
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "config.txt");
+
+            File.WriteAllText(path, JsonConvert.SerializeObject(CurrentConfigState,
+                    new JsonSerializerSettings
+                    {
+                        Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
+                        ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                        Formatting = Formatting.Indented,
+                        DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
+                        DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                    }));
+
             if (_host != null && _host.State != CommunicationState.Closed)
                 _host.Close();
         }

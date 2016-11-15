@@ -112,7 +112,7 @@ namespace CCServ.ServiceManagement
         private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
         {
             //Alright, we're going to try to load the config.  If anything fails, or happens along the way, we'll replace the config file with a default one.
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), launchOptions.ConfigPath);
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "config.txt");
 
             if (!File.Exists(path))
             {
