@@ -30,6 +30,9 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static ConcurrentDictionary<string, ClientAccess.ServiceEndpoint> EndpointDescriptions { get; set; }
 
+        /// <summary>
+        /// The current config state that should be used by the application.
+        /// </summary>
         public static Entities.ConfigState CurrentConfigState { get; set; }
 
         /// <summary>
@@ -129,29 +132,19 @@ namespace CCServ.ServiceManagement
 
                     }).GroupBy(x => x.Priority).OrderByDescending(x => x.Key);
 
-            var multiples = startupMethods.Where(x => x.Count() > 1).ToList();
-            //Make sure no methods share the same priority
-            if (multiples.Any())
-            {
-                string errors = "";
-                foreach (var group in multiples)
-                {
-                    errors += "{0} - {1}".FormatS(group.Key, String.Join(", ", group.ToList().Select(x => x.Name)));
-                }
-
-                throw new Exception("The following startup methods share the same priorities: {0}".FormatS(errors));
-            }
-
-            //Now run them all in order.
+            //Now run them all in order.  We allow multiple of the same priority, in which case they will execute in a random order within that priority.
             Log.Info("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
+
+            //Write to the console here because the logging system hasn't been set up yet.
             Console.WriteLine("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
             foreach (var group in startupMethods)
             {
                 //We can say first because we know there's only one.
-                var info = group.ToList().First();
+                var infos = group.ToList();
 
-                Log.Info("Executing startup method {0} with priority {1}.".FormatS(info.Name, info.Priority));
-                info.Method(launchOptions);
+                Log.Info("Executing startup method(s) {0} with priority {1}.".FormatS(String.Join(", ", infos.Select(x => x.Name)), group.Key));
+                
+                infos.ForEach(x => x.Method(launchOptions));
             }
         }
     }
