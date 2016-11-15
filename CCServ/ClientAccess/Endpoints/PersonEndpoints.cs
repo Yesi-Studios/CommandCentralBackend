@@ -723,10 +723,13 @@ namespace CCServ.ClientAccess.Endpoints
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
                 List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
 
-                var rawResults = resultQueryToken.Query.GetExecutableQueryOver(session).List<Person>();
+                var rawResults = resultQueryToken.Query.GetExecutableQueryOver(session)
+                    .TransformUsing(Transformers.DistinctRootEntity) //This part here "should" give us distinct elements.
+                    .List<Person>();
 
                 foreach (var person in rawResults)
                 {
+
                     //Before we do anything, and if this is a geo query, let's determine if this person passes the geo query.
                     if (isGeoQuery)
                     {
