@@ -57,7 +57,7 @@ namespace CCServ.Logging
         /// </summary>
         public LogEntry()
         {
-            Time = DateTime.Now;
+            Time = DateTime.UtcNow;
         }
 
         /// <summary>

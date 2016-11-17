@@ -44,7 +44,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual TimeSpan GetTimeRemaining()
         {
-            return DateTime.Now.Subtract(SubmitTime);
+            return DateTime.UtcNow.Subtract(SubmitTime);
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(SubmitTime) < ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge;
+            return DateTime.UtcNow.Subtract(SubmitTime) < ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge;
         }
 
         #endregion

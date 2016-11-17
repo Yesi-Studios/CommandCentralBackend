@@ -164,7 +164,6 @@
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
     <Compile Include="CustomTypes\Time.cs" />
-    <Compile Include="DataAccess\Importer.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\PropertyGroupPart.cs" />
     <Compile Include="DataAccess\QueryResultToken.cs" />
@@ -254,9 +253,6 @@
       <SubType>Designer</SubType>
     </None>
     <EmbeddedResource Include="app.manifest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="DataAccess\ids.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <None Include="packages.config" />

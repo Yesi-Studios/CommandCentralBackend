@@ -655,12 +655,12 @@ namespace CCServ.Entities
                             PermissionGroupNames = permissionGroupNames
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryTypes.Creation,
-                            EventTime = DateTime.Now
+                            EventTime = DateTime.UtcNow
                         } };
 
                         current++;
@@ -735,7 +735,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.Username = "dkatwoo";
                         person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
@@ -744,7 +744,7 @@ namespace CCServ.Entities
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryTypes.Creation,
-                            EventTime = DateTime.Now
+                            EventTime = DateTime.UtcNow
                         } };
 
                         session.SaveOrUpdate(person);
@@ -805,7 +805,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.Username = "anguslmm";
                         person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
@@ -814,7 +814,7 @@ namespace CCServ.Entities
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
-                            EventTime = DateTime.Now
+                            EventTime = DateTime.UtcNow
                         } };
 
                         session.Save(person);
@@ -1358,7 +1358,7 @@ namespace CCServ.Entities
                         .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere)))
-                        .And(x => x.MusterDate == MusterRecord.GetMusterDate(DateTime.Now))
+                        .And(x => x.MusterDate == MusterRecord.GetMusterDate(DateTime.UtcNow))
                         .Select(x => x.Id));
                 });
 

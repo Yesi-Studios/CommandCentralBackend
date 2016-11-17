@@ -66,7 +66,7 @@ namespace CCServ.ClientAccess
             if (!IsActive)
                 return false;
 
-            if (DateTime.Now.Subtract(LastUsedTime) >= _maxAge)
+            if (DateTime.UtcNow.Subtract(LastUsedTime) >= _maxAge)
                 return true;
 
             return false;

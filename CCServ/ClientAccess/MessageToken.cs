@@ -168,7 +168,7 @@ namespace CCServ.ClientAccess
                 CalledEndpoint, 
                 State, 
                 CallTime.ToString(CultureInfo.InvariantCulture), 
-                DateTime.Now.Subtract(CallTime).ToString(), 
+                DateTime.UtcNow.Subtract(CallTime).ToString(), 
                 HostAddress, 
                 APIKey == null ? "null" : APIKey.ApplicationName, 
                 AuthenticationSession == null ? "null" : AuthenticationSession.Id.ToString(),

@@ -40,7 +40,7 @@ namespace CCServ.Authorization
                 throw new ArgumentException("The client may not be null");
 
             var resolvedPermissions = new ResolvedPermissions();
-            resolvedPermissions.TimeResolved = DateTime.Now;
+            resolvedPermissions.TimeResolved = DateTime.UtcNow;
             resolvedPermissions.ClientId = client.Id.ToString();
             resolvedPermissions.PersonId = person == null ? null : person.Id.ToString();
 

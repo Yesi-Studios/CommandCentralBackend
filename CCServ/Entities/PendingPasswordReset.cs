@@ -42,7 +42,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.Now.Subtract(Time) < _maxAge;
+            return DateTime.UtcNow.Subtract(Time) < _maxAge;
         }
 
         #endregion

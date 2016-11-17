@@ -242,7 +242,7 @@ namespace CCServ.Entities
                         if (!person.CurrentMusterStatus.HasBeenSubmitted)
                         {
                             person.CurrentMusterStatus.MusterStatus = ReferenceLists.MusterStatuses.UA.ToString();
-                            person.CurrentMusterStatus.SubmitTime = DateTime.Now;
+                            person.CurrentMusterStatus.SubmitTime = DateTime.UtcNow;
                         }
                         person.CurrentMusterStatus.HasBeenSubmitted = true;
                         person.CurrentMusterStatus.Paygrade = person.Paygrade.ToString();
@@ -252,7 +252,7 @@ namespace CCServ.Entities
                         session.Save(person);
                     }
 
-                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.Now)
+                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.UtcNow)
                     {
                         RollOverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime,
                     };
@@ -317,7 +317,7 @@ namespace CCServ.Entities
                     //Now we need to go through each person and reset their current muster status.
                     foreach (var person in persons)
                     {
-                        person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                        person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                         session.Save(person);
                     }
 
@@ -367,7 +367,7 @@ namespace CCServ.Entities
                         .Fetch(x => x.CurrentMusterStatus).Eager
                         .List();
 
-                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus == null || x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.Now)).ToList();
+                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus == null || x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.UtcNow)).ToList();
 
                     if (personsWithIncorrectRecords.Any())
                     {
@@ -381,7 +381,7 @@ namespace CCServ.Entities
                         {
                             if (person.CurrentMusterStatus == null)
                             {
-                                person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                             }
                             else
                             {
@@ -391,7 +391,7 @@ namespace CCServ.Entities
                                 //If there is only one, then the current one needs to be archived, and a new one needs to be assigned.
                                 if (musterRecordsFromDayInQuestion.Count == 1)
                                 {
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else if (musterRecordsFromDayInQuestion.Count == 2)
                                 {
@@ -399,12 +399,12 @@ namespace CCServ.Entities
                                     //In this case, just reset the current muster record and make it a current one.
                                     session.Delete(person.CurrentMusterStatus);
                                     session.Flush();
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else if (musterRecordsFromDayInQuestion.Count == 0)
                                 {
                                     //If we're here then this person doesn't have a muster record.  That's weird.  Give them one.
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.Now);
+                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else
                                 {
@@ -430,7 +430,7 @@ namespace CCServ.Entities
                     Log.Info("Muster finalization status : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized ? "Finalized" : "Not Finalized"));
                     Log.Info("Expected completion time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterDueTime.ToString()));
                     Log.Info("Rollover time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));
-                    Log.Info("Current muster date is: {0}".FormatS(GetMusterDate(DateTime.Now).ToString("D")));
+                    Log.Info("Current muster date is: {0}".FormatS(GetMusterDate(DateTime.UtcNow).ToString("D")));
 
                     Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));
                     FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(

@@ -190,7 +190,7 @@ namespace CCServ.ServiceManagement.Service
                         Log.Debug(token.ToString());
 
                         //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
-                        token.HandledTime = DateTime.Now;
+                        token.HandledTime = DateTime.UtcNow;
                         token.State = MessageStates.Handled;
 
                         //Alright it's all done so let's go ahead and save the token.
