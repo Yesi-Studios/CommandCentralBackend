@@ -45,7 +45,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.UIC,
                     x => x.Designation,
                     x => x.Sex,
-                    x => x.WatchQualifications))
+                    x => x.WatchQualifications,
+                    x => x.SubscribedEvents))
                 .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
@@ -102,7 +103,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PhysicalAddresses,
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks,
-                    x => x.UserPreferences))
+                    x => x.UserPreferences,
+                    x => x.SubscribedEvents))
                     .IfSelf();
         }
     }
