@@ -909,6 +909,8 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
+                    
+
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
@@ -944,8 +946,25 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
+                    //Here we determine any events we need to raise.  All variances are assumed to be correct.
+                    List<Action> changeEvents = new List<Action>();
+
+                    if (variances.Any(x => PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName, y => y.LastName, y => y.MiddleName)
+                        .Select(y => y.Name).Any(y => x.PropertyName.SafeEquals(y))))
+                    {
+                        changeEvents.Add(() => new ChangeEventSystem.ChangeEvents.NameChangedEvent().RaiseEvent(new Email.Models.NameChangedEventEmailModel
+                        {
+                            NewName = personFromClient.ToString(),
+                            OldName = personFromDB.ToString(),
+                            PersonId = personFromDB.Id.ToString()
+                        }, personFromDB));
+                    }
+
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
+
+                    //Since everything went off well so far, let's fire off all the change events we found.
+                    changeEvents.ForEach(x => x());
 
                     //And then we're done!
                     token.SetResult("Success");

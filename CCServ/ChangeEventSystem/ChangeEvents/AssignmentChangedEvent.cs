@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CCServ.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// Raises the event.
         /// </summary>
         /// <param name="eventArgs"></param>
-        public override void RaiseEvent(object state)
+        public override void RaiseEvent(object state, Person client)
         {
             var args = state as Email.Models.AssignmentChangedEventEmailModel;
 

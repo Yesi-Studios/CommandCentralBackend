@@ -14,6 +14,7 @@ using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
 using System.Reflection;
+using CCServ.DTOs;
 
 namespace CCServ.Entities
 {
@@ -290,6 +291,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual IList<Change> Changes { get; set; }
 
+        /// <summary>
+        /// The list of those events to which this person is subscribed.
+        /// </summary>
+        public virtual IList<string> SubscribedEvents { get; set; }
+
         #endregion
 
         #endregion
@@ -324,9 +330,9 @@ namespace CCServ.Entities
         /// Returns an object containing two properties: this object's Id and this object's .ToString in a parameter called FriendlyName.  Intended for use with DTOs.
         /// </summary>
         /// <returns></returns>
-        public virtual object ToBasicPerson()
+        public virtual BasicPersonDTO ToBasicPerson()
         {
-            return new
+            return new BasicPersonDTO
             {
                 Id = this.Id,
                 FriendlyName = this.ToString()
@@ -412,18 +418,18 @@ namespace CCServ.Entities
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<object>>> GetChainOfCommand()
+        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
         {
             //Our result
-            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<object>>>();
+            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<BasicPersonDTO>>>();
 
             //Populate the dictionary
             foreach (var chainOfCommand in Enum.GetValues(typeof(ChainsOfCommand)).Cast<ChainsOfCommand>())
             {
-                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.PermissionGroupLevels,List<object>>());
+                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.PermissionGroupLevels, List<BasicPersonDTO>>());
                 foreach (var level in Enum.GetValues(typeof(Authorization.Groups.PermissionGroupLevels)).Cast<Authorization.Groups.PermissionGroupLevels>())
                 {
-                    result[chainOfCommand].Add(level, new List<object>());
+                    result[chainOfCommand].Add(level, new List<BasicPersonDTO>());
                 }
             }
 
@@ -492,7 +498,7 @@ namespace CCServ.Entities
                             }
                     }
 
-                    persons = query.List<Person>();;
+                    persons = query.List<Person>();
                 }
 
                 //Go through all the results.
@@ -920,6 +926,10 @@ namespace CCServ.Entities
                         element.Column("PreferenceValue").Type<string>())
                     .Cascade.All();
 
+                HasMany(x => x.SubscribedEvents)
+                    .KeyColumn("PersonId")
+                    .Element("SubscribedChangeEventName");
+
                 Cache.ReadWrite();
             }
         }
@@ -1086,6 +1096,9 @@ namespace CCServ.Entities
                         return x.Value.Length <= 1000;
                     })
                     .WithMessage("No preference value may be more than 1000 characters.");
+
+                RuleForEach(x => x.SubscribedEvents).Length(1, 100)
+                    .WithMessage("Subscription event names may not be more than 100 characters and may not be empty.");
 
                 When(x => x.IsClaimed, () =>
                 {
