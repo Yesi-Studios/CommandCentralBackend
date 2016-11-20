@@ -60,8 +60,8 @@ namespace CCServ.Logging.Loggers
                 .To(new System.Net.Mail.MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                .CC(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress, 
-                    ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress)
+                .CC(new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress),
+                    new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress))
                 .Subject("Command Central Fatal Error")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));

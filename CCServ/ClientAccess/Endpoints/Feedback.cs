@@ -75,8 +75,8 @@ namespace CCServ.ClientAccess.Endpoints
                 .CC(new System.Net.Mail.MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                .BCC(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress,
-                    ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress)
+                .BCC(new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress),
+                    new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress))
                 .Subject("Command Central Feedback")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.Feedback_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
