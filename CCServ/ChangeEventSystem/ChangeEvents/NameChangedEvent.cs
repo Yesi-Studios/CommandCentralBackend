@@ -15,7 +15,8 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// <summary>
         /// Raises the name changed event.
         /// </summary>
-        /// <param name="eventArgs"></param>
+        /// <param name="client"></param>
+        /// <param name="state"></param>
         public override void RaiseEvent(object state, Person client)
         {
             Task.Run(() =>
