@@ -39,6 +39,11 @@ namespace CCServ.ServiceManagement
         public static ConfigState CurrentConfigState { get; set; }
 
         /// <summary>
+        /// The registry used for setting up reoccurring, concurrent jobs.
+        /// </summary>
+        public static FluentScheduler.Registry FluentSchedulerRegistry { get; set; }
+
+        /// <summary>
         /// Starts the service with the given parameters.  By the end of this method, the application will be listening on the assigned port or it will fail.
         /// </summary>
         /// <param name="launchOptions"></param>
@@ -49,6 +54,10 @@ namespace CCServ.ServiceManagement
                 _options = launchOptions;
 
                 Log.Info("Starting service startup...");
+
+                FluentSchedulerRegistry = new FluentScheduler.Registry();
+                FluentSchedulerRegistry.UseUtcTime();
+                FluentScheduler.JobManager.Initialize(FluentSchedulerRegistry);
 
                 //Now we need to run all start up methods.
                 RunStartupMethods(launchOptions);
