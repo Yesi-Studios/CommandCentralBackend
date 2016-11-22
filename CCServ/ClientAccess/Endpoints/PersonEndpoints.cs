@@ -949,7 +949,7 @@ namespace CCServ.ClientAccess.Endpoints
                     //Here we determine any events we need to raise.  All variances are assumed to be correct.
                     List<Action> changeEvents = new List<Action>();
 
-                    /*if (variances.Any(x => PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName, y => y.LastName, y => y.MiddleName)
+                    if (variances.Any(x => PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName, y => y.LastName, y => y.MiddleName)
                         .Select(y => y.Name).Any(y => x.PropertyName.SafeEquals(y))))
                     {
                         changeEvents.Add(() => new ChangeEventSystem.ChangeEvents.NameChangedEvent().RaiseEvent(new Email.Models.NameChangedEventEmailModel
@@ -958,7 +958,7 @@ namespace CCServ.ClientAccess.Endpoints
                             OldName = personFromDB.ToString(),
                             PersonId = personFromDB.Id.ToString()
                         }, personFromDB));
-                    }*/
+                    }
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
