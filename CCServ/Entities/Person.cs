@@ -294,7 +294,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The list of those events to which this person is subscribed.
         /// </summary>
-        public virtual IList<string> SubscribedEvents { get; set; }
+        public virtual IList<ChangeEventSubscription> SubscribedEvents { get; set; }
 
         #endregion
 
@@ -418,16 +418,16 @@ namespace CCServ.Entities
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.ChainOfCommandLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
+        public virtual Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
         {
             //Our result
-            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.ChainOfCommandLevels, List<BasicPersonDTO>>>();
+            var result = new Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<BasicPersonDTO>>>();
 
             //Populate the dictionary
             foreach (var chainOfCommand in Enum.GetValues(typeof(ChainsOfCommand)).Cast<ChainsOfCommand>())
             {
-                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.ChainOfCommandLevels, List<BasicPersonDTO>>());
-                foreach (var level in Enum.GetValues(typeof(Authorization.Groups.ChainOfCommandLevels)).Cast<Authorization.Groups.ChainOfCommandLevels>())
+                result.Add(chainOfCommand, new Dictionary<ChainOfCommandLevels, List<BasicPersonDTO>>());
+                foreach (var level in Enum.GetValues(typeof(ChainOfCommandLevels)).Cast<ChainOfCommandLevels>())
                 {
                     result[chainOfCommand].Add(level, new List<BasicPersonDTO>());
                 }
@@ -435,9 +435,9 @@ namespace CCServ.Entities
 
             var permissionGroupNamesProperty = PropertySelector.SelectPropertiesFrom<Person>(x => x.PermissionGroupNames).First();
 
-            foreach (var groupLevel in new[] { Authorization.Groups.ChainOfCommandLevels.Command, 
-                                          Authorization.Groups.ChainOfCommandLevels.Department, 
-                                          Authorization.Groups.ChainOfCommandLevels.Division })
+            foreach (var groupLevel in new[] { ChainOfCommandLevels.Command, 
+                                          ChainOfCommandLevels.Department, 
+                                          ChainOfCommandLevels.Division })
             {
                 var permissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups
                                         .Where(x => x.AccessLevel == groupLevel)
@@ -459,7 +459,7 @@ namespace CCServ.Entities
 
                     switch (groupLevel)
                     {
-                        case Authorization.Groups.ChainOfCommandLevels.Command:
+                        case ChainOfCommandLevels.Command:
                             {
                                 if (this.Command == null)
                                     continue;
@@ -469,7 +469,7 @@ namespace CCServ.Entities
                                     .SetParameter("command", this.Command);
                                 break;
                             }
-                        case Authorization.Groups.ChainOfCommandLevels.Department:
+                        case ChainOfCommandLevels.Department:
                             {
                                 if (this.Command == null || this.Department == null)
                                     continue;
@@ -480,7 +480,7 @@ namespace CCServ.Entities
                                     .SetParameter("department", this.Department);
                                 break;
                             }
-                        case Authorization.Groups.ChainOfCommandLevels.Division:
+                        case ChainOfCommandLevels.Division:
                             {
                                 if (this.Command == null || this.Department == null || this.Division == null)
                                     continue;
@@ -505,7 +505,7 @@ namespace CCServ.Entities
                 foreach (var person in persons)
                 {
                     //Collect the person's highest level permission in each chain of command.
-                    var highestLevels = new Dictionary<ChainsOfCommand, Authorization.Groups.ChainOfCommandLevels>();
+                    var highestLevels = new Dictionary<ChainsOfCommand, ChainOfCommandLevels>();
 
                     foreach (var group in permissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)))
                     {
@@ -913,6 +913,7 @@ namespace CCServ.Entities
                 HasMany(x => x.EmailAddresses).Cascade.All();
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
+                HasMany(x => x.SubscribedEvents).Cascade.All();
 
                 HasManyToMany(x => x.WatchQualifications).Cascade.All();
 
@@ -925,10 +926,6 @@ namespace CCServ.Entities
                         index.Column("PreferenceKey").Type<string>(), element =>
                         element.Column("PreferenceValue").Type<string>())
                     .Cascade.All();
-
-                HasMany(x => x.SubscribedEvents)
-                    .KeyColumn("PersonId")
-                    .Element("SubscribedChangeEventName");
 
                 Cache.ReadWrite();
             }
@@ -1096,9 +1093,6 @@ namespace CCServ.Entities
                         return x.Value.Length <= 1000;
                     })
                     .WithMessage("No preference value may be more than 1000 characters.");
-
-                RuleForEach(x => x.SubscribedEvents).Length(1, 100)
-                    .WithMessage("Subscription event names may not be more than 100 characters and may not be empty.");
 
                 When(x => x.IsClaimed, () =>
                 {

@@ -49,7 +49,7 @@ namespace CCServ.Authorization
         /// <summary>
         /// THe highest levels in each of the modules that this client has.  The key is case insensitive.
         /// </summary>
-        public Dictionary<string, Groups.ChainOfCommandLevels> HighestLevels { get; set; }
+        public Dictionary<string, ChainOfCommandLevels> HighestLevels { get; set; }
 
         /// <summary>
         /// A dictionary where the string is the name of a module and the boolean indicates if the client is in that chain of command for the given person.
@@ -74,7 +74,7 @@ namespace CCServ.Authorization
             AccessibleSubmodules = new List<string>();
             EditableFields = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
             ReturnableFields = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
-            HighestLevels = new Dictionary<string, Groups.ChainOfCommandLevels>(StringComparer.OrdinalIgnoreCase);
+            HighestLevels = new Dictionary<string, ChainOfCommandLevels>(StringComparer.OrdinalIgnoreCase);
             EditablePermissionGroups = new List<string>();
 
             PrivelegedReturnableFields = new Dictionary<string, Dictionary<string, List<string>>>();

@@ -291,9 +291,9 @@ namespace CCServ.ClientAccess.Endpoints
             List<Person> musterablePersons = new List<Person>();
 
             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            Authorization.Groups.ChainOfCommandLevels highestLevelInMuster;
+            ChainOfCommandLevels highestLevelInMuster;
             if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out highestLevelInMuster))
-                highestLevelInMuster = Authorization.Groups.ChainOfCommandLevels.None;
+                highestLevelInMuster = ChainOfCommandLevels.None;
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -304,31 +304,31 @@ namespace CCServ.ClientAccess.Endpoints
                 //Switch on the highest level in muster and then add the query accordingly.
                 switch (highestLevelInMuster)
                 {
-                    case Authorization.Groups.ChainOfCommandLevels.Command:
+                    case ChainOfCommandLevels.Command:
                         {
                             queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
                             musterablePersons = queryOver.List().ToList();
                             break;
                         }
-                    case Authorization.Groups.ChainOfCommandLevels.Department:
+                    case ChainOfCommandLevels.Department:
                         {
                             queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
                             musterablePersons = queryOver.List().ToList();
                             break;
                         }
-                    case Authorization.Groups.ChainOfCommandLevels.Division:
+                    case ChainOfCommandLevels.Division:
                         {
                             queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
                             musterablePersons = queryOver.List().ToList();
                             break;
                         }
-                    case Authorization.Groups.ChainOfCommandLevels.Self:
+                    case ChainOfCommandLevels.Self:
                         {
                             //If the client's highest level is 'Self' then they can only muster themselves.
                             musterablePersons.Add(token.AuthenticationSession.Person);
                             break;
                         }
-                    case Authorization.Groups.ChainOfCommandLevels.None:
+                    case ChainOfCommandLevels.None:
                         {
                             //If the client's highest level is none, then they basically got their permissions taken away.
                             break;

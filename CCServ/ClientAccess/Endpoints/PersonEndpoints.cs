@@ -18,6 +18,9 @@ using System.Reflection;
 
 namespace CCServ.ClientAccess.Endpoints
 {
+    /// <summary>
+    /// The endpoints that effect the person object.
+    /// </summary>
     static class PersonEndpoints
     {
         #region Create

@@ -132,7 +132,7 @@ namespace CCServ.Authorization
                     if (!resolvedPermissions.PrivelegedReturnableFields.ContainsKey(module.ModuleName))
                     {
                         resolvedPermissions.PrivelegedReturnableFields.Add(module.ModuleName, 
-                            Enum.GetNames(typeof(Groups.ChainOfCommandLevels))
+                            Enum.GetNames(typeof(ChainOfCommandLevels))
                             .Select(x => new KeyValuePair<string, List<string>>(x, new List<string>()))
                             .ToDictionary(x => x.Key, x => x.Value));
                     }
@@ -146,14 +146,14 @@ namespace CCServ.Authorization
 
                     //Now we need to copy the fields to the level beneath them because of this assumption:
                     //Any field I can return at the command level, I can return at the division level.
-                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Department.ToString()] =
-                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Department.ToString()]
-                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Command.ToString()])
+                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()] =
+                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()]
+                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Command.ToString()])
                         .Distinct().ToList();
 
-                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Division.ToString()] =
-                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Division.ToString()]
-                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][Groups.ChainOfCommandLevels.Department.ToString()])
+                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Division.ToString()] =
+                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Division.ToString()]
+                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()])
                         .Distinct().ToList();
                 }
             }
@@ -169,23 +169,23 @@ namespace CCServ.Authorization
                 {
                     switch (highestLevel.Value)
                     {
-                        case Groups.ChainOfCommandLevels.Command:
+                        case ChainOfCommandLevels.Command:
                             {
                                 resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameCommandAs(person);
                                 break;
                             }
-                        case Groups.ChainOfCommandLevels.Department:
+                        case ChainOfCommandLevels.Department:
                             {
                                 resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDepartmentAs(person);
                                 break;
                             }
-                        case Groups.ChainOfCommandLevels.Division:
+                        case ChainOfCommandLevels.Division:
                             {
                                 resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDivisionAs(person);
                                 break;
                             }
-                        case Groups.ChainOfCommandLevels.Self:
-                        case Groups.ChainOfCommandLevels.None:
+                        case ChainOfCommandLevels.Self:
+                        case ChainOfCommandLevels.None:
                             {
                                 resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
                                 break;
