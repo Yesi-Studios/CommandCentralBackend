@@ -22,7 +22,7 @@ namespace CCServ.Authorization.Groups.Definitions
             
             CanEditMembershipOf();
 
-            HasAccessLevel(PermissionGroupLevels.Self);
+            HasAccessLevel(ChainOfCommandLevels.Self);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

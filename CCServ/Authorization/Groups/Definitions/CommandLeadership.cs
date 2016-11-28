@@ -21,7 +21,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
 
-            HasAccessLevel(PermissionGroupLevels.Command);
+            HasAccessLevel(ChainOfCommandLevels.Command);
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

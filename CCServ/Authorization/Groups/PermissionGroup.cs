@@ -32,7 +32,7 @@ namespace CCServ.Authorization.Groups
         /// <summary>
         /// This permission group's access level.
         /// </summary>
-        public PermissionGroupLevels AccessLevel { get; set; }
+        public ChainOfCommandLevels AccessLevel { get; set; }
 
         /// <summary>
         /// The modules included in this group.
@@ -98,7 +98,7 @@ namespace CCServ.Authorization.Groups
         /// Sets the group's access level.
         /// </summary>
         /// <param name="level"></param>
-        public void HasAccessLevel(PermissionGroupLevels level)
+        public void HasAccessLevel(ChainOfCommandLevels level)
         {
             AccessLevel = level;
         }

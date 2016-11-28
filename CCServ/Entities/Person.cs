@@ -418,16 +418,16 @@ namespace CCServ.Entities
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
+        public virtual Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.ChainOfCommandLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
         {
             //Our result
-            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.PermissionGroupLevels, List<BasicPersonDTO>>>();
+            var result = new Dictionary<ChainsOfCommand, Dictionary<Authorization.Groups.ChainOfCommandLevels, List<BasicPersonDTO>>>();
 
             //Populate the dictionary
             foreach (var chainOfCommand in Enum.GetValues(typeof(ChainsOfCommand)).Cast<ChainsOfCommand>())
             {
-                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.PermissionGroupLevels, List<BasicPersonDTO>>());
-                foreach (var level in Enum.GetValues(typeof(Authorization.Groups.PermissionGroupLevels)).Cast<Authorization.Groups.PermissionGroupLevels>())
+                result.Add(chainOfCommand, new Dictionary<Authorization.Groups.ChainOfCommandLevels, List<BasicPersonDTO>>());
+                foreach (var level in Enum.GetValues(typeof(Authorization.Groups.ChainOfCommandLevels)).Cast<Authorization.Groups.ChainOfCommandLevels>())
                 {
                     result[chainOfCommand].Add(level, new List<BasicPersonDTO>());
                 }
@@ -435,9 +435,9 @@ namespace CCServ.Entities
 
             var permissionGroupNamesProperty = PropertySelector.SelectPropertiesFrom<Person>(x => x.PermissionGroupNames).First();
 
-            foreach (var groupLevel in new[] { Authorization.Groups.PermissionGroupLevels.Command, 
-                                          Authorization.Groups.PermissionGroupLevels.Department, 
-                                          Authorization.Groups.PermissionGroupLevels.Division })
+            foreach (var groupLevel in new[] { Authorization.Groups.ChainOfCommandLevels.Command, 
+                                          Authorization.Groups.ChainOfCommandLevels.Department, 
+                                          Authorization.Groups.ChainOfCommandLevels.Division })
             {
                 var permissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups
                                         .Where(x => x.AccessLevel == groupLevel)
@@ -459,7 +459,7 @@ namespace CCServ.Entities
 
                     switch (groupLevel)
                     {
-                        case Authorization.Groups.PermissionGroupLevels.Command:
+                        case Authorization.Groups.ChainOfCommandLevels.Command:
                             {
                                 if (this.Command == null)
                                     continue;
@@ -469,7 +469,7 @@ namespace CCServ.Entities
                                     .SetParameter("command", this.Command);
                                 break;
                             }
-                        case Authorization.Groups.PermissionGroupLevels.Department:
+                        case Authorization.Groups.ChainOfCommandLevels.Department:
                             {
                                 if (this.Command == null || this.Department == null)
                                     continue;
@@ -480,7 +480,7 @@ namespace CCServ.Entities
                                     .SetParameter("department", this.Department);
                                 break;
                             }
-                        case Authorization.Groups.PermissionGroupLevels.Division:
+                        case Authorization.Groups.ChainOfCommandLevels.Division:
                             {
                                 if (this.Command == null || this.Department == null || this.Division == null)
                                     continue;
@@ -505,7 +505,7 @@ namespace CCServ.Entities
                 foreach (var person in persons)
                 {
                     //Collect the person's highest level permission in each chain of command.
-                    var highestLevels = new Dictionary<ChainsOfCommand, Authorization.Groups.PermissionGroupLevels>();
+                    var highestLevels = new Dictionary<ChainsOfCommand, Authorization.Groups.ChainOfCommandLevels>();
 
                     foreach (var group in permissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)))
                     {

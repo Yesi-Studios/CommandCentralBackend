@@ -16,7 +16,7 @@ namespace CCServ.Authorization.Groups.Definitions
         /// </summary>
         public Developers()
         {
-            HasAccessLevel(PermissionGroupLevels.Command);
+            HasAccessLevel(ChainOfCommandLevels.Command);
 
             CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson);
 

@@ -12,7 +12,7 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             CanEditMembershipOf(typeof(CommandMuster), typeof(DepartmentMuster), typeof(DivisionMuster));
 
-            HasAccessLevel(PermissionGroupLevels.Command);
+            HasAccessLevel(ChainOfCommandLevels.Command);
 
             InChainsOfCommand(ChainsOfCommand.Muster);
 

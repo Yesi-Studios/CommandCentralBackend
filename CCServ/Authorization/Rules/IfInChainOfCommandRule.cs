@@ -25,24 +25,24 @@ namespace CCServ.Authorization.Rules
             var moduleName = this.ParentPropertyGroup.ParentModule.ModuleName;
 
             //First find the person's highest level in this module.
-            var highestLevel = (Groups.PermissionGroupLevels)authToken.Client.PermissionGroups.SelectMany(x => x.Modules).Where(x => x.ModuleName.SafeEquals(moduleName)).Max(x => x.ParentPermissionGroup.AccessLevel);
+            var highestLevel = (Groups.ChainOfCommandLevels)authToken.Client.PermissionGroups.SelectMany(x => x.Modules).Where(x => x.ModuleName.SafeEquals(moduleName)).Max(x => x.ParentPermissionGroup.AccessLevel);
 
             switch (highestLevel)
             {
-                case Groups.PermissionGroupLevels.Command:
+                case Groups.ChainOfCommandLevels.Command:
                     {
                         return authToken.Client.IsInSameCommandAs(authToken.PersonFromClient);
                     }
-                case Groups.PermissionGroupLevels.Department:
+                case Groups.ChainOfCommandLevels.Department:
                     {
                         return authToken.Client.IsInSameDepartmentAs(authToken.PersonFromClient);
                     }
-                case Groups.PermissionGroupLevels.Division:
+                case Groups.ChainOfCommandLevels.Division:
                     {
                         return authToken.Client.IsInSameDivisionAs(authToken.PersonFromClient);
                     }
-                case Groups.PermissionGroupLevels.Self:
-                case Groups.PermissionGroupLevels.None:
+                case Groups.ChainOfCommandLevels.Self:
+                case Groups.ChainOfCommandLevels.None:
                     {
                         return false;
                     }

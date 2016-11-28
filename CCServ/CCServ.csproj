@@ -133,7 +133,7 @@
     <Compile Include="Authorization\Groups\Definitions\Users.cs" />
     <Compile Include="Authorization\Groups\ModulePart.cs" />
     <Compile Include="Authorization\Groups\PermissionGroup.cs" />
-    <Compile Include="Authorization\Groups\PermissionGroupLevelEnum.cs" />
+    <Compile Include="ChainOfCommandLevelsEnum.cs" />
     <Compile Include="Authorization\Groups\PropertyGroupPart.cs" />
     <Compile Include="Authorization\ResolvedPermissions.cs" />
     <Compile Include="Authorization\Rules\AuthorizationRuleBase.cs" />
@@ -191,6 +191,7 @@
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
+    <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />

@@ -178,23 +178,23 @@ namespace CCServ.Entities
 
             switch (highestLevelInMuster)
             {
-                case Authorization.Groups.PermissionGroupLevels.Command:
+                case Authorization.Groups.ChainOfCommandLevels.Command:
                     {
                         return client.IsInSameCommandAs(person);
                     }
-                case Authorization.Groups.PermissionGroupLevels.Department:
+                case Authorization.Groups.ChainOfCommandLevels.Department:
                     {
                         return client.IsInSameDepartmentAs(person);
                     }
-                case Authorization.Groups.PermissionGroupLevels.Division:
+                case Authorization.Groups.ChainOfCommandLevels.Division:
                     {
                         return client.IsInSameDivisionAs(person);
                     }
-                case Authorization.Groups.PermissionGroupLevels.Self:
+                case Authorization.Groups.ChainOfCommandLevels.Self:
                     {
                         return client.Id == person.Id;
                     }
-                case Authorization.Groups.PermissionGroupLevels.None:
+                case Authorization.Groups.ChainOfCommandLevels.None:
                     {
                         return false;
                     }
