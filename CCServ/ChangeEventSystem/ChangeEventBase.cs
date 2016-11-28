@@ -73,7 +73,7 @@ namespace CCServ.ChangeEventSystem
                     {
                         //Now, we need to select out only those people whose subscription levels match.
                         //So, if the person subscribed at the division level, but the person in question is only common at the department level, throw out the subscibers.
-                        var finalSubscribers = subscribers.Where(subscriber =>
+                        subscribers = subscribers.Where(subscriber =>
                             {
                                 //Here we're going to get the first event whose name matches this event and of those, the highest level.
                                 var subscriptionEvent = subscriber.SubscribedEvents.FirstOrDefault(y => y.ChangeEventName.SafeEquals(this.Name) &&
@@ -92,11 +92,11 @@ namespace CCServ.ChangeEventSystem
                                     return subscriber.IsInSameDivisionAs(person);
 
                                 throw new Exception("Whole processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(this.Name, subscriptionEvent.ChainOfCommandLevel));
-                            });
+                            }).ToList();
                     }
 
                     //Here are all the email addresses of all the people.
-                    result = finalSubscribers.SelectMany(x => x.EmailAddresses.Where(y => y.IsPreferred)
+                    result = subscribers.SelectMany(x => x.EmailAddresses.Where(y => y.IsPreferred)
                                                         .Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())))
                                              .ToList();
 
