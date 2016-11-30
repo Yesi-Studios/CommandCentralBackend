@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
 
 namespace CCServ.ChangeEventSystem.ChangeEvents
 {
@@ -33,7 +34,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
                         .To(GetValidSubscriptionEmailAddresses(client))
-                        .Subject("Name Changed Event")
+                        .Subject("{0} Event".FormatS(this.Name))
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.NameChangedEvent_HTML.html", args)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                 }).ConfigureAwait(false);

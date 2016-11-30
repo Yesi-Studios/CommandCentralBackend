@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
 
 namespace CCServ.ChangeEventSystem.ChangeEvents
 {
@@ -18,10 +19,24 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// <param name="eventArgs"></param>
         public override void RaiseEvent(object state, Person client)
         {
-            var args = state as Email.Models.AssignmentChangedEventEmailModel;
+            Task.Run(() =>
+            {
+                var args = state as Email.Models.AssignmentChangedEventEmailModel;
 
-            if (args == null)
-                throw new ArgumentException("The state object was either of the wrong type or null.");
+                if (args == null)
+                    throw new ArgumentException("The state object was either of the wrong type or null.");
+
+                if (args.NewAssignment == args.OldAssignment)
+                    throw new Exception("The assignment changed event was raised; however, the two assignments appear to be the same.");
+
+                //Ok, so we have an email we can use to contact the person!
+                Email.EmailInterface.CCEmailMessage
+                    .CreateDefault()
+                    .To(GetValidSubscriptionEmailAddresses(client))
+                    .Subject("{0} Event".FormatS(this.Name))
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AssignmentChangedEvent_HTML.html", args)
+                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+            }).ConfigureAwait(false);
         }
 
         /// <summary>

@@ -22,6 +22,8 @@ namespace CCServ.ChangeEventSystem
 
         public Dictionary<string, Dictionary<string, List<string>>> RequiredFields { protected set; get; }
 
+        public string EventRaisedByFriendlyName { get; set; }
+
         #endregion
 
         /// <summary>

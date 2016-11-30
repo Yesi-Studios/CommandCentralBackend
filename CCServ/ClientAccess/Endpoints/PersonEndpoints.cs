@@ -949,36 +949,10 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
-                    //Here we determine any events we need to raise.  All variances are assumed to be correct and do not require validation.
-                    List<Action> changeEvents = new List<Action>();
 
-                    if (variances.Any(x => PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName, y => y.LastName, y => y.MiddleName)
-                        .Select(y => y.Name).Any(y => x.PropertyName.SafeEquals(y))))
-                    {
-                        changeEvents.Add(() => new ChangeEventSystem.ChangeEvents.NameChangedEvent().RaiseEvent(new Email.Models.NameChangedEventEmailModel
-                        {
-
-                            NewName = new Person
-                            {
-                                FirstName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name)).NewValue.ToString(),
-                                MiddleName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name)).NewValue.ToString(),
-                                LastName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name)).NewValue.ToString()
-                            }.ToString(),
-                            OldName = new Person
-                            {
-                                FirstName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.FirstName).First().Name)).OldValue.ToString(),
-                                MiddleName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.MiddleName).First().Name)).OldValue.ToString(),
-                                LastName = variances.First(x => x.PropertyName.SafeEquals(PropertySelector.SelectPropertiesFrom<Person>(y => y.LastName).First().Name)).OldValue.ToString()
-                            }.ToString(),
-                            PersonId = personFromDB.Id.ToString()
-                        }, personFromDB));
-                    }
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
-
-                    //Since everything went off well so far, let's fire off all the change events we found.
-                    changeEvents.ForEach(x => x());
 
                     //And then we're done!
                     token.SetResult("Success");

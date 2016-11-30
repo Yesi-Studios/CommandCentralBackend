@@ -8,13 +8,11 @@ using CCServ.ClientAccess;
 
 namespace CCServ.Entities
 {
-
     /// <summary>
     /// Describes a single change
     /// </summary>
     public class Change
     {
-
         #region Properties
 
         /// <summary>
@@ -28,19 +26,24 @@ namespace CCServ.Entities
         public virtual Person Editor { get; set; }
 
         /// <summary>
-        /// The name of the object/entity that was changed.
+        /// The person who was edited.
         /// </summary>
-        public virtual string ObjectName { get; set; }
+        public virtual Person Editee { get; set; }
 
         /// <summary>
-        /// The Id of the object that was changed.
+        /// The name of the property of the object that changed.
         /// </summary>
-        public virtual Guid ObjectId { get; set; }
+        public virtual string PropertyName { get; set; }
 
         /// <summary>
-        /// The variance that caused this change to be logged.
+        /// The value prior to the update or change.
         /// </summary>
-        public virtual Variance Variance { get; set; }
+        public virtual string OldValue { get; set; }
+
+        /// <summary>
+        /// The new value.
+        /// </summary>
+        public virtual string NewValue { get; set; }
 
         /// <summary>
         /// The time this change was made.
@@ -67,12 +70,13 @@ namespace CCServ.Entities
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Editor).Not.Nullable();
+                References(x => x.Editee).Not.Nullable();
 
-                Map(x => x.ObjectName).Not.Nullable().Length(20);
-                Map(x => x.ObjectId).Not.Nullable().Length(45);
                 Map(x => x.Time).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
-
+                Map(x => x.PropertyName).Not.Nullable();
+                Map(x => x.OldValue);
+                Map(x => x.NewValue);
             }
         }
 

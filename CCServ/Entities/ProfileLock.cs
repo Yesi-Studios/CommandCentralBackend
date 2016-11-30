@@ -58,7 +58,6 @@ namespace CCServ.Entities
 
         #endregion
 
-
         /// <summary>
         /// Maps a profile lock to the database.
         /// </summary>
