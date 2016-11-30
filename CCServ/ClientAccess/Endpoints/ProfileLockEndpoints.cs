@@ -9,6 +9,9 @@ using CCServ.Authorization;
 
 namespace CCServ.ClientAccess.Endpoints
 {
+    /// <summary>
+    /// Contains all those endpoints for profile locks.
+    /// </summary>
     public static class ProfileLockEndpoints
     {
         /// <summary>
@@ -53,6 +56,15 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
+                    //Before we do anything, we need to release any lock the client might own.
+                    //Flush the session cause we're about to do stuff in that table as well.
+                    var clientLocks = session.QueryOver<ProfileLock>().Where(x => x.Owner == token.AuthenticationSession.Person).List();
+                    foreach (var clientLock in clientLocks)
+                    {
+                        session.Delete(clientLock);
+                    }
+                    session.Flush();
+
                     var person = session.Get<Person>(personId);
 
                     if (person == null)
@@ -68,6 +80,7 @@ namespace CCServ.ClientAccess.Endpoints
                     if (profileLock != null)
                     {
                         //If the client owns the lock, then they're trying to renew the lock.  Let's allow that.
+                        //This shouldn't even happen since we release all locks owned by the client but whatever.
                         if (profileLock.Owner.Id == token.AuthenticationSession.Person.Id)
                         {
                             profileLock.SubmitTime = token.CallTime;
