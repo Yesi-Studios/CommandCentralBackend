@@ -134,7 +134,8 @@ namespace CCServ
 
                         List<object> removedItems = new List<object>();
                         List<object> addedItems = new List<object>();
-                        List<object> changedItems = new List<object>();
+                        //The key is the new value, the value is the old value.
+                        List<KeyValuePair<object, object>> changedItems = new List<KeyValuePair<object, object>>();
 
                         //First, let's get the changes out of the way...
                         foreach (var newItem in newList)
