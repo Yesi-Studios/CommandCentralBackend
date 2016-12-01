@@ -115,6 +115,8 @@
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
+    <Compile Include="ChangeHandling\ChangeHandlerBase.cs" />
+    <Compile Include="ChangeHandling\PropertyGroupPart.cs" />
     <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />

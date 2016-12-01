@@ -15,6 +15,7 @@ using CCServ.ServiceManagement;
 using CCServ.Logging;
 using System.Reflection;
 using CCServ.DTOs;
+using CCServ.ChangeHandling;
 
 namespace CCServ.Entities
 {
@@ -1395,6 +1396,27 @@ namespace CCServ.Entities
                                                      .Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                                                      .Add(Restrictions.On(() => addressAlias.ZipCode).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
                 });
+            }
+        }
+
+        public class PersonChangeHandler : ChangeHandlerBase<Person>
+        {
+            public PersonChangeHandler()
+            {
+                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                    x => x.FirstName,
+                    x => x.LastName,
+                    x => x.MiddleName))
+                    .UsingChangeHandler(variance =>
+                        {
+                            return new List<Change>
+                            {
+                                new Change 
+                                {
+                                    
+                                }
+                            };
+                        });
             }
         }
     }

@@ -10,7 +10,7 @@ using System.Reflection;
 namespace CCServ.Authorization.Groups
 {
     /// <summary>
-    /// Builds a property group.
+    /// Builds a property group for a permission group.
     /// </summary>
     public class PropertyGroupPart
     {
