@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.ServiceModel.Web;
 using System.Text;
 using Newtonsoft.Json;
+using System.Collections;
 
 namespace AtwoodUtils
 {
@@ -105,6 +106,34 @@ namespace AtwoodUtils
             }
 
             throw new ArgumentException("'expression' should be a member expression or a method call expression.", "expression");
+        }
+
+        /// <summary>
+        /// Returns the base type of an enumerable.
+        /// <para />
+        /// Does not work with non-homogenous collections.
+        /// </summary>
+        /// <param name="enumerable"></param>
+        /// <returns></returns>
+        public static Type GetBaseTypeOfEnumerable(IEnumerable enumerable)
+        {
+            if (enumerable == null)
+                throw new ArgumentException("enumerable must not be null.");
+
+            var genericInterface = enumerable
+                .GetType()
+                .GetInterfaces()
+                .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+
+            if (genericInterface == null)
+            {
+                throw new Exception("enumerable appears to not implement a single base type.");
+            }
+
+            var elementType = genericInterface.GetGenericArguments()[0];
+            return elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                ? elementType.GetGenericArguments()[0]
+                : elementType;
         }
 
         /// <summary>
