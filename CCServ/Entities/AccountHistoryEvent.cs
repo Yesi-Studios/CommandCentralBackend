@@ -2,6 +2,7 @@
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using CCServ.Entities.ReferenceLists;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -43,6 +44,43 @@ namespace CCServ.Entities
             return "{0} @ {1}".FormatS(this.AccountHistoryEventType, this.EventTime);
         }
 
+        /// <summary>
+        /// Compares deep equality.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as AccountHistoryEvent;
+            if (other == null)
+                return false;
+
+            if (object.ReferenceEquals(this, other))
+                return true;
+
+            return other.Id.Equals(this.Id) &&
+                   other.AccountHistoryEventType.Equals(this.AccountHistoryEventType) &&
+                   other.EventTime.Equals(this.EventTime);
+        }
+
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + Utilities.GetSafeHashCode(AccountHistoryEventType);
+                hash = hash * 23 + Utilities.GetSafeHashCode(EventTime);
+
+                return hash;
+            }
+        }
+
         #endregion
 
         #region ctors
@@ -67,7 +105,8 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.EventTime).Not.Nullable();
+                Map(x => x.EventTime).Not.Nullable().CustomType<UtcDateTimeType>();
+                
                 References(x => x.AccountHistoryEventType).LazyLoad(Laziness.False);
             }
         }

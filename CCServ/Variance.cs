@@ -61,7 +61,7 @@ namespace CCServ
         /// <typeparam name="T">The parent type of all the variances.  Eg. Person</typeparam>
         /// <param name="variances"></param>
         /// <returns></returns>
-        public static IEnumerable<Change> CalculateChanges<T>(IEnumerable<Variance> variances)
+        public static IEnumerable<Change> CalculateChanges<T>(this IEnumerable<Variance> variances)
         {
             foreach (var variance in variances)
             {
@@ -73,7 +73,7 @@ namespace CCServ
                 var propertyInfo = AtwoodUtils.PropertySelector.SelectPropertyFrom<T>(variance.PropertyName);
 
                 //Now we need to know if we're dealing with a collection or not.
-                if (typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType))
+                if (typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType) && propertyInfo.PropertyType != typeof(string))
                 {
                     //We're going to make the extremely unsafe assumption that collections are not null.
 

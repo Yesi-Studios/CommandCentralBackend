@@ -137,6 +137,136 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Determines if two sets are equal (if both are null, that is considered to be equal), regardless of element order, in O(N) time.
+        /// <para/>
+        /// NOTE: T must override GetHashCode and Equals.  If you're not doing this and this method causes an error, that's your own damn fault, Atwood, you know you're supposed to be overriding those.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        public static bool SetEquals<T>(IEnumerable<T> left, IEnumerable<T> right)
+        {
+            /*
+             * So this algorithm is fancy and simple.  Go through every object and count how many times we find it in the left collection.
+             * Then, go through the right collection subtracting from the same counter every time we find the same object.  
+             * If all the counts equal 0 at the end, then we have two equal collections regardless of their order.
+             *
+             * Also, return false if the right collection doesn't contain something from the left.
+             */
+
+            //Get some null checking up in here.
+            if (left == null && right == null)
+                return true;
+
+            if (left == null || right == null)
+                return false;
+
+            Dictionary<T, int> dict = new Dictionary<T, int>();
+
+            foreach (var member in left)
+            {
+                if (!dict.ContainsKey(member))
+                {
+                    dict[member] = 1;
+                }
+                else
+                {
+                    dict[member]++;
+                }
+            }
+
+            foreach (var member in right)
+            {
+                if (!dict.ContainsKey(member))
+                {
+                    return false;
+                }
+                else
+                {
+                    dict[member]--;
+                }
+            }
+
+            return dict.All(x => x.Value == 0);
+        }
+
+        public static bool GetSetDifferences(List<object> left, List<object> right, out List<object> notInLeft, out List<object> notInRight, out List<Tuple<object, object>> inBothButChanged, string keyPropertyName = "id")
+        {
+            notInLeft = new List<object>();
+            notInRight = new List<object>();
+            inBothButChanged = new List<Tuple<object, object>>();
+
+            if (left == null && right == null)
+                return true;
+
+            if (left == null || right == null)
+                return false;
+
+            if (left.Count != right.Count)
+                return false;
+
+            if (left.Count == 0 && right.Count == 0)
+                return true;
+
+            var elementType = left.First().GetType();
+            var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.SafeEquals(keyPropertyName));
+            HashSet<object> foundIds = new HashSet<object>();
+
+            foreach (var leftValue in left)
+            {
+                if (idProperty == null)
+                {
+                    if (!right.Contains(leftValue))
+                    {
+                        notInRight.Add(leftValue);
+                    }
+                }
+                else
+                {
+                    var leftId = idProperty.GetValue(leftValue);
+                    var rightValue = right.FirstOrDefault(x => idProperty.GetValue(x).Equals(leftId));
+
+                    if (rightValue == null)
+                    {
+                        notInRight.Add(leftValue);
+                    }
+                    else if (!rightValue.Equals(leftValue))
+                    {
+                        inBothButChanged.Add(new Tuple<object, object>(leftValue, rightValue));
+                        foundIds.Add(leftId);
+                    }
+                }
+            }
+
+            foreach (var rightValue in right)
+            {
+                if (idProperty == null)
+                {
+                    if (!left.Contains(rightValue))
+                    {
+                        notInLeft.Add(rightValue);
+                    }
+                }
+                else
+                {
+                    var rightId = idProperty.GetValue(rightValue);
+                    if (!foundIds.Contains(rightId))
+                    {
+                        var leftValue = left.FirstOrDefault(x => idProperty.GetValue(x).Equals(rightId));
+
+                        if (leftValue == null)
+                        {
+                            notInLeft.Add(rightValue);
+                        }
+                    }
+                }
+            }
+
+            return notInLeft.Count == 0 && notInRight.Count == 0 && inBothButChanged.Count == 0;
+        } 
+
+        /// <summary>
         /// Determines whether or not a type is assignable to a generic type.
         /// </summary>
         /// <param name="givenType"></param>

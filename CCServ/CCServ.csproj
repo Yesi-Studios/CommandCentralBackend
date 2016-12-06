@@ -227,7 +227,8 @@
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualification.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualifications.cs" />
-    <Compile Include="Entities\Variance.cs" />
+    <Compile Include="TrackingInterceptor.cs" />
+    <Compile Include="Variance.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogEntry.cs" />
     <Compile Include="Logging\Log.cs" />

@@ -866,7 +866,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = NHibernateHelper.CreateStatefulSession(token))
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -912,8 +912,6 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
-                    
-
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
@@ -929,7 +927,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Determine what changed.
-                    var variances = session.GetDirtyProperties(personFromDB).ToList();
+                    var variances = session.GetVariantProperties(personFromDB).ToList();
 
                     //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
                     var results = new Person.PersonValidator().Validate(personFromDB);
@@ -948,8 +946,6 @@ namespace CCServ.ClientAccess.Endpoints
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                         return;
                     }
-
-
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);

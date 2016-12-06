@@ -93,6 +93,18 @@ namespace CCServ.DataAccess
         #region Helper Methods
 
         /// <summary>
+        /// Creates a new session from the session factory with change tracking.  All updates using this session will result in change entries.
+        /// </summary>
+        /// <returns></returns>
+        public static ISession CreateStatefulSession(ClientAccess.MessageToken token)
+        {
+            if (token == null)
+                throw new ArgumentException("The passed message token must not be null.  If you don't have a token, consider using the non-tracked session.");
+
+            return _sessionFactory.OpenSession(new TrackingInterceptor(token));
+        }
+
+        /// <summary>
         /// Creates a new session from the session factory.
         /// </summary>
         /// <returns></returns>
@@ -102,7 +114,7 @@ namespace CCServ.DataAccess
         }
 
         /// <summary>
-        /// Craeates a new session from the session factory. This session is stateless and has no cache.
+        /// Creates a new session from the session factory. This session is stateless and has no cache.
         /// </summary>
         /// <returns></returns>
         public static IStatelessSession CreateStatelessSession()

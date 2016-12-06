@@ -12,6 +12,9 @@ namespace AtwoodUtils
 {
     public static class ExtensionMethods
     {
+        
+
+
         public static string Truncate(this string str, int length, string message = "|| MESSAGE TRUNCATED ||")
         {
 
