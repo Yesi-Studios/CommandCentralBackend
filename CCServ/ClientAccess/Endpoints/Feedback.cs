@@ -6,9 +6,18 @@ using System.Threading.Tasks;
 
 namespace CCServ.ClientAccess.Endpoints
 {
+    /// <summary>
+    /// Contains the feedback endpoints.
+    /// </summary>
     public static class Feedback
     {
-
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Receives a feedback from the client and then emails it to the developers.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [EndpointMethod(EndpointName = "SubmitFeedback", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
         private static void EndpointMethod_SubmitFeedback(MessageToken token)
         {
