@@ -91,24 +91,7 @@ namespace CCServ.DataAccess
                 }
             }
 
-
-            //Returns all property indices that are considered to be dirty, given a current/old state and an entity to compare against.
-            Int32[] dirtyPropIndices = persister.FindDirty(currentState, previousState, entity, sessionImpl);
-
-            //There were no dirty properties.
-            if (dirtyPropIndices == null)
-                yield break;
-
-            //Walk across all firty properties
-            foreach (var propIndex in dirtyPropIndices)
-            {
-                yield return new Variance 
-                { 
-                    NewValue = currentState[propIndex], 
-                    OldValue = previousState[propIndex], 
-                    PropertyName = persister.PropertyNames[propIndex] 
-                };
-            }
+            
         }
 
 
