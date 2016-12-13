@@ -189,6 +189,7 @@
     <Compile Include="Email\EmailInterface\CCEmailMessage.cs" />
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
+    <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
@@ -318,6 +319,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Email\Templates\NameChangedEvent_HTML.html" />
+    <Content Include="Email\Templates\PasswordChanged_HTML.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

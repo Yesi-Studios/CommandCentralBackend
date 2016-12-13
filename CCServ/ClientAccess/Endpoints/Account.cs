@@ -773,6 +773,21 @@ namespace CCServ.ClientAccess.Endpoints
                         EventTime = token.CallTime
                     });
 
+                    var model = new Email.Models.PasswordChangedEmailModel
+                    {
+                        FriendlyName = self.ToString()
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(self.EmailAddresses.Where(x => x.IsDodEmailAddress).Select(x => new System.Net.Mail.MailAddress(x.Address, model.FriendlyName)))
+                        .BCC(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                        .Subject("Password Changed")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.PasswordChanged_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
                     session.Update(self);
 
                     transaction.Commit();
