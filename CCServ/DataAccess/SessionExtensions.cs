@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using System.Collections;
+using CCServ.Entities;
 
 namespace CCServ.DataAccess
 {
@@ -26,7 +27,7 @@ namespace CCServ.DataAccess
         /// <param name="session"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public static IEnumerable<Variance> GetVariantProperties(this ISession session, Object entity)
+        public static IEnumerable<Change> GetVariantProperties(this ISession session, Object entity)
         {
             //This is all the information about the session and its implementation from the underlying NHibernate set up.
             ISessionImplementor sessionImpl = session.GetSessionImplementation();
@@ -63,11 +64,30 @@ namespace CCServ.DataAccess
 
                     if (!Utilities.GetSetDifferences(currentCollection, previousCollection, out notInCurrent, out notInPrevious, out changes))
                     {
-                        int i = 0;
+                        foreach (var obj in notInCurrent)
+                        {
+                            yield return new Change
+                            {
+                                Remarks = "The item was removed"
+                            };
+                        }
                     }
                 }
                 else
                 {
+                    var previousValue = previousState[x];
+                    var currentValue = currentState[x];
+
+                    if (!Object.Equals(previousValue, currentValue))
+                    {
+                        yield return new Change
+                        {
+                            Id = Guid.NewGuid(),
+                            NewValue = currentValue.ToString(),
+                            OldValue = previousValue.ToString(),
+                            PropertyName = propertyName
+                        };
+                    }
                 }
             }
 

@@ -112,7 +112,7 @@ namespace CCServ.ServiceManagement
                         Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
                         ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
                         Formatting = Formatting.Indented,
-                        DateFormatString = "yyyy-MM-ddTHH:mm:ss.sssZ",
+                        DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
                         DateTimeZoneHandling = DateTimeZoneHandling.Utc
                     }));
 
