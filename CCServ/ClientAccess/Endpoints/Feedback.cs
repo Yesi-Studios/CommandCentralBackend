@@ -37,6 +37,12 @@ namespace CCServ.ClientAccess.Endpoints
 
             string title = token.Args["title"] as string;
 
+            if (string.IsNullOrWhiteSpace(title) || title.Length > 50)
+            {
+                token.AddErrorMessage("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(title))
             {
                 token.AddErrorMessage("Your 'title' parameter must not be empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
