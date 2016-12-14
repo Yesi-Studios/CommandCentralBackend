@@ -142,7 +142,7 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to create a news item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -211,11 +211,10 @@ namespace CCServ.ClientAccess.Endpoints
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
-                    transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-                    return;
+                   transaction.Rollback();
+                   throw;
                 }
             }
 
@@ -308,10 +307,9 @@ namespace CCServ.ClientAccess.Endpoints
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
                     return;
                 }
             }
@@ -377,10 +375,9 @@ namespace CCServ.ClientAccess.Endpoints
 
                     transaction.Commit();
                 }
-                catch (Exception e)
+                catch
                 {
                     transaction.Rollback();
-                    token.AddErrorMessage(e.Message, ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
                     return;
                 }
             }
