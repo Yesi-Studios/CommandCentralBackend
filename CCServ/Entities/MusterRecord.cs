@@ -106,6 +106,64 @@ namespace CCServ.Entities
             return this.MusterStatus;
         }
 
+        /// <summary>
+        /// Deep comparison.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as MusterRecord;
+            if (other == null)
+                return false;
+
+            return Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.Musterer == null ? Guid.Empty : other.Musterer.Id, this.Musterer == null ? Guid.Empty : this.Musterer.Id) &&
+                   Object.Equals(other.Musteree.Id, this.Musteree.Id) &&
+                   Object.Equals(other.Paygrade, this.Paygrade) &&
+                   Object.Equals(other.Designation, this.Designation) &&
+                   Object.Equals(other.UIC, this.UIC) &&
+                   Object.Equals(other.Division, this.Division) &&
+                   Object.Equals(other.Department, this.Department) &&
+                   Object.Equals(other.Command, this.Command) &&
+                   Object.Equals(other.MusterStatus, this.MusterStatus) &&
+                   Object.Equals(other.DutyStatus, this.DutyStatus) &&
+                   Object.Equals(other.SubmitTime, this.SubmitTime) &&
+                   Object.Equals(other.MusterDate, this.MusterDate) &&
+                   Object.Equals(other.HasBeenSubmitted, this.HasBeenSubmitted) &&
+                   Object.Equals(other.Remarks, this.Remarks);
+        }
+
+        /// <summary>
+        /// hashey codey
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Musterer);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Musteree);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Paygrade);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Designation);
+                hash = hash * 23 + Utilities.GetSafeHashCode(UIC);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Division);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Department);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Command);
+                hash = hash * 23 + Utilities.GetSafeHashCode(MusterStatus);
+                hash = hash * 23 + Utilities.GetSafeHashCode(DutyStatus);
+                hash = hash * 23 + Utilities.GetSafeHashCode(SubmitTime);
+                hash = hash * 23 + Utilities.GetSafeHashCode(MusterDate);
+                hash = hash * 23 + Utilities.GetSafeHashCode(HasBeenSubmitted);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Remarks);
+
+                return hash;
+            }
+        }
+
         #endregion
 
         #region ctors

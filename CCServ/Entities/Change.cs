@@ -36,6 +36,11 @@ namespace CCServ.Entities
         public virtual string PropertyName { get; set; }
 
         /// <summary>
+        /// The name of the property of the object that changed - friendly for display to a client.
+        /// </summary>
+        public virtual string FriendlyPropertyName { get; set; }
+
+        /// <summary>
         /// The value prior to the update or change.
         /// </summary>
         public virtual string OldValue { get; set; }
@@ -75,6 +80,7 @@ namespace CCServ.Entities
                 Map(x => x.Time).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.PropertyName).Not.Nullable();
+                Map(x => x.FriendlyPropertyName).Not.Nullable();
                 Map(x => x.OldValue);
                 Map(x => x.NewValue);
             }

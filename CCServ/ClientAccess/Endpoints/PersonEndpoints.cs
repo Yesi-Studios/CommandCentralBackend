@@ -927,7 +927,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Determine what changed.
-                    var variances = session.GetVariantProperties(personFromDB).ToList();
+                    var changes = session.GetVariantProperties(personFromDB).ToList();
 
                     //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
                     var results = new Person.PersonValidator().Validate(personFromDB);
@@ -940,7 +940,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-                    var unauthorizedEdits = variances.Where(x => !editableFields.Contains(x.PropertyName));
+                    var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
                     {
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);

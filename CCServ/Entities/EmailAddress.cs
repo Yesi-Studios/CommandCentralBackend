@@ -54,7 +54,45 @@ namespace CCServ.Entities
         #region Overrides
 
         /// <summary>
-        /// Returns the Address field.
+        /// Deep comparison.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as EmailAddress;
+            if (other == null)
+                return false;
+
+            return Object.Equals(other.Address, this.Address) &&
+                   Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.IsContactable, this.IsContactable) &&
+                   Object.Equals(other.IsDodEmailAddress, this.IsDodEmailAddress) &&
+                   Object.Equals(other.IsPreferred, this.IsPreferred);
+        }
+
+        /// <summary>
+        /// hashey codey
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Address);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsContactable);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsPreferred);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsDodEmailAddress);
+
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// Returns a string representation.
         /// </summary>
         /// <returns></returns>
         public override string ToString()

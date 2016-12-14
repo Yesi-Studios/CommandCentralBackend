@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using System.Collections;
 using CCServ.Entities;
+using Humanizer;
 
 namespace CCServ.DataAccess
 {
@@ -60,6 +61,8 @@ namespace CCServ.DataAccess
 
                     var notInCurrent = new List<object>();
                     var notInPrevious = new List<object>();
+
+                    //T1 is the current value, T2 is the previous value.  This is determined by how we pass it into the get set differences method.
                     var changes = new List<Tuple<object, object>>();
 
                     if (!Utilities.GetSetDifferences(currentCollection, previousCollection, out notInCurrent, out notInPrevious, out changes))
@@ -68,7 +71,37 @@ namespace CCServ.DataAccess
                         {
                             yield return new Change
                             {
-                                Remarks = "The item was removed"
+                                Remarks = "The item was removed.",
+                                Id = Guid.NewGuid(),
+                                NewValue = null,
+                                OldValue = obj.ToString(),
+                                PropertyName = propertyName,
+                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                            };
+                        }
+
+                        foreach (var obj in notInPrevious)
+                        {
+                            yield return new Change
+                            {
+                                Remarks = "The item was added.",
+                                Id = Guid.NewGuid(),
+                                NewValue = obj.ToString(),
+                                OldValue = null,
+                                PropertyName = propertyName,
+                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                            };
+                        }
+
+                        foreach (var pair in changes)
+                        {
+                            yield return new Change
+                            {
+                                Id = Guid.NewGuid(),
+                                NewValue = pair.Item1.ToString(),
+                                OldValue = pair.Item2.ToString(),
+                                PropertyName = propertyName,
+                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
                             };
                         }
                     }
@@ -85,18 +118,12 @@ namespace CCServ.DataAccess
                             Id = Guid.NewGuid(),
                             NewValue = currentValue.ToString(),
                             OldValue = previousValue.ToString(),
-                            PropertyName = propertyName
+                            PropertyName = propertyName,
+                            FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
                         };
                     }
                 }
             }
-
-            
         }
-
-
-
-        
-
     }
 }

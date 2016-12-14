@@ -191,6 +191,16 @@ namespace AtwoodUtils
             return dict.All(x => x.Value == 0);
         }
 
+        /// <summary>
+        /// Determines the differences between two sets.  Does not support duplicate objects.
+        /// </summary>
+        /// <param name="left">The left set.</param>
+        /// <param name="right">The right set.</param>
+        /// <param name="notInLeft">All those items that exist in the right set but not in the left.</param>
+        /// <param name="notInRight">All those items that exist in the left set but not in the right.</param>
+        /// <param name="inBothButChanged">All those items that exist in both sets, but that were changed.  This change detection is based on the property passed to be used as the object Id.  T1 is the left value, T2 is the right value.</param>
+        /// <param name="keyPropertyName">The name of the property that should exist on the objects within the sets to use to identify an object.  Enable change detection.</param>
+        /// <returns></returns>
         public static bool GetSetDifferences(List<object> left, List<object> right, out List<object> notInLeft, out List<object> notInRight, out List<Tuple<object, object>> inBothButChanged, string keyPropertyName = "id")
         {
             notInLeft = new List<object>();
