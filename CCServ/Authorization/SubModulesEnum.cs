@@ -24,6 +24,10 @@ namespace CCServ.Authorization
         /// <summary>
         /// The permission needed to edit the news.
         /// </summary>
-        EditNews
+        EditNews,
+        /// <summary>
+        /// The permission needed to edit or create FAQs.
+        /// </summary>
+        EditFAQ
     }
 }
