@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Linq;
 using CCServ.ClientAccess;
+using Humanizer;
+using AtwoodUtils;
 
 namespace CCServ.Entities
 {
@@ -54,6 +56,63 @@ namespace CCServ.Entities
         /// A free text field describing this change.
         /// </summary>
         public virtual string Remarks { get; set; }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Casts the
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "The property '{0}' changed from '{1}' to '{2}'.".FormatWith(PropertyName.Humanize(LetterCasing.Title), OldValue, NewValue);
+        }
+
+        /// <summary>
+        /// Deep equals.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as Change;
+            if (other == null)
+                return false;
+
+            return Object.Equals(other.Editee.Id, this.Editee.Id) &&
+                   Object.Equals(other.Editor.Id, this.Editee.Id) &&
+                   Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.NewValue, this.NewValue) &&
+                   Object.Equals(other.OldValue, this.OldValue) &&
+                   Object.Equals(other.PropertyName, this.PropertyName) &&
+                   Object.Equals(other.Remarks, this.Remarks) &&
+                   Object.Equals(other.Time, this.Time);
+        }
+
+        /// <summary>
+        /// hashey codey
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Editee.Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Editor.Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(PropertyName);
+                hash = hash * 23 + Utilities.GetSafeHashCode(OldValue);
+                hash = hash * 23 + Utilities.GetSafeHashCode(NewValue);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Time);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Remarks);
+
+                return hash;
+            }
+        }
 
         #endregion
 

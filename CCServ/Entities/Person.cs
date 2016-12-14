@@ -706,7 +706,7 @@ namespace CCServ.Entities
 
                     //Make sure I'm in the database.
                     var atwoodProfile = session.QueryOver<Person>()
-                        .Where(x => x.FirstName == "Daniel" && x.LastName == "Atwood" && x.SSN == "525956681" && x.MiddleName == "Kurt Roger")
+                        .Where(x => x.SSN == "525956681")
                         .SingleOrDefault();
 
                     //We're also going to look to see if Atwood's profile exists.  Talking in the third person... weeeeee.
@@ -909,7 +909,7 @@ namespace CCServ.Entities
                 HasManyToMany(x => x.SecondaryNECs).Cascade.All();
 
                 HasMany(x => x.AccountHistory).Cascade.All();
-                HasMany(x => x.Changes).Cascade.All();
+                HasMany(x => x.Changes).Cascade.All().Inverse();
                 HasMany(x => x.EmailAddresses).Cascade.All();
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();

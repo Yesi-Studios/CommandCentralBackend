@@ -3,6 +3,8 @@ using CCServ.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using System.Linq;
+using Humanizer;
+using AtwoodUtils;
 
 namespace CCServ.Entities
 {
@@ -54,7 +56,45 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return Number;
+            return "{0} ({1}) | {2}Contactable | {3}Preferred".FormatWith(Number, PhoneType.Value, IsContactable ? "" : "Not ", IsPreferred ? "" : "Not ");
+        }
+
+        /// <summary>
+        /// Deep comparison.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as PhoneNumber;
+            if (other == null)
+                return false;
+
+            return Object.Equals(other.Number, this.Number) &&
+                   Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.IsContactable, this.IsContactable) &&
+                   Object.Equals(other.IsPreferred, this.IsPreferred) &&
+                   Object.Equals(other.PhoneType, this.PhoneType);
+        }
+
+        /// <summary>
+        /// hashey codey
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Number);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsContactable);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsPreferred);
+                hash = hash * 23 + Utilities.GetSafeHashCode(PhoneType);
+
+                return hash;
+            }
         }
 
         #endregion

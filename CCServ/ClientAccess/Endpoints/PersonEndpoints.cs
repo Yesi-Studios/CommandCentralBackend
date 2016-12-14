@@ -254,6 +254,23 @@ namespace CCServ.ClientAccess.Endpoints
                                     wasSet = true;
                                     break;
                                 }
+                            case "changes":
+                                {
+                                    returnData.Add(propertyName, person.Changes.Select(x => new
+                                    {
+                                        Editee = x.Editee.ToBasicPerson(),
+                                        Editor = x.Editor.ToBasicPerson(),
+                                        x.PropertyName,
+                                        x.OldValue,
+                                        x.NewValue,
+                                        x.Time,
+                                        x.Remarks,
+                                        x.Id
+                                    }).ToList());
+
+                                    wasSet = true;
+                                    break;
+                                }
 
                         }
 
@@ -956,11 +973,11 @@ namespace CCServ.ClientAccess.Endpoints
                         return;
                     }
 
+                    //Since this was all good, just add the changes to the person's profile.
+                    changes.ForEach(x => personFromDB.Changes.Add(x));
+
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
-
-                    //Now we need to log all of the changes.
-                    changes.ForEach(x => session.Save(x));
 
                     //And then we're done!
                     token.SetResult("Success");
