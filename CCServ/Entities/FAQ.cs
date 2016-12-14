@@ -62,8 +62,8 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                Map(x => x.Name).Not.Nullable();
-                Map(x => x.Question).Not.Nullable();
+                Map(x => x.Name).Not.Nullable().Unique();
+                Map(x => x.Question).Not.Nullable().Unique();
                 HasMany(x => x.Paragraphs)
                     .KeyColumn("FAQId")
                     .Element("Paragraph", x => x.Length(1000));
