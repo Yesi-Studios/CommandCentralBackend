@@ -3,6 +3,7 @@ using AtwoodUtils;
 using System.Linq;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using Humanizer;
 
 namespace CCServ.Entities
 {
@@ -67,7 +68,6 @@ namespace CCServ.Entities
             return Object.Equals(other.Address, this.Address) &&
                    Object.Equals(other.Id, this.Id) &&
                    Object.Equals(other.IsContactable, this.IsContactable) &&
-                   Object.Equals(other.IsDodEmailAddress, this.IsDodEmailAddress) &&
                    Object.Equals(other.IsPreferred, this.IsPreferred);
         }
 
@@ -85,7 +85,6 @@ namespace CCServ.Entities
                 hash = hash * 23 + Utilities.GetSafeHashCode(Address);
                 hash = hash * 23 + Utilities.GetSafeHashCode(IsContactable);
                 hash = hash * 23 + Utilities.GetSafeHashCode(IsPreferred);
-                hash = hash * 23 + Utilities.GetSafeHashCode(IsDodEmailAddress);
 
                 return hash;
             }
@@ -97,7 +96,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return Address;
+            return "{0} | {1}Contactable | {2}Preferred".FormatWith(Address, IsContactable ? "" : "Not ", IsPreferred ? "" : "Not ");
         }
 
         #endregion

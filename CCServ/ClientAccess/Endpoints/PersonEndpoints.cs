@@ -927,7 +927,16 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Determine what changed.
-                    var changes = session.GetVariantProperties(personFromDB).ToList();
+                    var changes = session.GetVariantProperties(personFromDB)
+                        .Select(x =>
+                        {
+                            //When the yielded return results come back, we're going to tag them with the session-specific information.
+                            x.Editee = personFromDB;
+                            x.Editor = token.AuthenticationSession.Person;
+                            x.Time = token.CallTime;
+                            return x;
+                        })
+                        .ToList();
 
                     //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
                     var results = new Person.PersonValidator().Validate(personFromDB);
@@ -949,6 +958,9 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
+
+                    //Now we need to log all of the changes.
+                    changes.ForEach(x => session.Save(x));
 
                     //And then we're done!
                     token.SetResult("Success");

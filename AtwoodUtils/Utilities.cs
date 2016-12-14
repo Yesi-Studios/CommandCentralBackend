@@ -213,9 +213,6 @@ namespace AtwoodUtils
             if (left == null || right == null)
                 return false;
 
-            if (left.Count != right.Count)
-                return false;
-
             if (left.Count == 0 && right.Count == 0)
                 return true;
 

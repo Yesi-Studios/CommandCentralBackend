@@ -75,8 +75,7 @@ namespace CCServ.DataAccess
                                 Id = Guid.NewGuid(),
                                 NewValue = null,
                                 OldValue = obj.ToString(),
-                                PropertyName = propertyName,
-                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                                PropertyName = propertyName
                             };
                         }
 
@@ -88,8 +87,7 @@ namespace CCServ.DataAccess
                                 Id = Guid.NewGuid(),
                                 NewValue = obj.ToString(),
                                 OldValue = null,
-                                PropertyName = propertyName,
-                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                                PropertyName = propertyName
                             };
                         }
 
@@ -100,8 +98,7 @@ namespace CCServ.DataAccess
                                 Id = Guid.NewGuid(),
                                 NewValue = pair.Item1.ToString(),
                                 OldValue = pair.Item2.ToString(),
-                                PropertyName = propertyName,
-                                FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                                PropertyName = propertyName
                             };
                         }
                     }
@@ -116,10 +113,9 @@ namespace CCServ.DataAccess
                         yield return new Change
                         {
                             Id = Guid.NewGuid(),
-                            NewValue = currentValue.ToString(),
-                            OldValue = previousValue.ToString(),
-                            PropertyName = propertyName,
-                            FriendlyPropertyName = propertyName.Humanize(LetterCasing.Title)
+                            NewValue = currentValue == null ? null : currentValue.ToString(),
+                            OldValue = previousValue == null ? null : previousValue.ToString(),
+                            PropertyName = propertyName
                         };
                     }
                 }
