@@ -62,7 +62,7 @@ namespace CCServ.Entities
 
         #endregion
 
-        #region 
+        #region Overrides
 
         /// <summary>
         /// Returns the address in this format: 123 Fake Street, Happyville, TX 54321
@@ -71,6 +71,52 @@ namespace CCServ.Entities
         public override string ToString()
         {
             return "{0}, {1}, {2} {3}".FormatS(Address, City, State, ZipCode);
+        }
+
+        /// <summary>
+        /// Deep equality comparison
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var other = obj as PhysicalAddress;
+            if (other == null)
+                return false;
+
+            return Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.Address, this.Address) &&
+                   Object.Equals(other.City, this.City) &&
+                   Object.Equals(other.State, this.State) &&
+                   Object.Equals(other.ZipCode, this.ZipCode) &&
+                   Object.Equals(other.Country, this.Country) &&
+                   Object.Equals(other.IsHomeAddress, this.IsHomeAddress) &&
+                   Object.Equals(other.Latitude, this.Latitude) &&
+                   Object.Equals(other.Longitude, this.Longitude);
+        }
+
+        /// <summary>
+        /// hashey codey
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+
+                hash = hash * 23 + Utilities.GetSafeHashCode(Id);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Address);
+                hash = hash * 23 + Utilities.GetSafeHashCode(City);
+                hash = hash * 23 + Utilities.GetSafeHashCode(State);
+                hash = hash * 23 + Utilities.GetSafeHashCode(ZipCode);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Country);
+                hash = hash * 23 + Utilities.GetSafeHashCode(IsHomeAddress);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Latitude);
+                hash = hash * 23 + Utilities.GetSafeHashCode(Longitude);
+
+                return hash;
+            }
         }
 
         #endregion
