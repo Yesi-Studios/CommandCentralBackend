@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CCServ.Entities
 {
@@ -66,6 +67,30 @@ namespace CCServ.Entities
                 HasMany(x => x.Paragraphs)
                     .KeyColumn("FAQId")
                     .Element("Paragraph", x => x.Length(1000));
+            }
+        }
+
+        /// <summary>
+        /// Validates an FAQ
+        /// </summary>
+        public class FAQValidator : AbstractValidator<FAQ>
+        {
+            /// <summary>
+            /// Validates an FAQ
+            /// </summary>
+            public FAQValidator()
+            {
+                RuleFor(x => x.Id).NotEmpty();
+                RuleFor(x => x.Name).Must(x =>
+                {
+                    return x.All(y => char.IsLetterOrDigit(y) || y == '-');
+                })
+                .WithMessage("An FAQ's name must not contains spaces or any other special character aside from dashes.");
+                RuleFor(x => x.Question).Length(10, 255).NotEmpty()
+                    .WithMessage("Your question must not be blank, not less than 10 characters, but no more than 255.");
+                RuleFor(x => x.Paragraphs)
+                    .Must(x => x.Sum(y => y.Length) <= 4096)
+                    .WithMessage("The total text in the paragraphs must not exceed 4096 characters.");
             }
         }
     }
