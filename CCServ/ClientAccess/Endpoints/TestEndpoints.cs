@@ -14,7 +14,7 @@ namespace CCServ.ClientAccess.Endpoints
     /// <para />
     /// Endpoints in this class should be wrapped in debug statements.
     /// </summary>
-    public static class TestEndpoints
+    static class TestEndpoints
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
@@ -41,45 +41,6 @@ namespace CCServ.ClientAccess.Endpoints
         {
             Logging.Log.Critical("TEST TEST TEST");
         }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Returns the Navy's birthday.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "TestDate", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_TestDate(MessageToken token)
-        {
-            token.SetResult(new DateTime(1775, 10, 13));
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Returns the Navy's birthday.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "TestParseDate", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_TestParseDate(MessageToken token)
-        {
-            if (!token.Args.ContainsKey("date"))
-            {
-                token.AddErrorMessage("you failed to send a date parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            try
-            {
-                token.SetResult((DateTime)token.Args["date"]);
-            }
-            catch
-            {
-                token.SetResult("failed");
-            }
-            
-        }
+        
     }
 }

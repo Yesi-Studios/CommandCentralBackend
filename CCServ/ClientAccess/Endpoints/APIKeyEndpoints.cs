@@ -10,7 +10,7 @@ namespace CCServ.ClientAccess.Endpoints
     /// <summary>
     /// Contains all the endpoints for the API Keys.
     /// </summary>
-    public static class APIKeyEndpoints
+    static class APIKeyEndpoints
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.

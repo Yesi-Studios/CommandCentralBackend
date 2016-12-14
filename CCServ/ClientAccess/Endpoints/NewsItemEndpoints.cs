@@ -9,7 +9,7 @@ using CCServ.Authorization;
 
 namespace CCServ.ClientAccess.Endpoints
 {
-    public static class NewsItemEndpoints
+    static class NewsItemEndpoints
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.

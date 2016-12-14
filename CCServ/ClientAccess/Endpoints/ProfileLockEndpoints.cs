@@ -12,7 +12,7 @@ namespace CCServ.ClientAccess.Endpoints
     /// <summary>
     /// Contains all those endpoints for profile locks.
     /// </summary>
-    public static class ProfileLockEndpoints
+    static class ProfileLockEndpoints
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.

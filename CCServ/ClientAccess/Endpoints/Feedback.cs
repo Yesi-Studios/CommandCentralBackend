@@ -9,7 +9,7 @@ namespace CCServ.ClientAccess.Endpoints
     /// <summary>
     /// Contains the feedback endpoints.
     /// </summary>
-    public static class Feedback
+    static class Feedback
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
