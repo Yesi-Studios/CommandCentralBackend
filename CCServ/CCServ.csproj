@@ -197,6 +197,7 @@
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
+    <Compile Include="Entities\FAQ.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
