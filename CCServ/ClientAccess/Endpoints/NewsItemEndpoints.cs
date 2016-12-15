@@ -237,7 +237,7 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to manage the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 

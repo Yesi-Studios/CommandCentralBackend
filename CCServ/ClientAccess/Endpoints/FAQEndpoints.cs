@@ -181,5 +181,90 @@ namespace CCServ.ClientAccess.Endpoints
                 }
             }
         }
+
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Updates an FAQ.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(EndpointName = "UpdateFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void EndpointMethod_UpdateFAQ(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to manage the FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            //Make sure the client has permission to manage the FAQ.
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
+            {
+                token.AddErrorMessage("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+            }
+
+            //Let's see if the parameters are here.
+            if (!token.Args.ContainsKey("faq"))
+            {
+                token.AddErrorMessage("You didn't send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Get the faq
+            FAQ faqFromClient;
+
+            try
+            {
+                faqFromClient = token.Args["faq"].CastJToken<FAQ>();
+            }
+            catch (Exception e)
+            {
+                token.AddErrorMessage("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Ok now we know we have the FAQ.  Now let's see if it's valid.
+            var validationResult = new FAQ.FAQValidator().Validate(faqFromClient);
+
+            if (!validationResult.IsValid)
+            {
+                token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now we can go load the news item.
+            //Once we have a session, then we need to also make sure the Id is a real thing.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+
+                    //Let's see about loading it from the database.
+                    FAQ faqFromDB = session.Get<FAQ>(faqFromClient.Id);
+
+                    if (faqFromDB == null)
+                    {
+                        token.AddErrorMessage("A faq with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        return;
+                    }
+
+                    //We already know the desired faq is valid.  So all we need to do is merge it.
+                    session.Merge(faqFromClient);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    return;
+                }
+            }
+
+        }
+
     }
 }
