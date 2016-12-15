@@ -7,6 +7,9 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
+    /// <summary>
+    /// The gods in the system.  
+    /// </summary>
     public class Developers : PermissionGroup
     {
         /// <summary>
