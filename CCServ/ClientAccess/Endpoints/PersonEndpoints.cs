@@ -894,7 +894,6 @@ namespace CCServ.ClientAccess.Endpoints
                                             .Where(x => x.LockedPerson.Id == personFromClient.Id)
                                             .SingleOrDefault();
 
-
                     //If we got no profile lock, then bail
                     if (profileLock == null)
                     {
