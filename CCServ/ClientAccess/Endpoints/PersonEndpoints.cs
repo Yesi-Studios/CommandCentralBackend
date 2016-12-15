@@ -883,7 +883,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
-            using (var session = NHibernateHelper.CreateStatefulSession(token))
+            using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
