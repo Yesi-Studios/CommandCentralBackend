@@ -80,8 +80,7 @@ namespace CCServ.Entities
             /// </summary>
             public FAQValidator()
             {
-                RuleFor(x => x.Id).NotEmpty();
-                RuleFor(x => x.Name).Must(x =>
+                RuleFor(x => x.Name).NotEmpty().Length(1, 50).Must(x =>
                 {
                     return x.All(y => char.IsLetterOrDigit(y) || y == '-');
                 })
