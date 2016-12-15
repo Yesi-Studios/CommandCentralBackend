@@ -23,12 +23,12 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Returns a collection of properties that are dirty along with their new and old values.
         /// <para />
-        /// This only work on the person object.
+        /// This has only been tested on the Person object, but technically it should work on anything.
         /// </summary>
         /// <param name="session"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public static IEnumerable<Change> GetVariantProperties(this ISession session, Object entity)
+        public static IEnumerable<Change> GetVariantProperties<T>(this ISession session, T entity) where T : class, new()
         {
             //This is all the information about the session and its implementation from the underlying NHibernate set up.
             ISessionImplementor sessionImpl = session.GetSessionImplementation();
