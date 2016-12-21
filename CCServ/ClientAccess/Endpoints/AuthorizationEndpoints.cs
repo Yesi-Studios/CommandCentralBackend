@@ -179,29 +179,34 @@ namespace CCServ.ClientAccess.Endpoints
                                     {
                                         if (!person.IsInSameCommandAs(token.AuthenticationSession.Person))
                                             failures.Add(groupName);
+
                                         break;
                                     }
                                 case ChainOfCommandLevels.Department:
                                     {
                                         if (!person.IsInSameDepartmentAs(token.AuthenticationSession.Person))
                                             failures.Add(groupName);
+
                                         break;
                                     }
                                 case ChainOfCommandLevels.Division:
                                     {
                                         if (!person.IsInSameDivisionAs(token.AuthenticationSession.Person))
                                             failures.Add(groupName);
+
                                         break;
                                     }
                                 case ChainOfCommandLevels.None:
                                     {
                                         failures.Add(groupName);
+
                                         break;
                                     }
                                 case ChainOfCommandLevels.Self:
                                     {
                                         if (!person.Id.Equals(token.AuthenticationSession.Person.Id))
                                             failures.Add(groupName);
+
                                         break;
                                     }
                                 default:
