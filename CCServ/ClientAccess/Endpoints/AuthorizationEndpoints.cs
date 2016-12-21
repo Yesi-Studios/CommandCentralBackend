@@ -168,7 +168,46 @@ namespace CCServ.ClientAccess.Endpoints
                         }
                         else
                         {
-                            //Ok so the client can edit that permission group, now we need to take into account access level.
+                            //Here we get the group the client is trying to edit.  We know the client is allowed to edit its membership at this point.
+                            var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.SafeEquals(groupName));
+
+                            //Now, we need to know if the client has the right access level (chain of command) to edit it.
+                            switch (group.AccessLevel)
+                            {
+                                case ChainOfCommandLevels.Command:
+                                    {
+                                        if (!person.IsInSameCommandAs(token.AuthenticationSession.Person))
+                                            failures.Add(groupName);
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Department:
+                                    {
+                                        if (!person.IsInSameDepartmentAs(token.AuthenticationSession.Person))
+                                            failures.Add(groupName);
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Division:
+                                    {
+                                        if (!person.IsInSameDivisionAs(token.AuthenticationSession.Person))
+                                            failures.Add(groupName);
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.None:
+                                    {
+                                        failures.Add(groupName);
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Self:
+                                    {
+                                        if (!person.Id.Equals(token.AuthenticationSession.Person.Id))
+                                            failures.Add(groupName);
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        throw new Exception("In the access level switch of the edit permission groups endpoint.");
+                                    }
+                            }
                         }
                     }
 
