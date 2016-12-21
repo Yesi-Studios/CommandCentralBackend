@@ -26,6 +26,17 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Returns the property that matches the expression.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static MemberInfo SelectPropertyFrom<T>(Expression<Func<T, object>> expression)
+        {
+            return expression.GetProperty();
+        }
+
+        /// <summary>
         /// Selects a number of properties from a given type that are all of the same given type.
         /// </summary>
         /// <typeparam name="T"></typeparam>
