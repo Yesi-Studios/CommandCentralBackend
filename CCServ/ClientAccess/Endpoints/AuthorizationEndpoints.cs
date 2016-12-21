@@ -155,7 +155,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
 
                     //Now determine what permissions the client wants to change.
-                    var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First());
+                    var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First()).ToList();
 
                     //Now go through all the requested changes and make sure the client can make them.
                     List<string> failures = new List<string>();
@@ -219,6 +219,18 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //Now make sure we don't try to save the default permissions.
                     person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
+
+                    //We also need to add the changes to the person.
+                    person.Changes.Add(new Change
+                    {
+                        Editee = person,
+                        Editor = token.AuthenticationSession.Person,
+                        Id = Guid.NewGuid(),
+                        NewValue = String.Join(", ", person.PermissionGroupNames),
+                        OldValue = String.Join(", ", currentGroups),
+                        PropertyName = PropertySelector.SelectPropertyFrom<Person>(x => x.PermissionGroups).Name,
+                        Time = token.CallTime
+                    });
 
                     session.Update(person);
 
