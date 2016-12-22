@@ -30,6 +30,8 @@ namespace CCServ.Entities.ReferenceLists
         public static WatchQualification JOOD = new WatchQualification { Id = Guid.Parse("{726A2088-AE51-4E41-B10A-952F0CBD73C3}"), Value = "JOOD", Description = "" };
         public static WatchQualification OOD = new WatchQualification { Id = Guid.Parse("{91B60F40-C991-4DB6-A51F-3889989C2D33}"), Value = "OOD", Description = "" };
         public static WatchQualification CDO = new WatchQualification { Id = Guid.Parse("{0B8F03E9-11ED-40BF-8E0D-18C49F9C25E2}"), Value = "CDO", Description = "" };
+        public static WatchQualification FHD = new WatchQualification { Id = Guid.Parse("{57BE1E02-DD6B-41D6-B73B-15B2DB01F468}"), Value = "FHD", Description = "" };
+        public static WatchQualification Exempt = new WatchQualification { Id = Guid.Parse("{AC0DDBE2-E34E-468B-968E-8B4695ACF5A4}"), Value = "Exempt", Description = "" };
 
         /// <summary>
         /// Ensures that all watch qualifications are persisted in the database and that they look the same as they do here.
