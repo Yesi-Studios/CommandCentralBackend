@@ -7,6 +7,7 @@ using System.Linq;
 using NHibernate.Criterion;
 using CCServ.Authorization;
 using CCServ.Logging;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -530,8 +531,8 @@ namespace CCServ.Entities
                 Map(x => x.Command);
                 Map(x => x.MusterStatus);
                 Map(x => x.DutyStatus);
-                Map(x => x.SubmitTime);
-                Map(x => x.MusterDate).Not.Nullable();
+                Map(x => x.SubmitTime).CustomType<UtcDateTimeType>();
+                Map(x => x.MusterDate).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.HasBeenSubmitted).Not.Nullable();
                 Map(x => x.Remarks);
                 Map(x => x.Designation);

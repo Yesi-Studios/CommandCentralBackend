@@ -15,6 +15,7 @@ using CCServ.ServiceManagement;
 using CCServ.Logging;
 using System.Reflection;
 using CCServ.DTOs;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -894,16 +895,16 @@ namespace CCServ.Entities
                 Map(x => x.WorkRemarks).Nullable().Length(150);
                 Map(x => x.DateOfArrival).Not.Nullable();
                 Map(x => x.JobTitle).Nullable().Length(40);
-                Map(x => x.EAOS);
-                Map(x => x.PRD);
-                Map(x => x.DateOfDeparture).Nullable();
+                Map(x => x.EAOS).CustomType<UtcDateTimeType>();
+                Map(x => x.PRD).CustomType<UtcDateTimeType>();
+                Map(x => x.DateOfDeparture).Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.EmergencyContactInstructions).Nullable().Length(150);
                 Map(x => x.ContactRemarks).Nullable().Length(150);
                 Map(x => x.IsClaimed).Not.Nullable().Default(false.ToString());
                 Map(x => x.Username).Nullable().Length(40).Unique();
                 Map(x => x.PasswordHash).Nullable().Length(100);
                 Map(x => x.Suffix).Nullable().Length(40);
-                Map(x => x.GTCTrainingDate).Nullable();
+                Map(x => x.GTCTrainingDate).Nullable().CustomType<UtcDateTimeType>();
 
                 References(x => x.PrimaryNEC);
                 HasManyToMany(x => x.SecondaryNECs).Cascade.All();

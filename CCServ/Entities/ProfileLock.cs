@@ -4,6 +4,7 @@ using CCServ.ClientAccess;
 using System.Collections.Generic;
 using AtwoodUtils;
 using System.Linq;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -73,7 +74,7 @@ namespace CCServ.Entities
                 References(x => x.Owner).Not.Nullable();
                 References(x => x.LockedPerson).Not.Nullable().Unique();
 
-                Map(x => x.SubmitTime).Not.Nullable();
+                Map(x => x.SubmitTime).Not.Nullable().CustomType<UtcDateTimeType>();
             }
         }
     }

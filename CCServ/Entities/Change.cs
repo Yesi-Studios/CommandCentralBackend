@@ -7,6 +7,7 @@ using System.Linq;
 using CCServ.ClientAccess;
 using Humanizer;
 using AtwoodUtils;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -131,7 +132,7 @@ namespace CCServ.Entities
                 References(x => x.Editor).Not.Nullable();
                 References(x => x.Editee).Not.Nullable();
 
-                Map(x => x.Time).Not.Nullable();
+                Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.PropertyName).Not.Nullable();
                 Map(x => x.OldValue);

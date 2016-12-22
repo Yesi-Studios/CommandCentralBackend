@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -61,7 +62,7 @@ namespace CCServ.Entities
 
                 References(x => x.Person).Not.Nullable().Unique();
 
-                Map(x => x.Time).Not.Nullable();
+                Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
             }
         }
     }
