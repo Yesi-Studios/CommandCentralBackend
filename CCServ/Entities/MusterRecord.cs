@@ -370,7 +370,9 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    var persons = GetMusterablePersonsQuery(session).List();
+                    //In rollover, we're going to rollover ALL records, not just the records of musterable people.  
+                    //This is in response to issue https://github.com/Yesi-Studios/CommandCentralBackend/issues/135
+                    var persons = session.QueryOver<Person>().List();
 
                     //Now we need to go through each person and reset their current muster status.
                     foreach (var person in persons)
