@@ -256,7 +256,9 @@ namespace CCServ.ClientAccess.Endpoints
                                 }
                             case "changes":
                                 {
-                                    returnData.Add(propertyName, person.Changes.Select(x => new
+                                    //Here we're going to iterate back through the returnable fields in order to return only those changes the client can see.
+                                    //Then we'll select out those changes, casting the editee/editor to basic person DTOs.  
+                                    returnData.Add(propertyName, person.Changes.Where(x => returnableFields.Contains(x.PropertyName, StringComparer.CurrentCultureIgnoreCase)).Select(x => new
                                     {
                                         Editee = x.Editee.ToBasicPerson(),
                                         Editor = x.Editor.ToBasicPerson(),
