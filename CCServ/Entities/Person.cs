@@ -326,7 +326,7 @@ namespace CCServ.Entities
         #endregion
 
         #region Helper Methods
-
+        
         /// <summary>
         /// Returns an object containing two properties: this object's Id and this object's .ToString in a parameter called FriendlyName.  Intended for use with DTOs.
         /// </summary>
@@ -338,24 +338,6 @@ namespace CCServ.Entities
                 Id = this.Id,
                 FriendlyName = this.ToString()
             };
-        }
-
-        /// <summary>
-        /// Casts the person object to a DTO consisting of its identifiers.
-        /// </summary>
-        /// <returns></returns>
-        public virtual Dictionary<string, string> ToIdentificationDTO()
-        {
-            Dictionary<string, string> result = new Dictionary<string, string>();
-
-            foreach (var identifier in new PersonQueryProvider().GetIdentifiers())
-            {
-                var value = ((PropertyInfo)identifier).GetValue(this);
-
-                result.Add(identifier.Name, value == null ? "" : value.ToString());
-            }
-
-            return result;
         }
         
         /// <summary>
