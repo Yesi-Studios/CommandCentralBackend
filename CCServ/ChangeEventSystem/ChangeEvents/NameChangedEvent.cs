@@ -16,8 +16,8 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// <summary>
         /// Raises the name changed event.
         /// </summary>
-        /// <param name="client"></param>
-        /// <param name="state"></param>
+        /// <param name="client">The person that raised the event.</param>
+        /// <param name="state">Expected to be the NameChangedEventEmailModel.</param>
         public override void RaiseEvent(object state, Person client)
         {
             Task.Run(() =>
@@ -48,7 +48,18 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
             Name = "Name Changed";
             Description = "Occurs when a person's first name, last name or middle name changes.";
 
-            RequiresChainOfCommand = false;
+            RequiresChainOfCommand = false;s
+
+            RequiredFields = new Dictionary<Authorization.ChainsOfCommand, Dictionary<string, List<string>>>
+            {
+                { Authorization.ChainsOfCommand.Main, new Dictionary<string, List<string>>
+                    {
+                        { typeof(Person).Name, PropertySelector.SelectPropertiesFrom<Person>(x => x.FirstName,
+                                                                                             x => x.LastName,
+                                                                                             x => x.MiddleName).Select(x => x.Name).ToList() }
+                    }
+                }
+            };
         }
     }
 }

@@ -14,14 +14,31 @@ namespace CCServ.ChangeEventSystem
 
         #region Properties
 
+        /// <summary>
+        /// The name of this change event.
+        /// </summary>
         public string Name { protected set; get; }
 
+        /// <summary>
+        /// A short description of this change event.
+        /// </summary>
         public string Description { protected set; get; }
 
+        /// <summary>
+        /// Indicates if this change event requires chain of command checks during the field permissions check.
+        /// </summary>
         public bool RequiresChainOfCommand { protected set; get; }
 
-        public Dictionary<string, Dictionary<string, List<string>>> RequiredFields { protected set; get; }
+        /// <summary>
+        /// The list of fields a person must have access to view in order to see this change event.
+        /// 
+        /// Example: Authorization.ChainsOfCommand.Main -> Person -> FirstName.
+        /// </summary>
+        public Dictionary<Authorization.ChainsOfCommand, Dictionary<string, List<string>>> RequiredFields { protected set; get; }
 
+        /// <summary>
+        /// The name of the person who raised this change event. (person.ToString())
+        /// </summary>
         public string EventRaisedByFriendlyName { get; set; }
 
         #endregion
@@ -42,6 +59,13 @@ namespace CCServ.ChangeEventSystem
         {
             List<System.Net.Mail.MailAddress> result;
 
+            //Some basic validation.  If the client is null but there are required fields, then throw an error because we have no one to check against.
+            if (this.RequiredFields == null && person == null)
+                throw new Exception("Required fields and the person argument may not be null.");
+
+            if (this.RequiresChainOfCommand && person == null)
+                throw new Exception("If a change event requires a chain of command check, then the person argument can't be null.");
+
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
@@ -55,10 +79,6 @@ namespace CCServ.ChangeEventSystem
                     //If this event requires a CoC check, then let's use get chain of command to get all those persons' ids who are in this person's chain of command.
                     if (this.RequiresChainOfCommand)
                     {
-
-                        if (person == null)
-                            throw new ArgumentException("If a change event requires a chain of command check, then the person argument can't be null.");
-
                         var chainOfCommand = person.GetChainOfCommand();
                         var personIds = chainOfCommand[Authorization.ChainsOfCommand.Main].SelectMany(x => x.Value.Select(y => y.Id.ToString()));
 
@@ -70,7 +90,7 @@ namespace CCServ.ChangeEventSystem
                                            .Fetch(x => x.EmailAddresses).Eager
                                            .List<Person>();
 
-                    //Make sure the perso isn't null before we ask questions about chain of command.
+                    //Make sure the person isn't null before we ask questions about chain of command.
                     if (person != null)
                     {
                         //Now, we need to select out only those people whose subscription levels match.
@@ -93,7 +113,7 @@ namespace CCServ.ChangeEventSystem
                                 if (subscriptionEvent.ChainOfCommandLevel == ChainOfCommandLevels.Division)
                                     return subscriber.IsInSameDivisionAs(person);
 
-                                throw new Exception("Whole processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(this.Name, subscriptionEvent.ChainOfCommandLevel));
+                                throw new Exception("While processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(this.Name, subscriptionEvent.ChainOfCommandLevel));
                             }).ToList();
                     }
 

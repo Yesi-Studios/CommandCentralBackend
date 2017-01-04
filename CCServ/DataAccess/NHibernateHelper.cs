@@ -96,9 +96,16 @@ namespace CCServ.DataAccess
         /// Creates a new session from the session factory.
         /// </summary>
         /// <returns></returns>
-        public static ISession CreateStatefulSession()
+        public static ISession CreateStatefulSession(bool enableChangeEvents = true)
         {
-            return _sessionFactory.OpenSession();
+            if (enableChangeEvents)
+            {
+                return _sessionFactory.OpenSession(new ChangeInterceptor());
+            }
+            else
+            {
+                return _sessionFactory.OpenSession();
+            }
         }
 
         /// <summary>
