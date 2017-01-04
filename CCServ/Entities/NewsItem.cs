@@ -80,7 +80,7 @@ namespace CCServ.Entities
             /// </summary>
             public NewsItemValidator()
             {
-                RuleFor(x => x.CreationTime).NotEmpty().CustomType<UtcDateTimeType>();
+                RuleFor(x => x.CreationTime).NotEmpty();
                 RuleFor(x => x.Creator).NotEmpty();
                 RuleFor(x => x.Id).NotEmpty();
                 RuleFor(x => x.Paragraphs)
