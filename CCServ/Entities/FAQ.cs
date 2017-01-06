@@ -65,6 +65,7 @@ namespace CCServ.Entities
                 Map(x => x.Name).Not.Nullable().Unique();
                 Map(x => x.Question).Not.Nullable().Unique();
                 HasMany(x => x.Paragraphs)
+                    .Table("faqparagraphs")
                     .KeyColumn("FAQId")
                     .Element("Paragraph", x => x.Length(1000));
             }

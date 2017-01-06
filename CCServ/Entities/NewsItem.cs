@@ -63,6 +63,7 @@ namespace CCServ.Entities
 
                 Map(x => x.Title).Not.Nullable().Length(50).Not.LazyLoad();
                 HasMany(x => x.Paragraphs)
+                    .Table("newsitemparagraphs")
                     .KeyColumn("NewsItemID")
                     .Element("Paragraph", x => x.Length(10000))
                     .Not.LazyLoad();

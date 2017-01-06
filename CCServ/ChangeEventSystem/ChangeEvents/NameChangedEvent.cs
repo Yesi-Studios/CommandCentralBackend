@@ -48,7 +48,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
             Name = "Name Changed";
             Description = "Occurs when a person's first name, last name or middle name changes.";
 
-            RequiresChainOfCommand = false;s
+            RequiresChainOfCommand = false;
 
             RequiredFields = new Dictionary<Authorization.ChainsOfCommand, Dictionary<string, List<string>>>
             {

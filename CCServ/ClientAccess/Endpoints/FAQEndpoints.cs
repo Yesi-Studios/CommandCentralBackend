@@ -83,7 +83,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var faqs = session.QueryOver<FAQ>();
+                    var faqs = session.QueryOver<FAQ>().List();
 
                     token.SetResult(faqs);
 
