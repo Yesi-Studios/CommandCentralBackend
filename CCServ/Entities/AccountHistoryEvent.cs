@@ -56,9 +56,6 @@ namespace CCServ.Entities
             if (other == null)
                 return false;
 
-            if (object.ReferenceEquals(this, other))
-                return true;
-
             return Object.Equals(other.Id, this.Id) &&
                    Object.Equals(other.AccountHistoryEventType, this.AccountHistoryEventType) &&
                    Object.Equals(other.EventTime, this.EventTime);
