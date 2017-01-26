@@ -3,6 +3,7 @@ using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using CCServ.Entities.ReferenceLists;
 using NHibernate.Type;
+using Humanizer;
 
 namespace CCServ.Entities
 {
@@ -41,7 +42,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} @ {1}".FormatS(this.AccountHistoryEventType, this.EventTime);
+            return "{0} @ {1}".FormatWith(this.AccountHistoryEventType, this.EventTime);
         }
 
         /// <summary>
@@ -58,9 +59,9 @@ namespace CCServ.Entities
             if (object.ReferenceEquals(this, other))
                 return true;
 
-            return other.Id.Equals(this.Id) &&
-                   other.AccountHistoryEventType.Equals(this.AccountHistoryEventType) &&
-                   other.EventTime.Equals(this.EventTime);
+            return Object.Equals(other.Id, this.Id) &&
+                   Object.Equals(other.AccountHistoryEventType, this.AccountHistoryEventType) &&
+                   Object.Equals(other.EventTime, this.EventTime);
         }
 
         /// <summary>
