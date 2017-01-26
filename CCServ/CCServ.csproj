@@ -199,6 +199,7 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\FAQ.cs" />
+    <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
@@ -325,6 +326,7 @@
   <ItemGroup>
     <Content Include="Email\Templates\NameChangedEvent_HTML.html" />
     <Content Include="Email\Templates\PasswordChanged_HTML.html" />
+    <Content Include="TextFile1.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
