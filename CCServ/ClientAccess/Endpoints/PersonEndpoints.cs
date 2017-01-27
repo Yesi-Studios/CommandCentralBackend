@@ -967,7 +967,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-                    var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
+                    var unauthorizedEdits = changes.Where(x => !String.Equals("accounthistory", x.PropertyName, StringComparison.CurrentCultureIgnoreCase) && !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
                     {
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
