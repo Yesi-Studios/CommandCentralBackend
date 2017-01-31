@@ -10,7 +10,7 @@ using CCServ.CustomTypes;
 namespace CCServ.Email.Models
 {
     /// <summary>
-    /// 
+    /// The email model sent to the muster email template.
     /// </summary>
     public class MusterReportEmailModel
     {
@@ -25,6 +25,9 @@ namespace CCServ.Email.Models
             }
         }
 
+        /// <summary>
+        /// The link to the report which is built using the date string.
+        /// </summary>
         public string ReportLink
         {
             get
@@ -33,8 +36,14 @@ namespace CCServ.Email.Models
             }
         }
 
+        /// <summary>
+        /// The name of the person who generated this email.  Suggest using person.ToString() on the authentication token owner.
+        /// </summary>
         public string CreatorName { get; set; }
 
+        /// <summary>
+        /// The date time of the muster.
+        /// </summary>
         private DateTime MusterDateTime { get; set; }
 
         /// <summary>
@@ -54,10 +63,19 @@ namespace CCServ.Email.Models
             }
         }
 
+        /// <summary>
+        /// The list of all records involved in this report email.
+        /// </summary>
         public List<Entities.MusterRecord> Records { get; set; }
 
+        /// <summary>
+        /// The list of all containers in this email.  (These are the "totals" on the email).
+        /// </summary>
         private List<MusterGroupContainer> Containers { get; set; }
 
+        /// <summary>
+        /// The total text, which is the containers turned into HTML paragraphs.
+        /// </summary>
         public string ReportText
         {
             get
