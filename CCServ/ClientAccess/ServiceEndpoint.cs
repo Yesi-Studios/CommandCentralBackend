@@ -16,8 +16,6 @@ namespace CCServ.ClientAccess
     public class ServiceEndpoint
     {
 
-        
-
         #region Properties
 
         /// <summary>
