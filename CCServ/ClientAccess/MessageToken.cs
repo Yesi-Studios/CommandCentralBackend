@@ -193,7 +193,6 @@ namespace CCServ.ClientAccess
             //Initialize the status code to OK.  If the error message is ever set, then that'll change.
             StatusCode = System.Net.HttpStatusCode.OK;
             ErrorType = ErrorTypes.Null;
-            APIKey = new APIKey();
         }
 
         #endregion
@@ -322,8 +321,8 @@ namespace CCServ.ClientAccess
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.APIKey).LazyLoad(Laziness.False);
-                References(x => x.AuthenticationSession).LazyLoad(Laziness.False);
+                References(x => x.APIKey).Nullable();
+                References(x => x.AuthenticationSession).Nullable();
 
                 Map(x => x.CallTime);
                 Map(x => x.RawRequestBodyForLogging).Length(10000);

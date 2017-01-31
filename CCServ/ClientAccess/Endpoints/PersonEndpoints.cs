@@ -936,13 +936,15 @@ namespace CCServ.ClientAccess.Endpoints
                     var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
                     var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
-                    //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
-                    foreach (var field in returnableFields)
+                    //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
+                    foreach (var field in returnableFields.Intersect(editableFields, StringComparer.CurrentCultureIgnoreCase))
                     {
                         var property = typeof(Person).GetProperty(field);
 
                         property.SetValue(personFromDB, property.GetValue(personFromClient));
                     }
+
+                    
 
                     //Determine what changed.
                     var changes = session.GetVariantProperties(personFromDB)
@@ -967,7 +969,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
-                    var unauthorizedEdits = changes.Where(x => !String.Equals("accounthistory", x.PropertyName, StringComparison.CurrentCultureIgnoreCase) && !editableFields.Contains(x.PropertyName));
+                    var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
                     {
                         token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);

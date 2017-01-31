@@ -41,6 +41,8 @@ namespace CCServ.Logging.Loggers
                 .To(new System.Net.Mail.MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                .CC(new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.AtwoodGmailAddress),
+                    new System.Net.Mail.MailAddress(ServiceManagement.ServiceManager.CurrentConfigState.McLeanGmailAddress))
                 .Subject("Command Central Critical Message")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));

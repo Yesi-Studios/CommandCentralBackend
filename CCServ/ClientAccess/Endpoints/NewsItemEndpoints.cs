@@ -121,6 +121,8 @@ namespace CCServ.ClientAccess.Endpoints
                         x.Title
                     };
                 }));
+
+                Logging.Log.Critical("test test", token);
             }
         }
 
