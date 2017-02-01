@@ -440,7 +440,7 @@ namespace CCServ.ClientAccess.Endpoints
             bool showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
             {
-                showHidden = (bool)token.Args["showhidden"];
+                showHidden = Boolean.Parse(token.Args["showhidden"] as string);
             }
 
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -936,13 +936,15 @@ namespace CCServ.ClientAccess.Endpoints
                     var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
                     var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
-                    //Go through all returnable fields that don't ignore edits and then move the values into the person from the database.
-                    foreach (var field in returnableFields)
+                    //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
+                    foreach (var field in returnableFields.Intersect(editableFields, StringComparer.CurrentCultureIgnoreCase))
                     {
                         var property = typeof(Person).GetProperty(field);
 
                         property.SetValue(personFromDB, property.GetValue(personFromClient));
                     }
+
+                    
 
                     //Determine what changed.
                     var changes = session.GetVariantProperties(personFromDB)

@@ -23,6 +23,9 @@ namespace CCServ.Email.Models
         /// </summary>
         public ClientAccess.MessageToken Token { get; set; }
 
+        /// <summary>
+        /// Returns a comma delineated list of the permissions the client has.
+        /// </summary>
         public string ClientPermissionNames
         {
             get

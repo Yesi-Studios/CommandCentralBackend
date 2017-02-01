@@ -159,6 +159,20 @@ namespace CCServ.Email.EmailInterface
         }
 
         /// <summary>
+        /// The addresses to add to the CC collection.  Adds the addresses as MailAddress objects with no display name.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
+        public CCEmailMessage CC(IEnumerable<string> addresses)
+        {
+            foreach (var address in addresses)
+            {
+                Message.CC.Add(address);
+            }
+            return this;
+        }
+
+        /// <summary>
         /// The addresses to add to the BCC collection.
         /// </summary>
         /// <param name="addresses"></param>
@@ -190,6 +204,20 @@ namespace CCServ.Email.EmailInterface
         /// <param name="addresses"></param>
         /// <returns></returns>
         public CCEmailMessage BCC(IEnumerable<MailAddress> addresses)
+        {
+            foreach (var address in addresses)
+            {
+                Message.Bcc.Add(address);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// The addresses to add to the BCC collection.
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
+        public CCEmailMessage BCC(IEnumerable<string> addresses)
         {
             foreach (var address in addresses)
             {

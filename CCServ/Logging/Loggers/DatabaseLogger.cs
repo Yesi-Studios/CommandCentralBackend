@@ -13,6 +13,9 @@ namespace CCServ.Logging.Loggers
     public class DatabaseLogger : ILogger
     {
 
+        /// <summary>
+        /// Returns the Database target type.
+        /// </summary>
         public LoggingTargetTypes TargetType
         {
             get
@@ -21,6 +24,9 @@ namespace CCServ.Logging.Loggers
             }
         }
 
+        /// <summary>
+        /// Returns the name of this logger.
+        /// </summary>
         public string Name
         {
             get
@@ -66,6 +72,14 @@ namespace CCServ.Logging.Loggers
             }
         }
 
+        /// <summary>
+        /// Inserts an information entry log to the database.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
             if (DataAccess.NHibernateHelper.IsReady)
@@ -95,6 +109,14 @@ namespace CCServ.Logging.Loggers
             }
         }
 
+        /// <summary>
+        /// Inserts a critical message entry log to the database.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public void LogCritical(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
             if (DataAccess.NHibernateHelper.IsReady)
@@ -124,6 +146,14 @@ namespace CCServ.Logging.Loggers
             }
         }
 
+        /// <summary>
+        /// Inserts a warning entry log to the database.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public void LogWarning(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
             if (DataAccess.NHibernateHelper.IsReady)
@@ -153,6 +183,15 @@ namespace CCServ.Logging.Loggers
             }
         }
 
+        /// <summary>
+        /// Inserts an exception entry log to the database.
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="message"></param>
+        /// <param name="token"></param>
+        /// <param name="callerMemberName"></param>
+        /// <param name="callerLineNumber"></param>
+        /// <param name="callerFilePath"></param>
         public void LogException(Exception ex, string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
 

@@ -34,16 +34,11 @@ namespace CCServ.ServiceManagement
         /// The display name for the developer distro.
         /// </summary>
         public string DeveloperDistroDisplayName { get; set; }
-        
+
         /// <summary>
-        /// Atwood's email address.
+        /// The personal email addresses of the developers, used for error handling and such.
         /// </summary>
-        public string AtwoodGmailAddress { get; set; }
-        
-        /// <summary>
-        /// McLean's email address.
-        /// </summary>
-        public string McLeanGmailAddress { get; set; }
+        public List<string> DeveloperPersonalAddresses { get; set; }
 
         /// <summary>
         /// The email host of a DOD email address.
@@ -87,13 +82,17 @@ namespace CCServ.ServiceManagement
         {
             return new ConfigState
             {
-                AtwoodGmailAddress = "sundevilgoalie13@gmail.com",
+                DeveloperPersonalAddresses = new List<string>
+                {
+                    "sundevilgoalie13@gmail.com",
+                    "anguslmm@gmail.com",
+                    "brandy.stiverson@gmail.com"
+                },
                 DeveloperDistroAddress = "usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil",
                 DeveloperDistroDisplayName = "Command Central Communications",
                 DODEmailHost = "mail.mil",
                 DODSMTPAddress = "smtp.gordon.army.mil",
                 IsMusterFinalized = false,
-                McLeanGmailAddress = "anguslmm@gmail.com",
                 MusterDueTime = new Time(13, 30, 00),
                 MusterRolloverTime = new Time(20, 0, 0),
                 ProfileLockMaxAge = TimeSpan.FromMinutes(20),
@@ -109,7 +108,7 @@ namespace CCServ.ServiceManagement
         /// Loads the config from the config file.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 100)]
-        private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
+        private static void LoadConfigState(CLI.Options.LaunchOptions launchOptions)
         {
             //Alright, we're going to try to load the config.  If anything fails, or happens along the way, we'll replace the config file with a default one.
             string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "config.txt");

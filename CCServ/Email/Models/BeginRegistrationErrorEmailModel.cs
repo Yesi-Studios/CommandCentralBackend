@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace CCServ.Email.Models
 {
+    /// <summary>
+    /// Contains the parameters for the model sent to the begin registration error email.
+    /// </summary>
     public class BeginRegistrationErrorEmailModel
     {
         /// <summary>

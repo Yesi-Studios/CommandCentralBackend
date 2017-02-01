@@ -83,7 +83,7 @@ namespace CCServ.Entities
                 return false;
 
             return Object.Equals(other.Editee.Id, this.Editee.Id) &&
-                   Object.Equals(other.Editor.Id, this.Editee.Id) &&
+                   Object.Equals(other.Editor.Id, this.Editor.Id) &&
                    Object.Equals(other.Id, this.Id) &&
                    Object.Equals(other.NewValue, this.NewValue) &&
                    Object.Equals(other.OldValue, this.OldValue) &&

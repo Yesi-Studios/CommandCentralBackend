@@ -16,6 +16,8 @@ using CCServ.DataAccess;
 using System.Linq.Expressions;
 using CCServ.ClientAccess;
 using CCServ.Logging;
+using Polly;
+using Humanizer;
 
 namespace CCServ.ServiceManagement.Service
 {
@@ -83,6 +85,10 @@ namespace CCServ.ServiceManagement.Service
 
                     try
                     {
+                        //Very first thing we're going to do is save our message token and then update it later if we need to.
+                        session.Save(token);
+                        session.Flush();
+
                         //Create the new message token for this request.
                         token.CalledEndpoint = endpoint;
 
@@ -194,15 +200,35 @@ namespace CCServ.ServiceManagement.Service
                         token.State = MessageStates.Handled;
 
                         //Alright it's all done so let's go ahead and save the token.
-                        session.Save(token);
+                        session.SaveOrUpdate(token);
 
                         Log.Debug(token.ToString());
 
                         //Return the final response.
                         WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
 
-                        //Everything good?  Commit the transaction right before we release.
-                        transaction.Commit();
+                        bool failedAtLeastOnce = false;
+                        //Everything good?  Commit the transaction right before we release.  Included some handling for deadlocks.
+                        var result = Polly.Policy
+                            .Handle<NHibernate.ADOException>()
+                            .WaitAndRetry(2, count => TimeSpan.FromSeconds(1), (e, waitDuration, retryCount, context) =>
+                                {
+                                    failedAtLeastOnce = true;
+                                    Log.Critical("A session transaction failed to commit.  Retry count: {0}".FormatWith(retryCount), token);
+                                })
+                            .ExecuteAndCapture(() =>
+                                {
+                                    transaction.Commit();
+                                });
+
+                        if (failedAtLeastOnce && result.Outcome == OutcomeType.Successful)
+                        {
+                            Log.Critical("A session transaction failed to commit but succeeded after reattempt.", token);
+                        }
+                        else if (result.Outcome == OutcomeType.Failure)
+                        {
+                            throw result.FinalException;
+                        }
 
                         return token.FinalResult;
                     }
@@ -216,7 +242,7 @@ namespace CCServ.ServiceManagement.Service
                             "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
 
                         //Save the token
-                        session.Save(token);
+                        session.SaveOrUpdate(token);
 
                         transaction.Commit();
 

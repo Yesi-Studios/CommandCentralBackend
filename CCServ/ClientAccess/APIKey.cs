@@ -60,7 +60,7 @@ namespace CCServ.ClientAccess
                     //Now tell the client how many we have.
                     var apiKeys = session.QueryOver<APIKey>().List();
 
-                    Log.Info("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(",", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))));
+                    Log.Info("{0} API key(s) found for the application(s) {1}".FormatS(apiKeys.Count, String.Join(", ", apiKeys.Select(x => String.Format("'{0}'", x.ApplicationName)))));
 
                     transaction.Commit();
                 }

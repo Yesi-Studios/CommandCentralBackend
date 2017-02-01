@@ -20,5 +20,16 @@ namespace CCServ.Email.Models
 
         public string CallerFilePath { get; set; }
 
+        public string ClientPermissionNames
+        {
+            get
+            {
+                if (Token.AuthenticationSession == null)
+                    return null;
+
+                return String.Join(", ", Token.AuthenticationSession.Person.PermissionGroupNames);
+            }
+        }
+
     }
 }
