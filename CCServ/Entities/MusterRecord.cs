@@ -428,7 +428,7 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    var persons = GetMusterablePersonsQuery(session)
+                    var persons = session.QueryOver<Person>()
                         .Fetch(x => x.CurrentMusterStatus).Eager
                         .List();
 
