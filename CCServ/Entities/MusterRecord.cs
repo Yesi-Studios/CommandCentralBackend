@@ -413,6 +413,10 @@ namespace CCServ.Entities
 
         /// <summary>
         /// Registers the roll over method to run at a certain time.
+        /// <para />
+        /// Also, attempts to scan through the muster records and detect and fix any discrepancies with the system.
+        /// <para />
+        /// For example, if the person's current muster record is not from today, then advance their muster record.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
@@ -446,18 +450,27 @@ namespace CCServ.Entities
                             }
                             else
                             {
-                                var musterRecordsFromDayInQuestion = session.QueryOver<MusterRecord>().Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterStatus.MusterDate).List();
+                                //Let's look for all muster records for this person for the date of their record.
+                                //We're doing this to see if we have a duplicate record or not.
+                                var musterRecordsFromDayInQuestion = session.QueryOver<MusterRecord>()
+                                                    .Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterStatus.MusterDate)
+                                                    .List();
 
                                 //Ok now we have a list of all the muster records for this person from the day that is on their current muster record.
-                                //If there is only one, then the current one needs to be archived, and a new one needs to be assigned.
+                                //If there is only one then that one must be the current record, 
+                                //in which case, the current one needs to be archived, and a new one needs to be assigned.
                                 if (musterRecordsFromDayInQuestion.Count == 1)
                                 {
+                                    //We can do that easily by jsut resetting the reference that is the current record.
+                                    //The old current record will move into the archives by not being referenced by the person.
                                     person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else if (musterRecordsFromDayInQuestion.Count == 2)
                                 {
                                     //If there are two, then that means that the current record is here, but there's also another one that has already been archived.
                                     //In this case, just reset the current muster record and make it a current one.
+                                    //We're going to do that by deleting the current muster record, flushing that delete
+                                    //And then resetting the record.
                                     session.Delete(person.CurrentMusterStatus);
                                     session.Flush();
                                     person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
