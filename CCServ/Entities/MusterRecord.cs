@@ -291,27 +291,27 @@ namespace CCServ.Entities
                     //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person person in persons)
                     {
-                        if (person.CurrentMusterStatus == null)
+                        if (person.CurrentMusterRecord == null)
                             throw new Exception("{0}'s current muster status was null.".FormatS(person.ToString()));
 
-                        person.CurrentMusterStatus.Command = person.Command == null ? "" : person.Command.ToString();
-                        person.CurrentMusterStatus.Department = person.Department == null ? "" : person.Department.ToString();
-                        person.CurrentMusterStatus.Division = person.Division == null ? "" : person.Division.ToString();
-                        person.CurrentMusterStatus.DutyStatus = person.DutyStatus.ToString();
-                        if (!person.CurrentMusterStatus.HasBeenSubmitted)
+                        person.CurrentMusterRecord.Command = person.Command == null ? "" : person.Command.ToString();
+                        person.CurrentMusterRecord.Department = person.Department == null ? "" : person.Department.ToString();
+                        person.CurrentMusterRecord.Division = person.Division == null ? "" : person.Division.ToString();
+                        person.CurrentMusterRecord.DutyStatus = person.DutyStatus.ToString();
+                        if (!person.CurrentMusterRecord.HasBeenSubmitted)
                         {
-                            person.CurrentMusterStatus.MusterStatus = ReferenceLists.MusterStatuses.UA.ToString();
-                            person.CurrentMusterStatus.SubmitTime = DateTime.UtcNow;
+                            person.CurrentMusterRecord.MusterStatus = ReferenceLists.MusterStatuses.UA.ToString();
+                            person.CurrentMusterRecord.SubmitTime = DateTime.UtcNow;
                         }
-                        person.CurrentMusterStatus.HasBeenSubmitted = true;
-                        person.CurrentMusterStatus.Paygrade = person.Paygrade.ToString();
-                        person.CurrentMusterStatus.UIC = person.UIC == null ? "" : person.UIC.ToString();
-                        person.CurrentMusterStatus.Designation = person.Designation == null ? "" : person.Designation.ToString();
+                        person.CurrentMusterRecord.HasBeenSubmitted = true;
+                        person.CurrentMusterRecord.Paygrade = person.Paygrade.ToString();
+                        person.CurrentMusterRecord.UIC = person.UIC == null ? "" : person.UIC.ToString();
+                        person.CurrentMusterRecord.Designation = person.Designation == null ? "" : person.Designation.ToString();
 
                         session.Save(person);
                     }
 
-                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterStatus), creator, DateTime.UtcNow)
+                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterRecord), creator, DateTime.UtcNow)
                     {
                         RollOverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime,
                     };
@@ -378,7 +378,7 @@ namespace CCServ.Entities
                     //Now we need to go through each person and reset their current muster status.
                     foreach (var person in persons)
                     {
-                        person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                        person.CurrentMusterRecord = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                         session.Save(person);
                     }
 
@@ -429,10 +429,10 @@ namespace CCServ.Entities
                 try
                 {
                     var persons = session.QueryOver<Person>()
-                        .Fetch(x => x.CurrentMusterStatus).Eager
+                        .Fetch(x => x.CurrentMusterRecord).Eager
                         .List();
 
-                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterStatus == null || x.CurrentMusterStatus.MusterDate.Date != GetMusterDate(DateTime.UtcNow)).ToList();
+                    var personsWithIncorrectRecords = persons.Where(x => x.CurrentMusterRecord == null || x.CurrentMusterRecord.MusterDate.Date != GetMusterDate(DateTime.UtcNow)).ToList();
 
                     if (personsWithIncorrectRecords.Any())
                     {
@@ -444,16 +444,16 @@ namespace CCServ.Entities
                         //If they don't have one, the muster needs to get updated.
                         foreach (var person in personsWithIncorrectRecords)
                         {
-                            if (person.CurrentMusterStatus == null)
+                            if (person.CurrentMusterRecord == null)
                             {
-                                person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                                person.CurrentMusterRecord = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                             }
                             else
                             {
                                 //Let's look for all muster records for this person for the date of their record.
                                 //We're doing this to see if we have a duplicate record or not.
                                 var musterRecordsFromDayInQuestion = session.QueryOver<MusterRecord>()
-                                                    .Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterStatus.MusterDate)
+                                                    .Where(x => x.Musteree == person && x.MusterDate == person.CurrentMusterRecord.MusterDate)
                                                     .List();
 
                                 //Ok now we have a list of all the muster records for this person from the day that is on their current muster record.
@@ -463,7 +463,7 @@ namespace CCServ.Entities
                                 {
                                     //We can do that easily by jsut resetting the reference that is the current record.
                                     //The old current record will move into the archives by not being referenced by the person.
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                                    person.CurrentMusterRecord = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else if (musterRecordsFromDayInQuestion.Count == 2)
                                 {
@@ -471,19 +471,19 @@ namespace CCServ.Entities
                                     //In this case, just reset the current muster record and make it a current one.
                                     //We're going to do that by deleting the current muster record, flushing that delete
                                     //And then resetting the record.
-                                    session.Delete(person.CurrentMusterStatus);
+                                    session.Delete(person.CurrentMusterRecord);
                                     session.Flush();
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                                    person.CurrentMusterRecord = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else if (musterRecordsFromDayInQuestion.Count == 0)
                                 {
                                     //If we're here then this person doesn't have a muster record.  That's weird.  Give them one.
-                                    person.CurrentMusterStatus = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                                    person.CurrentMusterRecord = CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
                                 }
                                 else
                                 {
                                     //Who the fuck knows what happened if we got here.
-                                    throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterStatus.MusterDate, person.ToString()));
+                                    throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterRecord.MusterDate, person.ToString()));
                                 }
                             }
 
@@ -500,7 +500,7 @@ namespace CCServ.Entities
                     }
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
-                    Log.Info("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterStatus.HasBeenSubmitted), persons.Count));
+                    Log.Info("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
                     Log.Info("Muster finalization status : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized ? "Finalized" : "Not Finalized"));
                     Log.Info("Expected completion time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterDueTime.ToString()));
                     Log.Info("Rollover time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));

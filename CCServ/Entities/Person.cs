@@ -217,7 +217,7 @@ namespace CCServ.Entities
         /// <summary>
         /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
         /// </summary>
-        public virtual MusterRecord CurrentMusterStatus { get; set; }
+        public virtual MusterRecord CurrentMusterRecord { get; set; }
 
         /// <summary>
         /// The person's watch qualification.
@@ -644,7 +644,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = permissionGroupNames
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
@@ -724,7 +724,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.Username = "dkatwoo";
                         person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
@@ -794,7 +794,7 @@ namespace CCServ.Entities
                             PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
                         };
 
-                        person.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 
                         person.Username = "anguslmm";
                         person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
@@ -860,7 +860,7 @@ namespace CCServ.Entities
                 References(x => x.Command).Nullable();
                 References(x => x.UIC).Nullable();
                 References(x => x.Paygrade).Not.Nullable();
-                References(x => x.CurrentMusterStatus).Cascade.All().Nullable();
+                References(x => x.CurrentMusterRecord).Cascade.All().Nullable();
                 References(x => x.DutyStatus).Not.Nullable();
                 References(x => x.Sex).Not.Nullable();
 
@@ -1335,12 +1335,12 @@ namespace CCServ.Entities
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.CurrentMusterStatus))
+                    x => x.CurrentMusterRecord))
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<Person>(x => x.CurrentMusterStatus.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
+                    return Subqueries.WhereProperty<Person>(x => x.CurrentMusterRecord.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
                         .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
                         .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))

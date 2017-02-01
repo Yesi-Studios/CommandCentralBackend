@@ -237,7 +237,7 @@ namespace CCServ.ClientAccess.Endpoints
                 for (int x = 0; x < persons.Count; x++)
                 {
                     //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
-                    if (persons[x].CurrentMusterStatus == null)
+                    if (persons[x].CurrentMusterRecord == null)
                     {
                         if (persons[x].DutyStatus == DutyStatuses.Loss)
                         {
@@ -247,17 +247,17 @@ namespace CCServ.ClientAccess.Endpoints
                         else
                         {
                             //If the person's duty status is NOT Loss, then somehow this person never got a muster record.  This isn't good.
-                            if (persons[x].CurrentMusterStatus == null)
+                            if (persons[x].CurrentMusterRecord == null)
                                 throw new Exception("{0}'s current muster status was null.  This is unexpected.".FormatS(persons[x].ToString()));
                         }
                     }
 
-                    persons[x].CurrentMusterStatus.HasBeenSubmitted = true;
-                    persons[x].CurrentMusterStatus.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
-                    persons[x].CurrentMusterStatus.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterStatus.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
-                    persons[x].CurrentMusterStatus.SubmitTime = token.CallTime;
-                    persons[x].CurrentMusterStatus.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
+                    persons[x].CurrentMusterRecord.HasBeenSubmitted = true;
+                    persons[x].CurrentMusterRecord.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
+                    persons[x].CurrentMusterRecord.Musterer = token.AuthenticationSession.Person;
+                    persons[x].CurrentMusterRecord.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
+                    persons[x].CurrentMusterRecord.SubmitTime = token.CallTime;
+                    persons[x].CurrentMusterRecord.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
                     //And once we're done resetting their current muster status, let's update them.
                     session.Update(persons[x]);
@@ -299,7 +299,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
                 var queryOver = MusterRecord.GetMusterablePersonsQuery(session)
-                    .Fetch(x => x.CurrentMusterStatus).Eager;
+                    .Fetch(x => x.CurrentMusterRecord).Eager;
 
                 //Switch on the highest level in muster and then add the query accordingly.
                 switch (highestLevelInMuster)
@@ -346,7 +346,7 @@ namespace CCServ.ClientAccess.Endpoints
                 var results = musterablePersons.Select(x =>
                 {
                     //If the person's current muster status is null, throw an error.  This is not expected.
-                    if (x.CurrentMusterStatus == null)
+                    if (x.CurrentMusterRecord == null)
                         throw new Exception("{0}'s current muster status is null!".FormatS(x.ToString()));
 
                     return new
@@ -364,24 +364,24 @@ namespace CCServ.ClientAccess.Endpoints
                         FriendlyName = x.ToString(),
                         CurrentMusterStatus = new
                         {
-                            x.CurrentMusterStatus.Command,
-                            x.CurrentMusterStatus.Department,
-                            x.CurrentMusterStatus.Division,
-                            x.CurrentMusterStatus.DutyStatus,
-                            x.CurrentMusterStatus.HasBeenSubmitted,
-                            x.CurrentMusterStatus.Id,
-                            Musteree = x.CurrentMusterStatus.Musteree.ToBasicPerson(),
-                            Musterer = x.CurrentMusterStatus.Musterer == null ? null : x.CurrentMusterStatus.Musterer.ToBasicPerson(),
-                            x.CurrentMusterStatus.MusterStatus,
-                            x.CurrentMusterStatus.MusterDate,
-                            x.CurrentMusterStatus.Paygrade,
-                            x.CurrentMusterStatus.SubmitTime,
-                            x.CurrentMusterStatus.UIC,
-                            x.CurrentMusterStatus.Remarks,
-                            x.CurrentMusterStatus.Designation
+                            x.CurrentMusterRecord.Command,
+                            x.CurrentMusterRecord.Department,
+                            x.CurrentMusterRecord.Division,
+                            x.CurrentMusterRecord.DutyStatus,
+                            x.CurrentMusterRecord.HasBeenSubmitted,
+                            x.CurrentMusterRecord.Id,
+                            Musteree = x.CurrentMusterRecord.Musteree.ToBasicPerson(),
+                            Musterer = x.CurrentMusterRecord.Musterer == null ? null : x.CurrentMusterRecord.Musterer.ToBasicPerson(),
+                            x.CurrentMusterRecord.MusterStatus,
+                            x.CurrentMusterRecord.MusterDate,
+                            x.CurrentMusterRecord.Paygrade,
+                            x.CurrentMusterRecord.SubmitTime,
+                            x.CurrentMusterRecord.UIC,
+                            x.CurrentMusterRecord.Remarks,
+                            x.CurrentMusterRecord.Designation
                         },
                         CanMuster = MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x),
-                        HasBeenMustered = x.CurrentMusterStatus.HasBeenSubmitted
+                        HasBeenMustered = x.CurrentMusterRecord.HasBeenSubmitted
                     };
                 });
 

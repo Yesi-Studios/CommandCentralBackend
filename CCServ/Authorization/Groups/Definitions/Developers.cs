@@ -80,7 +80,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.JobTitle,
                     x => x.EAOS,
                     x => x.DateOfDeparture,
-                    x => x.CurrentMusterStatus,
+                    x => x.CurrentMusterRecord,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,

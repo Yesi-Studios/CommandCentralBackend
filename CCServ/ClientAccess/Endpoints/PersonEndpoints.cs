@@ -83,7 +83,7 @@ namespace CCServ.ClientAccess.Endpoints
                 IsClaimed = false,
                 PRD = personFromClient.PRD
             };
-            newPerson.CurrentMusterStatus = MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
+            newPerson.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
             //We're also going to add on the default permission groups.
             newPerson.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
@@ -220,7 +220,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 }
                             case "currentmusterstatus":
                                 {
-                                    if (person.CurrentMusterStatus == null)
+                                    if (person.CurrentMusterRecord == null)
                                     {
                                         returnData.Add(propertyName, null);
                                     }
@@ -228,19 +228,19 @@ namespace CCServ.ClientAccess.Endpoints
                                     {
                                         returnData.Add(propertyName, new
                                         {
-                                            person.CurrentMusterStatus.Command,
-                                            person.CurrentMusterStatus.Department,
-                                            person.CurrentMusterStatus.Division,
-                                            person.CurrentMusterStatus.DutyStatus,
-                                            person.CurrentMusterStatus.HasBeenSubmitted,
-                                            person.CurrentMusterStatus.Id,
-                                            person.CurrentMusterStatus.MusterDate,
-                                            Musteree = person.CurrentMusterStatus.Musteree.ToBasicPerson(),
-                                            Musterer = person.CurrentMusterStatus.Musterer == null ? null : person.CurrentMusterStatus.Musterer.ToBasicPerson(),
-                                            person.CurrentMusterStatus.MusterStatus,
-                                            person.CurrentMusterStatus.Paygrade,
-                                            person.CurrentMusterStatus.SubmitTime,
-                                            person.CurrentMusterStatus.UIC
+                                            person.CurrentMusterRecord.Command,
+                                            person.CurrentMusterRecord.Department,
+                                            person.CurrentMusterRecord.Division,
+                                            person.CurrentMusterRecord.DutyStatus,
+                                            person.CurrentMusterRecord.HasBeenSubmitted,
+                                            person.CurrentMusterRecord.Id,
+                                            person.CurrentMusterRecord.MusterDate,
+                                            Musteree = person.CurrentMusterRecord.Musteree.ToBasicPerson(),
+                                            Musterer = person.CurrentMusterRecord.Musterer == null ? null : person.CurrentMusterRecord.Musterer.ToBasicPerson(),
+                                            person.CurrentMusterRecord.MusterStatus,
+                                            person.CurrentMusterRecord.Paygrade,
+                                            person.CurrentMusterRecord.SubmitTime,
+                                            person.CurrentMusterRecord.UIC
                                         });
                                     }
 

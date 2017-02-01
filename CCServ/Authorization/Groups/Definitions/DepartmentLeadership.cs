@@ -64,7 +64,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Shift,
                     x => x.WorkRemarks,
                     x => x.JobTitle,
-                    x => x.CurrentMusterStatus,
+                    x => x.CurrentMusterRecord,
                     x => x.EmailAddresses,
                     x => x.PhoneNumbers,
                     x => x.PhysicalAddresses,
