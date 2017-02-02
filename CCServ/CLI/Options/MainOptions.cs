@@ -8,6 +8,9 @@ using CommandLine.Text;
 
 namespace CCServ.CLI.Options
 {
+    /// <summary>
+    /// The main launch options for the command line parser.
+    /// </summary>
     public class MainOptions
     {
         [VerbOption("launch", HelpText = "Launches the application.")]

@@ -440,7 +440,7 @@ namespace CCServ.ClientAccess.Endpoints
             bool showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
             {
-                showHidden = Boolean.Parse(token.Args["showhidden"] as string);
+                showHidden = Convert.ToBoolean(token.Args["showhidden"]);
             }
 
             using (var session = NHibernateHelper.CreateStatefulSession())
