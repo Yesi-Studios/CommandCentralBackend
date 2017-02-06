@@ -202,7 +202,6 @@ namespace CCServ.ServiceManagement.Service
 
                             //Invoke the data method of the endpoint.
                             description.EndpointMethod(token);
-                            Log.Critical("test test test", token);
                             token.State = MessageStates.Invoked;
 
                             //If the endpoint method didn't set a result, go ahead and set the result.  Assume everything was ok.
