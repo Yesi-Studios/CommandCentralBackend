@@ -7,8 +7,16 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
+    /// <summary>
+    /// The administrative admin group which is pretty much the same as command leadership.
+    /// <para/>
+    /// If the application were ever used at multiple commands, we'd revisit this permission group.
+    /// </summary>
     public class Admin : PermissionGroup
     {
+        /// <summary>
+        /// Declares the admin group's permissions.
+        /// </summary>
         public Admin()
         {
             CanAccessSubModules(SubModules.AdminTools, SubModules.CreatePerson);
