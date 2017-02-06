@@ -79,7 +79,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PRD,
                     x => x.PrimaryNEC,
                     x => x.SecondaryNECs,
-                    x => x.WatchQualifications))
+                    x => x.WatchQualifications,
+                    x => x.GTCTrainingDate))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
