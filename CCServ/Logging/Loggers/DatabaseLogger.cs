@@ -82,7 +82,7 @@ namespace CCServ.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            /*if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
@@ -106,7 +106,7 @@ namespace CCServ.Logging.Loggers
                         throw;
                     }
                 }
-            }*/
+            }
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace CCServ.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogCritical(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            /*if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
@@ -143,7 +143,7 @@ namespace CCServ.Logging.Loggers
                         throw;
                     }
                 }
-            }*/
+            }
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace CCServ.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogWarning(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            /*if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
@@ -180,7 +180,7 @@ namespace CCServ.Logging.Loggers
                         throw;
                     }
                 }
-            }*/
+            }
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace CCServ.Logging.Loggers
         public void LogException(Exception ex, string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
 
-            /*if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.NHibernateHelper.IsReady)
             {
                 using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
@@ -219,7 +219,7 @@ namespace CCServ.Logging.Loggers
                         throw;
                     }
                 }
-            }*/
+            }
 
         }
     }

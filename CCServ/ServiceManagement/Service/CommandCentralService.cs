@@ -80,178 +80,195 @@ namespace CCServ.ServiceManagement.Service
             try
             {
                 using (var session = NHibernateHelper.CreateStatefulSession())
-                using (var transaction = session.BeginTransaction())
                 {
-
-                    try
+                    //First up, we're going to save the token in its own transaction.  
+                    //We just want to get it recorded in the database that we received a request before moving on with anything else.
+                    using (var transaction = session.BeginTransaction())
                     {
-                        //Very first thing we're going to do is save our message token and then update it later if we need to.
-                        session.Save(token);
-                        session.Flush();
-
-                        //Create the new message token for this request.
-                        token.CalledEndpoint = endpoint;
-
-                        //Tell the logs we have a client.
-                        Log.Debug(token.ToString());
-
-                        //Add the headers to the response.
-                        AddHeadersToOutgoingResponse(WebOperationContext.Current);
-
-                        //Get the endpoint
-                        ServiceEndpoint description;
-                        if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                        try
                         {
-                            token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(ServiceManager.CurrentConfigState.DeveloperDistroAddress), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                            return token.ConstructResponseString();
+                            session.Save(token);
+
+                            transaction.Commit();
                         }
-
-                        //If the endpoint was retrieved successfully, then assign it here.
-                        token.EndpointDescription = description;
-
-                        //If the endpoint is inactive, return an error message.
-                        if (!token.EndpointDescription.IsActive)
+                        catch
                         {
-                            token.AddErrorMessage("The endpoint you requested is not currently available at this time.", ErrorTypes.Validation, System.Net.HttpStatusCode.ServiceUnavailable);
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                            return token.ConstructResponseString();
+                            transaction.Rollback();
+                            throw;
                         }
+                    }
 
-                        //Get the IP address of the host that called us.  We can't really do this in a separate static method because if I did, I would likely put that in the Utils library,
-                        //but if you put it there then for some reason it breaks the operation context and it can't find the current request. :(
-                        token.HostAddress = ((RemoteEndpointMessageProperty)OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;
+                    //Now that we've saved the token, let's continue on with other work.
+                    using (var transaction = session.BeginTransaction())
+                    {
 
-                        //Set the request body and convert it into args.
-                        token.SetRequestBody(Utilities.ConvertStreamToString(data), true);
-
-                        //If setting the request body caused an error then we should bail here.
-                        if (token.HasError)
+                        try
                         {
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                            return token.ConstructResponseString();
-                        }
+                            //Create the new message token for this request.
+                            token.CalledEndpoint = endpoint;
 
-                        //Get the apikey.
-                        if (!token.Args.ContainsKey("apikey"))
-                            token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        else
-                        {
-                            //Ok, so there is an apikey!  Is it legit?
-                            Guid apiKey;
-                            if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
-                                token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            else
+                            //Tell the logs we have a client.
+                            Log.Debug(token.ToString());
+
+                            //Add the headers to the response.
+                            AddHeadersToOutgoingResponse(WebOperationContext.Current);
+
+                            //Get the endpoint
+                            ServiceEndpoint description;
+                            if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                             {
-                                //Ok, well it's a GUID.   Do we have it in the database?...
-                                token.APIKey = session.Get<APIKey>(apiKey);
-
-                                //Let's see if we caught one.
-                                if (token.APIKey == null)
-                                    token.AddErrorMessage("Your API key was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                                token.AddErrorMessage("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
+                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(ServiceManager.CurrentConfigState.DeveloperDistroAddress), ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                                WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                                return token.ConstructResponseString();
                             }
-                        }
 
-                        //If the apikey was wrong, then let's bail here.
-                        if (token.HasError)
-                        {
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                            return token.ConstructResponseString();
-                        }
+                            //If the endpoint was retrieved successfully, then assign it here.
+                            token.EndpointDescription = description;
 
-                        //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
-                        token.State = MessageStates.Processed;
+                            //If the endpoint is inactive, return an error message.
+                            if (!token.EndpointDescription.IsActive)
+                            {
+                                token.AddErrorMessage("The endpoint you requested is not currently available at this time.", ErrorTypes.Validation, System.Net.HttpStatusCode.ServiceUnavailable);
+                                WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                                return token.ConstructResponseString();
+                            }
 
-                        Log.Debug(token.ToString());
+                            //Get the IP address of the host that called us.  We can't really do this in a separate static method because if I did, I would likely put that in the Utils library,
+                            //but if you put it there then for some reason it breaks the operation context and it can't find the current request. :(
+                            token.HostAddress = ((RemoteEndpointMessageProperty)OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]).Address;
 
-                        //Ok, now we know that the request is valid let's see if we need to authenticate it.
-                        if (description.EndpointMethodAttribute.RequiresAuthentication)
-                        {
-                            AuthenticateMessage(token, session);
+                            //Set the request body and convert it into args.
+                            token.SetRequestBody(Utilities.ConvertStreamToString(data), true);
 
-                            //If the authentication token was wrong, then let's bail here.
+                            //If setting the request body caused an error then we should bail here.
                             if (token.HasError)
                             {
                                 WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
                                 return token.ConstructResponseString();
                             }
 
-                            //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
-                            //at least the client tried to use the session.
-                            token.AuthenticationSession.LastUsedTime = token.CallTime;
-                            token.State = MessageStates.Authenticated;
+                            //Get the apikey.
+                            if (!token.Args.ContainsKey("apikey"))
+                                token.AddErrorMessage("You didn't send an '{0}' parameter.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            else
+                            {
+                                //Ok, so there is an apikey!  Is it legit?
+                                Guid apiKey;
+                                if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
+                                    token.AddErrorMessage("The '{0}' parameter was not in the correct format.".FormatS("apikey"), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                else
+                                {
+                                    //Ok, well it's a GUID.   Do we have it in the database?...
+                                    token.APIKey = session.Get<APIKey>(apiKey);
+
+                                    //Let's see if we caught one.
+                                    if (token.APIKey == null)
+                                        token.AddErrorMessage("Your API key was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
+                                }
+                            }
+
+                            //If the apikey was wrong, then let's bail here.
+                            if (token.HasError)
+                            {
+                                WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                                return token.ConstructResponseString();
+                            }
+
+                            //Alright! If we got to this point, then the message had been fully processed.  We set the message state in case the message fails.
+                            token.State = MessageStates.Processed;
 
                             Log.Debug(token.ToString());
-                        }
 
-                        //Invoke the data method of the endpoint.
-                        description.EndpointMethod(token);
-                        token.State = MessageStates.Invoked;
+                            //Ok, now we know that the request is valid let's see if we need to authenticate it.
+                            if (description.EndpointMethodAttribute.RequiresAuthentication)
+                            {
+                                AuthenticateMessage(token, session);
 
-                        //If the endpoint method didn't set a result, go ahead and set the result.  Assume everything was ok.
-                        if (token.Result == null && !token.HasError)
-                            token.SetResult("Success");
+                                //If the authentication token was wrong, then let's bail here.
+                                if (token.HasError)
+                                {
+                                    WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                                    return token.ConstructResponseString();
+                                }
 
-                        Log.Debug(token.ToString());
+                                //Because the session was successfully authenticated, let's go ahead and update it, since this is now the most recent time it was used, regardless if anything fails after this,
+                                //at least the client tried to use the session.
+                                token.AuthenticationSession.LastUsedTime = token.CallTime;
+                                token.State = MessageStates.Authenticated;
 
-                        //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
-                        token.HandledTime = DateTime.UtcNow;
-                        token.State = MessageStates.Handled;
+                                Log.Debug(token.ToString());
+                            }
 
-                        //Alright it's all done so let's go ahead and save the token.
-                        session.SaveOrUpdate(token);
+                            //Invoke the data method of the endpoint.
+                            description.EndpointMethod(token);
+                            Log.Critical("test test test", token);
+                            token.State = MessageStates.Invoked;
 
-                        Log.Debug(token.ToString());
+                            //If the endpoint method didn't set a result, go ahead and set the result.  Assume everything was ok.
+                            if (token.Result == null && !token.HasError)
+                                token.SetResult("Success");
 
-                        //Return the final response.
-                        WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                            Log.Debug(token.ToString());
 
-                        bool failedAtLeastOnce = false;
-                        //Everything good?  Commit the transaction right before we release.  Included some handling for deadlocks.
-                        var result = Polly.Policy
-                            .Handle<NHibernate.ADOException>()
-                            .WaitAndRetry(2, count => TimeSpan.FromSeconds(1), (e, waitDuration, retryCount, context) =>
+                            //Do the final handling. This involves turning the response into JSON, inserting/updating the handled token and then releasing the response.
+                            token.HandledTime = DateTime.UtcNow;
+                            token.State = MessageStates.Handled;
+
+                            //Alright it's all done so let's go ahead and save the token.
+                            session.SaveOrUpdate(token);
+
+                            Log.Debug(token.ToString());
+
+                            //Return the final response.
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+
+                            bool failedAtLeastOnce = false;
+                            //Everything good?  Commit the transaction right before we release.  Included some handling for deadlocks.
+                            var result = Polly.Policy
+                                .Handle<NHibernate.ADOException>()
+                                .WaitAndRetry(2, count => TimeSpan.FromSeconds(1), (e, waitDuration, retryCount, context) =>
                                 {
                                     failedAtLeastOnce = true;
                                     Log.Critical("A session transaction failed to commit.  Retry count: {0}".FormatWith(retryCount), token);
                                 })
-                            .ExecuteAndCapture(() =>
+                                .ExecuteAndCapture(() =>
                                 {
                                     transaction.Commit();
                                 });
 
-                        if (failedAtLeastOnce && result.Outcome == OutcomeType.Successful)
-                        {
-                            Log.Critical("A session transaction failed to commit but succeeded after reattempt.", token);
+                            if (failedAtLeastOnce && result.Outcome == OutcomeType.Successful)
+                            {
+                                Log.Critical("A session transaction failed to commit but succeeded after reattempt.", token);
+                            }
+                            else if (result.Outcome == OutcomeType.Failure)
+                            {
+                                throw result.FinalException;
+                            }
+
+                            return token.FinalResult;
                         }
-                        else if (result.Outcome == OutcomeType.Failure)
+                        catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                         {
-                            throw result.FinalException;
+                            //Set the message state
+                            token.State = MessageStates.FatalError;
+
+                            //Add the error message
+                            token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
+                                "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
+
+                            //Save the token
+                            session.SaveOrUpdate(token);
+
+                            transaction.Commit();
+
+                            //Log what happened.
+                            Log.Exception(e, "A fatal, unknown error occurred in the backend service.", token);
+
+                            //Set the outgoing status code and then release.
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
+                            return token.ConstructResponseString();
                         }
-
-                        return token.FinalResult;
-                    }
-                    catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
-                    {
-                        //Set the message state
-                        token.State = MessageStates.FatalError;
-
-                        //Add the error message
-                        token.AddErrorMessage("A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
-                            "  The developers have been alerted and a trained monkey(s) has been dispatched.", ErrorTypes.Fatal, System.Net.HttpStatusCode.InternalServerError);
-
-                        //Save the token
-                        session.SaveOrUpdate(token);
-
-                        transaction.Commit();
-
-                        //Log what happened.
-                        Log.Exception(e, "A fatal, unknown error occurred in the backend service.", token);
-
-                        //Set the outgoing status code and then release.
-                        WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
-                        return token.ConstructResponseString();
                     }
                 }
             }
