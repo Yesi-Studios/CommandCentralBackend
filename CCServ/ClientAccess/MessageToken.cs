@@ -231,8 +231,8 @@ namespace CCServ.ClientAccess
         /// <param name="status"></param>
         public virtual void AddErrorMessage(string message, ErrorTypes error, System.Net.HttpStatusCode status)
         {
-            if (Result != null)
-                throw new Exception("You can not set a error message on a message token that has already been assigned a return value.  You get one or the other.");
+            //In any case, we set the result to null.  An error occurred, so we don't really care about the result.
+            Result = null;
 
             ErrorMessages.Add(message);
             this.ErrorType = error;
@@ -249,9 +249,9 @@ namespace CCServ.ClientAccess
         /// <param name="status"></param>
         public virtual void AddErrorMessages(IEnumerable<string> messages, ErrorTypes error, System.Net.HttpStatusCode status)
         {
-            if (Result != null)
-                throw new Exception("You cannot set a error message on a message token that has already been assigned a return value.  You get one or the other.");
-
+            //In any case, we set the result to null.  An error occurred, so we don't really care about the result.
+            Result = null;
+            
             messages.ToList().ForEach(x => ErrorMessages.Add(x));
             this.ErrorType = error;
             this.StatusCode = status;
@@ -339,7 +339,6 @@ namespace CCServ.ClientAccess
                     .KeyColumn("MessageTokenId")
                     .Element("ErrorMessage", map => map.Length(10000))
                     .Not.LazyLoad();
-
             }
         }
 
