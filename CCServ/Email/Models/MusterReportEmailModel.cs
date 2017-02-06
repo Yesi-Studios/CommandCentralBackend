@@ -86,6 +86,12 @@ namespace CCServ.Email.Models
             }
         }
 
+        /// <summary>
+        /// Takes a number of muster stasuses and builds a muster report email from them.
+        /// </summary>
+        /// <param name="records"></param>
+        /// <param name="creator"></param>
+        /// <param name="musterDateTime"></param>
         public MusterReportEmailModel(IEnumerable<Entities.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
         {
             MusterDateTime = musterDateTime;
@@ -125,12 +131,27 @@ namespace CCServ.Email.Models
                 }
             }
 
+            //Now, before we move on to the next part, let's sort the muster containers so that they always have a uniform sorting in the email.
+            containers = containers.OrderBy(x => x.GroupTitle).ToList();
+
+            //Let's save the totals so that we're not recalculating them.
+            int total = containers.Sum(x => x.Total);
+            int totalMustered = containers.Sum(x => x.Mustered);
+
             //Now, let's make a "total" container.
             containers.Insert(0, new MusterGroupContainer
             {
                 GroupTitle = "Total",
-                Mustered = containers.Sum(x => x.Mustered),
-                Total = containers.Sum(x => x.Total)
+                Mustered = totalMustered,
+                Total = total
+            });
+
+            //We're also going to add an unaccounted for section At the end.
+            containers.Add(new MusterGroupContainer
+            {
+                GroupTitle = "Unaccounted For (UA)",
+                Mustered = total - totalMustered,
+                Total = total
             });
 
             Containers = containers;

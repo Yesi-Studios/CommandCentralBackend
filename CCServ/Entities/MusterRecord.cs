@@ -329,6 +329,7 @@ namespace CCServ.Entities
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-co@mail.mil", "CO"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
+                        .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
                         .Subject("Muster Report")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
