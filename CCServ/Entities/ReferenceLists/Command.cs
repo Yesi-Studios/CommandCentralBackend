@@ -50,10 +50,10 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     //We can use the DTO and command interchangeably here.
-                    var command = item.CastJToken<Command>();
+                    var commandFromClient = item.CastJToken<Command>();
 
                     //Now validate it.
-                    var result = command.Validate();
+                    var result = commandFromClient.Validate();
                     if (!result.IsValid)
                     {
                         token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -61,18 +61,20 @@ namespace CCServ.Entities.ReferenceLists
                     }
 
                     //Try to get it.
-                    var commandFromDB = session.Get<Command>(command.Id);
+                    var commandFromDB = session.Get<Command>(commandFromClient.Id);
 
                     //If it's null then add it.
                     if (commandFromDB == null)
                     {
-                        command.Id = Guid.NewGuid();
-                        session.Save(command);
+                        commandFromClient.Id = Guid.NewGuid();
+                        session.Save(commandFromClient);
                     }
                     else
                     {
                         //If it's not null, then merge it.
-                        session.Merge(command);
+                        commandFromDB.Value = commandFromClient.Value;
+                        commandFromDB.Description = commandFromClient.Description;
+                        session.Update(commandFromDB);
                     }
 
                     transaction.Commit();

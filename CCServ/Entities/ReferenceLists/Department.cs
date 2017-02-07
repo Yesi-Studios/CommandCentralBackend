@@ -183,19 +183,19 @@ namespace CCServ.Entities.ReferenceLists
                         return;
                     }
 
-                    var command = session.Get<Command>(commandId);
-                    if (command == null)
+                    var commandFromClient = session.Get<Command>(commandId);
+                    if (commandFromClient == null)
                     {
                         token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
                     //Cool the command is legit.  Let's build the department.
-                    var department = item.CastJToken<Department>();
-                    department.Command = command;
+                    var departmentFromClient = item.CastJToken<Department>();
+                    departmentFromClient.Command = commandFromClient;
 
                     //Now validate it.
-                    var result = department.Validate();
+                    var result = departmentFromClient.Validate();
                     if (!result.IsValid)
                     {
                         token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -203,18 +203,35 @@ namespace CCServ.Entities.ReferenceLists
                     }
 
                     //Try to get it.
-                    var departmentFromDB = session.Get<Department>(department.Id);
+                    var departmentFromDB = session.Get<Department>(departmentFromClient.Id);
+
+                    //If the client is updating the command, then we need to walk across all the persons and update that.
+                    if (departmentFromDB.Command.Id != departmentFromClient.Command.Id)
+                    {
+                        var persons = session.QueryOver<Person>()
+                            .Where(x => x.Command == departmentFromDB.Command)
+                            .List();
+
+                        foreach (var person in persons)
+                        {
+                            person.Command = departmentFromClient.Command;
+                            session.Update(person);
+                        }
+                    }
 
                     //If it's null then add it.
                     if (departmentFromDB == null)
                     {
-                        department.Id = Guid.NewGuid();
-                        session.Save(department);
+                        departmentFromClient.Id = Guid.NewGuid();
+                        session.Save(departmentFromClient);
                     }
                     else
                     {
                         //If it's not null, then merge it.
-                        session.Merge(department);
+                        departmentFromDB.Value = departmentFromClient.Value;
+                        departmentFromDB.Description = departmentFromClient.Description;
+                        departmentFromDB.Command = departmentFromClient.Command;
+                        session.Update(departmentFromDB);
                     }
 
                     transaction.Commit();
