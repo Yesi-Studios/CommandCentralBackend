@@ -22,6 +22,9 @@ namespace CCServ.CLI.Options
         [VerbOption("uninstall", HelpText = "Uninstalls the service.")]
         public UninstallOptions UninstallVerb { get; set; }
 
+        [VerbOption("", HelpText = "Upgrades the service to the most recent version on the Production branch.")]
+        public UpgradeOptions UpgradeVerb { get; set; }
+
         [ParserState]
         public IParserState LastParserState { get; set; }
 

@@ -167,6 +167,7 @@
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
+    <Compile Include="CLI\Options\UpgradeOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
     <Compile Include="CustomTypes\Time.cs" />
@@ -330,7 +331,6 @@
     <EmbeddedResource Include="Email\Templates\PasswordChanged_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <Content Include="TextFile1.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
