@@ -65,9 +65,9 @@ namespace AtwoodUtils
         /// Writes a given string to the Console.
         /// </summary>
         /// <param name="str"></param>
-        public static void WriteLine(this string str)
+        public static void WriteLine(this string str, params object[] args)
         {
-            Console.WriteLine(str);
+            Console.WriteLine(str, args);
         }
 
         public static string FormatS(this string str, params object[] args)
