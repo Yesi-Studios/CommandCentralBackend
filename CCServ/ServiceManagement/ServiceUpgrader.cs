@@ -25,12 +25,12 @@ namespace CCServ.ServiceManagement
             UninstallService(options);
 
             //At this point, we can be sure there is no service installed with the desired name.
-            //Now let's shuffle the file system.  We need four folders: Staging, Beta, Production, Old.  THese will all be in a folder called Command Central.
+            //Now let's shuffle the file system.  We need four folders: Source, Beta, Production, Old.  THese will all be in a folder called Command Central.
             string rootPath = @"C:/commandcentral";
-            string stagingPath = Path.Combine(rootPath, "staging");
+            string sourcePath = Path.Combine(rootPath, "source");
             string betaPath = Path.Combine(rootPath, "beta");
             string prodPath = Path.Combine(rootPath, "prod");
-            string oldPath = Path.Combine(rootPath, "old_" + string.Format("{0:yyyy-MM-dd_hh-mm-ss-tt}", DateTime.UtcNow));
+            string oldPath = Path.Combine(rootPath, "old_" + string.Format("{0:yyyy-MM-dd_hh-mm-ss-fff}", DateTime.UtcNow));
 
             //Next, we need to make sure the root path exists.
             if (!Directory.Exists(rootPath))
@@ -46,17 +46,17 @@ namespace CCServ.ServiceManagement
                 "Moved {0} -> {1}".WriteLine(prodPath, oldPath);
             }
 
-            //Now we remove staging, prod and beta if they exist.
+            //Now we remove source, prod and beta if they exist.
             if (Directory.Exists(prodPath))
             {
                 Utilities.DeleteDirectory(prodPath, true);
                 "Removed {0}".WriteLine(prodPath);
             }
 
-            if (Directory.Exists(stagingPath))
+            if (Directory.Exists(sourcePath))
             {
-                Utilities.DeleteDirectory(stagingPath, true);
-                "Removed {0}".WriteLine(stagingPath);
+                Utilities.DeleteDirectory(sourcePath, true);
+                "Removed {0}".WriteLine(sourcePath);
             }
 
             if (Directory.Exists(betaPath))
@@ -65,24 +65,24 @@ namespace CCServ.ServiceManagement
                 "Removed {0}".WriteLine(betaPath);
             }
 
-            //Now we need to download the production branch into staging, and build it into production.
-            Directory.CreateDirectory(stagingPath);
-            "Created {0}".WriteLine(stagingPath);
+            //Now we need to download the production branch into source, and build it into production.
+            Directory.CreateDirectory(sourcePath);
+            "Created {0}".WriteLine(sourcePath);
 
             "Beginning clone from repository {0}".WriteLine(options.GitURL);
             var co = new CloneOptions();
             co.CredentialsProvider = (_url, _user, _cred) => new UsernamePasswordCredentials { Username = options.GitUsername, Password = options.GitPassword };
-            Repository.Clone(options.GitURL, stagingPath, co);
+            Repository.Clone(options.GitURL, sourcePath, co);
 
-            //We should now have the repo in the staging directory.
+            //We should now have the repo in the source directory.
             //Let's make sure of that.
-            if (!Repository.IsValid(stagingPath))
+            if (!Repository.IsValid(sourcePath))
                 throw new Exception("An error occurred while cloning the repository!");
 
             "Clone completed.".WriteLine();
 
             //Now let's ensure that the branches we need actually exist.
-            using (var repo = new Repository(stagingPath))
+            using (var repo = new Repository(sourcePath))
             {
                 var prodBranch = repo.Branches.FirstOrDefault(x => x.FriendlyName == @"origin/" + options.ProductionBranchName);
                 var betaBranch = repo.Branches.FirstOrDefault(x => x.FriendlyName == @"origin/" + options.BetaBranchName);
@@ -104,7 +104,7 @@ namespace CCServ.ServiceManagement
                 //Now let's build the project.
                 //First we need nuget as well!
 
-                string pathToNuget = Path.Combine(stagingPath, "nuget.exe");
+                string pathToNuget = Path.Combine(sourcePath, "nuget.exe");
                 WebClient client = new WebClient();
                 client.DownloadFile(new Uri(options.NugetURL), pathToNuget);
 
@@ -112,15 +112,19 @@ namespace CCServ.ServiceManagement
                 if (!File.Exists(pathToNuget))
                     throw new Exception("An error occurred while acquiring nuget!");
 
-                RestoreNugetPackages(stagingPath, pathToNuget);
+                RestoreNugetPackages(sourcePath, pathToNuget);
 
-                BuildSolution(stagingPath, prodPath);
+                BuildSolution(sourcePath, prodPath);
+
+                //Once the solution builds, let's also make a version comment file.
+                File.WriteAllText(Path.Combine(prodPath, "version"), "{0} by {1}\n-----------\n{2}".FormatS(prodBranch.Tip.Id, prodBranch.Tip.Author, prodBranch.Tip.Message));
 
                 //Now for beta
                 Commands.Checkout(repo, betaBranch);
-                RestoreNugetPackages(stagingPath, pathToNuget);
-                BuildSolution(stagingPath, betaPath);
+                RestoreNugetPackages(sourcePath, pathToNuget);
+                BuildSolution(sourcePath, betaPath);
 
+                File.WriteAllText(Path.Combine(betaPath, "version"), "{0} by {1}\n-----------\n{2}".FormatS(betaBranch.Tip.Id, betaBranch.Tip.Author, betaBranch.Tip.Message));
             }
         }
 
