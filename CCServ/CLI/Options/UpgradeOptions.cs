@@ -31,7 +31,7 @@ namespace CCServ.CLI.Options
         }
 
         [Option('n', "servicename", HelpText = "The name of the service.  This will also be used for the service's display name.", DefaultValue = "ccserv")]
-        public string ServiceName { get; set; }
+        public string BaseServiceName { get; set; }
 
         [Option("productionbranch", HelpText = "The name of the Git production branch.", DefaultValue = "production")]
         public string ProductionBranchName { get; set; }

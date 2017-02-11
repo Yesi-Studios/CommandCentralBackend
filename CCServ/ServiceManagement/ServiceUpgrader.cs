@@ -22,8 +22,11 @@ namespace CCServ.ServiceManagement
 
         public static void UpgradeService(CLI.Options.UpgradeOptions options)
         {
-            UninstallService(options.ServiceName + "_prod");
-            UninstallService(options.ServiceName + "_beta");
+            string prodServiceName = options.BaseServiceName + "_prod";
+            string betaServiceName = options.BaseServiceName + "_beta";
+
+            UninstallService(prodServiceName);
+            UninstallService(betaServiceName);
 
             //At this point, we can be sure there is no service installed with the desired name.
             //Now let's shuffle the file system.  We need four folders: Source, Beta, Production, Old.  These will all be in a folder called Command Central.
@@ -35,12 +38,20 @@ namespace CCServ.ServiceManagement
 
             PrepareDirectories(rootPath, sourcePath, prodPath, betaPath, oldPath);
 
-            BuildBranches(options, sourcePath, prodPath, betaPath);
+            Tuple<Branch, Branch> branches = BuildBranches(options, sourcePath, prodPath, betaPath);
+            var prodBranch = branches.Item1;
+            var betaBranch = branches.Item2;
 
-            LaunchServices(options, prodPath, betaPath);
+            InstallService(Path.Combine(prodPath, AppDomain.CurrentDomain.FriendlyName), prodServiceName, "[Production] Command Central Backend Service on commit '{0}' by '{1}'.".FormatS(prodBranch.Tip.Id, prodBranch.Tip.Author));
+            InstallService(Path.Combine(betaPath, AppDomain.CurrentDomain.FriendlyName), betaServiceName, "[Beta] Command Central Backend Service on commit '{0}' by '{1}'.".FormatS(betaBranch.Tip.Id, betaBranch.Tip.Author));
 
-            
+            //Ok, services are installed!
+
+
+
         }
+
+        
 
         private static void LaunchServices(CLI.Options.UpgradeOptions options, string prodPath, string betaPath)
         {
@@ -53,13 +64,13 @@ namespace CCServ.ServiceManagement
             //Now, we want to install both services.
         }
 
-        private static void ReserveURL(int port, bool isHTTPS)
+        private static void ReserveURL(int port, bool useHTTPS)
         {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
             startInfo.FileName = "netsh";
-            startInfo.Arguments = @"http add urlacl url=http{0}://+:{1}/ user=Everyone".FormatS(isHTTPS ? "s" : "", port);
+            startInfo.Arguments = @"http add urlacl url=http{0}://+:{1}/ user=Everyone".FormatS(useHTTPS ? "s" : "", port);
             startInfo.UseShellExecute = false;
             startInfo.RedirectStandardOutput = true;
             startInfo.RedirectStandardError = true;
@@ -115,7 +126,7 @@ namespace CCServ.ServiceManagement
             "Created {0}".WriteLine(sourcePath);
         }
 
-        private static void BuildBranches(CLI.Options.UpgradeOptions options, string sourcePath, string prodPath, string betaPath)
+        private static Tuple<Branch, Branch> BuildBranches(CLI.Options.UpgradeOptions options, string sourcePath, string prodPath, string betaPath)
         {
             "Beginning clone from repository {0}".WriteLine(options.GitURL);
             var co = new CloneOptions();
@@ -173,6 +184,8 @@ namespace CCServ.ServiceManagement
                 BuildSolution(sourcePath, betaPath);
 
                 File.WriteAllText(Path.Combine(betaPath, "version"), "{0} by {1}\n-----------\n{2}".FormatS(betaBranch.Tip.Id, betaBranch.Tip.Author, betaBranch.Tip.Message));
+
+                return new Tuple<Branch, Branch>(prodBranch, betaBranch);
             }
         }
 
@@ -221,6 +234,28 @@ namespace CCServ.ServiceManagement
             BuildRequestData buildRequest = new BuildRequestData(slnFileName, properties, null, new string[] { "Build" }, null);
 
             BuildResult buildResult = BuildManager.DefaultBuildManager.Build(new BuildParameters(pc), buildRequest);
+        }
+
+        private static void InstallService(string assemblyPath, string serviceName, string description)
+        {
+            ServiceProcessInstaller ProcesServiceInstaller = new ServiceProcessInstaller();
+            ProcesServiceInstaller.Account = ServiceAccount.NetworkService;
+
+            ServiceInstaller ServiceInstallerObj = new ServiceInstaller();
+            InstallContext Context = new InstallContext();
+            String path = String.Format("/assemblypath={0}", assemblyPath);
+            String[] cmdline = { path };
+
+            Context = new InstallContext("", cmdline);
+            ServiceInstallerObj.Context = Context;
+            ServiceInstallerObj.DisplayName = serviceName;
+            ServiceInstallerObj.Description = description;
+            ServiceInstallerObj.ServiceName = serviceName;
+            ServiceInstallerObj.StartType = ServiceStartMode.Automatic;
+            ServiceInstallerObj.Parent = ProcesServiceInstaller;
+
+            System.Collections.Specialized.ListDictionary state = new System.Collections.Specialized.ListDictionary();
+            ServiceInstallerObj.Install(state);
         }
 
         private static void UninstallService(string serviceName)
