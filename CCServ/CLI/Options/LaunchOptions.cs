@@ -45,7 +45,7 @@ namespace CCServ.CLI.Options
         [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", Required = true)]
         public string Server { get; set; }
 
-        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
+        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1113)]
         public int Port { get; set; }
 
         [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Leave blank if not using the --secure option.", DefaultValue = "")]

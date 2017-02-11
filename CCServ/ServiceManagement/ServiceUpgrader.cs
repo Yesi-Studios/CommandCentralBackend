@@ -25,13 +25,52 @@ namespace CCServ.ServiceManagement
             UninstallService(options);
 
             //At this point, we can be sure there is no service installed with the desired name.
-            //Now let's shuffle the file system.  We need four folders: Source, Beta, Production, Old.  THese will all be in a folder called Command Central.
+            //Now let's shuffle the file system.  We need four folders: Source, Beta, Production, Old.  These will all be in a folder called Command Central.
             string rootPath = @"C:/commandcentral";
             string sourcePath = Path.Combine(rootPath, "source");
             string betaPath = Path.Combine(rootPath, "beta");
             string prodPath = Path.Combine(rootPath, "prod");
             string oldPath = Path.Combine(rootPath, "old_" + string.Format("{0:yyyy-MM-dd_hh-mm-ss-fff}", DateTime.UtcNow));
 
+            PrepareDirectories(rootPath, sourcePath, prodPath, betaPath, oldPath);
+
+            BuildBranches(options, sourcePath, prodPath, betaPath);
+
+            ReserveURL(options);
+
+            
+        }
+
+        private static void LaunchServices(CLI.Options.UpgradeOptions options, string prodPath, string betaPath)
+        {
+            //First, let's make sure that we have reservations for the required ports.
+            ReserveURL(options);
+        }
+
+        private static void ReserveURL(CLI.Options.UpgradeOptions options)
+        {
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
+            startInfo.FileName = "netsh";
+            startInfo.Arguments = @"http add urlacl url=http{0}://+:{1}/ user=Everyone".FormatS(options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.HTTPSOnly ? "s" : "", options.Port);
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            process.StartInfo = startInfo;
+            process.OutputDataReceived += (sender, args) => { if (args.Data != null) args.Data.WriteLine(); };
+            process.ErrorDataReceived += (sender, args) => { if (args.Data != null) args.Data.WriteLine(); };
+
+            "Executing: {0} {1}".WriteLine(startInfo.FileName, startInfo.Arguments);
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+        }
+
+        private static void PrepareDirectories(string rootPath, string sourcePath, string prodPath, string betaPath, string oldPath)
+        {
             //Next, we need to make sure the root path exists.
             if (!Directory.Exists(rootPath))
             {
@@ -68,7 +107,10 @@ namespace CCServ.ServiceManagement
             //Now we need to download the production branch into source, and build it into production.
             Directory.CreateDirectory(sourcePath);
             "Created {0}".WriteLine(sourcePath);
+        }
 
+        private static void BuildBranches(CLI.Options.UpgradeOptions options, string sourcePath, string prodPath, string betaPath)
+        {
             "Beginning clone from repository {0}".WriteLine(options.GitURL);
             var co = new CloneOptions();
             co.CredentialsProvider = (_url, _user, _cred) => new UsernamePasswordCredentials { Username = options.GitUsername, Password = options.GitPassword };
