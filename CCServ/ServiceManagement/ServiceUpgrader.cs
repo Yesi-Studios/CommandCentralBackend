@@ -8,6 +8,11 @@ using AtwoodUtils;
 using LibGit2Sharp;
 using System.Configuration.Install;
 using System.ServiceProcess;
+using System.Net;
+using Microsoft.Build.Construction;
+using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
+using Microsoft.Build.Logging;
 
 namespace CCServ.ServiceManagement
 {
@@ -79,23 +84,103 @@ namespace CCServ.ServiceManagement
             //Now let's ensure that the branches we need actually exist.
             using (var repo = new Repository(stagingPath))
             {
-                foreach (var branch in repo.Branches)
+                var prodBranch = repo.Branches.FirstOrDefault(x => x.FriendlyName == @"origin/" + options.ProductionBranchName);
+                var betaBranch = repo.Branches.FirstOrDefault(x => x.FriendlyName == @"origin/" + options.BetaBranchName);
+
+                if (prodBranch == null)
                 {
-                    branch.FriendlyName.WriteLine();
+                    throw new Exception("No branch was found for '{0}'".FormatS(@"origin/" + options.ProductionBranchName));
                 }
+
+                if (betaBranch == null)
+                {
+                    throw new Exception("No branch was found for '{0}'".FormatS(@"origin/" + options.BetaBranchName));
+                }
+
+                //Cool, so we know that we have the two branches that we need.
+                //Now we need to build them into their respective directories.
+                Commands.Checkout(repo, prodBranch);
+
+                //Now let's build the project.
+                //First we need nuget as well!
+
+                string pathToNuget = Path.Combine(stagingPath, "nuget.exe");
+                WebClient client = new WebClient();
+                client.DownloadFile(new Uri(options.NugetURL), pathToNuget);
+
+                //Let's make sure that we got it!
+                if (!File.Exists(pathToNuget))
+                    throw new Exception("An error occurred while acquiring nuget!");
+
+                RestoreNugetPackages(stagingPath, pathToNuget);
+
+                BuildSolution(stagingPath, prodPath);
+
+                //Now for beta
+                Commands.Checkout(repo, betaBranch);
+                RestoreNugetPackages(stagingPath, pathToNuget);
+                BuildSolution(stagingPath, betaPath);
+
             }
+        }
+
+        private static void RestoreNugetPackages(string rootpath, string pathToNuget)
+        {
+            //These are all the directories that need to have packages rebuilt.
+            var dirs = Directory.GetDirectories(rootpath).Where(x => Directory.GetFiles(x).Any(y => y == Path.Combine(x, "packages.config")));
+
+            foreach (var dir in dirs)
+            {
+                System.Diagnostics.Process process = new System.Diagnostics.Process();
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
+                startInfo.FileName = "cmd.exe";
+                startInfo.Arguments = @"/c {0} install {1}\packages.config -o {2}".FormatS(pathToNuget, dir, Path.Combine(rootpath, "packages"));
+                startInfo.UseShellExecute = false;
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+                process.StartInfo = startInfo;
+                process.OutputDataReceived += (sender, args) => { if (args.Data != null) args.Data.WriteLine(); };
+                process.ErrorDataReceived += (sender, args) => { if (args.Data != null) args.Data.WriteLine(); };
+
+                "Executing: {0} {1}".WriteLine(startInfo.FileName, startInfo.Arguments);
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+            }
+        }
+
+        private static void BuildSolution(string rootPath, string outputPath)
+        {
+            //First let's see if we have a .sln in here.
+            var slnFileName = Directory.GetFiles(rootPath).SingleOrDefault(x => Path.GetExtension(x) == ".sln");
+
+            if (slnFileName == null)
+                throw new Exception("The directory contains no .sln file.");
+
+            ProjectCollection pc = new ProjectCollection();
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("Configuration", "Release");
+            properties.Add("Platform", "Any CPU");
+            properties.Add("OutputPath", outputPath);
+
+            BuildRequestData buildRequest = new BuildRequestData(slnFileName, properties, null, new string[] { "Build" }, null);
+
+            BuildResult buildResult = BuildManager.DefaultBuildManager.Build(new BuildParameters(pc), buildRequest);
         }
 
         private static void UninstallService(CLI.Options.UpgradeOptions options)
         {
             //Select the service.
             //We do it like this to allow for case insensitivity in the service name.
-            var service = System.ServiceProcess.ServiceController.GetServices().FirstOrDefault(x => x.ServiceName.Equals(options.ServiceName, StringComparison.CurrentCultureIgnoreCase));
+            var service = ServiceController.GetServices().FirstOrDefault(x => x.ServiceName.Equals(options.ServiceName, StringComparison.CurrentCultureIgnoreCase));
 
             //If there is a service with the desired service name.
             if (service != null)
             {
-                var liveService = new System.ServiceProcess.ServiceController(options.ServiceName);
+                var liveService = new ServiceController(options.ServiceName);
 
                 //If the live service is running, we need to shut it down.
                 if (liveService.Status == ServiceControllerStatus.Running)
@@ -142,5 +227,6 @@ namespace CCServ.ServiceManagement
                     throw new Exception("An error occurred!  We failed to uninstall the service.");
             }
         }
+
     }
 }

@@ -48,5 +48,10 @@ namespace CCServ.CLI.Options
         [Option("giturl", HelpText = "The local or remote url of the Git repository.", DefaultValue = @"https://github.com/Yesi-Studios/CommandCentralBackend.git")]
         public string GitURL { get; set; }
 
+        [Option("nugeturl", HelpText = "The url path to the nuget.exe to use during the build.", DefaultValue = @"https://dist.nuget.org/win-x86-commandline/v3.5.0/nuget.exe")]
+        public string NugetURL { get; set; }
+
+        [Option("msbuildpath", HelpText = "The url path to the nuget.exe to use during the build.", DefaultValue = @"C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild")]
+        public string MSBuildPath { get; set; }
     }
 }
