@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using CCServ.CLI.Options;
 using System.ServiceProcess;
 using System.Threading;
+using System.Globalization;
 
 namespace CCServ.CLI
 {
@@ -21,6 +22,12 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
+            #if DEBUG
+
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+            
+            #endif
+
             try
             {
                 if (!Environment.UserInteractive)
@@ -47,6 +54,8 @@ namespace CCServ.CLI
                 Console.WriteLine("Press any key to close...");
                 Console.ReadKey(true);
             }
+
+            Console.ReadLine();
             
         }
 
@@ -91,6 +100,9 @@ namespace CCServ.CLI
                 case "upgrade":
                     {
                         var upgradeOptions = (UpgradeOptions)invokedVerbInstance;
+
+                        ServiceManagement.ServiceUpgrader.UpgradeService(upgradeOptions);
+
                         break;
                     }
                 default:
