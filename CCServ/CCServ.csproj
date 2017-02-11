@@ -178,8 +178,8 @@
     <Compile Include="CLI\Options\InstallOptions.cs" />
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
+    <Compile Include="CLI\Options\ServiceLaunchOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
-    <Compile Include="CLI\Options\UpgradeOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
     <Compile Include="CustomTypes\Time.cs" />
@@ -248,7 +248,6 @@
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualification.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualifications.cs" />
-    <Compile Include="ServiceManagement\ServiceUpgrader.cs" />
     <Compile Include="Variance.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogEntry.cs" />

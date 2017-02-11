@@ -97,14 +97,6 @@ namespace CCServ.CLI
                         WindowsService.WindowsServiceInstaller.UninstallService(uninstallOptions.ServiceName);
                         break;
                     }
-                case "upgrade":
-                    {
-                        var upgradeOptions = (UpgradeOptions)invokedVerbInstance;
-
-                        ServiceManagement.ServiceUpgrader.UpgradeService(upgradeOptions);
-
-                        break;
-                    }
                 default:
                     {
                         "Fell to default statement in verb switch for verb: {0}.".WriteLine();
