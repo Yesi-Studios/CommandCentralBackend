@@ -54,8 +54,11 @@ namespace CCServ.CLI.Options
         [Option("msbuildpath", HelpText = "The url path to the nuget.exe to use during the build.", DefaultValue = @"C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild")]
         public string MSBuildPath { get; set; }
 
-        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1113)]
-        public int Port { get; set; }
+        [Option("betaport", HelpText = "The port on which to launch the beta version of the service.", DefaultValue = 1113)]
+        public int BetaPort { get; set; }
+
+        [Option("prodport", HelpText = "The port on which to launch the prod version of the service.", DefaultValue = 1114)]
+        public int ProdPort { get; set; }
 
         [Option("securitymode", HelpText = "Indicates which security mode should be used by the service.", DefaultValue = SecurityModes.None)]
         public SecurityModes SecurityMode { get; set; }

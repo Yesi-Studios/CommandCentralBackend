@@ -22,7 +22,8 @@ namespace CCServ.ServiceManagement
 
         public static void UpgradeService(CLI.Options.UpgradeOptions options)
         {
-            UninstallService(options);
+            UninstallService(options.ServiceName + "_prod");
+            UninstallService(options.ServiceName + "_beta");
 
             //At this point, we can be sure there is no service installed with the desired name.
             //Now let's shuffle the file system.  We need four folders: Source, Beta, Production, Old.  These will all be in a folder called Command Central.
@@ -36,7 +37,7 @@ namespace CCServ.ServiceManagement
 
             BuildBranches(options, sourcePath, prodPath, betaPath);
 
-            ReserveURL(options);
+            LaunchServices(options, prodPath, betaPath);
 
             
         }
@@ -44,16 +45,21 @@ namespace CCServ.ServiceManagement
         private static void LaunchServices(CLI.Options.UpgradeOptions options, string prodPath, string betaPath)
         {
             //First, let's make sure that we have reservations for the required ports.
-            ReserveURL(options);
+            ReserveURL(options.BetaPort, options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.HTTPSOnly);
+            ReserveURL(options.ProdPort, options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.HTTPSOnly);
+
+            //TODO: Find out how to check that we actually reserved those ports.
+            
+            //Now, we want to install both services.
         }
 
-        private static void ReserveURL(CLI.Options.UpgradeOptions options)
+        private static void ReserveURL(int port, bool isHTTPS)
         {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
             startInfo.FileName = "netsh";
-            startInfo.Arguments = @"http add urlacl url=http{0}://+:{1}/ user=Everyone".FormatS(options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.HTTPSOnly ? "s" : "", options.Port);
+            startInfo.Arguments = @"http add urlacl url=http{0}://+:{1}/ user=Everyone".FormatS(isHTTPS ? "s" : "", port);
             startInfo.UseShellExecute = false;
             startInfo.RedirectStandardOutput = true;
             startInfo.RedirectStandardError = true;
@@ -217,21 +223,21 @@ namespace CCServ.ServiceManagement
             BuildResult buildResult = BuildManager.DefaultBuildManager.Build(new BuildParameters(pc), buildRequest);
         }
 
-        private static void UninstallService(CLI.Options.UpgradeOptions options)
+        private static void UninstallService(string serviceName)
         {
             //Select the service.
             //We do it like this to allow for case insensitivity in the service name.
-            var service = ServiceController.GetServices().FirstOrDefault(x => x.ServiceName.Equals(options.ServiceName, StringComparison.CurrentCultureIgnoreCase));
+            var service = ServiceController.GetServices().FirstOrDefault(x => x.ServiceName.Equals(serviceName, StringComparison.CurrentCultureIgnoreCase));
 
             //If there is a service with the desired service name.
             if (service != null)
             {
-                var liveService = new ServiceController(options.ServiceName);
+                var liveService = new ServiceController(serviceName);
 
                 //If the live service is running, we need to shut it down.
                 if (liveService.Status == ServiceControllerStatus.Running)
                 {
-                    "A service named '{0}' is currently running, do you wish to stop it? (y/n)".WriteLine(options.ServiceName);
+                    "A service named '{0}' is currently running, do you wish to stop it? (y/n)".WriteLine(serviceName);
                     string stopServiceOption = Console.ReadLine();
 
                     switch (stopServiceOption.ToLower())
@@ -265,11 +271,11 @@ namespace CCServ.ServiceManagement
                 ServiceInstaller installer = new ServiceInstaller();
                 InstallContext context = new InstallContext();
                 installer.Context = context;
-                installer.ServiceName = options.ServiceName;
+                installer.ServiceName = serviceName;
                 installer.Uninstall(null);
 
                 //Now, let's confirm that the service is actually gone.
-                if (ServiceController.GetServices().Any(x => x.ServiceName.Equals(options.ServiceName, StringComparison.CurrentCultureIgnoreCase)))
+                if (ServiceController.GetServices().Any(x => x.ServiceName.Equals(serviceName, StringComparison.CurrentCultureIgnoreCase)))
                     throw new Exception("An error occurred!  We failed to uninstall the service.");
             }
         }
