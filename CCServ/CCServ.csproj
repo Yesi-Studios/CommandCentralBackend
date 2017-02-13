@@ -178,7 +178,6 @@
     <Compile Include="CLI\Options\InstallOptions.cs" />
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
-    <Compile Include="CLI\Options\ServiceLaunchOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
