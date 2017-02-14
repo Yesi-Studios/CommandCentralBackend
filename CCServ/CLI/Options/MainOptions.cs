@@ -22,9 +22,6 @@ namespace CCServ.CLI.Options
         [VerbOption("uninstall", HelpText = "Uninstalls the service.")]
         public UninstallOptions UninstallVerb { get; set; }
 
-        [VerbOption("", HelpText = "Upgrades the service to the most recent version on the Production branch.")]
-        public UpgradeOptions UpgradeVerb { get; set; }
-
         [ParserState]
         public IParserState LastParserState { get; set; }
 
@@ -32,7 +29,7 @@ namespace CCServ.CLI.Options
         public string GetUsage(string verb)
         {
             var help = HelpText.AutoBuild(this, verb);
-            help.Heading = new HeadingInfo("Command Central Service CLI", ServiceManagement.ServiceManager.CurrentConfigState.Version);
+            help.Heading = new HeadingInfo("Command Central Service CLI", "1.0.0");
             help.Copyright = new CopyrightInfo(true, "U.S. Navy", 2016);
             help.AdditionalNewLineAfterOption = true;
             help.AddDashesToOption = true;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+using CommandLine.Text;
 
 namespace CCServ.CLI.Options
 {
@@ -12,6 +13,23 @@ namespace CCServ.CLI.Options
     /// </summary>
     public class LaunchOptions
     {
+        [ParserState]
+        public IParserState LastParserState { get; set; }
+
+        [HelpVerbOption]
+        public string GetUsage(string verb)
+        {
+            var help = HelpText.AutoBuild(this);
+            help.Heading = new HeadingInfo("Command Central Service CLI", "1.0.0");
+            help.Copyright = new CopyrightInfo(true, "U.S. Navy", 2016);
+            help.AdditionalNewLineAfterOption = true;
+            help.AddDashesToOption = true;
+
+            help.AddPreOptionsLine("License: IDK.");
+
+            return help;
+        }
+
         [Option("printsql", HelpText = "Instructs the data providers to print the SQL they generate to the output stream.", DefaultValue = false)]
         public bool PrintSQL { get; set; }
 
@@ -27,7 +45,7 @@ namespace CCServ.CLI.Options
         [Option('s', "server", HelpText = "The address (IP or FQDN) of the database server.", Required = true)]
         public string Server { get; set; }
 
-        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1337)]
+        [Option("port", HelpText = "The port on which to launch the service.", DefaultValue = 1113)]
         public int Port { get; set; }
 
         [Option('c', "certpass", HelpText = "The certificate password to use if using ssl to connect to the database. Leave blank if not using the --secure option.", DefaultValue = "")]
