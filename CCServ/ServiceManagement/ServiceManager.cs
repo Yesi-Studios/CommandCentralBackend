@@ -68,8 +68,7 @@ namespace CCServ.ServiceManagement
                 //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(launchOptions.Port))
                 {
-                    Log.Critical("It appears the port '{0}' is already in use. We cannot continue from this.");
-                    Environment.Exit(0);
+                    throw new Exception("It appears the port '{0}' is already in use. We cannot continue from this.");
                 }
 
                 //Ok, so now we have a valid port.  Let's set up the service.
