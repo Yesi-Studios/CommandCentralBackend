@@ -19,27 +19,27 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// The unique Id of this requirement.
         /// </summary>
-        public Guid Id { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The title of this requirement.
         /// </summary>
-        public string Title { get; set; }
+        public virtual string Title { get; set; }
 
         /// <summary>
         /// The description of this requirement.
         /// </summary>
-        public string Description { get; set; }
+        public virtual string Description { get; set; }
 
         /// <summary>
         /// The person who created this training Requirement.
         /// </summary>
-        public Person Creator { get; set; }
+        public virtual Person Creator { get; set; }
 
         /// <summary>
         /// The date/time this training requirement was created.
         /// </summary>
-        public DateTime DateCreated { get; set; }
+        public virtual DateTime DateCreated { get; set; }
 
         #endregion
 

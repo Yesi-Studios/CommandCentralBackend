@@ -16,22 +16,22 @@ namespace CCServ.Entities
         /// <summary>
         /// The unique Id of this comment.
         /// </summary>
-        public Guid Id { get; set; }
+        public virtual Guid Id { get; set; }
 
         /// <summary>
         /// The text of this comment.
         /// </summary>
-        public string Text { get; set; }
+        public virtual string Text { get; set; }
 
         /// <summary>
         /// The time this comment was made.
         /// </summary>
-        public DateTime Time { get; set; }
+        public virtual DateTime Time { get; set; }
 
         /// <summary>
         /// The creator of this comment.
         /// </summary>
-        public Person Creator { get; set; }
+        public virtual Person Creator { get; set; }
 
         #endregion
     }
