@@ -75,7 +75,7 @@ namespace CCServ.CLI
                 }))
             {
                 //We close the environment here, because if parsing failed, then the help text will have been printed to the console.
-                //This poses an awkward issue when debugging from Visual Studio though.
+                //This poses an awkward issue when debugging from Visual Studio though because the command window closes before you can see the error.
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
