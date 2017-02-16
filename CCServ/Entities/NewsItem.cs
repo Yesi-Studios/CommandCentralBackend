@@ -67,7 +67,7 @@ namespace CCServ.Entities
                     .KeyColumn("NewsItemID")
                     .Element("Paragraph", x => x.Length(10000))
                     .Not.LazyLoad();
-                Map(x => x.CreationTime).Not.Nullable().Not.LazyLoad();
+                Map(x => x.CreationTime).Not.Nullable();
             }
         }
 
