@@ -26,7 +26,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The time this comment was made.
         /// </summary>
-        public virtual DateTime Time { get; set; }
+        public virtual DateTime DateCreated { get; set; }
 
         /// <summary>
         /// The creator of this comment.
