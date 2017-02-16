@@ -45,8 +45,6 @@ namespace CCServ.Entities
 
         #endregion
 
-        
-
         /// <summary>
         /// Maps a news item to the database.
         /// </summary>
