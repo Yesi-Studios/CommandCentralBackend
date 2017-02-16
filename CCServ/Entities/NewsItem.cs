@@ -61,7 +61,7 @@ namespace CCServ.Entities
 
                 References(x => x.Creator).LazyLoad(Laziness.False);
 
-                Map(x => x.Title).Not.Nullable().Length(50).Not.LazyLoad();
+                Map(x => x.Title).Not.Nullable();
                 HasMany(x => x.Paragraphs)
                     .Table("newsitemparagraphs")
                     .KeyColumn("NewsItemID")
