@@ -213,6 +213,7 @@
     <Compile Include="Entities\CommentBase.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="Entities\TrainingModule\Assignment.cs" />
+    <Compile Include="Entities\TrainingModule\AssignmentComment.cs" />
     <Compile Include="Entities\TrainingModule\Requirement.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />

@@ -21,7 +21,10 @@ namespace CCServ.Entities.TrainingModule
         /// </summary>
         public DateTime DateAssigned { get; set; }
 
-        
+        /// <summary>
+        /// A list of comments.  This is the comment thread for the assignment object.
+        /// </summary>
+        public IList<AssignmentComment> Comments { get; set; }
         
 
     }
