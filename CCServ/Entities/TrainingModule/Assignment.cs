@@ -98,8 +98,12 @@ namespace CCServ.Entities.TrainingModule
                     return null;
                 });
 
-                
-                
+                RuleFor(x => x.Comments).SetCollectionValidator(new AssignmentComment.AssignmentCommentValidator());
+
+                RuleFor(x => x.AssignedBy).NotEmpty();
+                RuleFor(x => x.AssignedTo).NotEmpty();
+
+                RuleFor(x => x.Requirement).NotEmpty();
             }
         }
     }
