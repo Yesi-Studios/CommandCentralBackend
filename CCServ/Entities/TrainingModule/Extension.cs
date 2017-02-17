@@ -132,6 +132,5 @@ namespace CCServ.Entities.TrainingModule
                     .WithMessage("An extension must be for at least one day.");
             }
         }
-           
     }
 }
