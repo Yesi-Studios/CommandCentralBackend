@@ -128,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\Groups\Definitions\TrainingCoordinator.cs" />
+    <Compile Include="Authorization\Groups\Definitions\TrainingPO.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventBase.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
