@@ -216,6 +216,7 @@
     <Compile Include="Entities\TrainingModule\AssignmentComment.cs" />
     <Compile Include="Entities\TrainingModule\Extension.cs" />
     <Compile Include="Entities\TrainingModule\ExtensionComment.cs" />
+    <Compile Include="Entities\TrainingModule\Pipeline.cs" />
     <Compile Include="Entities\TrainingModule\Requirement.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
