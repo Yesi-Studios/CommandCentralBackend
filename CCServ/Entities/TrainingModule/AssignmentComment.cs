@@ -32,6 +32,7 @@ namespace CCServ.Entities.TrainingModule
                 Id(x => x.Id).GeneratedBy.Guid();
 
                 References(x => x.Creator).Not.Nullable();
+                References(x => x.Assignment).Not.Nullable();
 
                 Map(x => x.Text).Length(500).Not.Nullable();
                 Map(x => x.DateCreated).Not.Nullable();
@@ -54,6 +55,7 @@ namespace CCServ.Entities.TrainingModule
                 RuleFor(x => x.Text).Length(3, 500);
 
                 RuleFor(x => x.Assignment).NotEmpty();
+                RuleFor(x => x.DateCreated).NotEmpty();
             }
         }
     }
