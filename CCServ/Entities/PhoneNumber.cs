@@ -5,6 +5,7 @@ using FluentValidation;
 using System.Linq;
 using Humanizer;
 using AtwoodUtils;
+using System.Collections.Generic;
 
 namespace CCServ.Entities
 {
@@ -56,7 +57,15 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} ({1}) | {2}Contactable | {3}Preferred".FormatWith(Number, PhoneType.Value, IsContactable ? "" : "Not ", IsPreferred ? "" : "Not ");
+            List<string> preferences = new List<string>();
+            if (IsContactable)
+                preferences.Add("C");
+            if (IsPreferred)
+                preferences.Add("P");
+
+            string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
+
+            return "{0} ({1}) {2}".FormatWith(Number, PhoneType.Value, final);
         }
 
         /// <summary>
