@@ -20,7 +20,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadAPIKeys", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadAPIKeys(MessageToken token)
+        private static void LoadAPIKeys(MessageToken token)
         {
             //Just make sure the client is logged in.
             if (token.AuthenticationSession == null)

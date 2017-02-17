@@ -22,7 +22,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadNewsItem(MessageToken token)
+        private static void LoadNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -82,7 +82,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadNewsItems", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadNewsItems(MessageToken token)
+        private static void LoadNewsItems(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -136,7 +136,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "CreateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_CreateNewsItem(MessageToken token)
+        private static void CreateNewsItem(MessageToken token)
         {
 
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
@@ -232,7 +232,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "UpdateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdateNewsItem(MessageToken token)
+        private static void UpdateNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -327,7 +327,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "DeleteNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteNewsItem(MessageToken token)
+        private static void DeleteNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)

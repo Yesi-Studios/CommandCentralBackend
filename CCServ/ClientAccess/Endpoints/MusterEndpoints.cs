@@ -24,7 +24,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadMusterRecordsByMusteree", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterRecordsByMusteree(MessageToken token)
+        private static void LoadMusterRecordsByMusteree(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -110,7 +110,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadMusterRecordsByMusterDay", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterRecordsByMusterDay(MessageToken token)
+        private static void LoadMusterRecordsByMusterDay(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -172,7 +172,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "SubmitMuster", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_SubmitMuster(MessageToken token)
+        private static void SubmitMuster(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -279,7 +279,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadMusterablePersonsForToday", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadMusterablePersonsForToday(MessageToken token)
+        private static void LoadMusterablePersonsForToday(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -408,7 +408,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "FinalizeMuster", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_FinalizeMuster(MessageToken token)
+        private static void FinalizeMuster(MessageToken token)
         {
             //Let's make sure we have permission to finalize muster.  You can finalize muster if you're logged in (no shit) and a command level muster... person.
             if (token.AuthenticationSession == null)

@@ -27,7 +27,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadFAQ(MessageToken token)
+        private static void LoadFAQ(MessageToken token)
         {
             //Get the FAQ Id we're supposed to load.
             if (!token.Args.ContainsKey("faqid"))
@@ -75,7 +75,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadFAQs", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadFAQs(MessageToken token)
+        private static void LoadFAQs(MessageToken token)
         {
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -105,7 +105,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "CreateOrUpdateFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_CreateOrUpdateFAQ(MessageToken token)
+        private static void CreateOrUpdateFAQ(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -203,7 +203,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "DeleteFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteFAQ(MessageToken token)
+        private static void DeleteFAQ(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)

@@ -28,7 +28,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "TakeProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_TakeProfileLock(MessageToken token)
+        private static void TakeProfileLock(MessageToken token)
         {
 
             if (token.AuthenticationSession == null)
@@ -161,7 +161,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "ReleaseProfileLock", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_ReleaseProfileLock(MessageToken token)
+        private static void ReleaseProfileLock(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {

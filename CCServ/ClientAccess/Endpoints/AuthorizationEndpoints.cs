@@ -21,7 +21,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_GetPermissionGroups(MessageToken token)
+        private static void GetPermissionGroups(MessageToken token)
         {
             token.SetResult(Authorization.Groups.PermissionGroup.AllPermissionGroups.ToList());
         }
@@ -34,7 +34,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadPermissionGroupsByPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadPermissionGroupsByPerson(MessageToken token)
+        private static void LoadPermissionGroupsByPerson(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -91,7 +91,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "UpdatePermissionGroupsByPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdatePermissionGroupsByPerson(MessageToken token)
+        private static void UpdatePermissionGroupsByPerson(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {

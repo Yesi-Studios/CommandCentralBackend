@@ -21,7 +21,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "LoadReferenceLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadReferenceLists(MessageToken token)
+        private static void LoadReferenceLists(MessageToken token)
         {
             List<string> entityNames = new List<string>();
             if (token.Args.ContainsKey("entitynames"))
@@ -190,7 +190,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "UpdateOrInsertReferenceList", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdateOrInsertList(MessageToken token)
+        private static void UpdateOrInsertList(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {
@@ -241,7 +241,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "DeleteReferenceList", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteReferenceList(MessageToken token)
+        private static void DeleteReferenceList(MessageToken token)
         {
             if (token.AuthenticationSession == null)
             {

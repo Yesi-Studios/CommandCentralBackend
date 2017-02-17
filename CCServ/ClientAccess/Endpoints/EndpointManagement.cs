@@ -21,7 +21,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "SwitchEndpoint", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_SwitchEndpoint(MessageToken token)
+        private static void SwitchEndpoint(MessageToken token)
         {
             //Just make sure the client is logged in.
             if (token.AuthenticationSession == null)

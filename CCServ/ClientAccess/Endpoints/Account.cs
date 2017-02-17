@@ -36,7 +36,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "Login", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_Login(MessageToken token)
+        private static void Login(MessageToken token)
         {
             //Let's see if the parameters are here.
             if (!token.Args.ContainsKey("username"))
@@ -145,7 +145,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "Logout", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_Logout(MessageToken token)
+        private static void Logout(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -207,7 +207,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "BeginRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_BeginRegistration(MessageToken token)
+        private static void BeginRegistration(MessageToken token)
         {
 
             //Let's do our work in a new session so that we don't affect the authentication information.
@@ -369,7 +369,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "CompleteRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_CompleteRegistration(MessageToken token)
+        private static void CompleteRegistration(MessageToken token)
         {
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("username"))
@@ -485,7 +485,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "BeginPasswordReset", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_BeginPasswordReset(MessageToken token)
+        private static void BeginPasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("email"))
@@ -632,7 +632,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "CompletePasswordReset", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_CompletePasswordReset(MessageToken token)
+        private static void CompletePasswordReset(MessageToken token)
         {
 
             //First, let's make sure the args are present.
@@ -731,7 +731,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "ChangePassword", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_ChangePassword(MessageToken token)
+        private static void ChangePassword(MessageToken token)
         {
             //Just make sure the client is logged in.
             if (token.AuthenticationSession == null)
@@ -812,7 +812,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(EndpointName = "ForgotUsername", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_ForgotUsername(MessageToken token)
+        private static void ForgotUsername(MessageToken token)
         {
             if (!token.Args.ContainsKey("ssn"))
             {
