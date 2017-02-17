@@ -33,7 +33,7 @@ namespace CCServ.Entities.TrainingModule
 
                 References(x => x.Creator).Not.Nullable();
 
-                Map(x => x.Text).Not.Nullable();
+                Map(x => x.Text).Length(500).Not.Nullable();
                 Map(x => x.DateCreated).Not.Nullable();
             }
         }
@@ -48,7 +48,12 @@ namespace CCServ.Entities.TrainingModule
             /// </summary>
             public AssignmentCommentValidator()
             {
+                RuleFor(x => x.Id).NotEmpty();
 
+                RuleFor(x => x.Creator).NotEmpty();
+                RuleFor(x => x.Text).Length(3, 500);
+
+                RuleFor(x => x.Assignment).NotEmpty();
             }
         }
     }
