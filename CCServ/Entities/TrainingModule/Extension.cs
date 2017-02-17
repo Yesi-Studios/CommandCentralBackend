@@ -34,7 +34,7 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// The assignment to which this extension applies.  This extension will (if approved) extend the time a person has to complete the related requirement.
         /// </summary>
-        public virtual Assignment Assignment { get; set; }
+        public virtual RequirementAssignment Assignment { get; set; }
 
         /// <summary>
         /// Indicates that this extension has been approved.

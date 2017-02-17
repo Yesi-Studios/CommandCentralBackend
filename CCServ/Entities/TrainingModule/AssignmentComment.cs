@@ -17,7 +17,7 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// The assignment to which this comment applies.
         /// </summary>
-        public virtual Assignment Assignment { get; set; }
+        public virtual RequirementAssignment Assignment { get; set; }
 
         /// <summary>
         /// Maps an assignment comment to the database.

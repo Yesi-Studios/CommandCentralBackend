@@ -212,12 +212,14 @@
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\CommentBase.cs" />
     <Compile Include="Entities\FAQ.cs" />
-    <Compile Include="Entities\TrainingModule\Assignment.cs" />
+    <Compile Include="Entities\TrainingModule\PipelineAssignment.cs" />
+    <Compile Include="Entities\TrainingModule\RequirementAssignment.cs" />
     <Compile Include="Entities\TrainingModule\AssignmentComment.cs" />
     <Compile Include="Entities\TrainingModule\Extension.cs" />
     <Compile Include="Entities\TrainingModule\ExtensionComment.cs" />
     <Compile Include="Entities\TrainingModule\Pipeline.cs" />
     <Compile Include="Entities\TrainingModule\Requirement.cs" />
+    <Compile Include="Entities\TrainingModule\TrainingAssignmentBase.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
