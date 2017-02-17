@@ -31,26 +31,19 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// Maps a pipeline assignment to the database.
         /// </summary>
-        public class PipelineAssignmentMapping : ClassMap<PipelineAssignment>
+        public class PipelineAssignmentMapping : SubclassMap<PipelineAssignment>
         {
             /// <summary>
             /// Maps a pipeline assignment to the database.
             /// </summary>
             public PipelineAssignmentMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                DiscriminatorValue("PipelineAssignment");
 
-                References(x => x.AssignedBy).Not.Nullable();
-                References(x => x.AssignedTo).Not.Nullable();
                 References(x => x.Pipeline).Not.Nullable();
 
-                HasManyToMany(x => x.RequirementAssignments)
-                    .Table("requirementassignmenttopipelineassignment_requirementassignments");
+                HasManyToMany(x => x.RequirementAssignments);
 
-                Map(x => x.DateAssigned).Not.Nullable();
-                Map(x => x.CompleteByDate).Not.Nullable();
-
-                HasMany(x => x.Comments);
             }
         }
 

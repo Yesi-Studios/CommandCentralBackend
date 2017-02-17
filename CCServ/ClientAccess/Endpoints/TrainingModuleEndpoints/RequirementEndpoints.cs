@@ -83,5 +83,67 @@ namespace CCServ.ClientAccess.Endpoints.TrainingModuleEndpoints
                 }
             }
         }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Deletes a training requirement.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        static void DeleteRequirement(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to delete a training requirement.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.TrainingAdmin.ToString()))
+            {
+                token.AddErrorMessage("You do not have permission to manage the training module.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("requirement"))
+            {
+                token.AddErrorMessage("You failed to send a 'requirement' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            Requirement requirementFromClient;
+            try
+            {
+                requirementFromClient = token.Args["requirement"].CastJToken<Requirement>();
+            }
+            catch (Exception e)
+            {
+                token.AddErrorMessage("There was an error while trying to parse the requirement you sent.  Error: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            //Now that we have the requirement the client want to delete, let's start a session.
+            //We need to make sure the requirement is real, and that it won't affect any assignments.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    int personsWithAssignments = session
+                        .QueryOver<Entities.Person>()
+                        .Where(x => x.Assignments)
+                        .RowCount();
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
     }
 }

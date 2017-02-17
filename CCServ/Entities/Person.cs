@@ -224,6 +224,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual IList<WatchQualification> WatchQualifications { get; set; }
 
+        /// <summary>
+        /// The list of assignments the person has.
+        /// </summary>
+        public virtual IList<TrainingModule.TrainingAssignmentBase> Assignments { get; set; }
+
         #endregion
 
         #region Contacts Properties
@@ -968,6 +973,7 @@ namespace CCServ.Entities
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
                 HasMany(x => x.SubscribedEvents).Cascade.All();
 
+                HasManyToMany(x => x.Assignments);
                 HasManyToMany(x => x.WatchQualifications).Cascade.All();
 
                 HasMany(x => x.PermissionGroupNames)

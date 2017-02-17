@@ -37,25 +37,19 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// Maps a requirement assignment to the database.
         /// </summary>
-        public class RequirementAssignmentMapping : ClassMap<RequirementAssignment>
+        public class RequirementAssignmentMapping : SubclassMap<RequirementAssignment>
         {
             /// <summary>
             /// Maps a requirement assignment to the database.
             /// </summary>
             public RequirementAssignmentMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                DiscriminatorValue("RequirementAssignment");
 
-                References(x => x.AssignedBy).Not.Nullable();
-                References(x => x.AssignedTo).Not.Nullable();
                 References(x => x.Requirement).Not.Nullable();
 
-                Map(x => x.DateAssigned).Not.Nullable();
-                Map(x => x.CompleteByDate).Not.Nullable();
                 Map(x => x.CompletedDate).Nullable();
                 Map(x => x.IsCompleted).Default(false.ToString());
-
-                HasMany(x => x.Comments);
             }
         }
 

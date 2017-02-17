@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CCServ.Entities.TrainingModule
 {
@@ -45,6 +47,30 @@ namespace CCServ.Entities.TrainingModule
         public virtual IList<Comment> Comments { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Maps the base training assignment to the database.
+        /// </summary>
+        public class TrainingAssignmentBaseMapping : ClassMap<TrainingAssignmentBase>
+        {
+            /// <summary>
+            /// Maps a requirement assignment to the database.
+            /// </summary>
+            public TrainingAssignmentBaseMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                References(x => x.AssignedBy).Not.Nullable();
+                References(x => x.AssignedTo).Not.Nullable();
+
+                Map(x => x.DateAssigned).Not.Nullable();
+                Map(x => x.CompleteByDate).Not.Nullable();
+
+                HasMany(x => x.Comments);
+
+                DiscriminateSubClassesOnColumn("Type");
+            }
+        }
 
     }
 }
