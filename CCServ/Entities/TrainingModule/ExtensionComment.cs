@@ -16,7 +16,7 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// The extension to which this comment applies.
         /// </summary>
-        public Extension Extension { get; set; }
+        public virtual Extension Extension { get; set; }
 
         /// <summary>
         /// Maps an extension comment to the database.
