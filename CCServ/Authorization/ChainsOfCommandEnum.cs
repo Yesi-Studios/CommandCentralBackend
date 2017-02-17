@@ -9,6 +9,7 @@ namespace CCServ.Authorization
     public enum ChainsOfCommand
     {
         Main,
-        Muster
+        Muster,
+        Training
     }
 }

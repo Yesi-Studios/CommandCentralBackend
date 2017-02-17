@@ -28,6 +28,14 @@ namespace CCServ.Authorization
         /// <summary>
         /// The permission needed to edit or create FAQs.
         /// </summary>
-        EditFAQ
+        EditFAQ,
+        /// <summary>
+        /// The permission needed to create training requirements, and assign them.  Includes pipelines and extensions as well.
+        /// </summary>
+        TrainingAdmin,
+        /// <summary>
+        /// The permission needed to create training events and take attendance.
+        /// </summary>
+        ManageTrainingEvents
     }
 }
