@@ -91,7 +91,7 @@ namespace CCServ.Entities.TrainingModule
                     });
                 });
 
-                RuleFor(x => x.Comments).SetCollectionValidator(new AssignmentComment.AssignmentCommentValidator());
+                RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
 
                 RuleFor(x => x.AssignedBy).NotEmpty();
                 RuleFor(x => x.AssignedTo).NotEmpty();

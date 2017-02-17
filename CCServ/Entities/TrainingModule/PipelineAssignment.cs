@@ -44,7 +44,8 @@ namespace CCServ.Entities.TrainingModule
                 References(x => x.AssignedTo).Not.Nullable();
                 References(x => x.Pipeline).Not.Nullable();
 
-                HasManyToMany(x => x.RequirementAssignments);
+                HasManyToMany(x => x.RequirementAssignments)
+                    .Table("requirementassignmenttopipelineassignment_requirementassignments");
 
                 Map(x => x.DateAssigned).Not.Nullable();
                 Map(x => x.CompleteByDate).Not.Nullable();
@@ -74,7 +75,7 @@ namespace CCServ.Entities.TrainingModule
                     return null;
                 });
 
-                RuleFor(x => x.Comments).SetCollectionValidator(new AssignmentComment.AssignmentCommentValidator());
+                RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
 
                 RuleFor(x => x.AssignedBy).NotEmpty();
                 RuleFor(x => x.AssignedTo).NotEmpty();

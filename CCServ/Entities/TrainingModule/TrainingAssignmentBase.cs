@@ -25,11 +25,6 @@ namespace CCServ.Entities.TrainingModule
         public virtual DateTime DateAssigned { get; set; }
 
         /// <summary>
-        /// A list of comments.  This is the comment thread for the assignment object.
-        /// </summary>
-        public virtual IList<AssignmentComment> Comments { get; set; }
-
-        /// <summary>
         /// The person who assigned this assignment.
         /// </summary>
         public virtual Person AssignedBy { get; set; }
@@ -43,6 +38,11 @@ namespace CCServ.Entities.TrainingModule
         /// The date by which this assignment should be completed.
         /// </summary>
         public virtual DateTime CompleteByDate { get; set; }
+
+        /// <summary>
+        /// The comments tied to this instance of a training assignment.
+        /// </summary>
+        public virtual IList<Comment> Comments { get; set; }
 
         #endregion
 

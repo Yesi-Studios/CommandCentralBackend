@@ -29,7 +29,7 @@ namespace CCServ.Entities.TrainingModule
         /// <summary>
         /// The comments, which together make a comment thread on which users can discuss this extension.
         /// </summary>
-        public virtual IList<ExtensionComment> Comments { get; set; }
+        public virtual IList<Comment> Comments { get; set; }
 
         /// <summary>
         /// The assignment to which this extension applies.  This extension will (if approved) extend the time a person has to complete the related requirement.
@@ -104,7 +104,7 @@ namespace CCServ.Entities.TrainingModule
                 RuleFor(x => x.Assignment).NotEmpty();
                 RuleFor(x => x.DateCreated).NotEmpty();
 
-                RuleFor(x => x.Comments).SetCollectionValidator(new ExtensionComment.ExtensionCommentValidator());
+                RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
 
                 When(x => !x.IsApproved, () =>
                 {
