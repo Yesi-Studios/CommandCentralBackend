@@ -52,7 +52,7 @@ namespace CCServ.Entities
         #region Overrides
 
         /// <summary>
-        /// Returns the Number property.
+        /// Returns the Number property along with the user preferences printed next to it.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
