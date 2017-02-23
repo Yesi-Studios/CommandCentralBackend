@@ -62,10 +62,18 @@ namespace CCServ.Entities
                 preferences.Add("C");
             if (IsPreferred)
                 preferences.Add("P");
-
+            
             string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
 
-            return "{0} ({1}) {2}".FormatWith(Number, PhoneType.Value, final);
+            string phoneType = "";
+            if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Home.Id)
+                phoneType = "H";
+            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Mobile.Id)
+                phoneType = "M";
+            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Work.Id)
+                phoneType = "W";
+
+            return "{0} ({1}) {2}".FormatWith(Number, phoneType, final);
         }
 
         /// <summary>
