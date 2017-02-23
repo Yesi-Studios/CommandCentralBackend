@@ -68,10 +68,6 @@
       <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="LibGit2Sharp, Version=0.23.1.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <HintPath>..\packages\LibGit2Sharp.0.23.1\lib\net40\LibGit2Sharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
@@ -179,7 +175,6 @@
     <Compile Include="CLI\Options\LaunchOptions.cs" />
     <Compile Include="CLI\Options\MainOptions.cs" />
     <Compile Include="CLI\Options\UninstallOptions.cs" />
-    <Compile Include="CLI\Options\UpgradeOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
     <Compile Include="CustomTypes\Time.cs" />
@@ -248,7 +243,6 @@
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualification.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualifications.cs" />
-    <Compile Include="ServiceManagement\ServiceUpgrader.cs" />
     <Compile Include="Variance.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogEntry.cs" />

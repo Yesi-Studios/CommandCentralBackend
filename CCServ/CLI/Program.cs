@@ -74,6 +74,8 @@ namespace CCServ.CLI
                     invokedVerbInstance = subOptions;
                 }))
             {
+                //We close the environment here, because if parsing failed, then the help text will have been printed to the console.
+                //This poses an awkward issue when debugging from Visual Studio though because the command window closes before you can see the error.
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
@@ -95,14 +97,6 @@ namespace CCServ.CLI
                     {
                         var uninstallOptions = (UninstallOptions)invokedVerbInstance;
                         WindowsService.WindowsServiceInstaller.UninstallService(uninstallOptions.ServiceName);
-                        break;
-                    }
-                case "upgrade":
-                    {
-                        var upgradeOptions = (UpgradeOptions)invokedVerbInstance;
-
-                        ServiceManagement.ServiceUpgrader.UpgradeService(upgradeOptions);
-
                         break;
                     }
                 default:

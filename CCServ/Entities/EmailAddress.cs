@@ -4,6 +4,7 @@ using System.Linq;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using Humanizer;
+using System.Collections.Generic;
 
 namespace CCServ.Entities
 {
@@ -96,7 +97,15 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} | {1}Contactable | {2}Preferred".FormatWith(Address, IsContactable ? "" : "Not ", IsPreferred ? "" : "Not ");
+            List<string> preferences = new List<string>();
+            if (IsContactable)
+                preferences.Add("C");
+            if (IsPreferred)
+                preferences.Add("P");
+            
+            string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
+
+            return "{0} {1}".FormatWith(Address, final);
         }
 
         #endregion

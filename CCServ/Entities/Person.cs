@@ -825,6 +825,76 @@ namespace CCServ.Entities
                         }
                     }
 
+                    Log.Info("Scanning for LeMay's profile...");
+
+                    //Make sure mclean is in the database.
+                    var lemay = session.QueryOver<Person>()
+                        .Where(x => x.FirstName == "Stephen" && x.LastName == "Lemay" && x.MiddleName == "Charles")
+                        .SingleOrDefault();
+
+                    //We're also going to look to see if McLean's profile exists.
+                    if (lemay == null)
+                    {
+                        Log.Warning("LeMay's profile was not found in the database.  Creating it now...");
+
+                        var person = new Person()
+                        {
+                            Id = Guid.NewGuid(),
+                            Sex = Sexes.Male,
+                            LastName = "LeMay",
+                            FirstName = "Stephen",
+                            MiddleName = "Charles",
+                            SSN = "888888878",
+                            IsClaimed = false,
+                            EmailAddresses = new List<EmailAddress>()
+                            {
+                                new EmailAddress
+                                {
+                                    Address = "stephen.c.lemay2@mail.mil",
+                                    IsContactable = true,
+                                    IsPreferred = true
+                                }
+                            },
+                            DateOfBirth = new DateTime(1992, 04, 24),
+                            DateOfArrival = new DateTime(2013, 08, 23),
+                            EAOS = new DateTime(2018, 1, 27),
+                            PRD = new DateTime(2017, 3, 15),
+                            Paygrade = Paygrades.E5,
+                            DutyStatus = DutyStatuses.Active,
+                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
+                        };
+
+                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
+
+                        person.Username = "sclemay";
+                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
+                        person.IsClaimed = true;
+
+                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
+                        {
+                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
+                            EventTime = DateTime.UtcNow
+                        } };
+
+                        session.Save(person);
+
+                        Log.Info("LeMay's profile created.  Id : {0}".FormatS(person.Id));
+                    }
+                    else
+                    {
+                        Log.Info("LeMay's profile found. Id : {0}".FormatS(lemay.Id));
+
+                        if (!lemay.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
+                        {
+                            Log.Warning("LeMay isn't a developer.  That must be a mistake...");
+                            lemay.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
+
+                            session.Update(lemay);
+
+                            Log.Info("LeMay is now a developer.");
+                        }
+                    }
+
                     //Give the listener the current row count.
                     Log.Info("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
 

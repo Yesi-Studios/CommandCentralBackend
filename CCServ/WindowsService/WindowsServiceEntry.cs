@@ -39,7 +39,9 @@ namespace CCServ
 
             if (args == null || !args.Any() || !CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
+                //In the event that parsing fails we need to throw an exception, because we'll be in the non-interactive state.
+                throw new Exception("Failed to parse arguments...");
+                    
             }
 
             _launchOptions = options;
