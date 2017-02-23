@@ -5,6 +5,7 @@ using FluentValidation;
 using System.Linq;
 using Humanizer;
 using AtwoodUtils;
+using System.Collections.Generic;
 
 namespace CCServ.Entities
 {
@@ -51,12 +52,28 @@ namespace CCServ.Entities
         #region Overrides
 
         /// <summary>
-        /// Returns the Number property.
+        /// Returns the Number property along with the user preferences printed next to it.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} ({1}) | {2}Contactable | {3}Preferred".FormatWith(Number, PhoneType.Value, IsContactable ? "" : "Not ", IsPreferred ? "" : "Not ");
+            List<string> preferences = new List<string>();
+            if (IsContactable)
+                preferences.Add("C");
+            if (IsPreferred)
+                preferences.Add("P");
+            
+            string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
+
+            string phoneType = "";
+            if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Home.Id)
+                phoneType = "H";
+            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Mobile.Id)
+                phoneType = "M";
+            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Work.Id)
+                phoneType = "W";
+
+            return "{0} ({1}) {2}".FormatWith(Number, phoneType, final);
         }
 
         /// <summary>

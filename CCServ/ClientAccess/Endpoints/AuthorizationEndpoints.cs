@@ -172,6 +172,10 @@ namespace CCServ.ClientAccess.Endpoints
                             //Here we get the group the client is trying to edit.  We know the client is allowed to edit its membership at this point.
                             var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.SafeEquals(groupName));
 
+                            var highestPermissionLevelInGroups = resolvedPermissions.HighestLevels
+                                .Where(x => group.ChainsOfCommandMemberOf.Select(y => y.ToString()).Contains(x.Key, StringComparer.CurrentCultureIgnoreCase))
+                                .Max(x => x.Value);
+
                             //Now, we need to know if the client has the right access level (chain of command) to edit it.
                             switch (group.AccessLevel)
                             {
@@ -184,15 +188,64 @@ namespace CCServ.ClientAccess.Endpoints
                                     }
                                 case ChainOfCommandLevels.Department:
                                     {
-                                        if (!person.IsInSameDepartmentAs(token.AuthenticationSession.Person))
-                                            failures.Add(groupName);
+                                        switch (highestPermissionLevelInGroups)
+                                        {
+                                            case ChainOfCommandLevels.Command:
+                                                {
+                                                    if (!person.IsInSameCommandAs(token.AuthenticationSession.Person))
+                                                        failures.Add(groupName);
+
+                                                    break;
+                                                }
+                                            case ChainOfCommandLevels.Department:
+                                                {
+                                                    if (!person.IsInSameDepartmentAs(token.AuthenticationSession.Person))
+                                                        failures.Add(groupName);
+
+                                                    break;
+                                                }
+                                            case ChainOfCommandLevels.Division:
+                                                {
+                                                    throw new Exception("This case shouldn't be met...");
+                                                }
+                                            default:
+                                                {
+                                                    throw new Exception("Fell to default case.");
+                                                }
+                                        }
 
                                         break;
                                     }
                                 case ChainOfCommandLevels.Division:
                                     {
-                                        if (!person.IsInSameDivisionAs(token.AuthenticationSession.Person))
-                                            failures.Add(groupName);
+                                        switch (highestPermissionLevelInGroups)
+                                        {
+                                            case ChainOfCommandLevels.Command:
+                                                {
+                                                    if (!person.IsInSameCommandAs(token.AuthenticationSession.Person))
+                                                        failures.Add(groupName);
+
+                                                    break;
+                                                }
+                                            case ChainOfCommandLevels.Department:
+                                                {
+                                                    if (!person.IsInSameDepartmentAs(token.AuthenticationSession.Person))
+                                                        failures.Add(groupName);
+
+                                                    break;
+                                                }
+                                            case ChainOfCommandLevels.Division:
+                                                {
+                                                    if (!person.IsInSameDivisionAs(token.AuthenticationSession.Person))
+                                                        failures.Add(groupName);
+
+                                                    break;
+                                                }
+                                            default:
+                                                {
+                                                    throw new Exception("Fell to default case.");
+                                                }
+                                        }
 
                                         break;
                                     }
