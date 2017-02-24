@@ -210,6 +210,10 @@
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignments.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatuses.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
