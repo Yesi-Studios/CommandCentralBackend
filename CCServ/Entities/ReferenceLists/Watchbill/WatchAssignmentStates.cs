@@ -83,5 +83,42 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
             Value = "Excused",
             Description = "The assigned person failed to stand his or her watch; however, the absence was excued."
         };
+
+        /// <summary>
+        /// Ensures that all of the watch assignment states are persisted in the database and they look the same as they do here.
+        /// </summary>
+        /// <param name="options"></param>
+        [ServiceManagement.StartMethod(Priority = 11)]
+        private static void EnsureWatchAssignmentStatesPersistence(CLI.Options.LaunchOptions options)
+        {
+            Logging.Log.Info("Checking watch assignment states...");
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var currentStates = session.QueryOver<WatchAssignmentState>().List();
+
+                    var missingStates = AllWatchAssignmentStates.Except(currentStates).ToList();
+
+                    if (missingStates.Any())
+                    {
+                        foreach (var state in missingStates)
+                        {
+                            session.Save(state);
+                        }
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+        }
     }
 }
