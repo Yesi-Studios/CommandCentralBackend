@@ -44,12 +44,18 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The date time of the muster.
         /// </summary>
-        private DateTime MusterDateTime { get; set; }
+        public DateTime MusterDateTime { get; set; }
 
         /// <summary>
         /// The time that the muster rolls over.
         /// </summary>
-        public Time RollOverTime { get; set; }
+        public Time RollOverTime
+        {
+            get
+            {
+                return ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime;
+            }
+        }
 
         /// <summary>
         /// The date to display.
@@ -62,16 +68,6 @@ namespace CCServ.Email.Models
                   CultureInfo.CreateSpecificCulture("en-US"));
             }
         }
-
-        /// <summary>
-        /// The list of all records involved in this report email.
-        /// </summary>
-        public List<Entities.MusterRecord> Records { get; set; }
-
-        /// <summary>
-        /// The list of all containers in this email.  (These are the "totals" on the email).
-        /// </summary>
-        private List<MusterGroupContainer> Containers { get; set; }
 
         /// <summary>
         /// The total text, which is the containers turned into HTML paragraphs.
@@ -92,7 +88,7 @@ namespace CCServ.Email.Models
         /// <param name="records"></param>
         /// <param name="creator"></param>
         /// <param name="musterDateTime"></param>
-        public MusterReportEmailModel(IEnumerable<Entities.MusterRecord> records, Entities.Person creator, DateTime musterDateTime)
+        public MusterReportEmailModel()
         {
             MusterDateTime = musterDateTime;
 
