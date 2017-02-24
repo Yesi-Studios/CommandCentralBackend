@@ -311,11 +311,6 @@ namespace CCServ.Entities
                         session.Save(person);
                     }
 
-                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterRecord), creator, DateTime.UtcNow)
-                    {
-                        RollOverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime,
-                    };
-
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()

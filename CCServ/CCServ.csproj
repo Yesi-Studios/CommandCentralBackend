@@ -207,6 +207,7 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\FAQ.cs" />
+    <Compile Include="MusterReport.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
