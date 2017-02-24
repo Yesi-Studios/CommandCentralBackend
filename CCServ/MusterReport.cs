@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NHibernate.Criterion;
+using AtwoodUtils;
 
 namespace CCServ
 {
@@ -45,6 +47,54 @@ namespace CCServ
             Email.Models.MusterReportEmailModel model = new Email.Models.MusterReportEmailModel();
 
             model.MusterDateTime = this.MusterDate;
+
+            if (token == null || token.AuthenticationSession == null)
+                model.CreatorName = "SYSTEM";
+            else
+                model.CreatorName = token.AuthenticationSession.Person.ToString();
+
+            var containers = new List<MusterGroupContainer>();
+            
+            //Now we need to go get the records.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
+            {
+                try
+                {
+                    var records = session.QueryOver<Entities.MusterRecord>()
+                        .Where(x => x.MusterDate == this.MusterDate)
+                        .List();
+
+                    foreach (var record in records)
+                    {
+                        var container = containers.FirstOrDefault(x => x.GroupTitle.SafeEquals(record.DutyStatus));
+
+                        if (container == null)
+                        {
+                            containers.Add(new MusterGroupContainer
+                            {
+                                GroupTitle = record.DutyStatus,
+                                Mustered = String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()) ? 0 : 1,
+                                Total = 1
+                            });
+                        }
+                        else
+                        {
+                            container.Total++;
+                            if (!String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()))
+                                container.Mustered++;
+                        }
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
         }
 
         #endregion
