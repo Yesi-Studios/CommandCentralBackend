@@ -212,6 +212,8 @@
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatuses.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchInputReason.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftType.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftTypes.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
