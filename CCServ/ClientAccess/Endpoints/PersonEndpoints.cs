@@ -808,7 +808,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var returnData = new Dictionary<string, string>();
 
                     //Now just set the fields the client is allowed to see.
-                    foreach (var propertyName in returnableFields)
+                    foreach (var propertyName in returnableFields.Intersect(returnFields, StringComparer.CurrentCultureIgnoreCase))
                     {
                         var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName);
 
