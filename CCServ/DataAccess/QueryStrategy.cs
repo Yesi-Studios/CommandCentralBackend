@@ -52,7 +52,7 @@ namespace CCServ.DataAccess
             {
                 ParentQueryStrategy = this,
                 Properties = members.ToList(),
-                CriteriaProvider = null //TODO maybe provider a default here.
+                CriteriaProvider = null
             };
 
             PropertyGroups.Add(part);

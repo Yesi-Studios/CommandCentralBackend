@@ -205,19 +205,7 @@ namespace CCServ.Entities.ReferenceLists
                     //Try to get it.
                     var departmentFromDB = session.Get<Department>(departmentFromClient.Id);
 
-                    //If the client is updating the command, then we need to walk across all the persons and update that.
-                    if (departmentFromDB.Command.Id != departmentFromClient.Command.Id)
-                    {
-                        var persons = session.QueryOver<Person>()
-                            .Where(x => x.Command == departmentFromDB.Command)
-                            .List();
-
-                        foreach (var person in persons)
-                        {
-                            person.Command = departmentFromClient.Command;
-                            session.Update(person);
-                        }
-                    }
+                    
 
                     //If it's null then add it.
                     if (departmentFromDB == null)
@@ -227,6 +215,20 @@ namespace CCServ.Entities.ReferenceLists
                     }
                     else
                     {
+                        //If the client is updating the command, then we need to walk across all the persons and update that.
+                        if (departmentFromDB.Command.Id != departmentFromClient.Command.Id)
+                        {
+                            var persons = session.QueryOver<Person>()
+                                .Where(x => x.Command == departmentFromDB.Command)
+                                .List();
+
+                            foreach (var person in persons)
+                            {
+                                person.Command = departmentFromClient.Command;
+                                session.Update(person);
+                            }
+                        }
+
                         //If it's not null, then merge it.
                         departmentFromDB.Value = departmentFromClient.Value;
                         departmentFromDB.Description = departmentFromClient.Description;
