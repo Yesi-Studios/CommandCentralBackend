@@ -86,6 +86,51 @@ namespace CCServ
                         }
                     }
 
+                    //Now, before we move on to the next part, let's sort the muster containers so that they always have a uniform sorting in the email.
+                    containers = containers.OrderBy(x => x.GroupTitle).ToList();
+
+                    //Let's save the totals so that we're not recalculating them.
+                    int total = containers.Sum(x => x.Total);
+                    int totalMustered = containers.Sum(x => x.Mustered);
+
+                    //Now, let's make a "total" container.
+                    containers.Insert(0, new MusterGroupContainer
+                    {
+                        GroupTitle = "Total",
+                        Mustered = totalMustered,
+                        Total = total
+                    });
+
+                    //We're also going to add an unaccounted for section At the end.
+                    containers.Add(new MusterGroupContainer
+                    {
+                        GroupTitle = "Unaccounted For (UA)",
+                        Mustered = total - totalMustered,
+                        Total = total
+                    });
+
+                    model.ReportText = containers.Select(x => x.ToString()).Aggregate((current, newElement) => current + "<p>" + newElement + "</p>");
+
+
+
+                    //Ok, now we need to send the email.
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateTestingDefault()
+                        .To(new System.Net.Mail.MailAddress(
+                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-muster@mail.mil", "Muster Distro"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-n11@mail.mil", "N11"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-chiefs@mail.mil", "Department Chiefs"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-heads@mail.mil", "Department Heads"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-co@mail.mil", "CO"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
+                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
+                        .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
+                        .Subject("Muster Report - " + model.DisplayDay)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
                     transaction.Commit();
                 }
                 catch
