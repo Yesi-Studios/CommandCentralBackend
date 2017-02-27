@@ -51,6 +51,13 @@ namespace CCServ.ServiceManagement
         {
             try
             {
+
+                //Do arg validation.
+                if ((launchOptions.DropFirst || launchOptions.GIGO != 0) && 
+                    String.Equals(launchOptions.Database, "command_central", StringComparison.CurrentCultureIgnoreCase) &&
+                    String.Equals(launchOptions.Server, "147.51.62.50", StringComparison.CurrentCultureIgnoreCase))
+                    throw new Exception("Go fuck yourself and try to delete the production database or sully it with your garbage.");
+
                 _options = launchOptions;
 
                 Log.Info("Starting service startup...");
