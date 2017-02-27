@@ -53,7 +53,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Changes,
                     x => x.PRD,
                     x => x.WatchQualifications,
-                    x => x.GTCTrainingDate))
+                    x => x.GTCTrainingDate,
+                    x => x.HasCompletedAWARE,
+                    x => x.ADAMSTrainingDate))
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
                     x => x.FirstName,
@@ -93,7 +95,9 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.PRD,
                     x => x.WatchQualifications,
-                    x => x.GTCTrainingDate));
+                    x => x.GTCTrainingDate,
+                    x => x.HasCompletedAWARE,
+                    x => x.ADAMSTrainingDate));
 
             CanAccessModule("Muster");
         }
