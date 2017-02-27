@@ -70,88 +70,9 @@ namespace CCServ.Email.Models
         }
 
         /// <summary>
-        /// The total text, which is the containers turned into HTML paragraphs.
+        /// The final text of the report.
         /// </summary>
-        public string ReportText
-        {
-            get
-            {
-                var strs = Containers.Select(x => x.ToString());
-
-                return strs.Aggregate((current, newElement) => current + "<p>" + newElement + "</p>");
-            }
-        }
-
-        /// <summary>
-        /// Takes a number of muster stasuses and builds a muster report email from them.
-        /// </summary>
-        /// <param name="records"></param>
-        /// <param name="creator"></param>
-        /// <param name="musterDateTime"></param>
-        public MusterReportEmailModel()
-        {
-            MusterDateTime = musterDateTime;
-
-            if (creator == null)
-                CreatorName = "SYSTEM";
-            else
-                CreatorName = creator.ToString();
-
-            if (records == null || !records.Any())
-                throw new ArgumentException("The 'records' parameter must contain records.");
-
-            var containers = new List<MusterGroupContainer>();
-
-            foreach (var record in records)
-            {
-
-                if (record.MusterDate.Date != musterDateTime.Date)
-                    throw new ArgumentException("One or more records were from different dates.  A muster report may only be built from the records from the same time frame.");
-
-                var container = containers.FirstOrDefault(x => x.GroupTitle.SafeEquals(record.DutyStatus));
-
-                if (container == null)
-                {
-                    containers.Add(new MusterGroupContainer
-                    {
-                        GroupTitle = record.DutyStatus,
-                        Mustered = String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()) ? 0 : 1,
-                        Total = 1
-                    });
-                }
-                else
-                {
-                    container.Total++;
-                    if (!String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()))
-                        container.Mustered++;
-                }
-            }
-
-            //Now, before we move on to the next part, let's sort the muster containers so that they always have a uniform sorting in the email.
-            containers = containers.OrderBy(x => x.GroupTitle).ToList();
-
-            //Let's save the totals so that we're not recalculating them.
-            int total = containers.Sum(x => x.Total);
-            int totalMustered = containers.Sum(x => x.Mustered);
-
-            //Now, let's make a "total" container.
-            containers.Insert(0, new MusterGroupContainer
-            {
-                GroupTitle = "Total",
-                Mustered = totalMustered,
-                Total = total
-            });
-
-            //We're also going to add an unaccounted for section At the end.
-            containers.Add(new MusterGroupContainer
-            {
-                GroupTitle = "Unaccounted For (UA)",
-                Mustered = total - totalMustered,
-                Total = total
-            });
-
-            Containers = containers;
-        }
+        public string ReportText { get; set; }
 
     }
 }

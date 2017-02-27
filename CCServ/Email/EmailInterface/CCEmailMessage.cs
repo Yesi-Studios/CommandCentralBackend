@@ -58,6 +58,26 @@ namespace CCServ.Email.EmailInterface
         }
 
         /// <summary>
+        /// Creates a default email message which does not use the smtp email server for the DoD.  Intended for testing.
+        /// </summary>
+        /// <returns></returns>
+        public static CCEmailMessage CreateTestingDefault()
+        {
+            return CCEmailMessage
+                    .From(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .BCC(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .ReplyTo(new System.Net.Mail.MailAddress(
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .HighProperty()
+                    .UsingSMTPHosts("localhost");
+        }
+
+        /// <summary>
         /// Starts a new mail message and sets the from field.
         /// </summary>
         /// <param name="address"></param>
