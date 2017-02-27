@@ -426,7 +426,6 @@ namespace CCServ.Entities
                                         .Where(x => x.AccessLevel == groupLevel)
                                         .ToList();
 
-                IList<Person> persons;
                 using (var session = NHibernateHelper.CreateStatefulSession())
                 {
                     var queryString = "from Person as person where (";
@@ -481,33 +480,38 @@ namespace CCServ.Entities
                             }
                     }
 
-                    persons = query.List<Person>();
-                }
-
-                //Go through all the results.
-                foreach (var person in persons)
-                {
-                    //Collect the person's highest level permission in each chain of command.
-                    var highestLevels = new Dictionary<ChainsOfCommand, ChainOfCommandLevels>();
-
-                    foreach (var group in permissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)))
+                    var persons = query.List<Person>();
+                    
+                    //Go through all the results.
+                    foreach (var person in persons)
                     {
-                        foreach (var chainOfCommand in group.ChainsOfCommandMemberOf)
+                        //Collect the person's highest level permission in each chain of command.
+                        var highestLevels = new Dictionary<ChainsOfCommand, ChainOfCommandLevels>();
+
+                        //Here, let's make sure to ignore the developers permission group and the admin permission group.
+                        foreach (var group in permissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)))
                         {
-                            //This is just a check to make sure we're doing this right.
-                            if (group.AccessLevel != groupLevel)
-                                throw new Exception("During the GetChaindOfCommand check, we accessed a group level that was unintended.");
+                            if (group.GetType() != typeof(Authorization.Groups.Definitions.Developers) && group.GetType() != typeof(Authorization.Groups.Definitions.Admin))
+                            {
+                                foreach (var chainOfCommand in group.ChainsOfCommandMemberOf)
+                                {
+                                    //This is just a check to make sure we're doing this right.
+                                    if (group.AccessLevel != groupLevel)
+                                        throw new Exception("During the GetChaindOfCommand check, we accessed a group level that was unintended.");
 
-                            //Now here we need to ask "Is the person in the same access level as the person in question?"
-                            //Meaning, if the access level is division, are they in the same division?
-                            highestLevels[chainOfCommand] = group.AccessLevel;
+                                    //Now here we need to ask "Is the person in the same access level as the person in question?"
+                                    //Meaning, if the access level is division, are they in the same division?
+                                    highestLevels[chainOfCommand] = group.AccessLevel;
+                                }
+                            }
+
                         }
-                    }
 
-                    //Now just add them to the corresponding lists.
-                    foreach (var highestLevel in highestLevels)
-                    {
-                        result[highestLevel.Key][highestLevel.Value].Add(person.ToBasicPerson());
+                        //Now just add them to the corresponding lists.
+                        foreach (var highestLevel in highestLevels)
+                        {
+                            result[highestLevel.Key][highestLevel.Value].Add(person.ToBasicPerson());
+                        }
                     }
                 }
             }

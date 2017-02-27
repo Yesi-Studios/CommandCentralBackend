@@ -69,19 +69,6 @@ namespace CCServ.Entities.ReferenceLists
                     //Try to get it.
                     var divisionFromDB = session.Get<Division>(divisionFromClient.Id);
 
-                    //If the client wants to update the department of a division, 
-                    //we also need to go across all persons and update their departments.
-                    if (divisionFromDB.Department.Id != divisionFromClient.Department.Id)
-                    {
-                        var persons = session.QueryOver<Person>().Where(x => x.Department == divisionFromDB.Department).List();
-
-                        foreach (var person in persons)
-                        {
-                            person.Department = divisionFromClient.Department;
-                            session.Update(person);
-                        }
-                    }
-
                     //If it's null then add it.
                     if (divisionFromDB == null)
                     {
@@ -90,6 +77,20 @@ namespace CCServ.Entities.ReferenceLists
                     }
                     else
                     {
+                        //If the client wants to update the department of a division, 
+                        //we also need to go across all persons and update their departments.
+                        if (divisionFromDB.Department.Id != divisionFromClient.Department.Id)
+                        {
+                            var persons = session.QueryOver<Person>().Where(x => x.Department == divisionFromDB.Department).List();
+
+                            foreach (var person in persons)
+                            {
+                                person.Department = divisionFromClient.Department;
+                                person.Command = divisionFromClient.Department.Command;
+                                session.Update(person);
+                            }
+                        }
+
                         //If it's not null, then merge it.
                         divisionFromDB.Value = divisionFromClient.Value;
                         divisionFromDB.Description = divisionFromClient.Description;
