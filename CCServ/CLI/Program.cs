@@ -22,12 +22,7 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
-            #if DEBUG
-
-            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
             
-            #endif
-
             try
             {
                 if (!Environment.UserInteractive)
