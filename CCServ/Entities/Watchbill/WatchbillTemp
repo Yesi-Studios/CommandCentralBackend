@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CCServ.Entities.Watchbill
 {
     /// <summary>
     /// Describes a single watchbill, which is a collection of watch days, shifts in those days, and inputs.
