@@ -139,11 +139,28 @@ namespace CCServ.Entities
             }
         }
 
+        /// <summary>
+        /// Validates an Email address
+        /// </summary>
         public class EmailAddressValidator : AbstractValidator<EmailAddress>
         {
+            /// <summary>
+            /// Validates an Email address
+            /// </summary>
             public EmailAddressValidator()
             {
-                //TODO
+                RuleFor(x => x.Address).Must(x =>
+                    {
+                        try
+                        {
+                            var address = new System.Net.Mail.MailAddress(x);
+                            return true;
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    });
             }
         }
 
