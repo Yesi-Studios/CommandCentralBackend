@@ -382,21 +382,34 @@ namespace CCServ.ClientAccess.Endpoints
                 token.AddErrorMessage("Your person id parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
-            Person person;
             using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var transaction = session.BeginTransaction())
             {
-                person = session.Get<Person>(personId);
+                try
+                {
+
+                    Person person = session.Get<Person>(personId);
+
+                    if (person == null)
+                    {
+                        token.AddErrorMessage("Your person id parameter was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    var result = person.GetChainOfCommand();
+
+                    token.SetResult(result);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
 
-            if (person == null)
-            {
-                token.AddErrorMessage("Your person id parameter was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            var result = person.GetChainOfCommand();
-
-            token.SetResult(result);
+            
         }
 
         /// <summary>
