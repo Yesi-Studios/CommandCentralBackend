@@ -111,11 +111,9 @@ namespace CCServ
 
                     model.ReportText = containers.Select(x => x.ToString()).Aggregate((current, newElement) => current + "<p>" + newElement + "</p>");
 
-
-
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
-                        .CreateTestingDefault()
+                        .CreateTestingDefault() //TODO change me to the real thing when you're ready.
                         .To(new System.Net.Mail.MailAddress(
                             ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                             ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName),
