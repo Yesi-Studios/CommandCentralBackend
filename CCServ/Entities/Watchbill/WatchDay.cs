@@ -25,11 +25,11 @@ namespace CCServ.Entities.Watchbill
         public virtual Watchbill Watchbill { get; set; }
 
         /// <summary>
-        /// The rank of this watchbill in consideration of the other watch days.
+        /// The date of this watch day.
         /// <para />
-        /// No two watch days should share the same rank, but the parent Watchbill is responsible for this enforcement.
+        /// No two watch days should share the same date, but the parent Watchbill is responsible for this enforcement.
         /// </summary>
-        public virtual int Rank { get; set; }
+        public virtual DateTime Date { get; set; }
 
         /// <summary>
         /// The collection of watch shifts contained in this watch day.  These represent the actual watches... eg: A shift from 0800-1200.
