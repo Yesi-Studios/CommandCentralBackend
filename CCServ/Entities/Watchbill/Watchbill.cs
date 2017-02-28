@@ -25,16 +25,6 @@ namespace CCServ.Entities.Watchbill
         public virtual string Title { get; set; }
 
         /// <summary>
-        /// The month of the year that this watchbill is for.
-        /// </summary>
-        public virtual int Month { get; set; }
-
-        /// <summary>
-        /// The year that this watchbill is for.
-        /// </summary>
-        public virtual int Year { get; set; }
-
-        /// <summary>
         /// The person who created this watchbill.  This is expected to often be the command watchbill coordinator.
         /// </summary>
         public virtual Person CreatedBy { get; set; }
@@ -43,6 +33,11 @@ namespace CCServ.Entities.Watchbill
         /// Represents the current state of the watchbill.  Different states should trigger different actions.
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchbillStatus CurrentState { get; set; }
+
+        /// <summary>
+        /// The collection of all the watch days that make up this watchbill.  Together, they should make en entire watchbill but not necessarily an entire month.
+        /// </summary>
+        public virtual IList<WatchDay> WatchDays { get; set; }
 
         #endregion
 
