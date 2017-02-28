@@ -614,11 +614,20 @@ namespace CCServ.Entities
                     int current = 0;
                     for (int x = 0; x < launchOptions.GIGO; x++)
                     {
-                        var permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
-                            .OrderBy(y => Utilities.GetRandomNumber(0, 100))
-                            .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count))
-                            .Select(y => y.GroupName)
-                            .ToList();
+                        List<string> permissionGroupNames;
+                        
+                        if (x == 0)
+                        {
+                            permissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName };
+                        }
+                        else
+                        {
+                            permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
+                                    .OrderBy(y => Utilities.GetRandomNumber(0, 100))
+                                    .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count))
+                                    .Select(y => y.GroupName)
+                                    .ToList();
+                        }
 
                         Command command = commands.ElementAt(Utilities.GetRandomNumber(0, commands.Count - 1));
                         Department department = command.Departments.ElementAt(Utilities.GetRandomNumber(0, command.Departments.Count - 1));
@@ -637,7 +646,7 @@ namespace CCServ.Entities
                             UIC = uic,
                             SSN = Utilities.GenerateSSN(),
                             IsClaimed = true,
-                            Username = Utilities.RandomString(12),
+                            Username = "user" + x.ToString(),
                             PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf"),
                             Sex = Sexes.AllSexes.ElementAt(Utilities.GetRandomNumber(0, Sexes.AllSexes.Count - 1)),
                             EmailAddresses = new List<EmailAddress>()
@@ -699,216 +708,6 @@ namespace CCServ.Entities
             {
                 try
                 {
-                    Log.Info("Scanning for Atwood's profile...");
-
-                    //Make sure I'm in the database.
-                    var atwoodProfile = session.QueryOver<Person>()
-                        .Where(x => x.SSN == "525956681")
-                        .SingleOrDefault();
-
-                    //We're also going to look to see if Atwood's profile exists.  Talking in the third person... weeeeee.
-                    if (atwoodProfile == null)
-                    {
-                        Log.Warning("Atwood's profile was not found in the database.  Creating it now...");
-
-                        var person = new Person()
-                        {
-                            Id = Guid.NewGuid(),
-                            LastName = "Atwood",
-                            FirstName = "Daniel",
-                            MiddleName = "Kurt Roger",
-                            SSN = "525956681",
-                            IsClaimed = false,
-                            Sex = Sexes.Male,
-                            EmailAddresses = new List<EmailAddress>()
-                            {
-                                new EmailAddress
-                                {
-                                    Address = "daniel.k.atwood.mil@mail.mil",
-                                    IsContactable = true,
-                                    IsPreferred = true
-                                }
-                            },
-                            DateOfBirth = new DateTime(1992, 04, 24),
-                            DateOfArrival = new DateTime(2013, 08, 23),
-                            EAOS = new DateTime(2018, 1, 27),
-                            PRD = new DateTime(2017, 3, 15),
-                            Paygrade = Paygrades.E5,
-                            DutyStatus = DutyStatuses.Active,
-                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
-                        };
-
-                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
-
-                        person.Username = "dkatwoo";
-                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
-                        person.IsClaimed = true;
-
-                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = AccountHistoryTypes.Creation,
-                            EventTime = DateTime.UtcNow
-                        } };
-
-                        session.SaveOrUpdate(person);
-
-                        Log.Info("Atwood's profile created.  Id : {0}".FormatS(person.Id));
-                    }
-                    else
-                    {
-                        Log.Info("Atwood's profile found. Id : {0}".FormatS(atwoodProfile.Id));
-
-                        if (!atwoodProfile.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
-                        {
-                            Log.Warning("Atwood isn't a developer.  That must be a mistake...");
-                            atwoodProfile.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
-
-                            session.Update(atwoodProfile);
-
-                            Log.Info("Atwood is now a developer.");
-                        }
-                    }
-
-                    Log.Info("Scanning for McLean's profile...");
-
-                    //Make sure mclean is in the database.
-                    var mcleanProfile = session.QueryOver<Person>()
-                        .Where(x => x.FirstName == "Angus" && x.LastName == "McLean" && x.MiddleName == "Laughton")
-                        .SingleOrDefault();
-
-                    //We're also going to look to see if McLean's profile exists.
-                    if (mcleanProfile == null)
-                    {
-                        Log.Warning("McLean's profile was not found in the database.  Creating it now...");
-
-                        var person = new Person()
-                        {
-                            Id = Guid.NewGuid(),
-                            Sex = Sexes.Male,
-                            LastName = "McLean",
-                            FirstName = "Angus",
-                            MiddleName = "Laughton",
-                            SSN = "888888888",
-                            IsClaimed = false,
-                            EmailAddresses = new List<EmailAddress>()
-                            {
-                                new EmailAddress
-                                {
-                                    Address = "angus.l.mclean5.mil@mail.mil",
-                                    IsContactable = true,
-                                    IsPreferred = true
-                                }
-                            },
-                            DateOfBirth = new DateTime(1992, 04, 24),
-                            DateOfArrival = new DateTime(2013, 08, 23),
-                            EAOS = new DateTime(2018, 1, 27),
-                            PRD = new DateTime(2017, 3, 15),
-                            Paygrade = Paygrades.E5,
-                            DutyStatus = DutyStatuses.Active,
-                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
-                        };
-
-                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
-
-                        person.Username = "anguslmm";
-                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
-                        person.IsClaimed = true;
-
-                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
-                            EventTime = DateTime.UtcNow
-                        } };
-
-                        session.Save(person);
-
-                        Log.Info("McLean's profile created.  Id : {0}".FormatS(person.Id));
-                    }
-                    else
-                    {
-                        Log.Info("McLean's profile found. Id : {0}".FormatS(mcleanProfile.Id));
-
-                        if (!mcleanProfile.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
-                        {
-                            Log.Warning("McLean isn't a developer.  That must be a mistake...");
-                            mcleanProfile.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
-
-                            session.Update(mcleanProfile);
-
-                            Log.Info("McLean is now a developer.");
-                        }
-                    }
-
-                    Log.Info("Scanning for LeMay's profile...");
-
-                    //Make sure mclean is in the database.
-                    var lemay = session.QueryOver<Person>()
-                        .Where(x => x.FirstName == "Stephen" && x.LastName == "Lemay" && x.MiddleName == "Charles")
-                        .SingleOrDefault();
-
-                    //We're also going to look to see if McLean's profile exists.
-                    if (lemay == null)
-                    {
-                        Log.Warning("LeMay's profile was not found in the database.  Creating it now...");
-
-                        var person = new Person()
-                        {
-                            Id = Guid.NewGuid(),
-                            Sex = Sexes.Male,
-                            LastName = "LeMay",
-                            FirstName = "Stephen",
-                            MiddleName = "Charles",
-                            SSN = "888888878",
-                            IsClaimed = false,
-                            EmailAddresses = new List<EmailAddress>()
-                            {
-                                new EmailAddress
-                                {
-                                    Address = "stephen.c.lemay2@mail.mil",
-                                    IsContactable = true,
-                                    IsPreferred = true
-                                }
-                            },
-                            DateOfBirth = new DateTime(1992, 04, 24),
-                            DateOfArrival = new DateTime(2013, 08, 23),
-                            EAOS = new DateTime(2018, 1, 27),
-                            PRD = new DateTime(2017, 3, 15),
-                            Paygrade = Paygrades.E5,
-                            DutyStatus = DutyStatuses.Active,
-                            PermissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName }
-                        };
-
-                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
-
-                        person.Username = "sclemay";
-                        person.PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf");
-                        person.IsClaimed = true;
-
-                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = ReferenceLists.AccountHistoryTypes.Creation,
-                            EventTime = DateTime.UtcNow
-                        } };
-
-                        session.Save(person);
-
-                        Log.Info("LeMay's profile created.  Id : {0}".FormatS(person.Id));
-                    }
-                    else
-                    {
-                        Log.Info("LeMay's profile found. Id : {0}".FormatS(lemay.Id));
-
-                        if (!lemay.PermissionGroupNames.Contains(new Authorization.Groups.Definitions.Developers().GroupName))
-                        {
-                            Log.Warning("LeMay isn't a developer.  That must be a mistake...");
-                            lemay.PermissionGroupNames.Add(new Authorization.Groups.Definitions.Developers().GroupName);
-
-                            session.Update(lemay);
-
-                            Log.Info("LeMay is now a developer.");
-                        }
-                    }
-
                     //Give the listener the current row count.
                     Log.Info("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
 
