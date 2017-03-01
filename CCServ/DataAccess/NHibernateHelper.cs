@@ -88,8 +88,6 @@ namespace CCServ.DataAccess
                     .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
         }
 
-
-
         #region Helper Methods
 
         /// <summary>
