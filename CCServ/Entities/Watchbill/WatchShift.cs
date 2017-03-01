@@ -61,10 +61,6 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchShiftType ShiftType { get; set; }
 
-
-
-
-
         #endregion
 
     }

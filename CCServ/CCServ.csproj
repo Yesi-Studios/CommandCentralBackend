@@ -210,6 +210,7 @@
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
+    <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
@@ -220,6 +221,7 @@
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftType.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftTypes.cs" />
     <Compile Include="Entities\Watchbill\WatchDay.cs" />
+    <Compile Include="Entities\Watchbill\WatchInput.cs" />
     <Compile Include="Entities\Watchbill\WatchShift.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
