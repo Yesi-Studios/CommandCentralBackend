@@ -42,7 +42,7 @@ namespace CCServ.ClientAccess
         /// </summary>
         /// <returns></returns>
         [ServiceManagement.StartMethod(Priority = 4)]
-        private static void SetupEndpoints(CLI.Options.LaunchOptions launchOptions)
+        private static void ScanEndpoints(CLI.Options.LaunchOptions launchOptions)
         {
             Log.Info("Scanning for endpoint methods.");
 
@@ -65,7 +65,6 @@ namespace CCServ.ClientAccess
                             endpointMethodAttribute.EndpointName = x.Name;
 
                         Log.Info("Found endpoint : {0}".FormatS(endpointMethodAttribute.EndpointName));
-
 
                         return new ServiceEndpoint
                         {
