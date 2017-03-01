@@ -157,7 +157,7 @@ namespace CCServ.DataAccess
                 {
                     var disjunction = Restrictions.Disjunction();
 
-                    List<object> values = null;
+                    List<object> values = new List<object>();
 
                     switch (propertyGroup.SearchType)
                     {
