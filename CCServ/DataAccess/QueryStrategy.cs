@@ -157,7 +157,7 @@ namespace CCServ.DataAccess
                 {
                     var disjunction = Restrictions.Disjunction();
 
-                    List<object> values;
+                    List<object> values = null;
 
                     switch (propertyGroup.SearchType)
                     {
@@ -176,6 +176,19 @@ namespace CCServ.DataAccess
                         case SearchDataTypes.DateTime:
                             {
                                 values = filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>().ToList();
+
+                                break;
+                            }
+                        case SearchDataTypes.Boolean:
+                            {
+                                try
+                                {
+                                    values = new List<object> { Convert.ToBoolean(filter.Value) };
+                                }
+                                catch
+                                {
+                                    result.Errors.Add("There was an error while casting your search.  Remember that it must be a Boolean.");
+                                }
 
                                 break;
                             }
