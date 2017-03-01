@@ -13,6 +13,16 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
     /// </summary>
     public class WatchShiftType : ReferenceListItemBase
     {
+
+        #region Properties
+
+        /// <summary>
+        /// The collection of watch qualifications a person must have in order to be assigned a watch with this watch type.
+        /// </summary>
+        public virtual IList<WatchQualification> RequiredWatchQualifications { get; set; }
+
+        #endregion
+
         /// <summary>
         /// Loads all objects or a single object if given an Id.
         /// </summary>
@@ -50,6 +60,8 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
+
+                HasMany(x => x.RequiredWatchQualifications);
 
                 Cache.ReadWrite();
             }
