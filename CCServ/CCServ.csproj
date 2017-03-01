@@ -220,6 +220,7 @@
     <Compile Include="Entities\Watchbill\WatchDay.cs" />
     <Compile Include="Entities\Watchbill\WatchInput.cs" />
     <Compile Include="Entities\Watchbill\WatchShift.cs" />
+    <Compile Include="Entities\Watchbill\WatchSwap.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
