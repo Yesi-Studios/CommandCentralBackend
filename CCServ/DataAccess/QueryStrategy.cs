@@ -169,13 +169,13 @@ namespace CCServ.DataAccess
                                     result.Errors.Add("Your search value must not be blank.");
                                 }
 
-                                values = rawValue.Split(null).Cast<object>().ToList();
+                                values.AddRange(rawValue.Split(null).Cast<object>());
 
                                 break;
                             }
                         case SearchDataTypes.DateTime:
                             {
-                                values = filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>().ToList();
+                                values.AddRange(filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>());
 
                                 break;
                             }
@@ -183,7 +183,7 @@ namespace CCServ.DataAccess
                             {
                                 try
                                 {
-                                    values = new List<object> { Convert.ToBoolean(filter.Value) };
+                                    values.Add(Convert.ToBoolean(filter.Value));
                                 }
                                 catch
                                 {
