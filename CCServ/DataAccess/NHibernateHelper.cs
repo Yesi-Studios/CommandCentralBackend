@@ -40,17 +40,6 @@ namespace CCServ.DataAccess
             }
         }
 
-        /// <summary>
-        /// Initializes the NHibernate Helper with the given connection settings.
-        /// </summary>
-        /// <param name="options"></param>
-        private static void ConfigureNHibernate(CLI.Options.LaunchOptions options)
-        {
-            
-
-            
-        }
-
         #region Helper Methods
 
         /// <summary>
@@ -118,7 +107,10 @@ namespace CCServ.DataAccess
         /// </summary>
         public static void CreateSchema(bool printSQL)
         {
-            _schema.Create(Console.Out, true);
+            _schema.Create(str =>
+            {
+
+            }, true);
         }
 
         #endregion
