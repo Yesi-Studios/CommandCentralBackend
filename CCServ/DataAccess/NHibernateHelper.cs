@@ -109,7 +109,8 @@ namespace CCServ.DataAccess
         {
             _schema.Create(str =>
             {
-
+                if (printSQL)
+                    str.WriteLine();
             }, true);
         }
 
