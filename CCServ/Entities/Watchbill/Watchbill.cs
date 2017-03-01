@@ -39,6 +39,11 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual IList<WatchDay> WatchDays { get; set; }
 
+        /// <summary>
+        /// Indicates the type of this watchbill.
+        /// </summary>
+        public virtual ReferenceLists.Watchbill.WatchbillType Type { get; set; }
+
         #endregion
 
     }
