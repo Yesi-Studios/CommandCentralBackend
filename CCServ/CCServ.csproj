@@ -215,6 +215,7 @@
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillType.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillTypes.cs" />
     <Compile Include="Entities\Watchbill\WatchAssignment.cs" />
     <Compile Include="Entities\Watchbill\Watchbill.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
