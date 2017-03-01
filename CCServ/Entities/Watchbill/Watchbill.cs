@@ -45,7 +45,7 @@ namespace CCServ.Entities.Watchbill
         public virtual ReferenceLists.Watchbill.WatchbillType Type { get; set; }
 
         /// <summary>
-        /// The collection of requirements.  This is how we know who needs to provide inputs.
+        /// The collection of requirements.  This is how we know who needs to provide inputs and who is available to be on this watchbill.
         /// </summary>
         public virtual IList<WatchInputRequirement> InputRequirements { get; set; }
 
