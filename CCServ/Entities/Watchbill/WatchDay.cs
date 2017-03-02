@@ -36,6 +36,11 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual IList<WatchShift> WatchShifts { get; set; }
 
+        /// <summary>
+        /// A free text remarks field so that the watchbill can annotate this day (if it's a holiday, for example).
+        /// </summary>
+        public virtual string Remarks { get; set; }
+
         #endregion
 
     }
