@@ -40,11 +40,6 @@ namespace CCServ.Entities.Watchbill
         public virtual DateTime To { get; set; }
 
         /// <summary>
-        /// The points assigned to this shift.  Completion of this shift will grant the member this many points.
-        /// </summary>
-        public virtual int Points { get; set; }
-
-        /// <summary>
         /// The watch inputs that have been given for this shift.  This is all the persons that have said they can not stand this shift and their given reasons.
         /// </summary>
         public virtual IList<WatchInput> WatchInputs { get; set; }
