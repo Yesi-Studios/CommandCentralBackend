@@ -54,11 +54,6 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchAssignmentState CurrentState { get; set; }
 
-        /// <summary>
-        /// If this watch assignment has been superceded (i.e. by a watch swap), this will contain a reference to the watch assignment that supercedes this one.
-        /// </summary>
-        public virtual WatchAssignment SupercedingWatchAssignment { get; set; }
-
         #endregion
 
     }
