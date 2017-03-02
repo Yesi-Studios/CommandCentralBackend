@@ -40,11 +40,6 @@ namespace CCServ.Entities.Watchbill
         public virtual IList<WatchDay> WatchDays { get; set; }
 
         /// <summary>
-        /// Indicates the type of this watchbill.
-        /// </summary>
-        public virtual ReferenceLists.Watchbill.WatchbillType Type { get; set; }
-
-        /// <summary>
         /// The collection of requirements.  This is how we know who needs to provide inputs and who is available to be on this watchbill.
         /// </summary>
         public virtual IList<WatchInputRequirement> InputRequirements { get; set; }
@@ -53,6 +48,18 @@ namespace CCServ.Entities.Watchbill
         /// The collection of all the watch inputs given for shifts within this watchbill.
         /// </summary>
         public virtual IList<WatchInput> WatchInputs { get; set; }
+
+        /// <summary>
+        /// The command at which this watchbill was created.
+        /// </summary>
+        public virtual ReferenceLists.Command Command { get; set; }
+
+        /// <summary>
+        /// This is how the watchbill knows the pool of people to use when assigning inputs, and assigning watches.  
+        /// <para />
+        /// The elligibilty group also determines the type of watchbill.
+        /// </summary>
+        public virtual WatchbillElligibilityGroup ElligibilityGroup { get; set; }
 
         #endregion
 
