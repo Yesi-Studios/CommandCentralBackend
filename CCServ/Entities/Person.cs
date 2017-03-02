@@ -55,6 +55,11 @@ namespace CCServ.Entities
         public virtual string SSN { get; set; }
 
         /// <summary>
+        /// The person's DoD Id which allows us to communicate with other systems about this person.
+        /// </summary>
+        public virtual string DoDId { get; set; }
+
+        /// <summary>
         /// The person's suffix.
         /// </summary>
         public virtual string Suffix { get; set; }
@@ -751,6 +756,7 @@ namespace CCServ.Entities
                 Map(x => x.FirstName).Not.Nullable().Length(40);
                 Map(x => x.MiddleName).Nullable().Length(40);
                 Map(x => x.SSN).Not.Nullable().Length(40).Unique();
+                Map(x => x.DoDId).Not.Nullable().Unique();
                 Map(x => x.DateOfBirth).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.Supervisor).Nullable().Length(40);
@@ -818,8 +824,10 @@ namespace CCServ.Entities
                     .WithMessage("The middle name must not exceed 40 characters.");
                 RuleFor(x => x.Suffix).Length(0, 40)
                     .WithMessage("The suffix must not exceed 40 characters.");
-                RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
+                RuleFor(x => x.SSN).NotEmpty().Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid and contain only numbers.");
+                RuleFor(x => x.DoDId).NotEmpty().Must((person, str) => str.All(Char.IsDigit))
+                    .WithMessage("A DoD Id must be numbers only.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
                 RuleFor(x => x.PRD).NotEmpty()
@@ -1004,7 +1012,8 @@ namespace CCServ.Entities
                     x => x.WorkRemarks,
                     x => x.JobTitle,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.DoDId))
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
