@@ -22,7 +22,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The watch day that owns this watch shift.
         /// </summary>
-        public virtual WatchDay WatchDay { get; set; }
+        public virtual IList<WatchDay> WatchDays { get; set; }
 
         /// <summary>
         /// A free text field allowing for this shift to be given a title.
