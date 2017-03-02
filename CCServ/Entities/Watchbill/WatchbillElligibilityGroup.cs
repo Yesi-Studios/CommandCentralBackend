@@ -74,7 +74,6 @@ namespace CCServ.Entities.Watchbill
                         return true;
                     })
                     .WithMessage("You may not list a person more than once in an elligibility group.");
-                    
             }
         }
 
