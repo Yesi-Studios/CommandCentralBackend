@@ -9,7 +9,7 @@ namespace CCServ.Entities.Watchbill
     /// <summary>
     /// Represents a request by a person to swap an assigned watch with someone else.
     /// </summary>
-    public class WatchSwap
+    public class WatchChange
     {
 
         #region Properties
