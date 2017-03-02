@@ -1,4 +1,7 @@
-﻿using System;
+﻿using FluentNHibernate.Mapping;
+using FluentValidation;
+using NHibernate.Type;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,6 +63,48 @@ namespace CCServ.Entities.Watchbill
         public virtual bool IsApproved { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Maps this object to the database.
+        /// </summary>
+        public class WatchChangeMapping : ClassMap<WatchChange>
+        {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
+            public WatchChangeMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                References(x => x.WatchAssignment).Not.Nullable();
+                References(x => x.CreatedBy).Not.Nullable();
+                References(x => x.PersonToAssign);
+                References(x => x.ApprovedBy);
+
+                HasMany(x => x.Comments);
+
+                Map(x => x.IsApproved);
+                Map(x => x.DateApproved).CustomType<UtcDateTimeType>();
+                Map(x => x.DateCreated).Not.Nullable().CustomType<UtcDateTimeType>();
+            }
+        }
+
+        /// <summary>
+        /// Validates the parent object.
+        /// </summary>
+        public class WatchChangeValidator : AbstractValidator<WatchChange>
+        {
+            /// <summary>
+            /// Validates the parent object.
+            /// </summary>
+            public WatchChangeValidator()
+            {
+                //Basic validations first.
+                RuleFor(x => x.WatchAssignment).NotEmpty();
+                RuleFor(x => x.DateCreated).NotEmpty();
+                RuleFor(x => x.CreatedBy).NotEmpty();
+            }
+        }
 
     }
 }
