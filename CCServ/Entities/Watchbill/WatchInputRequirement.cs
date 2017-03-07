@@ -28,11 +28,6 @@ namespace CCServ.Entities.Watchbill
         public virtual Person Person { get; set; }
 
         /// <summary>
-        /// The watchbill for which the person needs to provide inputs.
-        /// </summary>
-        public virtual Watchbill Watchbill { get; set; }
-
-        /// <summary>
         /// Indicates if this requirement has been answered, regardless of how many inputs there might be.
         /// </summary>
         public virtual bool IsAnswered { get; set; }
@@ -62,7 +57,6 @@ namespace CCServ.Entities.Watchbill
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Person).Not.Nullable();
-                References(x => x.Watchbill).Not.Nullable();
                 References(x => x.AnsweredBy);
 
                 Map(x => x.IsAnswered).Default(false.ToString());
@@ -81,7 +75,6 @@ namespace CCServ.Entities.Watchbill
             public WatchInputRequirementValidator()
             {
                 RuleFor(x => x.Person).NotEmpty();
-                RuleFor(x => x.Watchbill).NotEmpty();
 
                 When(x => x.AnsweredBy != null || x.DateAnswered.HasValue || x.DateAnswered.Value != default(DateTime) || x.IsAnswered, () =>
                 {
