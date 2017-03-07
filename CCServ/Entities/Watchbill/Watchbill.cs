@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -62,6 +64,59 @@ namespace CCServ.Entities.Watchbill
         public virtual WatchbillElligibilityGroup ElligibilityGroup { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Maps this object to the database.
+        /// </summary>
+        public class WatchbillMapping : ClassMap<Watchbill>
+        {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
+            public WatchbillMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                References(x => x.CreatedBy).Not.Nullable();
+                References(x => x.CurrentState).Not.Nullable();
+                References(x => x.Command).Not.Nullable();
+                References(x => x.ElligibilityGroup);
+
+                HasMany(x => x.WatchDays);
+                HasMany(x => x.InputRequirements);
+                HasMany(x => x.WatchInputs);
+
+
+                Map(x => x.Title).Not.Nullable();
+            }
+        }
+
+        /// <summary>
+        /// Validates the parent object.
+        /// </summary>
+        public class WatchbillValidator : AbstractValidator<Watchbill>
+        {
+            /// <summary>
+            /// Validates the parent object.
+            /// </summary>
+            public WatchbillValidator()
+            {
+                RuleFor(x => x.Title).NotEmpty().Length(1, 50);
+
+                RuleFor(x => x.CreatedBy).NotEmpty();
+                RuleFor(x => x.CurrentState).NotEmpty();
+                RuleFor(x => x.Command).NotEmpty();
+
+                RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
+                RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
+                RuleFor(x => x.WatchInputs).SetCollectionValidator(new WatchInput.WatchInputValidator());
+
+                When(x => x.CurrentState != ReferenceLists.Watchbill.WatchbillStatuses.Initial, () =>
+                {
+                    RuleFor(x => x.ElligibilityGroup).NotEmpty().WithMessage("You may not change a watchbill's state from initial without assigning an elligibility group.");
+                });
+            }
+        }
 
     }
 }
