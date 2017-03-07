@@ -61,7 +61,7 @@ namespace CCServ.Entities.Watchbill
         /// <para />
         /// The elligibilty group also determines the type of watchbill.
         /// </summary>
-        public virtual WatchbillElligibilityGroup ElligibilityGroup { get; set; }
+        public virtual ReferenceLists.Watchbill.WatchElligibilityGroup ElligibilityGroup { get; set; }
 
         #endregion
 
@@ -99,7 +99,6 @@ namespace CCServ.Entities.Watchbill
                 HasMany(x => x.WatchDays).Cascade.All();
                 HasMany(x => x.InputRequirements);
                 HasMany(x => x.WatchInputs);
-
 
                 Map(x => x.Title).Not.Nullable();
             }
