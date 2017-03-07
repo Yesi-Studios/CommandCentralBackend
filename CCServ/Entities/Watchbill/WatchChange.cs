@@ -113,9 +113,6 @@ namespace CCServ.Entities.Watchbill
                 });
 
                 RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
-                RuleForEach(x => x.Comments)
-                    .Must(x => x.Entity != null && x.Entity.GetType() == typeof(WatchChange))
-                    .WithMessage("All comments must be of this parent type.");
             }
         }
 
