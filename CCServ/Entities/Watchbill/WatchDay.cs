@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
+using AtwoodUtils;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -94,6 +95,40 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.Remarks).Length(0, 1000);
 
                 RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
+                Custom(watchDay =>
+                    {
+                        var shiftsByType = watchDay.WatchShifts.GroupBy(x => x.ShiftType);
+                        var conflictsByType = shiftsByType.Select(x =>
+                            {
+                                var ranges = x.ToList().Select(y => y.Range);
+
+                                return new
+                                {
+                                    ShiftType = x.Key,
+                                    Conflicts = Utilities.FindTimeRangeIntersections(ranges).Distinct()
+                                };
+                            })
+                            .ToList();
+
+                        List<string> errorElements = new List<string>();
+
+                        foreach (var group in conflictsByType)
+                        {
+                            if (group.Conflicts.Any())
+                            {
+                                errorElements.Add("{0} shifts: {1}".FormatS(group.ShiftType.Value, String.Join(" ; ", group.Conflicts.Select(x => x.ToString()))));
+                            }
+                        }
+
+                        if (errorElements.Any())
+                        {
+                            string str = "One or more shifts with the same type overlap during the watch day ({0}).  {1}"
+                                .FormatS(watchDay.Date.ToString("dd MMM"), String.Join(" | ", errorElements));
+                            return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchDay>(x => x.WatchShifts).Name, str);
+                        }
+
+                        return null;
+                    });
             }
         }
 
