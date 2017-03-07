@@ -239,6 +239,11 @@ namespace CCServ.Entities
         /// </summary>
         public virtual IList<WatchQualification> WatchQualifications { get; set; }
 
+        /// <summary>
+        /// The type of billet this person is assigned to.
+        /// </summary>
+        public virtual BilletAssignment BilletAssignment { get; set; }
+
         #endregion
 
         #region Contacts Properties
@@ -752,6 +757,7 @@ namespace CCServ.Entities
                 References(x => x.CurrentMusterRecord).Cascade.All().Nullable();
                 References(x => x.DutyStatus).Not.Nullable();
                 References(x => x.Sex).Not.Nullable();
+                References(x => x.BilletAssignment);
 
                 Map(x => x.LastName).Not.Nullable().Length(40);
                 Map(x => x.FirstName).Not.Nullable().Length(40);
@@ -979,7 +985,6 @@ namespace CCServ.Entities
                     }).WithMessage("You must have at least one mail.mil address.");
                 });
 
-
                 //Set validations
                 RuleFor(x => x.EmailAddresses)
                     .SetCollectionValidator(new EmailAddress.EmailAddressValidator());
@@ -1125,6 +1130,15 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                 {
                     return Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                });
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                    x => x.BilletAssignment))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    return Subqueries.WhereProperty<Person>(x => x.BilletAssignment.Id).In(QueryOver.Of<BilletAssignment>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
