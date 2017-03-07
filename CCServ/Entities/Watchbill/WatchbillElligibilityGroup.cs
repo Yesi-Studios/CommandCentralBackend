@@ -46,9 +46,9 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchbillElligibilityGroupMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
-                HasMany(x => x.ElligiblePersons);
+                HasManyToMany(x => x.ElligiblePersons);
 
                 Map(x => x.Name).Not.Nullable().Unique();
             }

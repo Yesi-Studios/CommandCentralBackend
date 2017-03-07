@@ -72,7 +72,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchShiftMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.ShiftType).Not.Nullable();
 
@@ -82,8 +82,8 @@ namespace CCServ.Entities.Watchbill
                 HasManyToMany(x => x.WatchDays);
 
                 Map(x => x.Title).Not.Nullable();
-                Map(x => x.From).Not.Nullable().CustomType<UtcDateTimeType>();
-                Map(x => x.To).Not.Nullable().CustomType<UtcDateTimeType>();
+                Map(x => x.From).Not.Nullable().CustomType<UtcDateTimeType>().Column("`From`");
+                Map(x => x.To).Not.Nullable().CustomType<UtcDateTimeType>().Column("`To`");
             }
         }
 
