@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -45,6 +47,40 @@ namespace CCServ.Entities.Watchbill
         public virtual DateTime DateAnswered { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Maps this object to the database.
+        /// </summary>
+        public class WatchInputRequirementMapping : ClassMap<WatchInputRequirement>
+        {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
+            public WatchInputRequirementMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                References(x => x.Person).Not.Nullable();
+                References(x => x.Watchbill).Not.Nullable();
+                References(x => x.AnsweredBy);
+
+                Map(x => x.IsAnswered).Default(false.ToString());
+                Map(x => x.DateAnswered);
+            }
+        }
+
+        /// <summary>
+        /// Validates the parent object.
+        /// </summary>
+        public class CommentValidator : AbstractValidator<Comment>
+        {
+            /// <summary>
+            /// Validates the parent object.
+            /// </summary>
+            public CommentValidator()
+            {
+            }
+        }
 
     }
 }
