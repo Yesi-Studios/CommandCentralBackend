@@ -12,6 +12,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
     <title>BF-simple-template</title>
 
+    @{ var reportLink = "https://commandcentral/#/muster/archive/" + @Model.MusterDateTime.ToString("s", CultureInfo.InvariantCulture); }
+
 
 </head>
 <body style="width: 100% !important;min-width: 100%;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100% !important;margin: 0;padding: 0;background-color: #FFFFFF">
@@ -213,7 +215,7 @@
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 30px;padding-right: 0px;padding-bottom: 30px;padding-left: 0px">
                                                                                                         <div style="color:#ffffff;line-height:120%;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
-                                                                                                            <div style="font-size:12px;line-height:14px;color:#ffffff;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 17px;text-align: center"><strong><span style="font-size: 28px; line-height: 33px;">Muster Report </span></strong></p><p style="margin: 0;font-size: 14px;line-height: 16px;text-align: center"><span style="font-size: 20px; line-height: 24px;"><strong><span style="line-height: 24px; font-size: 20px;">@Model.DisplayDay</span></strong></span></p></div>
+                                                                                                            <div style="font-size:12px;line-height:14px;color:#ffffff;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 17px;text-align: center"><strong><span style="font-size: 28px; line-height: 33px;">Muster Report </span></strong></p><p style="margin: 0;font-size: 14px;line-height: 16px;text-align: center"><span style="font-size: 20px; line-height: 24px;"><strong><span style="line-height: 24px; font-size: 20px;">@{ @Model.MusterDateTime.ToString("D", CultureInfo.CreateSpecificCulture("en-US")); }</span></strong></span></p></div>
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>
@@ -228,7 +230,7 @@
                                                                                                                 <tr style="vertical-align: top">
                                                                                                                     <td class="button" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top" width="100%" align="center" valign="middle">
                                                                                                                         <!--[if mso]>
-                                                                                                                          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="@Model.ReportLink"
+                                                                                                                          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="@{ @reportLink }"
                                                                                                                             style="
                                                                                                                               height:42px;
                                                                                                                               v-text-anchor:middle;
@@ -258,7 +260,8 @@
                                                                                                                                     <tr style="vertical-align: top">
                                                                                                                                         <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;border-radius: 16px;                   -webkit-border-radius: 16px;                   -moz-border-radius: 16px;                  color: #ffffff;                  background-color: #C7702E;                  padding-top: 5px;                   padding-right: 5px;                  padding-bottom: 5px;                  padding-left: 5px;                  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align: center" valign="middle">
                                                                                                                                             <!--<![endif]-->
-                                                                                                                                            <a style="display: inline-block;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;background-color: #C7702E;color: #ffffff" href="@Model.ReportLink" target="_blank">
+                                                                                                                                            
+                                                                                                                                            <a style="display: inline-block;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;background-color: #C7702E;color: #ffffff" href="@reportLink" target="_blank">
                                                                                                                                                 <span style="font-size:12px;line-height:24px;"><span style="font-size: 16px; line-height: 32px;" data-mce-style="font-size: 16px; line-height: 28px;">Get the full report</span></span>
                                                                                                                                             </a>
                                                                                                                                             <!--[if !mso]><!- - -->
@@ -300,7 +303,19 @@
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 10px;padding-right: 10px;padding-bottom: 10px;padding-left: 10px">
                                                                                                         <div style="color:#FFFFFF;line-height:120%;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
-                                                                                                            <div style="font-size:12px;line-height:14px;color:#FFFFFF;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 20px; line-height: 24px;"><span class="dummy" style="line-height: 24px; font-size: 20px;">@Raw(@Model.ReportText)</span></span></p></div>
+                                                                                                            <div style="font-size:12px;line-height:14px;color:#FFFFFF;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;">
+                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 20px; line-height: 24px;">
+                                                                                                                        <!-- TODO HERE! -->
+                                                                                                                        @{
+
+                                                                                                                            var total = Model.Records.Count;
+                                                                                                                            var totalAccounted = Model.Records.Where(x => x.MusterStatus != "UA").Count();
+                                                                                                                            Total : Math.Round(((double)totalAccounted / (double)total) * 100, 2)"%" (@totalAccounted"/"@total)
+                                                                                                                        }
+                                                                                                                    </span>
+                                                                                                                </p>
+                                                                                                            </div>
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>
@@ -327,7 +342,7 @@
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0px;padding-right: 10px;padding-bottom: 10px;padding-left: 10px">
                                                                                                         <div style="color:#B8B8C0;line-height:150%;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
-                                                                                                            <div style="font-size:12px;line-height:18px;color:#B8B8C0;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">This report was generated by @Model.CreatorName. This report marks the turn over of a new muster day. Any unaccounted personnel may no longer be updated. This day's muster has been archived. The new muster will reopen at @Model.RollOverTime.</p></div>
+                                                                                                            <div style="font-size:12px;line-height:18px;color:#B8B8C0;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">This report was generated by @{ @Model.Creator == null ? "SYSTEM" : Model.Creator.ToString() }. This report marks the turn over of a new muster day. Any unaccounted personnel may no longer be updated. This day's muster has been archived. The new muster will reopen at @Model.RollOverTime.</p></div>
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>

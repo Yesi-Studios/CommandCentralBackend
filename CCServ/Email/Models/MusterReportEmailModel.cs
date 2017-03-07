@@ -14,7 +14,7 @@ namespace CCServ.Email.Models
     /// </summary>
     public class MusterReportEmailModel
     {
-        /// <summary>
+        /*/// <summary>
         /// The link to the muster report.
         /// </summary>
         public string ReportISODateString
@@ -34,12 +34,12 @@ namespace CCServ.Email.Models
             {
                 return "https://commandcentral/#/muster/archive/" + ReportISODateString;
             }
-        }
+        }*/
 
         /// <summary>
-        /// The name of the person who generated this email.  Suggest using person.ToString() on the authentication token owner.
+        /// The person who generated this muster report.
         /// </summary>
-        public string CreatorName { get; set; }
+        public Entities.Person Creator { get; set; }
 
         /// <summary>
         /// The date time of the muster.
@@ -57,7 +57,7 @@ namespace CCServ.Email.Models
             }
         }
 
-        /// <summary>
+        /*/// <summary>
         /// The date to display.
         /// </summary>
         public string DisplayDay
@@ -67,12 +67,12 @@ namespace CCServ.Email.Models
                 return MusterDateTime.ToString("D",
                   CultureInfo.CreateSpecificCulture("en-US"));
             }
-        }
+        }*/
 
         /// <summary>
-        /// The final text of the report.
+        /// The list of muster records in this report.
         /// </summary>
-        public string ReportText { get; set; }
+        public List<Entities.MusterRecord> Records { get; set; }
 
     }
 }
