@@ -104,12 +104,12 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.DateCreated).NotEmpty();
                 RuleFor(x => x.CreatedBy).NotEmpty();
 
-                When(x => x.PersonToAssign != null || x.IsApproved == true || x.DateApproved.HasValue || x.DateApproved.Value != default(DateTime), () =>
+                When(x => x.PersonToAssign != null || x.IsApproved || x.DateApproved.HasValue || x.DateApproved.Value != default(DateTime), () =>
                 {
                     RuleFor(x => x.DateApproved).NotEmpty();
                     RuleFor(x => x.DateApproved).Must(x => x.Value != default(DateTime));
                     RuleFor(x => x.IsApproved).Must(x => x == true);
-                    RuleFor(x => x.PersonToAssign).Must(x => x != null);
+                    RuleFor(x => x.PersonToAssign).NotEmpty().WithMessage("You may not approve a watch change without first assigning a person to it.");
                 });
 
                 RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
