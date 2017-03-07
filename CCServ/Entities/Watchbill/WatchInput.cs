@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentNHibernate.Mapping;
+using FluentValidation;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -52,7 +54,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The datetime at which this watch input was confirmed.
         /// </summary>
-        public virtual DateTime DateConfirmed { get; set; }
+        public virtual DateTime? DateConfirmed { get; set; }
 
         /// <summary>
         /// The datetime at which this watch input was created/submitted.
@@ -66,5 +68,59 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        /// <summary>
+        /// Maps this object to the database.
+        /// </summary>
+        public class WatchInputMapping : ClassMap<WatchInput>
+        {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
+            public WatchInputMapping()
+            {
+                Id(x => x.Id).GeneratedBy.Guid();
+
+                References(x => x.InputReason).Not.Nullable();
+                References(x => x.Person).Not.Nullable();
+                References(x => x.SubmittedBy).Not.Nullable();
+                References(x => x.ConfirmedBy);
+                
+                HasMany(x => x.Comments);
+
+                HasManyToMany(x => x.WatchShifts);
+
+                Map(x => x.DateConfirmed);
+                Map(x => x.DateSubmitted).Not.Nullable();
+                Map(x => x.IsConfirmed).Default(false.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Validates the parent object.
+        /// </summary>
+        public class WatchInputValidator : AbstractValidator<WatchInput>
+        {
+            /// <summary>
+            /// Validates the parent object.
+            /// </summary>
+            public WatchInputValidator()
+            {
+                RuleFor(x => x.InputReason).NotEmpty();
+                RuleFor(x => x.Person).NotEmpty();
+                RuleFor(x => x.SubmittedBy).NotEmpty();
+                RuleFor(x => x.DateSubmitted).NotEmpty();
+
+                RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
+                RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
+
+                When(x => x.ConfirmedBy != null || x.DateConfirmed.HasValue || x.DateConfirmed.Value != default(DateTime) || x.IsConfirmed, () =>
+                {
+                    RuleFor(x => x.DateConfirmed).NotEmpty();
+                    RuleFor(x => x.DateConfirmed).Must(x => x.Value != default(DateTime));
+                    RuleFor(x => x.IsConfirmed).Must(x => x == true);
+                    RuleFor(x => x.ConfirmedBy).NotEmpty();
+                });
+            }
+        }
     }
 }
