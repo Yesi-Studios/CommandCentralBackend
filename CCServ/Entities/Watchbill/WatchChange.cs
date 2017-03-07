@@ -83,7 +83,7 @@ namespace CCServ.Entities.Watchbill
 
                 HasMany(x => x.Comments);
 
-                Map(x => x.IsApproved);
+                Map(x => x.IsApproved).Default(false.ToString());
                 Map(x => x.DateApproved).CustomType<UtcDateTimeType>();
                 Map(x => x.DateCreated).Not.Nullable().CustomType<UtcDateTimeType>();
             }
