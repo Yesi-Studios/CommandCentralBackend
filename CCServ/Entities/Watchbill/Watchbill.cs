@@ -93,7 +93,7 @@ namespace CCServ.Entities.Watchbill
 
         #region Methods
 
-        public virtual void SetState(ReferenceLists.Watchbill.WatchbillStatus desiredState, DateTime setTime, Person person)
+        public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person)
         {
             if (this.CurrentState.Id == desiredState.Id)
             {
