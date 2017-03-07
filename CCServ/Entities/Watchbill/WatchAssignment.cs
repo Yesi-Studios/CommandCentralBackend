@@ -83,6 +83,7 @@ namespace CCServ.Entities.Watchbill
 
                 Map(x => x.DateAssigned).Not.Nullable();
                 Map(x => x.DateAcknowledged);
+                Map(x => x.IsAcknowledged).Default(false.ToString());
             }
         }
 
