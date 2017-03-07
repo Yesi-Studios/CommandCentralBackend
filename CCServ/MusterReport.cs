@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NHibernate.Criterion;
 using AtwoodUtils;
+using System.Globalization;
 
 namespace CCServ
 {
@@ -49,12 +50,10 @@ namespace CCServ
             model.MusterDateTime = this.MusterDate;
 
             if (token == null || token.AuthenticationSession == null)
-                model.CreatorName = "SYSTEM";
+                model.Creator = null;
             else
-                model.CreatorName = token.AuthenticationSession.Person.ToString();
+                model.Creator = token.AuthenticationSession.Person;
 
-            var containers = new List<MusterGroupContainer>();
-            
             //Now we need to go get the records.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -64,52 +63,6 @@ namespace CCServ
                     var records = session.QueryOver<Entities.MusterRecord>()
                         .Where(x => x.MusterDate == this.MusterDate)
                         .List();
-
-                    foreach (var record in records)
-                    {
-                        var container = containers.FirstOrDefault(x => x.GroupTitle.SafeEquals(record.DutyStatus));
-
-                        if (container == null)
-                        {
-                            containers.Add(new MusterGroupContainer
-                            {
-                                GroupTitle = record.DutyStatus,
-                                Mustered = String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()) ? 0 : 1,
-                                Total = 1
-                            });
-                        }
-                        else
-                        {
-                            container.Total++;
-                            if (!String.Equals(record.MusterStatus, Entities.ReferenceLists.MusterStatuses.UA.ToString()))
-                                container.Mustered++;
-                        }
-                    }
-
-                    //Now, before we move on to the next part, let's sort the muster containers so that they always have a uniform sorting in the email.
-                    containers = containers.OrderBy(x => x.GroupTitle).ToList();
-
-                    //Let's save the totals so that we're not recalculating them.
-                    int total = containers.Sum(x => x.Total);
-                    int totalMustered = containers.Sum(x => x.Mustered);
-
-                    //Now, let's make a "total" container.
-                    containers.Insert(0, new MusterGroupContainer
-                    {
-                        GroupTitle = "Total",
-                        Mustered = totalMustered,
-                        Total = total
-                    });
-
-                    //We're also going to add an unaccounted for section At the end.
-                    containers.Add(new MusterGroupContainer
-                    {
-                        GroupTitle = "Unaccounted For (UA)",
-                        Mustered = total - totalMustered,
-                        Total = total
-                    });
-
-                    model.ReportText = containers.Select(x => x.ToString()).Aggregate((current, newElement) => current + "<p>" + newElement + "</p>");
 
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
@@ -125,7 +78,7 @@ namespace CCServ
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
                         .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
-                        .Subject("Muster Report - " + model.DisplayDay)
+                        .Subject("Muster Report - " + model.MusterDateTime.ToString("D", CultureInfo.CreateSpecificCulture("en-US")))
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
