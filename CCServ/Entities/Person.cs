@@ -800,6 +800,7 @@ namespace CCServ.Entities
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
                 HasMany(x => x.SubscribedEvents).Cascade.All();
+                HasMany(x => x.WatchAssignments).Cascade.All();
 
                 HasManyToMany(x => x.WatchQualifications).Cascade.All();
 
