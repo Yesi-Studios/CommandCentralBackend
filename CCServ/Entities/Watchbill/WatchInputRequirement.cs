@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using NHibernate.Type;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -65,7 +66,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.AnsweredBy);
 
                 Map(x => x.IsAnswered).Default(false.ToString());
-                Map(x => x.DateAnswered);
+                Map(x => x.DateAnswered).CustomType<UtcDateTimeType>();
             }
         }
 

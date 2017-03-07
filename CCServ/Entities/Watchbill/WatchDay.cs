@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using NHibernate.Type;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -61,7 +62,7 @@ namespace CCServ.Entities.Watchbill
 
                 HasManyToMany(x => x.WatchShifts);
 
-                Map(x => x.Date).Not.Nullable();
+                Map(x => x.Date).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.Remarks).Length(1000);
             }
         }
