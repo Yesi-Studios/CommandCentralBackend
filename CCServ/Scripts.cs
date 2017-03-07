@@ -33,13 +33,14 @@ namespace CCServ
                     session.Save(watchbill);
                     session.Flush();
 
-                    var ellGroup = new WatchbillElligibilityGroup { ElligiblePersons = allUsers.Take(new Random(DateTime.Now.Millisecond).Next(0, allUsers.Count)).ToList(), Id = Guid.NewGuid(), Name = "quarterdeck" };
-                    session.Save(ellGroup);
-                    session.Flush();
-
-                    watchbill.ElligibilityGroup = ellGroup;
+                    watchbill.ElligibilityGroup = WatchElligibilityGroups.Quarterdeck;
                     session.Update(watchbill);
                     session.Flush();
+
+                    var results = new Watchbill.WatchbillValidator().Validate(watchbill);
+
+                    if (results.Errors.Any())
+                        throw new Exception("fuck");
 
                     transaction.Commit();
 
@@ -61,14 +62,37 @@ namespace CCServ
 
                         watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
                         {
-                            From = watchbill.WatchDays.Last().Date.Date,
+                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(1), End = watchbill.WatchDays.Last().Date.Date.AddHours(8) },
                             Id = Guid.NewGuid(),
                             ShiftType = WatchShiftTypes.JOOD,
                             Title = "jood watch",
-                            To = watchbill.WatchDays.Last().Date.Date.AddHours(8),
                             WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
                         });
+
+                        watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
+                        {
+                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(9), End = watchbill.WatchDays.Last().Date.Date.AddHours(12) },
+                            Id = Guid.NewGuid(),
+                            ShiftType = WatchShiftTypes.JOOD,
+                            Title = "jood watch",
+                            WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
+                        });
+
+                        watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
+                        {
+                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(4), End = watchbill.WatchDays.Last().Date.Date.AddHours(6) },
+                            Id = Guid.NewGuid(),
+                            ShiftType = WatchShiftTypes.OOD,
+                            Title = "jood watch",
+                            WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
+                        });
+
                     }
+
+                    var results = new Watchbill.WatchbillValidator().Validate(watchbill);
+
+                    if (results.Errors.Any())
+                        throw new Exception("fuck");
 
                     session.Update(watchbill);
 
@@ -77,6 +101,9 @@ namespace CCServ
 
                 using (var transaction = session.BeginTransaction())
                 {
+
+                    var watchbill = session.QueryOver<Watchbill>().List().FirstOrDefault();
+
                 }
 
             }

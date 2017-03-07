@@ -25,6 +25,18 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
 
         #endregion
 
+        #region ctors
+
+        /// <summary>
+        /// Creates a blank watch elligibiltiy group.
+        /// </summary>
+        public WatchElligibilityGroup()
+        {
+            ElligiblePersons = new List<Person>();
+        }
+
+        #endregion
+
         /// <summary>
         /// Loads all object or a single object if given an Id.
         /// </summary>

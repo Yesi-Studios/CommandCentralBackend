@@ -34,14 +34,9 @@ namespace CCServ.Entities.Watchbill
         public virtual string Title { get; set; }
 
         /// <summary>
-        /// The date time at which this shift begins.
+        /// The range, containing the dates that the shift starts and ends.
         /// </summary>
-        public virtual DateTime From { get; set; }
-
-        /// <summary>
-        /// The date time at which this shift ends.
-        /// </summary>
-        public virtual DateTime To { get; set; }
+        public virtual TimeRange Range { get; set; }
 
         /// <summary>
         /// The watch inputs that have been given for this shift.  This is all the persons that have said they can not stand this shift and their given reasons.
@@ -59,6 +54,22 @@ namespace CCServ.Entities.Watchbill
         /// Indicates the type of this shift:  Is it JOOD, OOD, etc.
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchShiftType ShiftType { get; set; }
+
+        #endregion
+
+        #region ctors
+
+        /// <summary>
+        /// Creates a new watch shift.
+        /// </summary>
+        public WatchShift()
+        {
+            WatchDays = new List<WatchDay>();
+            WatchInputs = new List<WatchInput>();
+            WatchAssignments = new List<WatchAssignment>();
+
+            Range = new TimeRange();
+        }
 
         #endregion
 
@@ -82,8 +93,11 @@ namespace CCServ.Entities.Watchbill
                 HasManyToMany(x => x.WatchDays);
 
                 Map(x => x.Title).Not.Nullable();
-                Map(x => x.From).Not.Nullable().CustomType<UtcDateTimeType>().Column("`From`");
-                Map(x => x.To).Not.Nullable().CustomType<UtcDateTimeType>().Column("`To`");
+                Component(x => x.Range, x =>
+                    {
+                        x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
+                        x.Map(y => y.End).Not.Nullable().CustomType<UtcDateTimeType>();
+                    });
             }
         }
 
@@ -100,17 +114,16 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.ShiftType).NotEmpty();
                 RuleFor(x => x.Title).NotEmpty().Length(1, 50);
 
-                RuleFor(x => x.WatchAssignments).SetCollectionValidator(new WatchAssignment.WatchAssignmentValidator());
-                RuleFor(x => x.WatchInputs).SetCollectionValidator(new WatchInput.WatchInputValidator());
-                RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
-
                 Custom(watchShift =>
                 {
-                    if (watchShift.From >= watchShift.To)
-                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchShift>(x => x.From).Name, "The watch shift's from and to dates must make sense.  Please.");
+                    if (watchShift.Range.Start == default(DateTime) || watchShift.Range.End == default(DateTime))
+                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchShift>(x => x.Range).Name, "The watch shift's range dates must make sense.  Please.");
 
-                    if (watchShift.To <= watchShift.From)
-                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchShift>(x => x.To).Name, "The watch shift's from and to dates must make sense.  Please.");
+                    if (watchShift.Range.Start >= watchShift.Range.End)
+                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchShift>(x => x.Range).Name, "The watch shift's range dates must make sense.  Please.");
+
+                    if (watchShift.Range.End <= watchShift.Range.Start)
+                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchShift>(x => x.Range).Name, "The watch shift's range dates must make sense.  Please.");
 
                     return null;
                 });
