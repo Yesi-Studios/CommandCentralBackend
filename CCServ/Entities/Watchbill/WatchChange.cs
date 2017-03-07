@@ -55,7 +55,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The datetime at which this watch swap was approved.
         /// </summary>
-        public virtual DateTime DateApproved { get; set; }
+        public virtual DateTime? DateApproved { get; set; }
 
         /// <summary>
         /// Indicates if this watch swap has been approved.
@@ -103,6 +103,19 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.WatchAssignment).NotEmpty();
                 RuleFor(x => x.DateCreated).NotEmpty();
                 RuleFor(x => x.CreatedBy).NotEmpty();
+
+                When(x => x.PersonToAssign != null || x.IsApproved == true || x.DateApproved.HasValue || x.DateApproved.Value != default(DateTime), () =>
+                {
+                    RuleFor(x => x.DateApproved).NotEmpty();
+                    RuleFor(x => x.DateApproved).Must(x => x.Value != default(DateTime));
+                    RuleFor(x => x.IsApproved).Must(x => x == true);
+                    RuleFor(x => x.PersonToAssign).Must(x => x != null);
+                });
+
+                RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
+                RuleForEach(x => x.Comments)
+                    .Must(x => x.Entity != null && x.Entity.GetType() == typeof(WatchChange))
+                    .WithMessage("All comments must be of this parent type.");
             }
         }
 
