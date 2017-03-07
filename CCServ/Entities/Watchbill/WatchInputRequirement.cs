@@ -44,7 +44,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The datetime at which this requirement was marked as answered.
         /// </summary>
-        public virtual DateTime DateAnswered { get; set; }
+        public virtual DateTime? DateAnswered { get; set; }
 
         #endregion
 
@@ -72,15 +72,24 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// Validates the parent object.
         /// </summary>
-        public class CommentValidator : AbstractValidator<Comment>
+        public class WatchInputRequirementValidator : AbstractValidator<WatchInputRequirement>
         {
             /// <summary>
             /// Validates the parent object.
             /// </summary>
-            public CommentValidator()
+            public WatchInputRequirementValidator()
             {
+                RuleFor(x => x.Person).NotEmpty();
+                RuleFor(x => x.Watchbill).NotEmpty();
+
+                When(x => x.AnsweredBy != null || x.DateAnswered.HasValue || x.DateAnswered.Value != default(DateTime) || x.IsAnswered, () =>
+                {
+                    RuleFor(x => x.DateAnswered).NotEmpty();
+                    RuleFor(x => x.DateAnswered).Must(x => x.Value != default(DateTime));
+                    RuleFor(x => x.IsAnswered).Must(x => x == true);
+                    RuleFor(x => x.AnsweredBy).NotEmpty();
+                });
             }
         }
-
     }
 }
