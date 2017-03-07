@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using CCServ.Entities.ReferenceLists.Watchbill;
+using CCServ.ClientAccess;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -35,6 +37,16 @@ namespace CCServ.Entities.Watchbill
         /// Represents the current state of the watchbill.  Different states should trigger different actions.
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchbillStatus CurrentState { get; set; }
+
+        /// <summary>
+        /// Indicates the last time the state of this watchbill was changed.
+        /// </summary>
+        public virtual DateTime LastStateChange { get; set; }
+
+        /// <summary>
+        /// Contains a reference to the person who caused the last state change.
+        /// </summary>
+        public virtual Person LastStateChangedBy { get; set; }
 
         /// <summary>
         /// The collection of all the watch days that make up this watchbill.  Together, they should make en entire watchbill but not necessarily an entire month.
@@ -79,6 +91,69 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        #region Methods
+
+        public virtual void SetState(ReferenceLists.Watchbill.WatchbillStatus desiredState, DateTime setTime, Person person)
+        {
+            if (this.CurrentState.Id == desiredState.Id)
+            {
+                throw new Exception("Can't set the state to its same value.");
+            }
+
+            if (desiredState == WatchbillStatuses.Initial)
+            {
+                for (int x = this.InputRequirements.Count - 1; x >= 0; x--)
+                {
+                    this.InputRequirements.RemoveAt(x);
+                }
+                this.WatchInputs.Clear();
+
+                foreach (var watchDay in this.WatchDays)
+                {
+                    foreach (var shift in watchDay.WatchShifts)
+                    {
+                        shift.WatchAssignments.Clear();
+                        shift.WatchInputs.Clear();
+                    }
+                }
+            }
+            else if (desiredState == WatchbillStatuses.OpenForInputs)
+            {
+                foreach (var ellPerson in this.ElligibilityGroup.ElligiblePersons)
+                {
+                    this.InputRequirements.Add(new WatchInputRequirement
+                    {
+                        Id = Guid.NewGuid(),
+                        Person = ellPerson
+                    });
+
+                    //send emails to each of the people for whom we just added a watch input requirement.
+                }
+            }
+            else if (desiredState == WatchbillStatuses.ClosedForInputs)
+            {
+                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+            }
+            else if (desiredState == WatchbillStatuses.UnderReview)
+            {
+                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+            }
+            else if (desiredState == WatchbillStatuses.Published)
+            {
+                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+            }
+            else
+            {
+                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+            }
+
+            this.CurrentState = desiredState;
+            this.LastStateChange = setTime;
+            this.LastStateChangedBy = person;
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps this object to the database.
         /// </summary>
@@ -94,13 +169,15 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.CreatedBy).Not.Nullable();
                 References(x => x.CurrentState).Not.Nullable();
                 References(x => x.Command).Not.Nullable();
+                References(x => x.LastStateChangedBy).Not.Nullable();
                 References(x => x.ElligibilityGroup);
 
                 HasMany(x => x.WatchDays).Cascade.All();
-                HasMany(x => x.InputRequirements);
+                HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
                 HasMany(x => x.WatchInputs);
 
                 Map(x => x.Title).Not.Nullable();
+                Map(x => x.LastStateChange).Not.Nullable();
             }
         }
 
@@ -119,6 +196,8 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.CreatedBy).NotEmpty();
                 RuleFor(x => x.CurrentState).NotEmpty();
                 RuleFor(x => x.Command).NotEmpty();
+                RuleFor(x => x.LastStateChange).NotEmpty();
+                RuleFor(x => x.LastStateChangedBy).NotEmpty();
 
                 RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());

@@ -9,6 +9,7 @@ using CCServ.Entities.ReferenceLists.Watchbill;
 using CCServ.Entities;
 using System.Diagnostics;
 using NHibernate.Criterion;
+using AtwoodUtils;
 
 namespace CCServ
 {
@@ -25,11 +26,12 @@ namespace CCServ
 
                     var command = session.QueryOver<Entities.ReferenceLists.Command>().List().ToList().FirstOrDefault();
                     var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
-                    var allUsers = session.QueryOver<Person>().List().ToList();
+                    
 
                     Debug.Assert(command != null && user0 != null);
 
-                    var watchbill = new Watchbill { Command = command, CreatedBy = user0, CurrentState = WatchbillStatuses.Initial, Id = Guid.NewGuid(), Title = "fuck you" };
+                    var watchbill = new Watchbill { Command = command, CreatedBy = user0, CurrentState = WatchbillStatuses.Initial, 
+                        Id = Guid.NewGuid(), Title = "fuck you", LastStateChangedBy = user0, LastStateChange = DateTime.Now };
                     session.Save(watchbill);
                     session.Flush();
 
@@ -102,13 +104,83 @@ namespace CCServ
                 using (var transaction = session.BeginTransaction())
                 {
 
-                    var watchbill = session.QueryOver<Watchbill>().List().FirstOrDefault();
+                    var allUsers = session.QueryOver<Person>().List().ToList();
+
+                    var group = session.Get<WatchElligibilityGroup>(WatchElligibilityGroups.Quarterdeck.Id);
+                    foreach (var person in allUsers.Take(AtwoodUtils.Utilities.GetRandomNumber(0, allUsers.Count)))
+                    {
+                        group.ElligiblePersons.Add(person);
+                    }
+
+                    var results = new WatchElligibilityGroup.WatchElligibilityGroupValidator().Validate(group);
+
+                    if (results.Errors.Any())
+                        throw new Exception("fuck");
+
+                    session.Update(group);
+
+                    transaction.Commit();
 
                 }
 
+
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .Fetch(x => x.ElligibilityGroup).Eager
+                        .List().FirstOrDefault();
+
+                    var persons = watchbill.ElligibilityGroup.ElligiblePersons.ToList();
+
+                    if (!persons.Any())
+                        throw new Exception("fuck");
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .Fetch(x => x.ElligibilityGroup).Eager
+                        .List().FirstOrDefault();
+
+                    watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
+
+                    session.Update(watchbill);
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .Fetch(x => x.ElligibilityGroup).Eager
+                        .List().FirstOrDefault();
+
+                    watchbill.SetState(WatchbillStatuses.Initial, DateTime.Now, user0);
+
+                    session.Update(watchbill);
+
+                    transaction.Commit();
+                }
             }
 
 
+            int i = 0;
 
         }
     }
