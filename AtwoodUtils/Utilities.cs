@@ -59,6 +59,16 @@ namespace AtwoodUtils
             return iThree.ToString() + delimiter + iTwo.ToString() + delimiter + iFour.ToString();
         }
 
+        public static string GenerateDoDId()
+        {
+            string result = "";
+            for (int x = 0; x < 10; x++)
+            {
+                result += GetRandomNumber(1, 9).ToString();
+            }
+            return result;
+        }
+
         //Function to get random number
         public static int GetRandomNumber(int min, int max)
         {

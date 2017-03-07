@@ -76,6 +76,7 @@ namespace CCServ.ClientAccess.Endpoints
                 Designation = personFromClient.Designation,
                 Sex = personFromClient.Sex,
                 SSN = personFromClient.SSN,
+                DoDId = personFromClient.DoDId,
                 DateOfBirth = personFromClient.DateOfBirth,
                 DateOfArrival = personFromClient.DateOfArrival,
                 DutyStatus = personFromClient.DutyStatus,
