@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using NHibernate.Type;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -89,8 +90,8 @@ namespace CCServ.Entities.Watchbill
 
                 HasManyToMany(x => x.WatchShifts);
 
-                Map(x => x.DateConfirmed);
-                Map(x => x.DateSubmitted).Not.Nullable();
+                Map(x => x.DateConfirmed).CustomType<UtcDateTimeType>();
+                Map(x => x.DateSubmitted).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.IsConfirmed).Default(false.ToString());
             }
         }
