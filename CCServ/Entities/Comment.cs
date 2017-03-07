@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
+using NHibernate.Type;
 
 namespace CCServ.Entities
 {
@@ -53,7 +54,7 @@ namespace CCServ.Entities
                 References(x => x.Creator).Not.Nullable();
 
                 Map(x => x.Text).Length(1000).Not.Nullable();
-                Map(x => x.Time).Not.Nullable();
+                Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
             }
         }
 
