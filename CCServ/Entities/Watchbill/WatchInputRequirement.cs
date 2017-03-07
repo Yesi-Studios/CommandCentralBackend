@@ -59,7 +59,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchInputRequirementMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Person).Not.Nullable();
                 References(x => x.Watchbill).Not.Nullable();

@@ -74,7 +74,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchAssignmentMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.WatchShift).Not.Nullable();
                 References(x => x.PersonAssigned).Not.Nullable();

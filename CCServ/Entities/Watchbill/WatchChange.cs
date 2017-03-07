@@ -74,14 +74,15 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchChangeMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.WatchAssignment).Not.Nullable();
                 References(x => x.CreatedBy).Not.Nullable();
                 References(x => x.PersonToAssign);
                 References(x => x.ApprovedBy);
 
-                HasMany(x => x.Comments);
+                HasMany(x => x.Comments)
+                    .KeyColumn("EntityOwner_id");
 
                 Map(x => x.IsApproved).Default(false.ToString());
                 Map(x => x.DateApproved).CustomType<UtcDateTimeType>();

@@ -79,14 +79,15 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchInputMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.InputReason).Not.Nullable();
                 References(x => x.Person).Not.Nullable();
                 References(x => x.SubmittedBy).Not.Nullable();
                 References(x => x.ConfirmedBy);
                 
-                HasMany(x => x.Comments);
+                HasMany(x => x.Comments)
+                    .KeyColumn("EntityOwner_id");
 
                 HasManyToMany(x => x.WatchShifts);
 

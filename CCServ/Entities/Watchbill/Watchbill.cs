@@ -65,6 +65,20 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        #region ctors
+
+        /// <summary>
+        /// Creates a new watchbill, setting all collection to empty.
+        /// </summary>
+        public Watchbill()
+        {
+            WatchDays = new List<WatchDay>();
+            InputRequirements = new List<WatchInputRequirement>();
+            WatchInputs = new List<WatchInput>();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps this object to the database.
         /// </summary>
@@ -75,14 +89,14 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchbillMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.CreatedBy).Not.Nullable();
                 References(x => x.CurrentState).Not.Nullable();
                 References(x => x.Command).Not.Nullable();
                 References(x => x.ElligibilityGroup);
 
-                HasMany(x => x.WatchDays);
+                HasMany(x => x.WatchDays).Cascade.All();
                 HasMany(x => x.InputRequirements);
                 HasMany(x => x.WatchInputs);
 

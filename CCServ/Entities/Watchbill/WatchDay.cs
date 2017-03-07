@@ -46,6 +46,18 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        #region ctors
+
+        /// <summary>
+        /// Creates a new watch day and initalizations the collections to empty.
+        /// </summary>
+        public WatchDay()
+        {
+            WatchShifts = new List<WatchShift>();
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps this object to the database.
         /// </summary>
@@ -56,11 +68,11 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchDayMapping()
             {
-                Id(x => x.Id).GeneratedBy.Guid();
+                Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Watchbill).Not.Nullable();
 
-                HasManyToMany(x => x.WatchShifts);
+                HasManyToMany(x => x.WatchShifts).Cascade.All();
 
                 Map(x => x.Date).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.Remarks).Length(1000);
