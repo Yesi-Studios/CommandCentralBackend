@@ -210,6 +210,8 @@
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroup.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroups.cs" />
     <Compile Include="Entities\Watchbill\WatchAssignment.cs" />
     <Compile Include="Entities\Watchbill\Watchbill.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
@@ -217,7 +219,6 @@
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchInputReason.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftType.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftTypes.cs" />
-    <Compile Include="Entities\Watchbill\WatchbillElligibilityGroup.cs" />
     <Compile Include="Entities\Watchbill\WatchDay.cs" />
     <Compile Include="Entities\Watchbill\WatchInput.cs" />
     <Compile Include="Entities\Watchbill\WatchInputRequirement.cs" />
