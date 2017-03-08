@@ -145,8 +145,9 @@ namespace CCServ.Entities.Watchbill
                 }
 
                 //We now also need to load all persons in the watchbill's chain of command
-                var groups = Authorization.Groups.PermissionGroup.AllPermissionGroups
-                    .Where(x => x.ChainsOfCommandMemberOf.Contains(this.ElligibilityGroup.OwningChainOfCommand))
+                var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DepartmentQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DivisionQuarterdeckWatchbill() }
                     .Select(x => x.GroupName)
                     .ToList();
 
