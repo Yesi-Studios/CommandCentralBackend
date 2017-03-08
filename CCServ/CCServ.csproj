@@ -206,6 +206,7 @@
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillOpenForInputsEmailModel.cs" />
     <Compile Include="Email\Models\WatchInputRequiredEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
@@ -366,6 +367,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Email\Templates\WatchInputRequired_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\WatchbillOpenForInputs_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
