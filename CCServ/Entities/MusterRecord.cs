@@ -315,9 +315,11 @@ namespace CCServ.Entities
                         session.Save(person);
                     }
 
-                    new MusterReport(persons.First().CurrentMusterRecord.MusterDate).SendReport(token);
-
+                    //Let's first commit the transaction, thus setting all the muster records to their needed states.
                     transaction.Commit();
+
+                    //Then, we'll send the report.
+                    new MusterReport(persons.First().CurrentMusterRecord.MusterDate).SendReport(token);
                 }
                 catch (Exception e)
                 {

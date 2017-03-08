@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.CustomTypes;
+using CCServ.Entities;
 
 namespace CCServ.Email.Models
 {
@@ -14,28 +15,6 @@ namespace CCServ.Email.Models
     /// </summary>
     public class MusterReportEmailModel
     {
-        /*/// <summary>
-        /// The link to the muster report.
-        /// </summary>
-        public string ReportISODateString
-        {
-            get
-            {
-                return MusterDateTime.ToString("s", CultureInfo.InvariantCulture);
-            }
-        }
-
-        /// <summary>
-        /// The link to the report which is built using the date string.
-        /// </summary>
-        public string ReportLink
-        {
-            get
-            {
-                return "https://commandcentral/#/muster/archive/" + ReportISODateString;
-            }
-        }*/
-
         /// <summary>
         /// The person who generated this muster report.
         /// </summary>
@@ -57,22 +36,52 @@ namespace CCServ.Email.Models
             }
         }
 
-        /*/// <summary>
-        /// The date to display.
-        /// </summary>
-        public string DisplayDay
-        {
-            get
-            {
-                return MusterDateTime.ToString("D",
-                  CultureInfo.CreateSpecificCulture("en-US"));
-            }
-        }*/
-
         /// <summary>
         /// The list of muster records in this report.
         /// </summary>
         public List<Entities.MusterRecord> Records { get; set; }
+
+        /// <summary>
+        /// Returns all string muster statuses.
+        /// </summary>
+        public List<string> MusterStatuses
+        {
+            get
+            {
+                return Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Select(x => x.Value).OrderBy(x => x).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Returns all string duty statuses.
+        /// </summary>
+        public List<string> DutyStatuses
+        {
+            get
+            {
+                return Entities.ReferenceLists.DutyStatuses.AllDutyStatuses.Select(x => x.Value).OrderBy(x => x).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Returns the total records with the given muster status.
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public List<MusterRecord> GetRecordsWithMusterStatus(string status)
+        {
+            return Records.Where(x => x.MusterStatus.SafeEquals(status)).ToList();
+        }
+
+        /// <summary>
+        /// Returns the total records with the given duty status.
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public List<MusterRecord> GetRecordsWithDutyStatus(string status)
+        {
+            return Records.Where(x => x.DutyStatus.SafeEquals(status)).ToList();
+        }
 
     }
 }

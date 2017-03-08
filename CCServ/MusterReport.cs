@@ -60,9 +60,11 @@ namespace CCServ
             {
                 try
                 {
-                    var records = session.QueryOver<Entities.MusterRecord>()
-                        .Where(x => x.MusterDate == this.MusterDate)
-                        .List();
+                    model.Records = session.QueryOver<Entities.Person>()
+                        .Where(x => x.DutyStatus.Id != Entities.ReferenceLists.DutyStatuses.Loss.Id)
+                        .Select(x => x.CurrentMusterRecord)
+                        .List<Entities.MusterRecord>()
+                        .ToList();
 
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
