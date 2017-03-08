@@ -431,7 +431,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //So we should be good to finalize the muster.
-            MusterRecord.FinalizeMuster(token.AuthenticationSession.Person);
+            MusterRecord.FinalizeMuster(token);
         }
     }
 }
