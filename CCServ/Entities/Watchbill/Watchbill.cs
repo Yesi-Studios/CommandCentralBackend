@@ -7,6 +7,8 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using CCServ.Entities.ReferenceLists.Watchbill;
 using CCServ.ClientAccess;
+using System.Globalization;
+using AtwoodUtils;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -127,7 +129,16 @@ namespace CCServ.Entities.Watchbill
                         Person = ellPerson
                     });
 
-                    //send emails to each of the people for whom we just added a watch input requirement.
+                    var model = new Email.Models.WatchInputRequiredEmailModel { FriendlyName = ellPerson.ToString(), Watchbill = this.Title };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateTestingDefault() //TODO change me to the real thing when you're ready.
+                        .To(new System.Net.Mail.MailAddress(
+                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
+                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                        .Subject("Watchbill Inputs Required")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequired_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                 }
             }
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
