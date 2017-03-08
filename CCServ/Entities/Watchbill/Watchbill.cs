@@ -131,14 +131,57 @@ namespace CCServ.Entities.Watchbill
 
                     var model = new Email.Models.WatchInputRequiredEmailModel { FriendlyName = ellPerson.ToString(), Watchbill = this.Title };
 
+                    var addresses = ellPerson.EmailAddresses
+                        .Where(x => x.IsPreferred)
+                        .Select(x => new System.Net.Mail.MailAddress(x.Address, ellPerson.ToString()));
+
                     Email.EmailInterface.CCEmailMessage
-                        .CreateTestingDefault() //TODO change me to the real thing when you're ready.
-                        .To(new System.Net.Mail.MailAddress(
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                        .CreateDefault()
+                        .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                        .CC(addresses)
                         .Subject("Watchbill Inputs Required")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequired_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                }
+
+                //We now also need to load all persons in the watchbill's chain of command
+                var groups = Authorization.Groups.PermissionGroup.AllPermissionGroups
+                    .Where(x => x.ChainsOfCommandMemberOf.Contains(this.ElligibilityGroup.OwningChainOfCommand))
+                    .Select(x => x.GroupName)
+                    .ToList();
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
+                {
+
+                    try
+                    {
+                        var queryString = "from Person as person where (";
+                        for (var x = 0; x < groups.Count; x++)
+                        {
+                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x], 
+                                PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
+                            if (x + 1 != groups.Count)
+                                queryString += " or ";
+                        }
+                        queryString += " ) and person.Command = :command";
+                        var persons = session.CreateQuery(queryString)
+                            .SetParameter("command", this.Command)
+                            .List<Person>();
+
+                        //Now with these people, we actually want their dod emails.  
+                        //These are the collateral duty holders, so we're going to send them official emails.
+                        var collateralEmailAddresses = persons.SelectMany(x => 
+                                    x.EmailAddresses.Where(y => y.IsDodEmailAddress).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+
                 }
             }
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
