@@ -46,7 +46,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes,
-                    x => x.SSN))
+                    x => x.SSN,
+                    x => x.DoDId))
                     .IfInChainOfCommand()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,

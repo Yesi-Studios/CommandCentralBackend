@@ -49,7 +49,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.SubscribedEvents,
                     x => x.GTCTrainingDate,
                     x => x.HasCompletedAWARE,
-                    x => x.ADAMSTrainingDate))
+                    x => x.ADAMSTrainingDate,
+                    x => x.PhoneNumbers))
                 .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,
@@ -92,7 +93,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes,
-                    x => x.UserPreferences))
+                    x => x.UserPreferences,
+                    x => x.DoDId))
                     .IfSelf()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,

@@ -55,6 +55,11 @@ namespace CCServ.Entities
         public virtual string SSN { get; set; }
 
         /// <summary>
+        /// The person's DoD Id which allows us to communicate with other systems about this person.
+        /// </summary>
+        public virtual string DoDId { get; set; }
+
+        /// <summary>
         /// The person's suffix.
         /// </summary>
         public virtual string Suffix { get; set; }
@@ -238,6 +243,11 @@ namespace CCServ.Entities
         /// The person's watch qualification.
         /// </summary>
         public virtual IList<WatchQualification> WatchQualifications { get; set; }
+
+        /// <summary>
+        /// The type of billet this person is assigned to.
+        /// </summary>
+        public virtual BilletAssignment BilletAssignment { get; set; }
 
         #endregion
 
@@ -650,6 +660,7 @@ namespace CCServ.Entities
                             Division = division,
                             UIC = uic,
                             SSN = Utilities.GenerateSSN(),
+                            DoDId = Utilities.GenerateDoDId(),
                             IsClaimed = true,
                             Username = "user" + x.ToString(),
                             PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf"),
@@ -751,11 +762,13 @@ namespace CCServ.Entities
                 References(x => x.CurrentMusterRecord).Cascade.All().Nullable();
                 References(x => x.DutyStatus).Not.Nullable();
                 References(x => x.Sex).Not.Nullable();
+                References(x => x.BilletAssignment);
 
                 Map(x => x.LastName).Not.Nullable().Length(40);
                 Map(x => x.FirstName).Not.Nullable().Length(40);
                 Map(x => x.MiddleName).Nullable().Length(40);
                 Map(x => x.SSN).Not.Nullable().Length(40).Unique();
+                Map(x => x.DoDId).Not.Nullable().Unique();
                 Map(x => x.DateOfBirth).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.Supervisor).Nullable().Length(40);
@@ -824,8 +837,10 @@ namespace CCServ.Entities
                     .WithMessage("The middle name must not exceed 40 characters.");
                 RuleFor(x => x.Suffix).Length(0, 40)
                     .WithMessage("The suffix must not exceed 40 characters.");
-                RuleFor(x => x.SSN).Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
+                RuleFor(x => x.SSN).NotEmpty().Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid and contain only numbers.");
+                RuleFor(x => x.DoDId).NotEmpty().Must((person, str) => str.All(Char.IsDigit)).Length(10)
+                    .WithMessage("A DoD Id must be numbers only and be exactly ten digits.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
                 RuleFor(x => x.PRD).NotEmpty()
@@ -976,7 +991,6 @@ namespace CCServ.Entities
                     }).WithMessage("You must have at least one mail.mil address.");
                 });
 
-
                 //Set validations
                 RuleFor(x => x.EmailAddresses)
                     .SetCollectionValidator(new EmailAddress.EmailAddressValidator());
@@ -1010,7 +1024,8 @@ namespace CCServ.Entities
                     x => x.WorkRemarks,
                     x => x.JobTitle,
                     x => x.EmergencyContactInstructions,
-                    x => x.ContactRemarks))
+                    x => x.ContactRemarks,
+                    x => x.DoDId))
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1121,6 +1136,15 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                 {
                     return Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                });
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                    x => x.BilletAssignment))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    return Subqueries.WhereProperty<Person>(x => x.BilletAssignment.Id).In(QueryOver.Of<BilletAssignment>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<Person>(

@@ -157,7 +157,7 @@ namespace CCServ.DataAccess
                 {
                     var disjunction = Restrictions.Disjunction();
 
-                    List<object> values;
+                    List<object> values = new List<object>();
 
                     switch (propertyGroup.SearchType)
                     {
@@ -169,13 +169,26 @@ namespace CCServ.DataAccess
                                     result.Errors.Add("Your search value must not be blank.");
                                 }
 
-                                values = rawValue.Split(null).Cast<object>().ToList();
+                                values.AddRange(rawValue.Split(null).Cast<object>());
 
                                 break;
                             }
                         case SearchDataTypes.DateTime:
                             {
-                                values = filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>().ToList();
+                                values.AddRange(filter.Value.CastJToken<List<Dictionary<string, DateTime?>>>().Cast<object>());
+
+                                break;
+                            }
+                        case SearchDataTypes.Boolean:
+                            {
+                                try
+                                {
+                                    values.Add(Convert.ToBoolean(filter.Value));
+                                }
+                                catch
+                                {
+                                    result.Errors.Add("There was an error while casting your search.  Remember that it must be a Boolean.");
+                                }
 
                                 break;
                             }

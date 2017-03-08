@@ -271,8 +271,8 @@ namespace CCServ.Entities
         /// saving the report,
         /// and then resetting everyone's current muster record and then archiving the old ones.
         /// </summary>
-        /// <param name="creator">The person who initiated the muster finalization.  If null, the system initiated it.</param>
-        public static void FinalizeMuster(Person creator)
+        /// <param name="token">The token which represents the communication during which the muster was finalized.  If null, the system finalizes the muster.</param>
+        public static void FinalizeMuster(MessageToken token = null)
         {
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
                 throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
@@ -287,7 +287,11 @@ namespace CCServ.Entities
                     ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized = true;
 
                     var persons = GetMusterablePersonsQuery(session).List();
-                    
+
+                    //Let's make sure that all persons' current muster records are from the same day.
+                    if (persons.GroupBy(x => x.CurrentMusterRecord.MusterDate).Count() != 1)
+                        throw new Exception("Not all muster records are from the same day during finalization!");
+
                     //Ok we have all the persons and their muster records.  #thatwaseasy
                     foreach (Person person in persons)
                     {
@@ -311,30 +315,11 @@ namespace CCServ.Entities
                         session.Save(person);
                     }
 
-                    var model = new Email.Models.MusterReportEmailModel(persons.Select(x => x.CurrentMusterRecord), creator, DateTime.UtcNow)
-                    {
-                        RollOverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime,
-                    };
-
-                    //Ok, now we need to send the email.
-                    Email.EmailInterface.CCEmailMessage
-                        .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress(
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-muster@mail.mil", "Muster Distro"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-n11@mail.mil", "N11"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-chiefs@mail.mil", "Department Chiefs"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-heads@mail.mil", "Department Heads"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-co@mail.mil", "CO"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
-                        new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
-                        .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
-                        .Subject("Muster Report")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
-                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-
+                    //Let's first commit the transaction, thus setting all the muster records to their needed states.
                     transaction.Commit();
+
+                    //Then, we'll send the report.
+                    new MusterReport(persons.First().CurrentMusterRecord.MusterDate).SendReport(token);
                 }
                 catch (Exception e)
                 {
@@ -359,7 +344,7 @@ namespace CCServ.Entities
             {
                 if (!ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
                 {
-                    FinalizeMuster(null);
+                    FinalizeMuster();
                 }
             }
 

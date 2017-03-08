@@ -209,6 +209,9 @@
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
+    <Compile Include="MusterReport.cs" />
+    <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
+    <Compile Include="Entities\ReferenceLists\BilletAssignments.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroup.cs" />
