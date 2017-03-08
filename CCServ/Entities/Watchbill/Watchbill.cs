@@ -174,6 +174,16 @@ namespace CCServ.Entities.Watchbill
                         var collateralEmailAddresses = persons.SelectMany(x => 
                                     x.EmailAddresses.Where(y => y.IsDodEmailAddress).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
 
+                        var model = new Email.Models.WatchbillOpenForInputsEmailModel { Watchbill = this.Title };
+
+                        Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                            //.To(collateralEmailAddresses)
+                            .Subject("Watchbill Open For Inputs")
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
                         transaction.Commit();
                     }
                     catch
