@@ -24,7 +24,7 @@ namespace CCServ.Authorization.Groups.Definitions
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin),
                 typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
+            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
 
             HasAccessLevel(ChainOfCommandLevels.Command);
 
