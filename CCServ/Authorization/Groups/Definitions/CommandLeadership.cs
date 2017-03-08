@@ -7,6 +7,9 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
+    /// <summary>
+    /// The Command Leadership permission group. For the top leadership in the command.
+    /// </summary>
     public class CommandLeadership : PermissionGroup
     {
         /// <summary>
