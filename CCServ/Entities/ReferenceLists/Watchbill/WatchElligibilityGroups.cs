@@ -32,7 +32,8 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         {
             Id = Guid.Parse("{1F88A266-02BE-4E9B-ADBD-BE1D814B1CD8}"),
             Value = "Quarterdeck",
-            Description = "This is the group of people who are elligible to stand the quarterdeck watch."
+            Description = "This is the group of people who are elligible to stand the quarterdeck watch.",
+            OwningChainOfCommand = Authorization.ChainsOfCommand.QuarterdeckWatchbill
         };
 
         /// <summary>

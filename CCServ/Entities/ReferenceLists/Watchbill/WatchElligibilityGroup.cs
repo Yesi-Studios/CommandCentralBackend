@@ -23,6 +23,11 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// </summary>
         public virtual IList<Person> ElligiblePersons { get; set; }
 
+        /// <summary>
+        /// The chain of command that owns this elligibility group and may make changes to it.
+        /// </summary>
+        public virtual Authorization.ChainsOfCommand OwningChainOfCommand { get; set; }
+
         #endregion
 
         #region ctors
@@ -75,6 +80,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
+                Map(x => x.OwningChainOfCommand);
 
                 Cache.ReadWrite();
             }

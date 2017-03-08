@@ -31,7 +31,7 @@ namespace CCServ
                     Debug.Assert(command != null && user0 != null);
 
                     var watchbill = new Watchbill { Command = command, CreatedBy = user0, CurrentState = WatchbillStatuses.Initial, 
-                        Id = Guid.NewGuid(), Title = "fuck you", LastStateChangedBy = user0, LastStateChange = DateTime.Now };
+                        Id = Guid.NewGuid(), Title = "Quarterdeck Watchbill", LastStateChangedBy = user0, LastStateChange = DateTime.Now };
                     session.Save(watchbill);
                     session.Flush();
 
@@ -131,7 +131,6 @@ namespace CCServ
                 using (var transaction = session.BeginTransaction())
                 {
                     var watchbill = session.QueryOver<Watchbill>()
-                        .Fetch(x => x.ElligibilityGroup).Eager
                         .List().FirstOrDefault();
 
                     var persons = watchbill.ElligibilityGroup.ElligiblePersons.ToList();
@@ -150,43 +149,6 @@ namespace CCServ
                     var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
 
                     var watchbill = session.QueryOver<Watchbill>()
-                        .Fetch(x => x.ElligibilityGroup).Eager
-                        .List().FirstOrDefault();
-
-                    watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
-
-                    session.Update(watchbill);
-
-                    transaction.Commit();
-                }
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                using (var transaction = session.BeginTransaction())
-                {
-                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
-
-                    var watchbill = session.QueryOver<Watchbill>()
-                        .Fetch(x => x.ElligibilityGroup).Eager
-                        .List().FirstOrDefault();
-
-                    watchbill.SetState(WatchbillStatuses.Initial, DateTime.Now, user0);
-
-                    session.Update(watchbill);
-
-                    transaction.Commit();
-                }
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                using (var transaction = session.BeginTransaction())
-                {
-                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
-
-                    var watchbill = session.QueryOver<Watchbill>()
-                        .Fetch(x => x.ElligibilityGroup).Eager
                         .List().FirstOrDefault();
 
                     watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
