@@ -176,6 +176,7 @@ namespace CCServ.Entities.Watchbill
 
                         var model = new Email.Models.WatchbillOpenForInputsEmailModel { Watchbill = this.Title };
 
+                        //Send the email to each person in turn so we don't send the email addresses to other people.
                         foreach (var addressGroup in collateralEmailAddresses)
                         {
                             Email.EmailInterface.CCEmailMessage
@@ -186,7 +187,6 @@ namespace CCServ.Entities.Watchbill
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
                                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                         }
-
 
                         transaction.Commit();
                     }
@@ -200,7 +200,17 @@ namespace CCServ.Entities.Watchbill
             }
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
             {
-                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+                //First up, we need all those people who haven't submitted inputs yet.
+                var unansweredRequirements = this.InputRequirements.Where(x => x.IsAnswered == false);
+
+                //Now simply we're going to update each unanswered requirement, telling it that it is now answered.
+                //However, we'll leave the person answered by blank, because no one answered it.  The system did.
+                foreach (var req in unansweredRequirements)
+                {
+                    req.IsAnswered = true;
+                    req.DateAnswered = DateTime.Now;
+                    req.AnsweredBy = null;
+                }
             }
             else if (desiredState == WatchbillStatuses.UnderReview)
             {
