@@ -9,7 +9,7 @@ namespace CCServ.Email.Models
     /// <summary>
     /// The email model that should be sent to the watch input required email template.
     /// </summary>
-    public class WatchInputRequiredEmailModel
+    public class WatchbillInputRequiredEmailModel
     {
         /// <summary>
         /// The name of the person to whom this email will be sent.

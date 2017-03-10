@@ -129,7 +129,7 @@ namespace CCServ.Entities.Watchbill
                         Person = ellPerson
                     });
 
-                    var model = new Email.Models.WatchInputRequiredEmailModel { FriendlyName = ellPerson.ToString(), Watchbill = this.Title };
+                    var model = new Email.Models.WatchbillInputRequiredEmailModel { FriendlyName = ellPerson.ToString(), Watchbill = this.Title };
 
                     var addresses = ellPerson.EmailAddresses
                         .Where(x => x.IsPreferred)
@@ -140,7 +140,7 @@ namespace CCServ.Entities.Watchbill
                         .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
                         .CC(addresses)
                         .Subject("Watchbill Inputs Required")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequired_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillInputRequired_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                 }
 
@@ -267,8 +267,10 @@ namespace CCServ.Entities.Watchbill
             }
             else if (desiredState == WatchbillStatuses.UnderReview)
             {
-
-
+                if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignments.Any())))
+                {
+                    throw new Exception("A watchbill may not move into the 'Under Review' state unless the all watch shifts have been assigned.");
+                }
                 
                 //We now also need to load all persons in the watchbill's chain of command.
                 var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
@@ -325,7 +327,81 @@ namespace CCServ.Entities.Watchbill
             }
             else if (desiredState == WatchbillStatuses.Published)
             {
-                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+                //Let's send an email to each person who is on watch, informing them of their watches.
+                var assignmentsByPerson = this.WatchDays
+                    .SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchAssignments))
+                    .GroupBy(x => x.PersonAssigned);
+
+                foreach (var assignments in assignmentsByPerson)
+                {
+                    var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = this.Title };
+
+                    var emailAddresses = assignments.Key.EmailAddresses
+                        .Where(x => x.IsPreferred)
+                        .Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString()));
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                        .CC(emailAddresses)
+                        .Subject("Watch Assigned")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                }
+
+                //Let's send emails to all the coordinators.
+                //We now also need to load all persons in the watchbill's chain of command.
+                var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DepartmentQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DivisionQuarterdeckWatchbill() }
+                    .Select(x => x.GroupName)
+                    .ToList();
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
+                {
+
+                    try
+                    {
+                        var queryString = "from Person as person where (";
+                        for (var x = 0; x < groups.Count; x++)
+                        {
+                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                                PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
+                            if (x + 1 != groups.Count)
+                                queryString += " or ";
+                        }
+                        queryString += " ) and person.Command = :command";
+                        var persons = session.CreateQuery(queryString)
+                            .SetParameter("command", this.Command)
+                            .List<Person>();
+
+                        //Now with these people who are the duty holders.
+                        var collateralEmailAddresses = persons.Select(x =>
+                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+
+                        var model = new Email.Models.WatchbillPublishedEmailModel { Watchbill = this.Title };
+
+                        //Send the email to each person in turn so we don't send the email addresses to other people.
+                        foreach (var addressGroup in collateralEmailAddresses)
+                        {
+                            Email.EmailInterface.CCEmailMessage
+                                .CreateDefault()
+                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .CC(addressGroup)
+                                .Subject("Watchbill Published")
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model)
+                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
             else
             {
