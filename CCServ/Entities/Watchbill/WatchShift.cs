@@ -89,8 +89,8 @@ namespace CCServ.Entities.Watchbill
 
                 HasMany(x => x.WatchAssignments);
 
-                HasManyToMany(x => x.WatchInputs);
-                HasManyToMany(x => x.WatchDays);
+                HasManyToMany(x => x.WatchInputs).Cascade.All();
+                HasManyToMany(x => x.WatchDays).Inverse();
 
                 Map(x => x.Title).Not.Nullable();
                 Component(x => x.Range, x =>

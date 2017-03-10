@@ -89,7 +89,7 @@ namespace CCServ.Entities.Watchbill
                 HasMany(x => x.Comments)
                     .KeyColumn("EntityOwner_id");
 
-                HasManyToMany(x => x.WatchShifts);
+                HasManyToMany(x => x.WatchShifts).Inverse();
 
                 Map(x => x.DateConfirmed).CustomType<UtcDateTimeType>();
                 Map(x => x.DateSubmitted).Not.Nullable().CustomType<UtcDateTimeType>();

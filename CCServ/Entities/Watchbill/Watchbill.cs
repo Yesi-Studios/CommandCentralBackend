@@ -130,7 +130,7 @@ namespace CCServ.Entities.Watchbill
 
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                         .CC(addresses)
                         .Subject("Watchbill Inputs Required")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillInputRequired_HTML.html", model)
@@ -174,7 +174,7 @@ namespace CCServ.Entities.Watchbill
                         {
                             Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                                 .CC(addressGroup)
                                 .Subject("Watchbill Open For Inputs")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
@@ -242,7 +242,7 @@ namespace CCServ.Entities.Watchbill
                         {
                             Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                                 .CC(addressGroup)
                                 .Subject("Watchbill Closed For Inputs")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
@@ -302,7 +302,7 @@ namespace CCServ.Entities.Watchbill
                         {
                             Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                                 .CC(addressGroup)
                                 .Subject("Watchbill Under Review")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model)
@@ -335,7 +335,7 @@ namespace CCServ.Entities.Watchbill
 
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                         .CC(emailAddresses)
                         .Subject("Watch Assigned")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model)
@@ -380,7 +380,7 @@ namespace CCServ.Entities.Watchbill
                         {
                             Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
                                 .CC(addressGroup)
                                 .Subject("Watchbill Published")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model)
