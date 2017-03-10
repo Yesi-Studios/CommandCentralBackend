@@ -61,11 +61,6 @@ namespace CCServ.Entities.Watchbill
         public virtual IList<WatchInputRequirement> InputRequirements { get; set; }
 
         /// <summary>
-        /// The collection of all the watch inputs given for shifts within this watchbill.
-        /// </summary>
-        public virtual IList<WatchInput> WatchInputs { get; set; }
-
-        /// <summary>
         /// The command at which this watchbill was created.
         /// </summary>
         public virtual ReferenceLists.Command Command { get; set; }
@@ -88,7 +83,6 @@ namespace CCServ.Entities.Watchbill
         {
             WatchDays = new List<WatchDay>();
             InputRequirements = new List<WatchInputRequirement>();
-            WatchInputs = new List<WatchInput>();
         }
 
         #endregion
@@ -108,7 +102,6 @@ namespace CCServ.Entities.Watchbill
                 {
                     this.InputRequirements.RemoveAt(x);
                 }
-                this.WatchInputs.Clear();
 
                 foreach (var watchDay in this.WatchDays)
                 {
@@ -435,7 +428,6 @@ namespace CCServ.Entities.Watchbill
 
                 HasMany(x => x.WatchDays).Cascade.All();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
-                HasMany(x => x.WatchInputs);
 
                 Map(x => x.Title).Not.Nullable();
                 Map(x => x.LastStateChange).Not.Nullable();
@@ -462,7 +454,6 @@ namespace CCServ.Entities.Watchbill
 
                 RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
-                RuleFor(x => x.WatchInputs).SetCollectionValidator(new WatchInput.WatchInputValidator());
 
                 When(x => x.CurrentState != ReferenceLists.Watchbill.WatchbillStatuses.Initial, () =>
                 {
