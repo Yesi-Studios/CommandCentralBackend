@@ -85,7 +85,7 @@ namespace CCServ
                             Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(4), End = watchbill.WatchDays.Last().Date.Date.AddHours(6) },
                             Id = Guid.NewGuid(),
                             ShiftType = WatchShiftTypes.OOD,
-                            Title = "jood watch",
+                            Title = "ood watch",
                             WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
                         });
 
@@ -107,7 +107,7 @@ namespace CCServ
                     var allUsers = session.QueryOver<Person>().List().ToList();
 
                     var group = session.Get<WatchElligibilityGroup>(WatchElligibilityGroups.Quarterdeck.Id);
-                    foreach (var person in allUsers.Take(AtwoodUtils.Utilities.GetRandomNumber(0, allUsers.Count)))
+                    foreach (var person in allUsers.Take(AtwoodUtils.Utilities.GetRandomNumber(5, allUsers.Count)))
                     {
                         group.ElligiblePersons.Add(person);
                     }
@@ -120,10 +120,7 @@ namespace CCServ
                     session.Update(group);
 
                     transaction.Commit();
-
                 }
-
-
             }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -152,6 +149,57 @@ namespace CCServ
                         .List().FirstOrDefault();
 
                     watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
+
+                    session.Update(watchbill);
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    WatchInputReason reason = new WatchInputReason { Description = "test", Id = Guid.NewGuid(), Value = "because I don't wanna" };
+                    session.Save(reason);
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var allUsers = session.QueryOver<Person>().List().ToList();
+
+                    var inputReason = session.QueryOver<WatchInputReason>().List().FirstOrDefault();
+
+                    if (inputReason == null)
+                        throw new Exception("uh oh");
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .List().FirstOrDefault();
+
+                    foreach (var shift in watchbill.WatchDays.SelectMany(x => x.WatchShifts))
+                    {
+                        foreach (var user in allUsers)
+                        {
+                            if (Utilities.GetRandomNumber(1, 100) > 50)
+                            {
+                                shift.WatchInputs.Add(new WatchInput
+                                {
+                                    DateSubmitted = DateTime.Now,
+                                    Id = Guid.NewGuid(),
+                                    InputReason = inputReason,
+                                    Person = user,
+                                    SubmittedBy = user0
+                                });
+                            }
+                        }
+                    }
 
                     session.Update(watchbill);
 
