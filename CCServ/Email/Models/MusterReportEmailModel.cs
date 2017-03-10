@@ -18,7 +18,7 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The person who generated this muster report.
         /// </summary>
-        public Entities.Person Creator { get; set; }
+        public Person Creator { get; set; }
 
         /// <summary>
         /// The date time of the muster.
