@@ -206,6 +206,8 @@
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillUnderReviewEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillOpenForInputsEmailModel.cs" />
     <Compile Include="Email\Models\WatchInputRequiredEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
@@ -374,6 +376,10 @@
     <EmbeddedResource Include="Email\Templates\WatchbillOpenForInputs_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Email\Templates\WatchbillClosedForInputs_HTML.html" />
+    <Content Include="Email\Templates\WatchbillOpenForReview_HTML.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

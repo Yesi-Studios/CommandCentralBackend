@@ -211,10 +211,117 @@ namespace CCServ.Entities.Watchbill
                     req.DateAnswered = DateTime.Now;
                     req.AnsweredBy = null;
                 }
+
+                //We now also need to load all persons in the watchbill's chain of command.
+                var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DepartmentQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DivisionQuarterdeckWatchbill() }
+                    .Select(x => x.GroupName)
+                    .ToList();
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
+                {
+
+                    try
+                    {
+                        var queryString = "from Person as person where (";
+                        for (var x = 0; x < groups.Count; x++)
+                        {
+                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                                PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
+                            if (x + 1 != groups.Count)
+                                queryString += " or ";
+                        }
+                        queryString += " ) and person.Command = :command";
+                        var persons = session.CreateQuery(queryString)
+                            .SetParameter("command", this.Command)
+                            .List<Person>();
+
+                        //Now with these people who are the duty holders.
+                        var collateralEmailAddresses = persons.Select(x =>
+                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+
+                        var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
+
+                        //Send the email to each person in turn so we don't send the email addresses to other people.
+                        foreach (var addressGroup in collateralEmailAddresses)
+                        {
+                            Email.EmailInterface.CCEmailMessage
+                                .CreateDefault()
+                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .CC(addressGroup)
+                                .Subject("Watchbill Closed For Inputs")
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
+                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
             else if (desiredState == WatchbillStatuses.UnderReview)
             {
-                throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
+
+
+                
+                //We now also need to load all persons in the watchbill's chain of command.
+                var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DepartmentQuarterdeckWatchbill(),
+                                    new Authorization.Groups.Definitions.DivisionQuarterdeckWatchbill() }
+                    .Select(x => x.GroupName)
+                    .ToList();
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = session.BeginTransaction())
+                {
+
+                    try
+                    {
+                        var queryString = "from Person as person where (";
+                        for (var x = 0; x < groups.Count; x++)
+                        {
+                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                                PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
+                            if (x + 1 != groups.Count)
+                                queryString += " or ";
+                        }
+                        queryString += " ) and person.Command = :command";
+                        var persons = session.CreateQuery(queryString)
+                            .SetParameter("command", this.Command)
+                            .List<Person>();
+
+                        //Now with these people who are the duty holders.
+                        var collateralEmailAddresses = persons.Select(x =>
+                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+
+                        var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
+
+                        //Send the email to each person in turn so we don't send the email addresses to other people.
+                        foreach (var addressGroup in collateralEmailAddresses)
+                        {
+                            Email.EmailInterface.CCEmailMessage
+                                .CreateDefault()
+                                .To(new System.Net.Mail.MailAddress("daniel.k.atwood.mil@mail.mil"))
+                                .CC(addressGroup)
+                                .Subject("Watchbill Under Review")
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model)
+                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
             else if (desiredState == WatchbillStatuses.Published)
             {
