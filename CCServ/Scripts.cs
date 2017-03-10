@@ -148,6 +148,8 @@ namespace CCServ
                     var watchbill = session.QueryOver<Watchbill>()
                         .List().FirstOrDefault();
 
+                    var count = watchbill.WatchDays.Count;
+
                     watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
 
                     session.Update(watchbill);
@@ -199,6 +201,29 @@ namespace CCServ
                                 });
                             }
                         }
+                    }
+
+                    session.Update(watchbill);
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var allUsers = session.QueryOver<Person>().List().ToList();
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .List().FirstOrDefault();
+
+                    var allInputs = watchbill.WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchInputs));
+
+                    foreach (var input in allInputs)
+                    {
                     }
 
                     session.Update(watchbill);
