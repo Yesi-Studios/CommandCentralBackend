@@ -187,19 +187,24 @@ namespace CCServ
 
                     foreach (var shift in watchbill.WatchDays.SelectMany(x => x.WatchShifts))
                     {
-                        foreach (var user in allUsers)
+                        foreach (var requirement in watchbill.InputRequirements)
                         {
-                            if (Utilities.GetRandomNumber(1, 100) > 50)
+                            if (Utilities.GetRandomNumber(1, 10000) > 9950)
                             {
                                 shift.WatchInputs.Add(new WatchInput
                                 {
                                     DateSubmitted = DateTime.Now,
                                     Id = Guid.NewGuid(),
                                     InputReason = inputReason,
-                                    Person = user,
+                                    Person = requirement.Person,
                                     SubmittedBy = user0
                                 });
+
+                                requirement.IsAnswered = true;
+                                requirement.AnsweredBy = user0;
+                                requirement.DateAnswered = DateTime.Now;
                             }
+
                         }
                     }
 
@@ -249,10 +254,11 @@ namespace CCServ
 
                     watchbill.SetState(WatchbillStatuses.ClosedForInputs, DateTime.Now, user0);
 
+                    session.Update(watchbill);
+
                     transaction.Commit();
                 }
             }
-
         }
     }
 }

@@ -87,7 +87,8 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.ConfirmedBy);
                 
                 HasMany(x => x.Comments)
-                    .KeyColumn("EntityOwner_id");
+                    .KeyColumn("EntityOwner_id")
+                    .ForeignKeyConstraintName("none");
 
                 HasManyToMany(x => x.WatchShifts).Inverse();
 
