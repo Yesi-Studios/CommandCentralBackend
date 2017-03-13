@@ -68,6 +68,9 @@ namespace CCServ.Entities.ReferenceLists
         /// <returns></returns>
         public static bool operator ==(ReferenceListItemBase x, ReferenceListItemBase y)
         {
+            if (object.ReferenceEquals(null, x))
+                return object.ReferenceEquals(null, y);
+
             return x.Id == y.Id && x.Value == y.Value && x.Description == y.Description;
         }
 
