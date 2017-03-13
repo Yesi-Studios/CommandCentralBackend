@@ -57,7 +57,9 @@ namespace CCServ.Entities.ReferenceLists
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            return this == (ReferenceListItemBase)obj;
+            ReferenceListItemBase other = (ReferenceListItemBase)obj;
+
+            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
         }
 
         /// <summary>
@@ -71,7 +73,8 @@ namespace CCServ.Entities.ReferenceLists
             if (object.ReferenceEquals(null, x))
                 return object.ReferenceEquals(null, y);
 
-            return x.Id == y.Id && x.Value == y.Value && x.Description == y.Description;
+            return x.Equals(y);
+
         }
 
         /// <summary>
