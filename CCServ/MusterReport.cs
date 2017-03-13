@@ -68,7 +68,7 @@ namespace CCServ
 
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
-                        .CreateHomeTestingDefault() //TODO change me to the real thing when you're ready.
+                        .CreateDefault()
                         .To(new System.Net.Mail.MailAddress(
                             ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                             ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName),
