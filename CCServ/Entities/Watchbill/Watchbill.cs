@@ -99,7 +99,7 @@ namespace CCServ.Entities.Watchbill
         public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person)
         {
             //Don't allow false changes.
-            if (this.CurrentState.Id == desiredState.Id)
+            if (this.CurrentState == desiredState)
             {
                 throw new Exception("Can't set the state to its same value.");
             }
