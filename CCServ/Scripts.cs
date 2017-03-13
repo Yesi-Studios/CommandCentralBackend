@@ -224,7 +224,7 @@ namespace CCServ
 
                     foreach (var input in allInputs)
                     {
-                        if (Utilities.GetRandomNumber(1, 100) > 90)
+                        if (Utilities.GetRandomNumber(1, 100) < 90)
                         {
                             input.ConfirmedBy = user0;
                             input.DateConfirmed = DateTime.Now;
@@ -233,6 +233,21 @@ namespace CCServ
                     }
 
                     session.Update(watchbill);
+
+                    transaction.Commit();
+                }
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .List().FirstOrDefault();
+
+                    watchbill.SetState(WatchbillStatuses.ClosedForInputs, DateTime.Now, user0);
 
                     transaction.Commit();
                 }
