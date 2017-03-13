@@ -209,24 +209,11 @@ namespace CCServ.Entities.Watchbill
 
                 
             }
-            //Auto-answer all the inputs required that haven't already been answered.
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
             {
                 if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.OpenForInputs)
                     throw new Exception("You may not move to the closed for inputs state from anything other than the open for inputs state.");
-
-                //First up, we need all those people who haven't submitted inputs yet.
-                var unansweredRequirements = this.InputRequirements.Where(x => x.IsAnswered == false);
-
-                //Now simply we're going to update each unanswered requirement, telling it that it is now answered.
-                //However, we'll leave the person answered by blank, because no one answered it.  The system did.
-                foreach (var req in unansweredRequirements)
-                {
-                    req.IsAnswered = true;
-                    req.DateAnswered = DateTime.Now;
-                    req.AnsweredBy = null;
-                }
 
                 //We now also need to load all persons in the watchbill's chain of command.
                 var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),

@@ -82,7 +82,8 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.ApprovedBy);
 
                 HasMany(x => x.Comments)
-                    .KeyColumn("EntityOwner_id");
+                    .KeyColumn("EntityOwner_id")
+                    .ForeignKeyConstraintName("none"); ;
 
                 Map(x => x.IsApproved).Default(false.ToString());
                 Map(x => x.DateApproved).CustomType<UtcDateTimeType>();
