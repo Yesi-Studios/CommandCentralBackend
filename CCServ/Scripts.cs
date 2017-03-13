@@ -224,6 +224,12 @@ namespace CCServ
 
                     foreach (var input in allInputs)
                     {
+                        if (Utilities.GetRandomNumber(1, 100) > 90)
+                        {
+                            input.ConfirmedBy = user0;
+                            input.DateConfirmed = DateTime.Now;
+                            input.IsConfirmed = true;
+                        }
                     }
 
                     session.Update(watchbill);
