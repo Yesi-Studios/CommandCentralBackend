@@ -125,6 +125,9 @@ namespace CCServ.Entities.Watchbill
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
             else if (desiredState == WatchbillStatuses.OpenForInputs)
             {
+                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.Initial)
+                    throw new Exception("You may not move to the open for inputs state from anything other than the initial state.");
+
                 foreach (var ellPerson in this.ElligibilityGroup.ElligiblePersons)
                 {
                     this.InputRequirements.Add(new WatchInputRequirement
@@ -209,6 +212,9 @@ namespace CCServ.Entities.Watchbill
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
             {
+                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.OpenForInputs)
+                    throw new Exception("You may not move to the closed for inputs state from anything other than the open for inputs state.");
+
                 //First up, we need all those people who haven't submitted inputs yet.
                 var unansweredRequirements = this.InputRequirements.Where(x => x.IsAnswered == false);
 
@@ -279,6 +285,9 @@ namespace CCServ.Entities.Watchbill
             //Inform the chain of command that the watchbill is open for review.
             else if (desiredState == WatchbillStatuses.UnderReview)
             {
+                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.ClosedForInputs)
+                    throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
+
                 if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignments.Any())))
                 {
                     throw new Exception("A watchbill may not move into the 'Under Review' state unless the all watch shifts have been assigned.");
@@ -342,6 +351,9 @@ namespace CCServ.Entities.Watchbill
             //Tell the chain of command the watchbill is published.
             else if (desiredState == WatchbillStatuses.Published)
             {
+                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.UnderReview)
+                    throw new Exception("You may not move to the published state from anything other than the under review state.");
+
                 //Let's send an email to each person who is on watch, informing them of their watches.
                 var assignmentsByPerson = this.WatchDays
                     .SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchAssignments))
