@@ -89,13 +89,23 @@ namespace CCServ.Entities.Watchbill
 
         #region Methods
 
+        /// <summary>
+        /// This method is responsible for advancing the watchbill into different states.  
+        /// At each state, different actions must be taken.
+        /// </summary>
+        /// <param name="desiredState"></param>
+        /// <param name="setTime"></param>
+        /// <param name="person"></param>
         public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person)
         {
+            //Don't allow false changes.
             if (this.CurrentState.Id == desiredState.Id)
             {
                 throw new Exception("Can't set the state to its same value.");
             }
 
+            //If we set a watchbill's state to initial, then remove all the assignments from it, 
+            //leaving a watchbill with only its days and shifts.
             if (desiredState == WatchbillStatuses.Initial)
             {
                 for (int x = this.InputRequirements.Count - 1; x >= 0; x--)
@@ -112,6 +122,7 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
             }
+            //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
             else if (desiredState == WatchbillStatuses.OpenForInputs)
             {
                 foreach (var ellPerson in this.ElligibilityGroup.ElligiblePersons)
@@ -128,6 +139,8 @@ namespace CCServ.Entities.Watchbill
                         .Where(x => x.IsPreferred)
                         .Select(x => new System.Net.Mail.MailAddress(x.Address, ellPerson.ToString()));
 
+                    //We don't send these emails with parallel threads because of the updating of the watchbill above.  
+                    //I'd basically have to create two loops to make sure we don't get any weird cross-thread behaviors.
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
                         .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
@@ -170,16 +183,17 @@ namespace CCServ.Entities.Watchbill
                         var model = new Email.Models.WatchbillOpenForInputsEmailModel { Watchbill = this.Title };
 
                         //Send the email to each person in turn so we don't send the email addresses to other people.
-                        foreach (var addressGroup in collateralEmailAddresses)
-                        {
-                            Email.EmailInterface.CCEmailMessage
-                                .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
-                                .Subject("Watchbill Open For Inputs")
-                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
-                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                        }
+                        //Do it parallel to speed it up.
+                        Parallel.ForEach(collateralEmailAddresses, addressGroup =>
+                            {
+                                Email.EmailInterface.CCEmailMessage
+                                    .CreateDefault()
+                                    .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
+                                    .CC(addressGroup)
+                                    .Subject("Watchbill Open For Inputs")
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
+                                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                            });
 
                         transaction.Commit();
                     }
@@ -191,6 +205,8 @@ namespace CCServ.Entities.Watchbill
 
                 }
             }
+            //Auto-answer all the inputs required that haven't already been answered.
+            //Inform everyone in the chain of command that the watchbill is closed for inputs.
             else if (desiredState == WatchbillStatuses.ClosedForInputs)
             {
                 //First up, we need all those people who haven't submitted inputs yet.
@@ -238,16 +254,17 @@ namespace CCServ.Entities.Watchbill
                         var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
 
                         //Send the email to each person in turn so we don't send the email addresses to other people.
-                        foreach (var addressGroup in collateralEmailAddresses)
-                        {
-                            Email.EmailInterface.CCEmailMessage
-                                .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
-                                .Subject("Watchbill Closed For Inputs")
-                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
-                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                        }
+                        //Do it parallel to speed it up.
+                        Parallel.ForEach(collateralEmailAddresses, addressGroup =>
+                            {
+                                Email.EmailInterface.CCEmailMessage
+                                    .CreateDefault()
+                                    .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
+                                    .CC(addressGroup)
+                                    .Subject("Watchbill Closed For Inputs")
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
+                                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                            });
 
                         transaction.Commit();
                     }
@@ -258,6 +275,8 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
             }
+            //Make sure there are assignments for each shift.  
+            //Inform the chain of command that the watchbill is open for review.
             else if (desiredState == WatchbillStatuses.UnderReview)
             {
                 if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignments.Any())))
@@ -298,16 +317,17 @@ namespace CCServ.Entities.Watchbill
                         var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
 
                         //Send the email to each person in turn so we don't send the email addresses to other people.
-                        foreach (var addressGroup in collateralEmailAddresses)
-                        {
-                            Email.EmailInterface.CCEmailMessage
-                                .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
-                                .Subject("Watchbill Under Review")
-                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model)
-                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                        }
+                        //Do it parallel to speed it up.
+                        Parallel.ForEach(collateralEmailAddresses, addressGroup =>
+                            {
+                                Email.EmailInterface.CCEmailMessage
+                                    .CreateDefault()
+                                    .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
+                                    .CC(addressGroup)
+                                    .Subject("Watchbill Under Review")
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model)
+                                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                            });
 
                         transaction.Commit();
                     }
@@ -318,6 +338,8 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
             }
+            //Move the watchbill into its published state, tell everyone who has watch which watches they have.
+            //Tell the chain of command the watchbill is published.
             else if (desiredState == WatchbillStatuses.Published)
             {
                 //Let's send an email to each person who is on watch, informing them of their watches.
@@ -325,22 +347,24 @@ namespace CCServ.Entities.Watchbill
                     .SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchAssignments))
                     .GroupBy(x => x.PersonAssigned);
 
-                foreach (var assignments in assignmentsByPerson)
-                {
-                    var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = this.Title };
+                //Start a bunch of parallel tasks in order to send the emails.
+                //We do this to try to speed everything up.
+                Parallel.ForEach(assignmentsByPerson, assignments =>
+                    {
+                        var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = this.Title };
 
-                    var emailAddresses = assignments.Key.EmailAddresses
-                        .Where(x => x.IsPreferred)
-                        .Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString()));
+                        var emailAddresses = assignments.Key.EmailAddresses
+                            .Where(x => x.IsPreferred)
+                            .Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString()));
 
-                    Email.EmailInterface.CCEmailMessage
-                        .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                        .CC(emailAddresses)
-                        .Subject("Watch Assigned")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model)
-                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                }
+                        Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
+                            .CC(emailAddresses)
+                            .Subject("Watch Assigned")
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                    });
 
                 //Let's send emails to all the coordinators.
                 //We now also need to load all persons in the watchbill's chain of command.
@@ -369,23 +393,24 @@ namespace CCServ.Entities.Watchbill
                             .SetParameter("command", this.Command)
                             .List<Person>();
 
-                        //Now with these people who are the duty holders.
+                        //Now with these people who are the duty holders, get their preferred email addresses.
                         var collateralEmailAddresses = persons.Select(x =>
                                     x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
 
                         var model = new Email.Models.WatchbillPublishedEmailModel { Watchbill = this.Title };
 
                         //Send the email to each person in turn so we don't send the email addresses to other people.
-                        foreach (var addressGroup in collateralEmailAddresses)
-                        {
-                            Email.EmailInterface.CCEmailMessage
-                                .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
-                                .Subject("Watchbill Published")
-                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model)
-                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                        }
+                        //We're also going to do this with parallel threads to try to get the emails out faster.
+                        Parallel.ForEach(collateralEmailAddresses, addressGroup =>
+                            {
+                                Email.EmailInterface.CCEmailMessage
+                                    .CreateDefault()
+                                    .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
+                                    .CC(addressGroup)
+                                    .Subject("Watchbill Published")
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model)
+                                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                            });
 
                         transaction.Commit();
                     }
