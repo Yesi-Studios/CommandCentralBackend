@@ -428,14 +428,31 @@ namespace CCServ.Entities.Watchbill
 
         public virtual void PopulateWatchbill(Person client, DateTime dateTime)
         {
-
             //First we need to know how many shifts of each type are in this watchbill.
             //And we need to know how many elligible people in each department there are.
             var shifts = this.WatchDays.SelectMany(x => x.WatchShifts).ToList();
-            var shiftsbyType = shifts.GroupBy(x => x.ShiftType).ToList();
             var elligiblePersonsByDepartment = this.ElligibilityGroup.ElligiblePersons.GroupBy(x => x.Department).ToList();
+            var shiftsByDepartmentCount = new Dictionary<ReferenceLists.Department, Dictionary<WatchShiftType, int>>();
 
-            //Next, we're going to walk the shifts we have to fill, and see 
+            foreach (var shift in shifts)
+            {
+                foreach (var departmentGroup in elligiblePersonsByDepartment)
+                {
+                    if (!shiftsByDepartmentCount.ContainsKey(departmentGroup.Key))
+                        shiftsByDepartmentCount.Add(departmentGroup.Key, new Dictionary<WatchShiftType, int>());
+
+                    if (!shiftsByDepartmentCount[departmentGroup.Key].ContainsKey(shift.ShiftType))
+                        shiftsByDepartmentCount[departmentGroup.Key].Add(shift.ShiftType, 0);
+
+                    if (!departmentGroup.Any(x => !shift.ShiftType.RequiredWatchQualifications.Except(x.WatchQualifications).Any()))
+                        shiftsByDepartmentCount[departmentGroup.Key][shift.ShiftType]++;
+                }
+            }
+
+            int i = 0;
+
+            //Next, we're going to walk the shifts we have to fill, and see how many are elligible for each shift from each department.
+            //We do this to build our available percentages by department.
         }
 
         #endregion
