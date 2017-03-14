@@ -259,6 +259,23 @@ namespace CCServ
                     transaction.Commit();
                 }
             }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
+
+                    var watchbill = session.QueryOver<Watchbill>()
+                        .List().FirstOrDefault();
+
+                    watchbill.PopulateWatchbill(user0, DateTime.Now);
+
+                    session.Update(watchbill);
+
+                    transaction.Commit();
+                }
+            }
         }
     }
 }
