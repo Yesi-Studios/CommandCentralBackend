@@ -426,6 +426,18 @@ namespace CCServ.Entities.Watchbill
             this.LastStateChangedBy = person;
         }
 
+        public virtual void PopulateWatchbill(Person client, DateTime dateTime)
+        {
+
+            //First we need to know how many shifts of each type are in this watchbill.
+            //And we need to know how many elligible people in each department there are.
+            var shifts = this.WatchDays.SelectMany(x => x.WatchShifts).ToList();
+            var shiftsbyType = shifts.GroupBy(x => x.ShiftType).ToList();
+            var elligiblePersonsByDepartment = this.ElligibilityGroup.ElligiblePersons.GroupBy(x => x.Department).ToList();
+
+            //Next, we're going to walk the shifts we have to fill, and see 
+        }
+
         #endregion
 
         /// <summary>
