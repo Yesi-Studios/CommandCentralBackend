@@ -418,7 +418,7 @@ namespace CCServ.Entities.Watchbill
             //Fire off all the messages.
             Parallel.ForEach(emailMessagesToSend, message =>
             {
-                message.SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                //message.SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             });
 
             this.CurrentState = desiredState;
@@ -438,8 +438,13 @@ namespace CCServ.Entities.Watchbill
             {
                 foreach (var departmentGroup in elligiblePersonsByDepartment)
                 {
+                    int n3 = departmentGroup.Key.GetHashCode();
+
                     if (!shiftsByDepartmentCount.ContainsKey(departmentGroup.Key))
                         shiftsByDepartmentCount.Add(departmentGroup.Key, new Dictionary<WatchShiftType, int>());
+
+                    int n1 = shiftsByDepartmentCount.First().Key.GetHashCode();
+                    int n2 = departmentGroup.Key.GetHashCode();
 
                     if (!shiftsByDepartmentCount[departmentGroup.Key].ContainsKey(shift.ShiftType))
                         shiftsByDepartmentCount[departmentGroup.Key].Add(shift.ShiftType, 0);
