@@ -763,7 +763,7 @@ namespace CCServ.Entities
                 Map(x => x.FirstName).Not.Nullable().Length(40);
                 Map(x => x.MiddleName).Nullable().Length(40);
                 Map(x => x.SSN).Not.Nullable().Length(40).Unique();
-                Map(x => x.DoDId).Not.Nullable().Unique();
+                Map(x => x.DoDId).Unique();
                 Map(x => x.DateOfBirth).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.Supervisor).Nullable().Length(40);
@@ -833,7 +833,7 @@ namespace CCServ.Entities
                     .WithMessage("The suffix must not exceed 40 characters.");
                 RuleFor(x => x.SSN).NotEmpty().Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
                     .WithMessage("The SSN must be valid and contain only numbers.");
-                RuleFor(x => x.DoDId).NotEmpty().Must((person, str) => str.All(Char.IsDigit)).Length(10)
+                RuleFor(x => x.DoDId).Must((person, str) => str.All(Char.IsDigit))
                     .WithMessage("A DoD Id must be numbers only and be exactly ten digits.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
