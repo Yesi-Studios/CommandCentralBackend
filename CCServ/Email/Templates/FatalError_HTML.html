@@ -280,6 +280,9 @@
                                                                                                                 else
                                                                                                                 {
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Friendly Name: @Model.Token.AuthenticationSession.Person</span>
+                                                                                                                    </p>
+                                                                                                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Session Id: @Model.Token.AuthenticationSession.Id</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
@@ -287,9 +290,6 @@
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Id: @Model.Token.AuthenticationSession.Person.Id</span>
-                                                                                                                    </p>
-                                                                                                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Friendly Name: @Model.Token.AuthenticationSession.Person</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Logout Time: @Model.Token.AuthenticationSession.LogoutTime</span>
@@ -343,6 +343,9 @@
                                                                                                                 else
                                                                                                                 {
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Endpoint: @Model.Token.CalledEndpoint</span>
+                                                                                                                    </p>
+                                                                                                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Message Id: @Model.Token.Id</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
@@ -356,9 +359,6 @@
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Raw JSON Request: @Model.Token.RawRequestBodyForLogging</span>
-                                                                                                                    </p>
-                                                                                                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Endpoint: @Model.Token.CalledEndpoint</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Raw JSON Result: @Model.Token.RawResponseBody</span>
@@ -412,19 +412,24 @@
                                                                                                                 else
                                                                                                                 {
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Error Message: @Model.Exception.Message</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 14px;"><strong>Message: </strong></span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">@Model.Exception.Message</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Inner Error Message: @(@Model.Exception.InnerException == null ? "null" : @Model.Exception.InnerException.Message)</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 14px;"><strong>Inner Error Message: </strong></span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">@(@Model.Exception.InnerException == null ? "null" : @Model.Exception.InnerException.Message)</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Source: @Model.Exception.Source</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 14px;"><strong>Source: </strong></span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">@Model.Exception.Source</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Target Site: @Model.Exception.TargetSite</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 14px;"><strong>Target Site: </strong></span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">@Model.Exception.TargetSite</span>
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Stack Trace: @Model.Exception.StackTrace</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 14px;"><strong>Stack Trace: </strong></span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">@Model.Exception.StackTrace</span>
                                                                                                                     </p>
                                                                                                                 }
                                                                                                             </div>
