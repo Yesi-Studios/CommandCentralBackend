@@ -22,7 +22,7 @@ namespace CCServ.Authorization.Groups.Definitions
             CanAccessSubModules(SubModules.AdminTools, SubModules.CreatePerson);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin),
-                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
+                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster), typeof(CommandLeadership));
 
             InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
 
@@ -31,6 +31,7 @@ namespace CCServ.Authorization.Groups.Definitions
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.SSN,
+                    x => x.DoDId,
                     x => x.DateOfBirth,
                     x => x.Ethnicity,
                     x => x.ReligiousPreference,
@@ -58,6 +59,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.FirstName,
                     x => x.MiddleName,
                     x => x.SSN,
+                    x => x.DoDId,
                     x => x.Suffix,
                     x => x.DateOfBirth,
                     x => x.Sex,
