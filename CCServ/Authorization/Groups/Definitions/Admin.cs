@@ -22,7 +22,7 @@ namespace CCServ.Authorization.Groups.Definitions
             CanAccessSubModules(SubModules.AdminTools, SubModules.CreatePerson);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin),
-                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
+                typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster), typeof(CommandLeadership));
 
             InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
 
