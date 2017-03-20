@@ -22,7 +22,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             InChainsOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
 
-            CanAccessModule("QuarterdeckWatchbill");
+            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
         }
 
     }
