@@ -142,7 +142,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             }
 
                             var watchbill = days.First().Watchbill;
-                            if (!days.All(x => x.Watchbill.Id == watchbill.Id))
+                            if (days.Any(x => x.Watchbill.Id != watchbill.Id))
                             {
                                 token.AddErrorMessage("Your requested watch days were not all from the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
