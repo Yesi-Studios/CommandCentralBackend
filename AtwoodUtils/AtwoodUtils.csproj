@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConditionalJsonIgnore.cs" />
+    <Compile Include="CustomContractResolver.cs" />
     <Compile Include="DisplayUtilities.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
