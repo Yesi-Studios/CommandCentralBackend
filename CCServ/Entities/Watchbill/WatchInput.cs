@@ -113,6 +113,7 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.SubmittedBy).NotEmpty();
                 RuleFor(x => x.DateSubmitted).NotEmpty();
 
+                RuleFor(x => x.WatchShifts).NotEmpty();
                 RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
 
                 When(x => x.ConfirmedBy != null || x.DateConfirmed.HasValue || x.DateConfirmed.Value != default(DateTime) || x.IsConfirmed, () =>
