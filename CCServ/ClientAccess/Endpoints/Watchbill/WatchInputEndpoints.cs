@@ -144,7 +144,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                                 .Resolve(token.AuthenticationSession.Person, personFromDB);
 
-                            if (resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()])
+                            if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
+                                && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
                             {
                                 token.AddErrorMessage("You are not authorized to submit inputs for this person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                 return;
@@ -186,6 +187,105 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
         }
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Updates a watch shift.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void UpdateWatchShift(MessageToken token)
+        {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
 
+            if (!token.Args.ContainsKey("watchshift"))
+            {
+                token.AddErrorMessage("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            WatchShift watchShiftFromClient;
+            try
+            {
+                watchShiftFromClient = token.Args["watchshift"].CastJToken<WatchShift>();
+            }
+            catch
+            {
+                token.AddErrorMessage("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var valdiationResult = new WatchShift.WatchShiftValidator().Validate(watchShiftFromClient);
+
+            if (!valdiationResult.IsValid)
+            {
+                token.AddErrorMessages(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var watchShiftFromDB = session.Get<WatchShift>(watchShiftFromClient.Id);
+
+                        if (watchShiftFromDB == null)
+                        {
+                            token.AddErrorMessage("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        var watchbill = watchShiftFromDB.WatchDays.First().Watchbill;
+
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        {
+                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that elligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            return;
+                        }
+
+                        //Ok let's swap the properties now.
+                        //Check the state.
+                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial
+                            && (watchShiftFromClient.ShiftType != watchShiftFromDB.ShiftType || watchShiftFromClient.Range != watchShiftFromDB.Range))
+                        {
+                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        watchShiftFromDB.Title = watchShiftFromClient.Title;
+                        watchShiftFromDB.Range = watchShiftFromClient.Range;
+                        watchShiftFromDB.ShiftType = watchShiftFromClient.ShiftType;
+
+                        //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
+                        var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
+
+                        if (!watchbillValidationResult.IsValid)
+                        {
+                            token.AddErrorMessages(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        session.Update(watchShiftFromDB);
+
+                        token.SetResult(watchShiftFromDB);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }
