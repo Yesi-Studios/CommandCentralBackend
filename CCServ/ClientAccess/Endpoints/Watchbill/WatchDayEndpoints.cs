@@ -123,9 +123,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-
                         //Let's get the watchbill the client says this watch day will be assigned to.
                         var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchDayFromClient.Watchbill.Id);
+
+                        if (watchbill == null)
+                        {
+                            token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
