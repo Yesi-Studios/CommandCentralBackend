@@ -74,7 +74,6 @@ namespace CCServ.Entities.ReferenceLists
                 return object.ReferenceEquals(null, y);
 
             return x.Equals(y);
-
         }
 
         /// <summary>
