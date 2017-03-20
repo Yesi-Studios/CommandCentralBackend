@@ -64,7 +64,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     newsItem.Id,
                     newsItem.CreationTime,
-                    Creator = newsItem.Creator.ToBasicPerson(),
+                    Creator = newsItem.Creator,
                     newsItem.Paragraphs,
                     newsItem.Title
                 });
@@ -116,7 +116,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         x.Id,
                         x.CreationTime,
-                        Creator = x.Creator.ToBasicPerson(),
+                        Creator = x.Creator,
                         x.Paragraphs,
                         x.Title
                     };

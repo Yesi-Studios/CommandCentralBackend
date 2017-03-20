@@ -15,7 +15,7 @@ namespace CCServ
 {
     static class Scripts
     {
-        [ServiceManagement.StartMethod(Priority = 1)]
+        //[ServiceManagement.StartMethod(Priority = 1)]
         private static void TestWatchbill(CLI.Options.LaunchOptions launchOptions)
         {
             Logging.Log.Debug("starting watchbill test");
