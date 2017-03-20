@@ -172,6 +172,7 @@
     <Compile Include="ClientAccess\Endpoints\ReferenceListEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchbillEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchDayEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchEligibilityGroupEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchInputEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchShiftEndpoints.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
