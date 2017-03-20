@@ -267,7 +267,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             return;
                         }
 
-                        //Now let's move the properties over that are editable.  The only one is title... that's right folks... all this fucking work to allow editing a single fucking property.
+                        //Now let's move the properties over that are editable.
                         watchbillFromDB.Title = watchbillFromClient.Title;
 
                         //If the state is different, we need to move the state as well.  There's a method for that.
