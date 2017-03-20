@@ -236,8 +236,8 @@ namespace CCServ.ClientAccess.Endpoints
                                             person.CurrentMusterRecord.HasBeenSubmitted,
                                             person.CurrentMusterRecord.Id,
                                             person.CurrentMusterRecord.MusterDate,
-                                            Musteree = person.CurrentMusterRecord.Musteree.ToBasicPerson(),
-                                            Musterer = person.CurrentMusterRecord.Musterer == null ? null : person.CurrentMusterRecord.Musterer.ToBasicPerson(),
+                                            Musteree = person.CurrentMusterRecord.Musteree,
+                                            Musterer = person.CurrentMusterRecord.Musterer == null ? null : person.CurrentMusterRecord.Musterer,
                                             person.CurrentMusterRecord.MusterStatus,
                                             person.CurrentMusterRecord.Paygrade,
                                             person.CurrentMusterRecord.SubmitTime,
@@ -261,8 +261,8 @@ namespace CCServ.ClientAccess.Endpoints
                                     //Then we'll select out those changes, casting the editee/editor to basic person DTOs.  
                                     returnData.Add(propertyName, person.Changes.Where(x => returnableFields.Contains(x.PropertyName, StringComparer.CurrentCultureIgnoreCase)).Select(x => new
                                     {
-                                        Editee = x.Editee.ToBasicPerson(),
-                                        Editor = x.Editor.ToBasicPerson(),
+                                        Editee = x.Editee,
+                                        Editor = x.Editor,
                                         x.PropertyName,
                                         x.OldValue,
                                         x.NewValue,
@@ -933,9 +933,6 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
                     Person personFromDB = session.Get<Person>(personFromClient.Id);
-
-                    //De-proxy the object.  I'm pretty sure we don't need due to our no proxy mappings this but I'm unwilling to test without it right now.
-                    personFromDB = session.GetSessionImplementation().PersistenceContext.Unproxy(personFromDB) as Person;
 
                     //Did we get a person?  If not, the person the client gave us is bullshit.
                     if (personFromDB == null)

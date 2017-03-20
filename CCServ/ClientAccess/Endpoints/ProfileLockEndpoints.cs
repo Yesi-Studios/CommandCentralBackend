@@ -110,8 +110,8 @@ namespace CCServ.ClientAccess.Endpoints
                         {
                             profileLock.Id,
                             profileLock.SubmitTime,
-                            Owner = profileLock.Owner.ToBasicPerson(),
-                            LockedPerson = profileLock.LockedPerson.ToBasicPerson(),
+                            Owner = profileLock.Owner,
+                            LockedPerson = profileLock.LockedPerson,
                             ExpirationTime = profileLock.SubmitTime.Add(ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge)
                         });
                     }
@@ -134,8 +134,8 @@ namespace CCServ.ClientAccess.Endpoints
                         {
                             newLock.Id,
                             newLock.SubmitTime,
-                            Owner = newLock.Owner.ToBasicPerson(),
-                            LockedPerson = newLock.LockedPerson.ToBasicPerson(),
+                            Owner = newLock.Owner,
+                            LockedPerson = newLock.LockedPerson,
                             ExpirationTime = newLock.SubmitTime.Add(ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge)
                         });
                     }
