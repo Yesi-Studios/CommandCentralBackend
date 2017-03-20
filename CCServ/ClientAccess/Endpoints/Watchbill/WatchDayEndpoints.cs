@@ -8,6 +8,9 @@ using CCServ.Entities.Watchbill;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
+    /// <summary>
+    /// Contains all of the endpoints for interacting with the watch day object.
+    /// </summary>
     class WatchDayEndpoints
     {
         /// <summary>
@@ -71,7 +74,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Creates a watch day.
+        /// Creates multiple watch days.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
