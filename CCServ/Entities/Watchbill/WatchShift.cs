@@ -113,6 +113,7 @@ namespace CCServ.Entities.Watchbill
             {
                 RuleFor(x => x.ShiftType).NotEmpty();
                 RuleFor(x => x.Title).NotEmpty().Length(1, 50);
+                RuleFor(x => x.WatchDays).NotEmpty();
                 RuleFor(x => x.WatchInputs).SetCollectionValidator(new WatchInput.WatchInputValidator());
 
                 Custom(watchShift =>
