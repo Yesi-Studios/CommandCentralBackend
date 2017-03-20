@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace AtwoodUtils
 {
@@ -17,9 +20,23 @@ namespace AtwoodUtils
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
         };
 
-        public class NHibernateContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
+        public class NHibernateContractResolver : DefaultContractResolver
         {
-            protected override Newtonsoft.Json.Serialization.JsonContract CreateContract(System.Type objectType)
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                JsonProperty property = base.CreateProperty(member, memberSerialization);
+
+                var atts = property.AttributeProvider.GetAttributes(typeof(ConditionalJsonIgnoreAttribute), true);
+
+                if (!atts.Any())
+                    return property;
+
+                property.ShouldSerialize = x => false;
+
+                return property;
+            }
+
+            protected override JsonContract CreateContract(System.Type objectType)
             {
                 if (typeof(NHibernate.Proxy.INHibernateProxy).IsAssignableFrom(objectType))
                     return base.CreateContract(objectType.BaseType);
