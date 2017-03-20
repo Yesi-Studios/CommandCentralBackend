@@ -171,6 +171,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
+                            //Let's also check the watchbill's state.
+                            if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                            {
+                                token.AddErrorMessage("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
                             session.Save(input);
                         }
 
@@ -190,12 +197,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Updates a watch shift.
+        /// Updates a watch input.  This is how clients can confirm inputs, for example.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateWatchShift(MessageToken token)
+        private static void UpdateWatchInput(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -204,24 +211,24 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
-            if (!token.Args.ContainsKey("watchshift"))
+            if (!token.Args.ContainsKey("watchinput"))
             {
-                token.AddErrorMessage("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
-            WatchShift watchShiftFromClient;
+            WatchInput watchInputFromClient;
             try
             {
-                watchShiftFromClient = token.Args["watchshift"].CastJToken<WatchShift>();
+                watchInputFromClient = token.Args["watchinput"].CastJToken<WatchInput>();
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
-            var valdiationResult = new WatchShift.WatchShiftValidator().Validate(watchShiftFromClient);
+            var valdiationResult = new WatchInput.WatchInputValidator().Validate(watchInputFromClient);
 
             if (!valdiationResult.IsValid)
             {
@@ -235,47 +242,48 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchShiftFromDB = session.Get<WatchShift>(watchShiftFromClient.Id);
+                        var watchInputFromDB = session.Get<WatchInput>(watchInputFromClient.Id);
 
-                        if (watchShiftFromDB == null)
+                        if (watchInputFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            token.AddErrorMessage("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
-                        var watchbill = watchShiftFromDB.WatchDays.First().Watchbill;
-
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that elligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                        var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;
 
                         //Ok let's swap the properties now.
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial
-                            && (watchShiftFromClient.ShiftType != watchShiftFromDB.ShiftType || watchShiftFromClient.Range != watchShiftFromDB.Range))
+                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
                         {
-                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            token.AddErrorMessage("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
-                        watchShiftFromDB.Title = watchShiftFromClient.Title;
-                        watchShiftFromDB.Range = watchShiftFromClient.Range;
-                        watchShiftFromDB.ShiftType = watchShiftFromClient.ShiftType;
+                        //Now let's confirm that our client is allowed to submit inputs for this person.
+                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
+                            .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
 
-                        //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
-                        var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
-
-                        if (!watchbillValidationResult.IsValid)
+                        if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()])
                         {
-                            token.AddErrorMessages(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            token.AddErrorMessage("You are not authorized to edit inputs for this person.  " +
+                                "If this is your own input and you need to change the date range, " +
+                                "please delete the input and then re-create it for the proper range.",
+                                ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;
                         }
 
-                        session.Update(watchShiftFromDB);
+                        //The client is looking to confirm the watch input.
+                        if (!watchInputFromDB.IsConfirmed && watchInputFromClient.IsConfirmed)
+                        {
+                            watchInputFromDB.IsConfirmed = true;
+                            watchInputFromDB.DateConfirmed = token.CallTime;
+                            watchInputFromDB.ConfirmedBy = token.AuthenticationSession.Person;
+                        }
 
-                        token.SetResult(watchShiftFromDB);
+                        session.Update(watchInputFromDB);
+
+                        token.SetResult(watchInputFromDB);
 
                         transaction.Commit();
                     }
