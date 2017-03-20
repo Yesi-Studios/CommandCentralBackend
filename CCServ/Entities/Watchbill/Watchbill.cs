@@ -70,7 +70,7 @@ namespace CCServ.Entities.Watchbill
         /// <para />
         /// The elligibilty group also determines the type of watchbill.
         /// </summary>
-        public virtual ReferenceLists.Watchbill.WatchElligibilityGroup ElligibilityGroup { get; set; }
+        public virtual WatchElligibilityGroup ElligibilityGroup { get; set; }
 
         #endregion
 
@@ -478,7 +478,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.CurrentState).Not.Nullable();
                 References(x => x.Command).Not.Nullable();
                 References(x => x.LastStateChangedBy).Not.Nullable();
-                References(x => x.ElligibilityGroup);
+                References(x => x.ElligibilityGroup).Not.Nullable();
 
                 HasMany(x => x.WatchDays).Cascade.All();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
@@ -505,14 +505,10 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.Command).NotEmpty();
                 RuleFor(x => x.LastStateChange).NotEmpty();
                 RuleFor(x => x.LastStateChangedBy).NotEmpty();
+                RuleFor(x => x.ElligibilityGroup).NotEmpty();
 
                 RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
-
-                When(x => x.CurrentState != ReferenceLists.Watchbill.WatchbillStatuses.Initial, () =>
-                {
-                    RuleFor(x => x.ElligibilityGroup).NotEmpty().WithMessage("You may not change a watchbill's state from initial without assigning an elligibility group.");
-                });
             }
         }
 
