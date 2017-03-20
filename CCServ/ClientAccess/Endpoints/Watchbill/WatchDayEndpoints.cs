@@ -190,6 +190,61 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 token.AddErrorMessage("An error occurred while trying to parse your watch day.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
+
+            var valdiationResult = new WatchDay.WatchDayValidator().Validate(watchDayFromClient);
+
+            if (!valdiationResult.IsValid)
+            {
+                token.AddErrorMessages(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id);
+
+                        if (watchDayFromDB == null)
+                        {
+                            token.AddErrorMessage("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        {
+                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that elligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            return;
+                        }
+
+                        //Ok let's swap the properties now.
+                        watchDayFromDB.Date = watchDayFromClient.Date;
+                        watchDayFromDB.Remarks = watchDayFromClient.Remarks;
+
+                        //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
+                        var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchDayFromDB.Watchbill);
+
+                        if (!watchbillValidationResult.IsValid)
+                        {
+                            token.AddErrorMessages(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        session.Update(watchDayFromDB);
+                        
+                        token.SetResult(watchDayFromDB);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }
