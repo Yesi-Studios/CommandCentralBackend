@@ -295,5 +295,92 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 }
             }
         }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Deletes a watch shift.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteWatchInput(MessageToken token)
+        {
+
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("watchinput"))
+            {
+                token.AddErrorMessage("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            WatchInput watchInputFromClient;
+            try
+            {
+                watchInputFromClient = token.Args["watchinput"].CastJToken<WatchInput>();
+            }
+            catch
+            {
+                token.AddErrorMessage("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var watchInputFromDB = session.Get<WatchInput>(watchInputFromClient.Id);
+
+                        if (watchInputFromDB == null)
+                        {
+                            token.AddErrorMessage("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;
+
+                        //Check the state.
+                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        {
+                            token.AddErrorMessage("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
+                        //Now we also need the permissions to determine if this client can edit this input.
+                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
+                            .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
+
+                        if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
+                            && watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id
+                            && watchInputFromDB.SubmittedBy.Id != token.AuthenticationSession.Person.Id)
+                        {
+                            token.AddErrorMessage("You are not authorized to edit inputs for this person.  " +
+                                "If this is your own input and you need to change the date range, " +
+                                "please delete the input and then re-create it for the proper range.",
+                                ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            return;
+                        }
+
+                        session.Delete(watchInputFromDB);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+
+        }
     }
 }
