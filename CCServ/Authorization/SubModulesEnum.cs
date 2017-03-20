@@ -28,10 +28,6 @@ namespace CCServ.Authorization
         /// <summary>
         /// The permission needed to edit or create FAQs.
         /// </summary>
-        EditFAQ,
-        /// <summary>
-        /// The permission that allows a person to create a watchbill.
-        /// </summary>
-        CreateWatchbill
+        EditFAQ        
     }
 }
