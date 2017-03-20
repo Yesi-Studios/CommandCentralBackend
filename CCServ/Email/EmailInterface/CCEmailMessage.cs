@@ -44,13 +44,13 @@ namespace CCServ.Email.EmailInterface
         public static CCEmailMessage CreateDefault()
         {
             return CCEmailMessage
-                    .From(new System.Net.Mail.MailAddress(
+                    .From(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new System.Net.Mail.MailAddress(
+                    .BCC(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new System.Net.Mail.MailAddress(
+                    .ReplyTo(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
@@ -64,13 +64,13 @@ namespace CCServ.Email.EmailInterface
         public static CCEmailMessage CreateHomeTestingDefault()
         {
             return CCEmailMessage
-                    .From(new System.Net.Mail.MailAddress(
+                    .From(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new System.Net.Mail.MailAddress(
+                    .BCC(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new System.Net.Mail.MailAddress(
+                    .ReplyTo(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
