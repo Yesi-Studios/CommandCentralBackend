@@ -14,8 +14,10 @@ using AtwoodUtils;
 using CCServ.ServiceManagement;
 using CCServ.Logging;
 using System.Reflection;
-using CCServ.DTOs;
 using NHibernate.Type;
+using Newtonsoft.Json;
+using System.Runtime.Serialization;
+using System.Web.Script.Serialization;
 
 namespace CCServ.Entities
 {
@@ -35,43 +37,62 @@ namespace CCServ.Entities
         #region Main Properties
 
         /// <summary>
+        /// Returns this.ToString()
+        /// </summary>
+        public virtual string FriendlyName
+        {
+            get
+            {
+                return this.ToString();
+            }
+        }
+
+        /// <summary>
         /// The person's last name.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string LastName { get; set; }
 
         /// <summary>
         /// The person's first name.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string FirstName { get; set; }
 
         /// <summary>
         /// The person's middle name.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string MiddleName { get; set; }
 
         /// <summary>
         /// The person's SSN.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string SSN { get; set; }
 
         /// <summary>
         /// The person's DoD Id which allows us to communicate with other systems about this person.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string DoDId { get; set; }
 
         /// <summary>
         /// The person's suffix.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string Suffix { get; set; }
 
         /// <summary>
         /// The person's date of birth.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? DateOfBirth { get; set; }
 
         /// <summary>
         /// The person's age.  0 if the date of birth isn't set.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual int Age
         {
             get
@@ -93,71 +114,85 @@ namespace CCServ.Entities
         /// <summary>
         /// The person's sex.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Sex Sex { get; set; }
 
         /// <summary>
         /// The person's remarks.  This is the primary comments section
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string Remarks { get; set; }
 
         /// <summary>
         /// Stores the person's ethnicity.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Ethnicity Ethnicity { get; set; }
 
         /// <summary>
         /// The person's religious preference
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual ReligiousPreference ReligiousPreference { get; set; }
 
         /// <summary>
         /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Paygrade Paygrade { get; set; }
 
         /// <summary>
         /// The person's Designation (CTI2, CTR1, 1114, Job title)
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Designation Designation { get; set; }
 
         /// <summary>
         /// The person's division
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Division Division { get; set; }
 
         /// <summary>
         /// The person's department
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Department Department { get; set; }
 
         /// <summary>
         /// The person's command
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual Command Command { get; set; }
 
         /// <summary>
         /// The date this person received government travel card training.  Temporary and should be implemented in the training module.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? GTCTrainingDate { get; set; }
 
         /// <summary>
         /// The date on which ADAMS training was completed.  Temporary and should be implemented in the training module.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? ADAMSTrainingDate { get; set; }
 
         /// <summary>
         /// The date on which AWARE training was completed.  Temporary and should be implemented in the training module.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual bool HasCompletedAWARE { get; set; }
 
         /// <summary>
         /// The user's preferences.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IDictionary<string, string> UserPreferences { get; set; }
 
         /// <summary>
         /// A collection of all the watch assignments this person has ever been assigned.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<Watchbill.WatchAssignment> WatchAssignments { get; set; }
 
         #endregion
@@ -167,86 +202,103 @@ namespace CCServ.Entities
         /// <summary>
         /// The person's primary NEC.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual NEC PrimaryNEC { get; set; }
 
         /// <summary>
         /// The list of the client's secondary NECs.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<NEC> SecondaryNECs { get; set; }
 
         /// <summary>
         /// The person's supervisor
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string Supervisor { get; set; }
 
         /// <summary>
         /// The person's work center.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string WorkCenter { get; set; }
 
         /// <summary>
         /// The room in which the person works.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string WorkRoom { get; set; }
 
         /// <summary>
         /// A free form text field intended to let the client store the shift of a person - however the client wants to do that.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string Shift { get; set; }
 
         /// <summary>
         /// The comments section for the work page
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string WorkRemarks { get; set; }
 
         /// <summary>
         /// The person's duty status
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DutyStatus DutyStatus { get; set; }
 
         /// <summary>
         /// The person's UIC
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual UIC UIC { get; set; }
 
         /// <summary>
         /// The date/time that the person arrived at the command.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? DateOfArrival { get; set; }
 
         /// <summary>
         /// The client's job title.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string JobTitle { get; set; }
 
         /// <summary>
         /// The date/time of the end of active obligatory service (EAOS) for the person.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? EAOS { get; set; }
 
         /// <summary>
         /// The member's projected rotation date.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? PRD { get; set; }
 
         /// <summary>
         /// The date/time that the client left/will leave the command.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual DateTime? DateOfDeparture { get; set; }
 
         /// <summary>
         /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual MusterRecord CurrentMusterRecord { get; set; }
 
         /// <summary>
         /// The person's watch qualification.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<WatchQualification> WatchQualifications { get; set; }
 
         /// <summary>
         /// The type of billet this person is assigned to.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual BilletAssignment BilletAssignment { get; set; }
 
         #endregion
@@ -256,26 +308,31 @@ namespace CCServ.Entities
         /// <summary>
         /// The email addresses of this person.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<EmailAddress> EmailAddresses { get; set; }
 
         /// <summary>
         /// The Phone Numbers of this person.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<PhoneNumber> PhoneNumbers { get; set; }
 
         /// <summary>
         /// The Physical Addresses of this person
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<PhysicalAddress> PhysicalAddresses { get; set; }
 
         /// <summary>
         /// Instructions from the user on what avenues of contact to follow in the case of an emergency.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string EmergencyContactInstructions { get; set; }
 
         /// <summary>
         /// A free form text field intended to allow the user to make comments about their contact fields.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string ContactRemarks { get; set; }
 
         #endregion
@@ -285,41 +342,49 @@ namespace CCServ.Entities
         /// <summary>
         /// A boolean indicating whether or not this account has been claimed.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual bool IsClaimed { get; set; }
 
         /// <summary>
         /// The client's username.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string Username { get; set; }
 
         /// <summary>
         /// The client's hashed password.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual string PasswordHash { get; set; }
 
         /// <summary>
         /// The list of the person's permissions.  This is not persisted in the database.  Only the names are.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual List<Authorization.Groups.PermissionGroup> PermissionGroups { get; set; }
 
         /// <summary>
         /// The list of the person's permissions as they are stored in the database.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<string> PermissionGroupNames { get; set; }
 
         /// <summary>
         /// A list containing account history events, these are events that track things like login, password reset, etc.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<AccountHistoryEvent> AccountHistory { get; set; }
 
         /// <summary>
         /// A list containing all changes that have every occurred to the profile.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<Change> Changes { get; set; }
 
         /// <summary>
         /// The list of those events to which this person is subscribed.
         /// </summary>
+        [ConditionalJsonIgnore]
         public virtual IList<ChangeEventSubscription> SubscribedEvents { get; set; }
 
         #endregion
@@ -351,19 +416,6 @@ namespace CCServ.Entities
         #endregion
 
         #region Helper Methods
-        
-        /// <summary>
-        /// Returns an object containing two properties: this object's Id and this object's .ToString in a parameter called FriendlyName.  Intended for use with DTOs.
-        /// </summary>
-        /// <returns></returns>
-        public virtual BasicPersonDTO ToBasicPerson()
-        {
-            return new BasicPersonDTO
-            {
-                Id = this.Id,
-                FriendlyName = this.ToString()
-            };
-        }
         
         /// <summary>
         /// Returns a boolean indicating if this person is in the same command as the given person.
@@ -426,18 +478,18 @@ namespace CCServ.Entities
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<DTOs.BasicPersonDTO>>> GetChainOfCommand()
+        public virtual Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<Person>>> GetChainOfCommand()
         {
             //Our result
-            var result = new Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<BasicPersonDTO>>>();
+            var result = new Dictionary<ChainsOfCommand, Dictionary<ChainOfCommandLevels, List<Person>>>();
 
             //Populate the dictionary
             foreach (var chainOfCommand in Enum.GetValues(typeof(ChainsOfCommand)).Cast<ChainsOfCommand>())
             {
-                result.Add(chainOfCommand, new Dictionary<ChainOfCommandLevels, List<BasicPersonDTO>>());
+                result.Add(chainOfCommand, new Dictionary<ChainOfCommandLevels, List<Person>>());
                 foreach (var level in Enum.GetValues(typeof(ChainOfCommandLevels)).Cast<ChainOfCommandLevels>())
                 {
-                    result[chainOfCommand].Add(level, new List<BasicPersonDTO>());
+                    result[chainOfCommand].Add(level, new List<Person>());
                 }
             }
 
@@ -535,7 +587,7 @@ namespace CCServ.Entities
                         //Now just add them to the corresponding lists.
                         foreach (var highestLevel in highestLevels)
                         {
-                            result[highestLevel.Key][highestLevel.Value].Add(person.ToBasicPerson());
+                            result[highestLevel.Key][highestLevel.Value].Add(person);
                         }
                     }
                 }
