@@ -150,6 +150,25 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
+                            //Now we just have to be certain that the watch shifts are all real and from the same watchbill.
+                            var watchShiftsFromDB = session.QueryOver<WatchShift>()
+                                .WhereRestrictionOn(x => x.Id)
+                                .IsIn(input.WatchShifts.Select(x => x.Id).Cast<object>().ToArray())
+                                .List();
+
+                            if (watchShiftsFromDB.Count != input.WatchShifts.Count)
+                            {
+                                token.AddErrorMessage("One or more of your watch shifts' Ids were invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            //Now we just need to walk the watchbill references.
+                            var watchbill = watchShiftsFromDB.First().WatchDays.First().Watchbill;
+                            if (watchShiftsFromDB.Any(x => x.WatchDays.First().Watchbill.Id != watchbill.Id))
+                            {
+                                token.AddErrorMessage("Your requested watch inputs were not all for the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             session.Save(input);
                         }
