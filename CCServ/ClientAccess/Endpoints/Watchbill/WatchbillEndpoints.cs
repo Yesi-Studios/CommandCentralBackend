@@ -351,6 +351,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             return;
                         }
 
+                        //Check the state.
+                        if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                        {
+                            token.AddErrorMessage("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            return;
+                        }
+
                         session.Delete(watchbillFromDB);
 
                         transaction.Commit();
