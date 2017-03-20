@@ -418,7 +418,7 @@ namespace CCServ.Entities.Watchbill
             //Fire off all the messages.
             Parallel.ForEach(emailMessagesToSend, message =>
             {
-                //message.SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                message.SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             });
 
             this.CurrentState = desiredState;
