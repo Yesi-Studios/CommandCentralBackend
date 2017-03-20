@@ -21,7 +21,7 @@ namespace CCServ.Authorization.Groups.Definitions
         {
             HasAccessLevel(ChainOfCommandLevels.Command);
 
-            CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson, SubModules.EditFAQ, SubModules.CreateWatchbill);
+            CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson, SubModules.EditFAQ);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(CommandLeadership), 
                 typeof(Admin), typeof(Developers), typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));

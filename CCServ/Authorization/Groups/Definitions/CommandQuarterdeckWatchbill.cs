@@ -23,8 +23,6 @@ namespace CCServ.Authorization.Groups.Definitions
             InChainsOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
 
             CanAccessModule("Watchbill");
-
-            CanAccessSubModules(SubModules.CreateWatchbill);
         }
 
     }
