@@ -28,7 +28,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a watchbill.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -41,7 +41,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             Guid watchbillId;
             if (!Guid.TryParse(token.Args["watchbillid"] as string, out watchbillId))
             {
-                token.AddErrorMessage("Your watchbill id parameter's formar was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a watchbill.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -123,7 +123,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a watchbill.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -215,7 +215,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a watchbill.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -307,7 +307,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a watchbill.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
