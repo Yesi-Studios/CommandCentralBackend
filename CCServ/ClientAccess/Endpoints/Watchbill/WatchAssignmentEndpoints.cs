@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AtwoodUtils;
+using CCServ.Authorization;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -77,7 +79,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchAssignments(MessageToken token)
+        private static void SearchWatchAssignments(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
@@ -95,6 +97,180 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
+                        //TODO
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Inserts a number of watch assignments.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void CreateWatchAssignments(MessageToken token)
+        {
+
+            if (token.AuthenticationSession == null)
+            {
+                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                return;
+            }
+
+            if (!token.Args.ContainsKey("watchassignments"))
+            {
+                token.AddErrorMessage("You failed to send a 'watchassignments' paramater.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            List<WatchAssignment> watchAssignmentsFromClient;
+            try
+            {
+                watchAssignmentsFromClient = token.Args["watchassignments"].CastJToken<List<WatchAssignment>>();
+            }
+            catch
+            {
+                token.AddErrorMessage("An error occurred while parsing your 'watchassignments' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var watchAssignmentsToInsert = watchAssignmentsFromClient.Select(x =>
+                {
+                    return new WatchAssignment
+                    {
+                        AssignedBy = token.AuthenticationSession.Person,
+                        CurrentState = Entities.ReferenceLists.Watchbill.WatchAssignmentStates.Assigned,
+                        DateAssigned = token.CallTime,
+                        Id = Guid.NewGuid(),
+                        PersonAssigned = x.PersonAssigned,
+                        WatchShift = x.WatchShift
+                    };
+                })
+                .ToList();
+
+            var validationResults = watchAssignmentsToInsert.Select(x => new WatchAssignment.WatchAssignmentValidator().Validate(x)).ToList();
+
+            if (validationResults.Any(x => !x.IsValid))
+            {
+                token.AddErrorMessages(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var assignment in watchAssignmentsToInsert)
+                        {
+                            var personFromDB = session.Get<Entities.Person>(assignment.PersonAssigned.Id);
+
+                            if (personFromDB == null)
+                            {
+                                token.AddErrorMessage("Your person's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            var shiftFromDB = session.Get<Entities.Watchbill.WatchShift>(assignment.WatchShift.Id);
+
+                            if (shiftFromDB == null)
+                            {
+                                token.AddErrorMessage("Your shift's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            //Now we need to know what watchbill we're talking about.
+                            var watchbill = shiftFromDB.WatchDays.First().Watchbill;
+
+                            //If we're in the closed for inputs state, only the command level can create assignements.
+                            //If we're in the under review state, dvision and department level can create assignemnts based on the person's division/department.
+                            //If we're in the published state, command level can add assignemnts.
+                            //All other can't add assignments.
+                            //Check the state.
+                            if ((watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs ||
+                                watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.Published) &&
+                                !token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                            {
+                                token.AddErrorMessage("Only command level watchbill coordinators may add assignments while the watchbill is in this state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+                            else if (watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.UnderReview)
+                            {
+                                var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
+
+                                var highestLevel = resolvedPermissions.HighestLevels[watchbill.ElligibilityGroup.OwningChainOfCommand.ToString()];
+
+                                switch (highestLevel)
+                                {
+                                    case ChainOfCommandLevels.Command:
+                                        {
+                                            if (!token.AuthenticationSession.Person.IsInSameCommandAs(personFromDB))
+                                            {
+                                                token.AddErrorMessage("You may not add watch assignments to a person not in your command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                                return;
+                                            }
+                                            break;
+                                        }
+                                    case ChainOfCommandLevels.Department:
+                                        {
+                                            if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(personFromDB))
+                                            {
+                                                token.AddErrorMessage("You may not add watch assignments to a person not in your department.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                                return;
+                                            }
+                                            break;
+                                        }
+                                    case ChainOfCommandLevels.Division:
+                                        {
+                                            if (!token.AuthenticationSession.Person.IsInSameDivisionAs(personFromDB))
+                                            {
+                                                token.AddErrorMessage("You may not add watch assignments to a person not in your division.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                                return;
+                                            }
+                                            break;
+                                        }
+                                    case ChainOfCommandLevels.None:
+                                    case ChainOfCommandLevels.Self:
+                                        {
+                                            token.AddErrorMessage("You lack sufficient permissions to add watch assignments.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                            break;
+                                        }
+                                    default:
+                                        {
+                                            throw new NotImplementedException("In the highest level chain of command switch in /CreateAssignments.");
+                                        }
+                                }
+                            }
+                            else
+                            {
+                                token.AddErrorMessage("You are not allowed to add assignments while the watchbill is in this state.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                return;
+                            }
+
+                            //Now let's add the assignment to the shift and then update the other assignments.
+                            foreach (var prevAssignment in shiftFromDB.WatchAssignments)
+                            {
+                                prevAssignment.CurrentState = Entities.ReferenceLists.Watchbill.WatchAssignmentStates.Superceded;
+                            }
+
+                            shiftFromDB.WatchAssignments.Add(assignment);
+                            //TODO: send email to person to inform them that a watch has been assigned to them.
+
+                            //Ok we're done with authorization and validation... looks like we should be good to add the assignment.
+                            session.Update(shiftFromDB);
+                        }
+
+                        token.SetResult(watchAssignmentsToInsert);
 
                         transaction.Commit();
                     }
@@ -105,6 +281,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
+
         }
     }
 }
