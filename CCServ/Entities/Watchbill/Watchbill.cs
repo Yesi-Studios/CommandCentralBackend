@@ -426,6 +426,11 @@ namespace CCServ.Entities.Watchbill
             this.LastStateChangedBy = person;
         }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="dateTime"></param>
         public virtual void PopulateWatchbill(Person client, DateTime dateTime)
         {
             //First we need to know how many shifts of each type are in this watchbill.

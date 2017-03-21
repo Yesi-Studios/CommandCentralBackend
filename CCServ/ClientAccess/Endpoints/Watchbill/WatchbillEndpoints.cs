@@ -14,6 +14,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
     /// </summary>
     static class WatchbillEndpoints
     {
+        
 
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
@@ -45,6 +46,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
+            bool doPopulation = false;
+            if (token.Args.ContainsKey("dopopulation"))
+            {
+                if (!Boolean.TryParse(token.Args["dopopulation"] as string, out doPopulation))
+                {
+                    token.AddErrorMessage("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+            }
+
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -58,6 +69,26 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         {
                             token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
+                        }
+
+                        if (doPopulation)
+                        {
+                            //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
+                            //but we may as well restrict it because the population method is very expensive.
+                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                            {
+                                token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                return;
+                            }
+
+                            //And make sure we're at a state where population can occur.
+                            if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
+                            {
+                                token.AddErrorMessage("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                         }
 
                         token.SetResult(watchbillFromDB);
