@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
+using CCServ.DataAccess;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -112,6 +113,13 @@ namespace CCServ.Entities.Watchbill
                     RuleFor(x => x.AcknowledgedBy).NotEmpty();
                 });
             }
+        }
+
+        /// <summary>
+        /// Provides searching strategies for the watch assignment object.
+        /// </summary>
+        public class WatchAssignmentQueryProvider : QueryStrategy<Person>
+        {
         }
 
     }

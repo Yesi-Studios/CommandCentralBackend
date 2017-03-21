@@ -107,7 +107,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Loads a watchbill.
+        /// Loads all watchbills.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
