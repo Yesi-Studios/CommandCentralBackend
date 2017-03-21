@@ -4,7 +4,6 @@ using System.Linq;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using Humanizer;
-using AtwoodUtils;
 using System.Collections.Generic;
 
 namespace CCServ.Entities
