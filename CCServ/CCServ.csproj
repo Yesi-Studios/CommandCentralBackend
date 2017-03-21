@@ -170,6 +170,7 @@
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ProfileLockEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ReferenceListEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchAssignmentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchbillEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchDayEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchEligibilityGroupEndpoints.cs" />
