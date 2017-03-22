@@ -7,6 +7,8 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
 using CCServ.DataAccess;
+using AtwoodUtils;
+using NHibernate.Criterion;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -118,8 +120,45 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// Provides searching strategies for the watch assignment object.
         /// </summary>
-        public class WatchAssignmentQueryProvider : QueryStrategy<Person>
+        public class WatchAssignmentQueryProvider : QueryStrategy<WatchAssignment>
         {
+            /// <summary>
+            /// Provides searching strategies for the watch assignment object.
+            /// </summary>
+            public  WatchAssignmentQueryProvider()
+            {
+                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                    x => x.Id))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                    {
+                        return Restrictions.Eq(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString());
+                    });
+
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                    x => x.IsAcknowledged))
+                .AsType(SearchDataTypes.Boolean)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                    {
+                        bool value;
+                        try
+                        {
+                            value = (bool)token.SearchParameter.Value;
+                        }
+                        catch (Exception)
+                        {
+                            token.Errors.Add("An error occurred while parsing your boolean search value.");
+                            return null;
+                        }
+
+                        return Restrictions.Eq(token.SearchParameter.Key.Name, value);
+                    });
+
+            }
+
         }
 
     }
