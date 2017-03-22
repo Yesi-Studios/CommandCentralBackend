@@ -178,7 +178,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
-                            session.Save(input);
+                            foreach (var shift in watchShiftsFromDB)
+                            {
+                                shift.WatchInputs.Add(input);
+                            }
+
+                            session.Update(watchbill);
                         }
 
                         token.SetResult(watchInputsToInsert);

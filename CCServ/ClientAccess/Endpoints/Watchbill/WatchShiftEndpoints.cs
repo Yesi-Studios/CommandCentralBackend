@@ -161,7 +161,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
-                            session.Save(shift);
+                            foreach (var day in days)
+                            {
+                                day.WatchShifts.Add(shift);
+                            }
+
+                            session.Update(watchbill);
                         }
 
                         token.SetResult(watchShiftsToInsert);

@@ -151,7 +151,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
-                            session.Save(day);
+                            watchbill.WatchDays.Add(day);
+
+                            session.Update(watchbill);
                         }
 
                         token.SetResult(watchDaysToInsert);
