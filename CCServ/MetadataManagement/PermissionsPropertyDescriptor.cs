@@ -11,9 +11,27 @@ namespace CCServ.MetadataManagement
 
         #region Properties
 
-        public 
+        public List<PermissionsGroupPropertyDefinition> PermissionGroups { get; private set; }
 
         #endregion
 
+        public PermissionsGroupPropertyDefinition EditableBy(params Authorization.ChainOfCommand[] chainsOfCommand)
+        {
+            PermissionGroups.Add(new PermissionsGroupPropertyDefinition(CRUDMethods.Update));
+            return PermissionGroups.Last();
+        }
+
+        public PermissionsGroupPropertyDefinition ReturnableBy(params Authorization.ChainOfCommand[] chainsOfCommand)
+        {
+            PermissionGroups.Add(new PermissionsGroupPropertyDefinition(CRUDMethods.Retrieve));
+            return PermissionGroups.Last();
+        }
+
+        public PermissionsGroupPropertyDefinition ReturnableByEveryone()
+        {
+            PermissionGroups.Add(new PermissionsGroupPropertyDefinition(CRUDMethods.Retrieve));
+            return PermissionGroups.Last();
+        }
+        
     }
 }

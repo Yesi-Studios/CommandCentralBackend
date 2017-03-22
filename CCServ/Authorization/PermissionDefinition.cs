@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization
 {
-    public enum ChainsOfCommand
+    public class PermissionDefinition
     {
-        Main,
-        Muster
+
+        public ChainOfCommand ChainOfCommand { get; set; }
+        public ChainOfCommandLevels Level { get; set; }
+
     }
 }

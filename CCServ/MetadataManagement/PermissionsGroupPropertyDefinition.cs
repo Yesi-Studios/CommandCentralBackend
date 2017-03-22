@@ -11,7 +11,40 @@ namespace CCServ.MetadataManagement
 
         #region Properties
 
-        public List<chains>
+        public CRUDMethods CRUDMethod { get; set; }
+
+        #endregion
+
+        #region ctors
+
+        public PermissionsGroupPropertyDefinition(CRUDMethods method)
+        {
+            this.CRUDMethod = method;
+        }
+
+        #endregion
+
+        #region FluentMethods
+
+        public PermissionsGroupPropertyDefinition IfInChainOfCommand()
+        {
+        }
+
+        public PermissionsGroupPropertyDefinition IfSelf()
+        {
+        }
+
+        public PermissionsGroupPropertyDefinition Everyone()
+        {
+        }
+
+        public PermissionsGroupPropertyDefinition Noone()
+        {
+        }
+
+        public PermissionsGroupPropertyDefinition WithAtLeastLevel(Authorization.ChainOfCommandLevels level)
+        {
+        }
 
         #endregion
 

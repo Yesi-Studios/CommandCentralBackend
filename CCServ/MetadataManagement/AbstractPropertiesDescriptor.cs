@@ -15,6 +15,8 @@ namespace CCServ.MetadataManagement
 
         protected List<PropertyDescriptor> Properties { get; private set; }
 
+        protected List<GlobalPermissionsDescriptor> GlobalPermissionsDescriptors { get; set; }
+
         #endregion
 
         #region ctors
@@ -32,6 +34,15 @@ namespace CCServ.MetadataManagement
         {
             Properties.Add(new PropertyDescriptor(expression.GetProperty()));
             return Properties.Last();
+        }
+
+        public GlobalPermissionsDescriptor InOrderTo
+        {
+            get
+            {
+                GlobalPermissionsDescriptors.Add(new GlobalPermissionsDescriptor());
+                return GlobalPermissionsDescriptors.Last();
+            }
         }
 
         #endregion

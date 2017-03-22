@@ -16,6 +16,8 @@ namespace CCServ.MetadataManagement
 
         public PermissionsPropertyDescriptor PermissionsDescriptor { get; private set; }
 
+        public bool IsRequired { get; private set; }
+
         #endregion
 
         #region ctors
@@ -30,11 +32,22 @@ namespace CCServ.MetadataManagement
 
         #region FluentMethods
 
-        public PropertyDescriptor Permissions(Action<PermissionsPropertyDescriptor> permissionsDeclarer)
+        public PropertyDescriptor Permissions(params Action<PermissionsPropertyDescriptor>[] permissionsDeclarers)
         {
-            permissionsDeclarer(PermissionsDescriptor);
+            foreach (var declarer in permissionsDeclarers)
+            {
+                declarer(PermissionsDescriptor);
+            }
             return this;
         }
+
+        public PropertyDescriptor Required()
+        {
+            IsRequired = true;
+            return this;
+        }
+
+
 
         #endregion
 

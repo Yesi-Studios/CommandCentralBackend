@@ -728,6 +728,21 @@ namespace CCServ.Entities
 
         #endregion
 
+        public class PersonMetadata : MetadataManagement.AbstractPropertiesDescriptor<Person>
+        {
+            public PersonMetadata()
+            {
+                InOrderTo.Create.MustBeIn(ChainsOfCommand.Main).AtLevel(ChainOfCommandLevels.Command);
+
+                Property(x => x.LastName)
+                    .Permissions(
+                        x => x.EditableBy(ChainsOfCommand.Main).IfInChainOfCommand(),
+                        x => x.ReturnableByEveryone())
+                    .Required();
+
+            }
+        }
+
         /// <summary>
         /// Maps a person to the database.
         /// </summary>
