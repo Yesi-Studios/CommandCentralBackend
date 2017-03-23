@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCServ.MetadataManagement
 {
-    enum CRUDMethods
+    public enum CRUDMethods
     {
         Create,
         Retrieve,
