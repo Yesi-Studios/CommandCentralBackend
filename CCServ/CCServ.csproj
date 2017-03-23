@@ -187,11 +187,11 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\FAQ.cs" />
-    <Compile Include="MetadataManagement\AbstractPropertiesDescriptor.cs" />
+    <Compile Include="MetadataManagement\ClassMetadata.cs" />
     <Compile Include="MetadataManagement\CRUDMethodsEnum.cs" />
-    <Compile Include="MetadataManagement\GlobalPermissionsDescriptor.cs" />
-    <Compile Include="MetadataManagement\PermissionsGroupPropertyDefinition.cs" />
-    <Compile Include="MetadataManagement\PermissionsPropertyDescriptor.cs" />
+    <Compile Include="MetadataManagement\Permissions\GlobalPermissionsDescriptor.cs" />
+    <Compile Include="MetadataManagement\Permissions\PermissionsGroupPropertyDefinition.cs" />
+    <Compile Include="MetadataManagement\Permissions\PermissionsPropertyDescriptor.cs" />
     <Compile Include="MetadataManagement\PropertyDescriptor.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />

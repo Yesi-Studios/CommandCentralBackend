@@ -1,30 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using CCServ.MetadataManagement.Permissions;
 
 namespace CCServ.MetadataManagement
 {
-    class PropertyDescriptor
+    /// <summary>
+    /// Describes the metadata relating to a single property.
+    /// </summary>
+    public class PropertyDescriptor<T>
     {
 
         #region Properties
 
-        public MemberInfo Property { get; private set; }
+        /// <summary>
+        /// The property selector.
+        /// </summary>
+        public Expression<Func<T, object>> PropertyExpression { get; private set; }
 
+        /// <summary>
+        /// This contains all of the permissions related to this property: who can edit it and who can return it.
+        /// </summary>
         public PermissionsPropertyDescriptor PermissionsDescriptor { get; private set; }
-
-        public bool IsRequired { get; private set; }
 
         #endregion
 
         #region ctors
 
-        public PropertyDescriptor(MemberInfo property)
+        /// <summary>
+        /// Creates a new property.
+        /// </summary>
+        /// <returns></returns>
+        public PropertyDescriptor(Expression<Func<T, object>> expression)
         {
-            this.Property = property;
+            this.PropertyExpression = expression;
             PermissionsDescriptor = new PermissionsPropertyDescriptor();
         }
 
@@ -32,22 +45,16 @@ namespace CCServ.MetadataManagement
 
         #region FluentMethods
 
-        public PropertyDescriptor Permissions(params Action<PermissionsPropertyDescriptor>[] permissionsDeclarers)
+        /// <summary>
+        /// Starts the permissions declaration chain.
+        /// </summary>
+        /// <param name="permissionsDeclarer"></param>
+        /// <returns></returns>
+        public PropertyDescriptor<T> Permissions(Action<PermissionsPropertyDescriptor> permissionsDeclarer)
         {
-            foreach (var declarer in permissionsDeclarers)
-            {
-                declarer(PermissionsDescriptor);
-            }
+            permissionsDeclarer(PermissionsDescriptor);
             return this;
         }
-
-        public PropertyDescriptor Required()
-        {
-            IsRequired = true;
-            return this;
-        }
-
-
 
         #endregion
 

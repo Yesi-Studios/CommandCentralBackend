@@ -16,6 +16,7 @@ using CCServ.Logging;
 using System.Reflection;
 using CCServ.DTOs;
 using NHibernate.Type;
+using CCServ.MetadataManagement.Permissions;
 
 namespace CCServ.Entities
 {
@@ -341,7 +342,7 @@ namespace CCServ.Entities
         #endregion
 
         #region Helper Methods
-        
+
         /// <summary>
         /// Returns an object containing two properties: this object's Id and this object's .ToString in a parameter called FriendlyName.  Intended for use with DTOs.
         /// </summary>
@@ -354,7 +355,7 @@ namespace CCServ.Entities
                 FriendlyName = this.ToString()
             };
         }
-        
+
         /// <summary>
         /// Returns a boolean indicating if this person is in the same command as the given person.
         /// </summary>
@@ -496,7 +497,7 @@ namespace CCServ.Entities
                     }
 
                     var persons = query.List<Person>();
-                    
+
                     //Go through all the results.
                     foreach (var person in persons)
                     {
@@ -559,7 +560,7 @@ namespace CCServ.Entities
                 {
 
                     List<UIC> uics = new List<UIC>();
-                    for(int i = 0; i < Utilities.GetRandomNumber(5, 10); i++)
+                    for (int i = 0; i < Utilities.GetRandomNumber(5, 10); i++)
                     {
                         uics.Add(new UIC
                         {
@@ -600,14 +601,14 @@ namespace CCServ.Entities
                             session.Save(commands.Last().Departments.Last());
                             session.Flush();
 
-                            for (int z = 0; z < Utilities.GetRandomNumber(2, 5); z ++)
+                            for (int z = 0; z < Utilities.GetRandomNumber(2, 5); z++)
                             {
                                 commands.Last().Departments.Last().Divisions.Add(new Division
                                 {
-                                     Department = commands.Last().Departments.Last(),
-                                     Description = Utilities.RandomString(8),
-                                     Id = Guid.NewGuid(),
-                                     Value = Utilities.RandomString(8)
+                                    Department = commands.Last().Departments.Last(),
+                                    Description = Utilities.RandomString(8),
+                                    Id = Guid.NewGuid(),
+                                    Value = Utilities.RandomString(8)
                                 });
 
                                 session.Save(commands.Last().Departments.Last().Divisions.Last());
@@ -620,7 +621,7 @@ namespace CCServ.Entities
                     for (int x = 0; x < launchOptions.GIGO; x++)
                     {
                         List<string> permissionGroupNames;
-                        
+
                         if (x == 0)
                         {
                             permissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName };
@@ -697,7 +698,7 @@ namespace CCServ.Entities
                     return;
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -728,18 +729,36 @@ namespace CCServ.Entities
 
         #endregion
 
-        public class PersonMetadata : MetadataManagement.AbstractPropertiesDescriptor<Person>
+        public class PersonMetadata : MetadataManagement.ClassMetadata<Person>
         {
             public PersonMetadata()
             {
                 InOrderTo.Create.MustBeIn(ChainsOfCommand.Main).AtLevel(ChainOfCommandLevels.Command);
                 InOrderTo.Delete.Impossible();
 
+                Property(x => x.Id)
+                    .Permissions(x =>
+                        x.EditableByNoone()
+                        .And
+                        .ReturnableByEveryone());
+
                 Property(x => x.LastName)
-                    .Permissions(
-                        x => x.EditableBy(ChainsOfCommand.Main).IfInChainOfCommand(),
-                        x => x.ReturnableByEveryone())
-                    .Required();
+                    .Permissions(x =>
+                        x.EditableBy(ChainsOfCommand.Main).IfInChainOfCommand()
+                        .And
+                        .EditableBySelf()
+                        .And
+                        .ReturnableByEveryone());
+
+                Property(x => x.SSN)
+                    .Permissions(x =>
+                        x.EditableBy(ChainsOfCommand.Main).IfInChainOfCommand()
+                        .And
+                        .EditableBySelf()
+                        .And
+                        .ReturnableBy(ChainsOfCommand.Main).IfInChainOfCommand()
+                        .And
+                        .ReturnableBySelf());
 
             }
         }
@@ -1056,15 +1075,15 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                     {
                         bool value;
-                        try 
-	                    {	        
-		                    value = (bool)token.SearchParameter.Value;
-	                    }
-	                    catch (Exception)
-	                    {
+                        try
+                        {
+                            value = (bool)token.SearchParameter.Value;
+                        }
+                        catch (Exception)
+                        {
                             token.Errors.Add("An error occurred while parsing your boolean search value.");
                             return null;
-	                    }
+                        }
 
                         return Restrictions.Eq(token.SearchParameter.Key.Name, value);
                     });
