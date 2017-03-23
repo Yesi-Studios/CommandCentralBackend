@@ -733,6 +733,7 @@ namespace CCServ.Entities
             public PersonMetadata()
             {
                 InOrderTo.Create.MustBeIn(ChainsOfCommand.Main).AtLevel(ChainOfCommandLevels.Command);
+                InOrderTo.Delete.Impossible();
 
                 Property(x => x.LastName)
                     .Permissions(

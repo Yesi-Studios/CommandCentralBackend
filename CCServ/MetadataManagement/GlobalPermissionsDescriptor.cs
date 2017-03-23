@@ -18,6 +18,8 @@ namespace CCServ.MetadataManagement
 
         public ChainOfCommandLevels RequiredLevel { get; private set; }
 
+        public bool IsImpossible { get; private set; }
+
         #endregion
 
         #region ctors
@@ -39,6 +41,15 @@ namespace CCServ.MetadataManagement
             }
         }
 
+        public GlobalPermissionsDescriptor Delete
+        {
+            get
+            {
+                Method = CRUDMethods.Delete;
+                return this;
+            }
+        }
+
         public GlobalPermissionsDescriptor MustBeIn(params ChainOfCommand[] chains)
         {
             foreach (var chain in chains)
@@ -51,6 +62,12 @@ namespace CCServ.MetadataManagement
         public GlobalPermissionsDescriptor AtLevel(ChainOfCommandLevels level)
         {
             RequiredLevel = level;
+            return this;
+        }
+
+        public GlobalPermissionsDescriptor Impossible()
+        {
+            IsImpossible = true;
             return this;
         }
 

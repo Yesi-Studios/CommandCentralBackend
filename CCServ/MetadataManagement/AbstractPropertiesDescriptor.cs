@@ -8,7 +8,7 @@ using AtwoodUtils;
 
 namespace CCServ.MetadataManagement
 {
-    abstract class AbstractPropertiesDescriptor<T>
+    public abstract class AbstractPropertiesDescriptor<T>
     {
 
         #region Properties
