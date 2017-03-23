@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCServ.Authorization
 {
-    class ChainOfCommand
+    public class ChainOfCommand
     {
 
         public string Name { get; set; }
