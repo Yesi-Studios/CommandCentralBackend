@@ -73,7 +73,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         {
                             //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
                             //but we may as well restrict it because the population method is very expensive.
-                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             {
                                 token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                 return;
@@ -183,7 +183,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
                 Title = watchbillFromClient.Title,
-                ElligibilityGroup = watchbillFromClient.ElligibilityGroup
+                EligibilityGroup = watchbillFromClient.EligibilityGroup
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
@@ -194,18 +194,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
-            //Let's make sure the client is allowed to make a watchbill with this elligibility group.
-            var ellGroup = Entities.ReferenceLists.Watchbill.WatchElligibilityGroups.AllWatchElligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.ElligibilityGroup.Id));
+            //Let's make sure the client is allowed to make a watchbill with this eligibility group.
+            var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id));
 
             if (ellGroup == null)
             {
-                token.AddErrorMessage("You failed to provide a proper elligibilty group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                token.AddErrorMessage("You failed to provide a proper eligibilty group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(ellGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
             {
-                token.AddErrorMessage("You are not allowed to create a watchbill tied to that elligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                token.AddErrorMessage("You are not allowed to create a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -290,7 +290,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         }
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
                             token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;
@@ -374,7 +374,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         }
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.ElligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
                             token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;

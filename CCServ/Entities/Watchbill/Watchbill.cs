@@ -68,9 +68,9 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// This is how the watchbill knows the pool of people to use when assigning inputs, and assigning watches.  
         /// <para />
-        /// The elligibilty group also determines the type of watchbill.
+        /// The eligibilty group also determines the type of watchbill.
         /// </summary>
-        public virtual WatchElligibilityGroup ElligibilityGroup { get; set; }
+        public virtual WatchEligibilityGroup EligibilityGroup { get; set; }
 
         #endregion
 
@@ -132,7 +132,7 @@ namespace CCServ.Entities.Watchbill
                 if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.Initial)
                     throw new Exception("You may not move to the open for inputs state from anything other than the initial state.");
 
-                foreach (var ellPerson in this.ElligibilityGroup.ElligiblePersons)
+                foreach (var ellPerson in this.EligibilityGroup.EligiblePersons)
                 {
                     this.InputRequirements.Add(new WatchInputRequirement
                     {
@@ -434,14 +434,14 @@ namespace CCServ.Entities.Watchbill
         public virtual void PopulateWatchbill(Person client, DateTime dateTime)
         {
             //First we need to know how many shifts of each type are in this watchbill.
-            //And we need to know how many elligible people in each department there are.
+            //And we need to know how many eligible people in each department there are.
             var shifts = this.WatchDays.SelectMany(x => x.WatchShifts).ToList();
-            var elligiblePersonsByDepartment = this.ElligibilityGroup.ElligiblePersons.GroupBy(x => x.Department).ToList();
+            var eligiblePersonsByDepartment = this.EligibilityGroup.EligiblePersons.GroupBy(x => x.Department).ToList();
             var shiftsByDepartmentCount = new Dictionary<ReferenceLists.Department, Dictionary<WatchShiftType, int>>();
 
             foreach (var shift in shifts)
             {
-                foreach (var departmentGroup in elligiblePersonsByDepartment)
+                foreach (var departmentGroup in eligiblePersonsByDepartment)
                 {
                     int n3 = departmentGroup.Key.GetHashCode();
 
@@ -461,7 +461,7 @@ namespace CCServ.Entities.Watchbill
 
             int i = 0;
 
-            //Next, we're going to walk the shifts we have to fill, and see how many are elligible for each shift from each department.
+            //Next, we're going to walk the shifts we have to fill, and see how many are eligible for each shift from each department.
             //We do this to build our available percentages by department.
         }
 
@@ -483,7 +483,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.CurrentState).Not.Nullable();
                 References(x => x.Command).Not.Nullable();
                 References(x => x.LastStateChangedBy).Not.Nullable();
-                References(x => x.ElligibilityGroup).Not.Nullable();
+                References(x => x.EligibilityGroup).Not.Nullable();
 
                 HasMany(x => x.WatchDays).Cascade.All();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
@@ -510,7 +510,7 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.Command).NotEmpty();
                 RuleFor(x => x.LastStateChange).NotEmpty();
                 RuleFor(x => x.LastStateChangedBy).NotEmpty();
-                RuleFor(x => x.ElligibilityGroup).NotEmpty();
+                RuleFor(x => x.EligibilityGroup).NotEmpty();
 
                 RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());

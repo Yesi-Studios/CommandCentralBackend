@@ -193,7 +193,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var watchbill = shiftFromDB.WatchDays.First().Watchbill;
 
                             //Let's make sure the person we're about to assign is in the eligibility group.
-                            if (!watchbill.ElligibilityGroup.ElligiblePersons.Any(x => x.Id == personFromDB.Id))
+                            if (!watchbill.EligibilityGroup.EligiblePersons.Any(x => x.Id == personFromDB.Id))
                             {
                                 token.AddErrorMessage("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
@@ -209,7 +209,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             {
 
                                 if (!token.AuthenticationSession.Person.PermissionGroups
-                                    .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.ElligibilityGroup.OwningChainOfCommand)
+                                    .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
                                         && x.AccessLevel == ChainOfCommandLevels.Command))
                                 {
                                     token.AddErrorMessage("Only command level watchbill coordinators may add assignments while the watchbill is in this state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
@@ -290,7 +290,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             {
                                 var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
 
-                                var highestLevel = resolvedPermissions.HighestLevels[watchbill.ElligibilityGroup.OwningChainOfCommand.ToString()];
+                                var highestLevel = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
 
                                 switch (highestLevel)
                                 {

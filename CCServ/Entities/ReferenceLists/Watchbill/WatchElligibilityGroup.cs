@@ -13,18 +13,18 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
     /// A watch bill group is the means by which a watchbill coordinator or other administrator 
     /// indicates the pool of persons from which a watchbill may pull and assign people.
     /// </summary>
-    public class WatchElligibilityGroup : ReferenceListItemBase
+    public class WatchEligibilityGroup : ReferenceListItemBase
     {
 
         #region Properties
 
         /// <summary>
-        /// The list of those persons that are elligible for this watchbill.
+        /// The list of those persons that are eligible for this watchbill.
         /// </summary>
-        public virtual IList<Person> ElligiblePersons { get; set; }
+        public virtual IList<Person> EligiblePersons { get; set; }
 
         /// <summary>
-        /// The chain of command that owns this elligibility group and may make changes to it.
+        /// The chain of command that owns this eligibility group and may make changes to it.
         /// </summary>
         public virtual Authorization.ChainsOfCommand OwningChainOfCommand { get; set; }
 
@@ -33,11 +33,11 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         #region ctors
 
         /// <summary>
-        /// Creates a blank watch elligibiltiy group.
+        /// Creates a blank watch eligibiltiy group.
         /// </summary>
-        public WatchElligibilityGroup()
+        public WatchEligibilityGroup()
         {
-            ElligiblePersons = new List<Person>();
+            EligiblePersons = new List<Person>();
         }
 
         #endregion
@@ -53,13 +53,13 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<WatchElligibilityGroup>()
+                    return session.QueryOver<WatchEligibilityGroup>()
                         .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
                         .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<WatchElligibilityGroup>(id) }.ToList();
+                    return new[] { (ReferenceListItemBase)session.Get<WatchEligibilityGroup>(id) }.ToList();
                 }
             }
         }
@@ -67,16 +67,16 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// <summary>
         /// Maps this object to the database.
         /// </summary>
-        public class WatchElligibilityGroupMapping : ClassMap<WatchElligibilityGroup>
+        public class WatchEligibilityGroupMapping : ClassMap<WatchEligibilityGroup>
         {
             /// <summary>
             /// Maps this object to the database.
             /// </summary>
-            public WatchElligibilityGroupMapping()
+            public WatchEligibilityGroupMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                HasManyToMany(x => x.ElligiblePersons);
+                HasManyToMany(x => x.EligiblePersons);
 
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
@@ -89,22 +89,22 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// <summary>
         /// Validates the parent object.
         /// </summary>
-        public class WatchElligibilityGroupValidator : AbstractValidator<WatchElligibilityGroup>
+        public class WatchEligibilityGroupValidator : AbstractValidator<WatchEligibilityGroup>
         {
             /// <summary>
             /// Validates the parent object.
             /// </summary>
-            public WatchElligibilityGroupValidator()
+            public WatchEligibilityGroupValidator()
             {
-                //We only have validation for elligible persons because no other value should change.
-                RuleFor(x => x.ElligiblePersons).Must((group, persons) =>
+                //We only have validation for eligible persons because no other value should change.
+                RuleFor(x => x.EligiblePersons).Must((group, persons) =>
                 {
                     if (persons.GroupBy(x => x.Id).Any(x => x.Count() != 1))
                         return false;
 
                     return true;
                 })
-                    .WithMessage("You may not list a person more than once in an elligibility group.");
+                    .WithMessage("You may not list a person more than once in an eligibility group.");
             }
         }
 

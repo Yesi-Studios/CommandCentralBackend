@@ -35,7 +35,7 @@ namespace CCServ
                     session.Save(watchbill);
                     session.Flush();
 
-                    watchbill.ElligibilityGroup = WatchElligibilityGroups.Quarterdeck;
+                    watchbill.EligibilityGroup = WatchEligibilityGroups.Quarterdeck;
                     session.Update(watchbill);
                     session.Flush();
 
@@ -106,13 +106,13 @@ namespace CCServ
 
                     var allUsers = session.QueryOver<Person>().List().ToList();
 
-                    var group = session.Get<WatchElligibilityGroup>(WatchElligibilityGroups.Quarterdeck.Id);
+                    var group = session.Get<WatchEligibilityGroup>(WatchEligibilityGroups.Quarterdeck.Id);
                     foreach (var person in allUsers.Take(AtwoodUtils.Utilities.GetRandomNumber(5, allUsers.Count)))
                     {
-                        group.ElligiblePersons.Add(person);
+                        group.EligiblePersons.Add(person);
                     }
 
-                    var results = new WatchElligibilityGroup.WatchElligibilityGroupValidator().Validate(group);
+                    var results = new WatchEligibilityGroup.WatchEligibilityGroupValidator().Validate(group);
 
                     if (results.Errors.Any())
                         throw new Exception("fuck");
@@ -130,7 +130,7 @@ namespace CCServ
                     var watchbill = session.QueryOver<Watchbill>()
                         .List().FirstOrDefault();
 
-                    var persons = watchbill.ElligibilityGroup.ElligiblePersons.ToList();
+                    var persons = watchbill.EligibilityGroup.EligiblePersons.ToList();
 
                     if (!persons.Any())
                         throw new Exception("fuck");

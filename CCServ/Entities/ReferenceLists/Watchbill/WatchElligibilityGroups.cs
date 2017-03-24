@@ -8,36 +8,36 @@ using System.Threading.Tasks;
 namespace CCServ.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
-    /// Contains all the predefined watch elligibility groups.
+    /// Contains all the predefined watch eligibility groups.
     /// </summary>
-    public static class WatchElligibilityGroups
+    public static class WatchEligibilityGroups
     {
 
-        static WatchElligibilityGroups()
+        static WatchEligibilityGroups()
         {
-            var groups = typeof(WatchElligibilityGroups).GetFields().Where(x => x.FieldType == typeof(WatchElligibilityGroup)).Select(x => (WatchElligibilityGroup)x.GetValue(null)).ToList();
+            var groups = typeof(WatchEligibilityGroups).GetFields().Where(x => x.FieldType == typeof(WatchEligibilityGroup)).Select(x => (WatchEligibilityGroup)x.GetValue(null)).ToList();
 
-            AllWatchElligibilityGroups = new ConcurrentBag<WatchElligibilityGroup>(groups);
+            AllWatchEligibilityGroups = new ConcurrentBag<WatchEligibilityGroup>(groups);
         }
 
         /// <summary>
-        /// Contains all the predefined watch elligibility groups.
+        /// Contains all the predefined watch eligibility groups.
         /// </summary>
-        public static ConcurrentBag<WatchElligibilityGroup> AllWatchElligibilityGroups;
+        public static ConcurrentBag<WatchEligibilityGroup> AllWatchEligibilityGroups;
 
         /// <summary>
         /// This watch shift is for JOODs.
         /// </summary>
-        public static WatchElligibilityGroup Quarterdeck = new WatchElligibilityGroup
+        public static WatchEligibilityGroup Quarterdeck = new WatchEligibilityGroup
         {
             Id = Guid.Parse("{1F88A266-02BE-4E9B-ADBD-BE1D814B1CD8}"),
             Value = "Quarterdeck",
-            Description = "This is the group of people who are elligible to stand the quarterdeck watch.",
+            Description = "This is the group of people who are eligible to stand the quarterdeck watch.",
             OwningChainOfCommand = Authorization.ChainsOfCommand.QuarterdeckWatchbill
         };
 
         /// <summary>
-        /// Ensures that all of the watch elligibility groups are persisted in the database and they look the same as they do here.
+        /// Ensures that all of the watch eligibility groups are persisted in the database and they look the same as they do here.
         /// </summary>
         /// <param name="options"></param>
         [ServiceManagement.StartMethod(Priority = 11)]
@@ -50,9 +50,9 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
             {
                 try
                 {
-                    var currentGroups = session.QueryOver<WatchElligibilityGroup>().List();
+                    var currentGroups = session.QueryOver<WatchEligibilityGroup>().List();
 
-                    var missingGroups = AllWatchElligibilityGroups.Except(currentGroups).ToList();
+                    var missingGroups = AllWatchEligibilityGroups.Except(currentGroups).ToList();
 
                     if (missingGroups.Any())
                     {

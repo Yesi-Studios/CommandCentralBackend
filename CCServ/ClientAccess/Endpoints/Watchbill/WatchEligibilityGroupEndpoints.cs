@@ -9,7 +9,7 @@ using CCServ.Entities.ReferenceLists.Watchbill;
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
-    /// The endpoints for interacting with the elligibility groups.
+    /// The endpoints for interacting with the eligibility groups.
     /// </summary>
     static class WatchEligibilityGroupEndpoints
     {
@@ -38,10 +38,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
-            WatchElligibilityGroup groupFromClient;
+            WatchEligibilityGroup groupFromClient;
             try
             {
-                groupFromClient = token.Args["eligibilitygroup"].CastJToken<WatchElligibilityGroup>();
+                groupFromClient = token.Args["eligibilitygroup"].CastJToken<WatchEligibilityGroup>();
             }
             catch
             {
@@ -49,7 +49,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
-            var validationResults = new WatchElligibilityGroup.WatchElligibilityGroupValidator().Validate(groupFromClient);
+            var validationResults = new WatchEligibilityGroup.WatchEligibilityGroupValidator().Validate(groupFromClient);
 
             if (!validationResults.IsValid)
             {
@@ -63,7 +63,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var groupFromDB = session.Get<WatchElligibilityGroup>(groupFromClient.Id);
+                        var groupFromDB = session.Get<WatchEligibilityGroup>(groupFromClient.Id);
 
                         if (groupFromDB == null)
                         {
@@ -74,10 +74,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         //Let's make sure that all of them are real people.
                         var persons = session.QueryOver<Entities.Person>()
                             .WhereRestrictionOn(x => x.Id)
-                            .IsIn(groupFromClient.ElligiblePersons.Select(x => (object)x.Id).ToArray())
+                            .IsIn(groupFromClient.EligiblePersons.Select(x => (object)x.Id).ToArray())
                             .List();
 
-                        if (persons.Count != groupFromClient.ElligiblePersons.Count)
+                        if (persons.Count != groupFromClient.EligiblePersons.Count)
                         {
                             token.AddErrorMessage("One or more of the persons in your eligibility group were not valid..", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
@@ -92,10 +92,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         //Now we need to add or remove all the people.
                         //This method will cause a pretty big batch update to occur on the database but that's ok.
-                        groupFromDB.ElligiblePersons.Clear();
+                        groupFromDB.EligiblePersons.Clear();
                         foreach (var person in persons)
                         {
-                            groupFromDB.ElligiblePersons.Add(person);
+                            groupFromDB.EligiblePersons.Add(person);
                         }
 
                         transaction.Commit();
