@@ -192,6 +192,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             //Now we need to know what watchbill we're talking about.
                             var watchbill = shiftFromDB.WatchDays.First().Watchbill;
 
+                            //Let's make sure the person we're about to assign is in the eligibility group.
+                            if (!watchbill.ElligibilityGroup.ElligiblePersons.Any(x => x.Id == personFromDB.Id))
+                            {
+                                token.AddErrorMessage("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
                             //If we're in the closed for inputs state, only the command level can create assignements.
                             //If we're in the under review state, dvision and department level can create assignemnts based on the person's division/department.
                             //If we're in the published state, command level can add assignemnts.
@@ -272,9 +279,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedAdded_HTML.html", model)
                                                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                                         }
-
                                     }
-
 
                                     //Ok we're done with authorization and validation... looks like we should be good to add the assignment.
                                     session.Update(shiftFromDB);
