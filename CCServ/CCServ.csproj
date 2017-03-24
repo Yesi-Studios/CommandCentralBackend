@@ -213,6 +213,7 @@
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchReassignedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
     <Compile Include="Email\Models\WatchAssignedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillPublishedEmailModel.cs" />
