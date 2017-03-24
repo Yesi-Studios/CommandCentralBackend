@@ -234,6 +234,45 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                     if (watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.Published)
                                     {
 
+                                        //Let's do the previous one first.
+                                        var supercededAddresses = supercededWatchAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
+                                        if (supercededAddresses.Any())
+                                        {
+
+                                            var model = new Email.Models.WatchReassignedEmailModel
+                                            {
+                                                FriendlyName = supercededWatchAssignment.PersonAssigned.ToString(),
+                                                WatchAssignment = supercededWatchAssignment,
+                                                Watchbill = watchbill.Title
+                                            };
+
+                                            Email.EmailInterface.CCEmailMessage
+                                                .CreateDefault()
+                                                .To(supercededAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, supercededWatchAssignment.PersonAssigned.ToString())))
+                                                .Subject("Watch Reassigned")
+                                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedRemoved_HTML.html", model)
+                                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                                        }
+
+                                        //Now the new watch assignment.
+                                        var newAddresses = assignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
+                                        if (newAddresses.Any())
+                                        {
+                                            var model = new Email.Models.WatchReassignedEmailModel
+                                            {
+                                                FriendlyName = assignment.PersonAssigned.ToString(),
+                                                WatchAssignment = assignment,
+                                                Watchbill = watchbill.Title
+                                            };
+
+                                            Email.EmailInterface.CCEmailMessage
+                                                .CreateDefault()
+                                                .To(newAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, assignment.PersonAssigned.ToString())))
+                                                .Subject("Watch Reassigned")
+                                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedAdded_HTML.html", model)
+                                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                                        }
+
                                     }
 
 
