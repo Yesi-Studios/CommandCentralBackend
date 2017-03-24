@@ -334,7 +334,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 return;
                             }
 
-                            
                         }
 
                         token.SetResult(watchAssignmentsToInsert);
@@ -348,7 +347,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
     }
 }
