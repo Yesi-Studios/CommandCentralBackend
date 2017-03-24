@@ -400,6 +400,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Email\Templates\WatchReassignedAdded_HTML.html" />
     <Content Include="Email\Templates\WatchReassignedRemoved_HTML.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
