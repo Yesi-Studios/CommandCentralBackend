@@ -15,7 +15,7 @@ namespace CCServ
 {
     static class Scripts
     {
-        //[ServiceManagement.StartMethod(Priority = 1)]
+        [ServiceManagement.StartMethod(Priority = 1)]
         private static void TestWatchbill(CLI.Options.LaunchOptions launchOptions)
         {
             Logging.Log.Debug("starting watchbill test");
@@ -26,17 +26,13 @@ namespace CCServ
 
                     var command = session.QueryOver<Entities.ReferenceLists.Command>().List().ToList().FirstOrDefault();
                     var user0 = session.QueryOver<Person>().Where(x => x.Username.IsInsensitiveLike("user0", MatchMode.Anywhere)).SingleOrDefault();
-                    
 
                     Debug.Assert(command != null && user0 != null);
 
                     var watchbill = new Watchbill { Command = command, CreatedBy = user0, CurrentState = WatchbillStatuses.Initial, 
                         Id = Guid.NewGuid(), Title = "Quarterdeck Watchbill", LastStateChangedBy = user0, LastStateChange = DateTime.Now };
-                    session.Save(watchbill);
-                    session.Flush();
-
                     watchbill.EligibilityGroup = WatchEligibilityGroups.Quarterdeck;
-                    session.Update(watchbill);
+                    session.Save(watchbill);
                     session.Flush();
 
                     var results = new Watchbill.WatchbillValidator().Validate(watchbill);
@@ -64,7 +60,7 @@ namespace CCServ
 
                         watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
                         {
-                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(1), End = watchbill.WatchDays.Last().Date.Date.AddHours(8) },
+                            Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(1), End = watchbill.WatchDays.Last().Date.Date.AddHours(8) },
                             Id = Guid.NewGuid(),
                             ShiftType = WatchShiftTypes.JOOD,
                             Title = "jood watch",
@@ -73,7 +69,7 @@ namespace CCServ
 
                         watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
                         {
-                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(9), End = watchbill.WatchDays.Last().Date.Date.AddHours(12) },
+                            Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(9), End = watchbill.WatchDays.Last().Date.Date.AddHours(12) },
                             Id = Guid.NewGuid(),
                             ShiftType = WatchShiftTypes.JOOD,
                             Title = "jood watch",
@@ -82,7 +78,7 @@ namespace CCServ
 
                         watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
                         {
-                            Range = new AtwoodUtils.TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(4), End = watchbill.WatchDays.Last().Date.Date.AddHours(6) },
+                            Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(4), End = watchbill.WatchDays.Last().Date.Date.AddHours(6) },
                             Id = Guid.NewGuid(),
                             ShiftType = WatchShiftTypes.OOD,
                             Title = "ood watch",
@@ -107,7 +103,7 @@ namespace CCServ
                     var allUsers = session.QueryOver<Person>().List().ToList();
 
                     var group = session.Get<WatchEligibilityGroup>(WatchEligibilityGroups.Quarterdeck.Id);
-                    foreach (var person in allUsers.Take(AtwoodUtils.Utilities.GetRandomNumber(5, allUsers.Count)))
+                    foreach (var person in allUsers.Take(Utilities.GetRandomNumber(5, allUsers.Count)))
                     {
                         group.EligiblePersons.Add(person);
                     }
@@ -121,9 +117,17 @@ namespace CCServ
 
                     transaction.Commit();
                 }
+
+                using (var transaction = session.BeginTransaction())
+                {
+                    WatchInputReason reason = new WatchInputReason { Description = "test", Id = Guid.NewGuid(), Value = "because I don't wanna" };
+                    session.Save(reason);
+
+                    transaction.Commit();
+                }
             }
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            /*using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -137,9 +141,9 @@ namespace CCServ
 
                     transaction.Commit();
                 }
-            }
+            }*/
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            /*using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -153,17 +157,6 @@ namespace CCServ
                     watchbill.SetState(WatchbillStatuses.OpenForInputs, DateTime.Now, user0);
 
                     session.Update(watchbill);
-
-                    transaction.Commit();
-                }
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                using (var transaction = session.BeginTransaction())
-                {
-                    WatchInputReason reason = new WatchInputReason { Description = "test", Id = Guid.NewGuid(), Value = "because I don't wanna" };
-                    session.Save(reason);
 
                     transaction.Commit();
                 }
@@ -275,7 +268,7 @@ namespace CCServ
 
                     transaction.Commit();
                 }
-            }
+            }*/
         }
     }
 }
