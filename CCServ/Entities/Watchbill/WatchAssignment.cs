@@ -136,6 +136,26 @@ namespace CCServ.Entities.Watchbill
                         return Restrictions.Eq(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString());
                     });
 
+                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                    x => x.CurrentState))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    return Subqueries.WhereProperty<WatchAssignment>(x => x.WatchShift.Id).In(QueryOver.Of<ReferenceLists.Watchbill.WatchAssignmentState>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                });
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                    x => x.PersonAssigned,
+                    x => x.AssignedBy,
+                    x => x.AcknowledgedBy))
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    throw new NotImplementedException();
+                    //TODO
+                });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
                     x => x.IsAcknowledged))
@@ -156,6 +176,65 @@ namespace CCServ.Entities.Watchbill
 
                         return Restrictions.Eq(token.SearchParameter.Key.Name, value);
                     });
+
+                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                    x => x.DateAssigned,
+                    x => x.DateAcknowledged))
+                .AsType(SearchDataTypes.DateTime)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    //First cast the value given to a JSON array.
+                    var value = ((Dictionary<string, DateTime?>)token.SearchParameter.Value);
+
+                    DateTime? from = null;
+                    DateTime? to = null;
+
+                    if (value.ContainsKey("From"))
+                    {
+                        from = value["From"];
+                    }
+
+                    if (value.ContainsKey("To"))
+                    {
+                        to = value["To"];
+                    }
+
+                    if (to == null && from == null)
+                    {
+                        token.Errors.Add("Both dates in your range may not be empty.");
+                        return null;
+                    }
+
+                    //Do the validation.
+                    if ((from.HasValue && to.HasValue) && from > to)
+                    {
+                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to));
+                        return null;
+                    }
+
+                    if (from == to)
+                    {
+                        return Restrictions.And(
+                                Restrictions.Ge(token.SearchParameter.Key.Name, from.Value.Date),
+                                Restrictions.Le(token.SearchParameter.Key.Name, from.Value.Date.AddHours(24)));
+                    }
+                    else if (from == null)
+                    {
+                        return Restrictions.Le(token.SearchParameter.Key.Name, to);
+                    }
+                    else if (to == null)
+                    {
+                        return Restrictions.Ge(token.SearchParameter.Key.Name, from);
+                    }
+                    else
+                    {
+                        return Restrictions.And(
+                                Restrictions.Ge(token.SearchParameter.Key.Name, from),
+                                Restrictions.Le(token.SearchParameter.Key.Name, to));
+                    }
+
+                });
 
             }
 
