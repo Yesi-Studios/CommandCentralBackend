@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities.ReferenceLists.Watchbill;
+using System.Reflection;
+using NHibernate.Transform;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -89,7 +91,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 return;
             }
 
-            //Now let's see how the client wants to find our watch assignments.
+            //Let's find which fields the client wants to search in.  This should be a dictionary.
+            if (!token.Args.ContainsKey("filters"))
+            {
+                token.AddErrorMessage("You didn't send a 'filters' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                return;
+            }
+            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
+
+            var convertedFilters = filters.ToDictionary(
+                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<WatchAssignment>(x.Key),
+                    x => x.Value);
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -98,7 +110,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        //TODO
+                        var resultQueryToken = new WatchAssignment.WatchAssignmentQueryProvider().CreateAdvancedQueryFor(convertedFilters);
+
+                        var results = resultQueryToken.Query.GetExecutableQueryOver(session)
+                            .TransformUsing(Transformers.DistinctRootEntity)
+                            .List();
+
+                        token.SetResult(results);
+
                         transaction.Commit();
                     }
                     catch
