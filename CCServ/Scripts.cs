@@ -30,7 +30,7 @@ namespace CCServ
                     Debug.Assert(command != null && user0 != null);
 
                     var watchbill = new Watchbill { Command = command, CreatedBy = user0, CurrentState = WatchbillStatuses.Initial, 
-                        Id = Guid.NewGuid(), Title = "Quarterdeck Watchbill", LastStateChangedBy = user0, LastStateChange = DateTime.Now };
+                        Id = Guid.NewGuid(), Title = "Quarterdeck Watchbill", LastStateChangedBy = user0, LastStateChange = DateTime.Now.AddHours(-4) };
                     watchbill.EligibilityGroup = WatchEligibilityGroups.Quarterdeck;
                     session.Save(watchbill);
                     session.Flush();
@@ -52,7 +52,7 @@ namespace CCServ
                     {
                         watchbill.WatchDays.Add(new WatchDay
                         {
-                            Date = DateTime.Now.Date.AddDays(watchbill.WatchDays.Count),
+                            Date = DateTime.Now.AddHours(-4).Date.AddDays(watchbill.WatchDays.Count),
                             Id = Guid.NewGuid(),
                             Remarks = "test",
                             Watchbill = watchbill
