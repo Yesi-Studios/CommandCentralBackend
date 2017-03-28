@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
+using CCServ.Entities.ReferenceLists.Watchbill;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -148,7 +149,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     return new WatchAssignment
                     {
                         AssignedBy = token.AuthenticationSession.Person,
-                        CurrentState = Entities.ReferenceLists.Watchbill.WatchAssignmentStates.Assigned,
+                        CurrentState = WatchAssignmentStates.Assigned,
                         DateAssigned = token.CallTime,
                         Id = Guid.NewGuid(),
                         PersonAssigned = x.PersonAssigned,
@@ -171,26 +172,39 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
+                        //Let's make sure all the watch assignments are from the same watchbill, and there shifts and people are real.
+                        Entities.Watchbill.Watchbill watchbill = null;
+
                         foreach (var assignment in watchAssignmentsToInsert)
                         {
                             var personFromDB = session.Get<Entities.Person>(assignment.PersonAssigned.Id);
 
                             if (personFromDB == null)
                             {
-                                token.AddErrorMessage("Your person's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                token.AddErrorMessage("A person's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
+                            assignment.PersonAssigned = personFromDB;
 
-                            var shiftFromDB = session.Get<Entities.Watchbill.WatchShift>(assignment.WatchShift.Id);
+                            var shiftFromDB = session.Get<WatchShift>(assignment.WatchShift.Id);
 
                             if (shiftFromDB == null)
                             {
-                                token.AddErrorMessage("Your shift's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                token.AddErrorMessage("A shift's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
+                            assignment.WatchShift = shiftFromDB;
 
                             //Now we need to know what watchbill we're talking about.
-                            var watchbill = shiftFromDB.WatchDays.First().Watchbill;
+                            if (watchbill == null)
+                            {
+                                watchbill = shiftFromDB.WatchDays.First().Watchbill;
+                            }
+                            else if (watchbill.Id != shiftFromDB.WatchDays.First().Watchbill.Id)
+                            {
+                                token.AddErrorMessage("You may not submit watch assignments for multiple watchbills at the same time.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
 
                             //Let's make sure the person we're about to assign is in the eligibility group.
                             if (!watchbill.EligibilityGroup.EligiblePersons.Any(x => x.Id == personFromDB.Id))
@@ -198,96 +212,51 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 token.AddErrorMessage("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
+                        }
 
-                            //If we're in the closed for inputs state, only the command level can create assignements.
-                            //If we're in the under review state, dvision and department level can create assignemnts based on the person's division/department.
-                            //If we're in the published state, command level can add assignemnts.
-                            //All other can't add assignments.
-                            //Check the state.
-                            if (watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs ||
-                                watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.Published)
+                        bool isCommandCoordinator = token.AuthenticationSession.Person.PermissionGroups
+                                .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
+                                    && x.AccessLevel == ChainOfCommandLevels.Command);
+
+                        //Now, if the watchbill is in the closed for inputs, published, or under review, and the client is a coordinator, then we can insert all of the assignments.
+                        if ((watchbill.CurrentState == WatchbillStatuses.ClosedForInputs ||
+                            watchbill.CurrentState == WatchbillStatuses.Published ||
+                            watchbill.CurrentState == WatchbillStatuses.UnderReview) && isCommandCoordinator)
+                        {
+                            foreach (var assignment in watchAssignmentsToInsert)
                             {
-
-                                if (!token.AuthenticationSession.Person.PermissionGroups
-                                    .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
-                                        && x.AccessLevel == ChainOfCommandLevels.Command))
-                                {
-                                    token.AddErrorMessage("Only command level watchbill coordinators may add assignments while the watchbill is in this state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                    return;
-                                }
-                                else
-                                {
-                                    WatchAssignment supercededWatchAssignment = null;
-                                    //We're in the Closed for inputs or published state and the client is command level.
-                                    //Therefore, the client can add watch assignments all day.
-                                    //Now let's add the assignment to the shift and then update the other assignments.
-                                    foreach (var prevAssignment in shiftFromDB.WatchAssignments)
-                                    {
-                                        if (prevAssignment.CurrentState != Entities.ReferenceLists.Watchbill.WatchAssignmentStates.Superceded)
-                                        {
-                                            prevAssignment.CurrentState = Entities.ReferenceLists.Watchbill.WatchAssignmentStates.Superceded;
-                                            
-                                            //There should only ever be one watch assignment to supercede... let's make sure that's the case.
-                                            if (supercededWatchAssignment != null)
-                                                throw new Exception("More than one watch assignment that was not superceded was found!");
-
-                                            supercededWatchAssignment = prevAssignment;
-                                        }
-                                    }
-
-                                    shiftFromDB.WatchAssignments.Add(assignment);
-
-                                    //One more thing, let's see if we're in the published state.  If we are, then we need to send the person an email.
-                                    if (watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.Published)
-                                    {
-
-                                        //Let's do the previous one first.
-                                        var supercededAddresses = supercededWatchAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
-                                        if (supercededAddresses.Any())
-                                        {
-
-                                            var model = new Email.Models.WatchReassignedEmailModel
-                                            {
-                                                FriendlyName = supercededWatchAssignment.PersonAssigned.ToString(),
-                                                WatchAssignment = supercededWatchAssignment,
-                                                Watchbill = watchbill.Title
-                                            };
-
-                                            Email.EmailInterface.CCEmailMessage
-                                                .CreateDefault()
-                                                .To(supercededAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, supercededWatchAssignment.PersonAssigned.ToString())))
-                                                .Subject("Watch Reassigned")
-                                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedRemoved_HTML.html", model)
-                                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                                        }
-
-                                        //Now the new watch assignment.
-                                        var newAddresses = assignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
-                                        if (newAddresses.Any())
-                                        {
-                                            var model = new Email.Models.WatchReassignedEmailModel
-                                            {
-                                                FriendlyName = assignment.PersonAssigned.ToString(),
-                                                WatchAssignment = assignment,
-                                                Watchbill = watchbill.Title
-                                            };
-
-                                            Email.EmailInterface.CCEmailMessage
-                                                .CreateDefault()
-                                                .To(newAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, assignment.PersonAssigned.ToString())))
-                                                .Subject("Watch Reassigned")
-                                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedAdded_HTML.html", model)
-                                                .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                                        }
-                                    }
-
-                                    //Ok we're done with authorization and validation... looks like we should be good to add the assignment.
-                                    session.Update(shiftFromDB);
-                                }
-
+                                //We need to set the other assignments to "superceded"
+                                SupercedeWatchAssignment(assignment.WatchShift, assignment, watchbill);
                             }
-                            else if (watchbill.CurrentState == Entities.ReferenceLists.Watchbill.WatchbillStatuses.UnderReview)
+                        }
+                        else if (!isCommandCoordinator && watchbill.CurrentState == WatchbillStatuses.UnderReview)
+                        {
+                            //We have to make sure that the watch assignments were submitted in a pair, and that the business rules about those are kept.  They're complicated and make my head hurt.
+                            if (watchAssignmentsToInsert.Count != 2)
                             {
+                                token.AddErrorMessage("You may not swap watches unless your watches are submitted in pairs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            //Make sure they actually swap each other.
+                            if (watchAssignmentsToInsert.First().PersonAssigned.Id != watchAssignmentsToInsert.Last().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id ||
+                                watchAssignmentsToInsert.Last().PersonAssigned.Id != watchAssignmentsToInsert.First().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id)
+                            {
+                                token.AddErrorMessage("You may not submit new watch assignments unless the previously assigned people for each shift are the other assignment's person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            //And they're not the same shift.  That would be weird.
+                            if (watchAssignmentsToInsert.First().WatchShift.Id == watchAssignmentsToInsert.Last().WatchShift.Id)
+                            {
+                                token.AddErrorMessage("The watch shifts may not be the same during a watch swap.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                return;
+                            }
+
+                            //Ok, now let's start iterating to check the permissions.  If everything is good, we'll update the watches after this loop.
+                            foreach (var assignment in watchAssignmentsToInsert)
+                            {
+                                //If we're here, we know that the person is not a command coordinator.
                                 var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
 
                                 var highestLevel = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
@@ -300,18 +269,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                         }
                                     case ChainOfCommandLevels.Department:
                                         {
-                                            if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(personFromDB))
+                                            if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(assignment.PersonAssigned))
                                             {
-                                                token.AddErrorMessage("You may not add watch assignments to a person not in your department.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                                token.AddErrorMessage("You may not add watch assignments for a person not in your department.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                                 return;
                                             }
                                             break;
                                         }
                                     case ChainOfCommandLevels.Division:
                                         {
-                                            if (!token.AuthenticationSession.Person.IsInSameDivisionAs(personFromDB))
+                                            if (!token.AuthenticationSession.Person.IsInSameDivisionAs(assignment.PersonAssigned))
                                             {
-                                                token.AddErrorMessage("You may not add watch assignments to a person not in your division.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                                token.AddErrorMessage("You may not add watch assignments for a person not in your division.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                                 return;
                                             }
                                             break;
@@ -328,13 +297,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                         }
                                 }
                             }
-                            else
-                            {
-                                token.AddErrorMessage("You are not allowed to add assignments while the watchbill is in this state.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                return;
-                            }
 
+                            SupercedeWatchAssignment(watchAssignmentsToInsert.First().WatchShift, watchAssignmentsToInsert.Last(), watchbill);
+                            SupercedeWatchAssignment(watchAssignmentsToInsert.Last().WatchShift, watchAssignmentsToInsert.First(), watchbill);
                         }
+                        else
+                        {
+                            token.AddErrorMessage("You may not add watch assignments to a watchbill in this state with your permissions.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            return;
+                        }
+
+                        //Well if we got down here, some change occurred!  Let's update the watchbill.
+                        session.Update(watchbill);
 
                         token.SetResult(watchAssignmentsToInsert);
 
@@ -348,5 +322,74 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 }
             }
         }
+
+        private static void SupercedeWatchAssignment(WatchShift shift, WatchAssignment newAssignment, Entities.Watchbill.Watchbill watchbill)
+        {
+            WatchAssignment supercededWatchAssignment = null;
+
+            //We're in the Closed for inputs or published state and the client is command level.
+            //Therefore, the client can add watch assignments all day.
+            //Now let's add the assignment to the shift and then update the other assignments.
+            foreach (var prevAssignment in shift.WatchAssignments)
+            {
+                if (prevAssignment.CurrentState != WatchAssignmentStates.Superceded)
+                {
+                    prevAssignment.CurrentState = WatchAssignmentStates.Superceded;
+
+                    //There should only ever be one watch assignment to supercede... let's make sure that's the case.
+                    if (supercededWatchAssignment != null)
+                        throw new Exception("More than one watch assignment that was not superceded was found!");
+
+                    supercededWatchAssignment = prevAssignment;
+                }
+            }
+
+            shift.WatchAssignments.Add(newAssignment);
+
+            //One more thing, let's see if we're in the published state.  If we are, then we need to send the person an email.
+            if (watchbill.CurrentState == WatchbillStatuses.Published)
+            {
+                //Let's do the previous one first.
+                var supercededAddresses = supercededWatchAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
+                if (supercededAddresses.Any())
+                {
+
+                    var model = new Email.Models.WatchReassignedEmailModel
+                    {
+                        FriendlyName = supercededWatchAssignment.PersonAssigned.ToString(),
+                        WatchAssignment = supercededWatchAssignment,
+                        Watchbill = watchbill.Title
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(supercededAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, supercededWatchAssignment.PersonAssigned.ToString())))
+                        .Subject("Watch Reassigned")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedRemoved_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                }
+
+                //Now the new watch assignment.
+                var newAddresses = newAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
+                if (newAddresses.Any())
+                {
+                    var model = new Email.Models.WatchReassignedEmailModel
+                    {
+                        FriendlyName = newAssignment.PersonAssigned.ToString(),
+                        WatchAssignment = newAssignment,
+                        Watchbill = watchbill.Title
+                    };
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(newAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, newAssignment.PersonAssigned.ToString())))
+                        .Subject("Watch Reassigned")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedAdded_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                }
+            }
+        }
+
+
     }
 }
