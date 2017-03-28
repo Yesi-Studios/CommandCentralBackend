@@ -40,7 +40,7 @@ namespace CCServ
                             Id = Guid.NewGuid(),
                             Title = "Quarterdeck Watchbill",
                             LastStateChangedBy = user0,
-                            LastStateChange = DateTime.Now
+                            LastStateChange = DateTime.Now.AddHours(-5)
                         };
                         watchbill.EligibilityGroup = WatchEligibilityGroups.Quarterdeck;
                         session.Save(watchbill);
@@ -59,15 +59,15 @@ namespace CCServ
                     {
                         var watchbill = session.QueryOver<Watchbill>().List().FirstOrDefault();
 
-                    for (int x = 0; x < 30; x++)
-                    {
-                        watchbill.WatchDays.Add(new WatchDay
+                        for (int x = 0; x < 30; x++)
                         {
-                            Date = DateTime.Now.AddHours(-4).Date.AddDays(watchbill.WatchDays.Count),
-                            Id = Guid.NewGuid(),
-                            Remarks = "test",
-                            Watchbill = watchbill
-                        });
+                            watchbill.WatchDays.Add(new WatchDay
+                            {
+                                Date = DateTime.Now.AddHours(-5).Date.AddDays(watchbill.WatchDays.Count),
+                                Id = Guid.NewGuid(),
+                                Remarks = "test",
+                                Watchbill = watchbill
+                            });
 
                             watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
                             {
@@ -139,7 +139,7 @@ namespace CCServ
                 }
             }
 
-            
+
         }
     }
 }
