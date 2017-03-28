@@ -389,7 +389,7 @@ namespace CCServ.ServiceManagement.Service
                     //Did we get a session and if so is it valid?
                     if (authenticationSession == null)
                         token.AddErrorMessage("That authentication token does not belong to an actual authenticated session.  Consider logging in so as to attain a token.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                    else if (authenticationSession.IsValid())
+                    else if (authenticationSession.IsInvalid())
                         token.AddErrorMessage("The session has timed out or is no longer valid.  Please sign back in.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                     else
                     {
@@ -397,15 +397,11 @@ namespace CCServ.ServiceManagement.Service
 
                         //Since the authentication session was valid, let's get the client's permission groups.
                         token.AuthenticationSession.Person.PermissionGroups = Authorization.AuthorizationUtilities.GetPermissionGroupsFromNames(token.AuthenticationSession.Person.PermissionGroupNames, true);
-
                     }
                 }
             }
         }
 
-        
-
         #endregion
-
     }
 }
