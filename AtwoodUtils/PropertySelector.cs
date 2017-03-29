@@ -55,7 +55,7 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static PropertyInfo SelectPropertyFrom<T>(string propertyName)
         {
-            return typeof(T).GetProperty(propertyName);
+            return typeof(T).GetProperty(propertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
         }
 
         /// <summary>

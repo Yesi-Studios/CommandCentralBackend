@@ -99,6 +99,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
+            //Make sure all the keys are real
+            foreach (var key in filters.Keys)
+            {
+                if (!typeof(WatchAssignment).GetProperties().Select(x => x.Name).Contains(key, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    token.AddErrorMessage("One or more properties you tried to search were not real.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    return;
+                }
+            }
+
             var convertedFilters = filters.ToDictionary(
                     x => (MemberInfo)PropertySelector.SelectPropertyFrom<WatchAssignment>(x.Key),
                     x => x.Value);
@@ -114,7 +124,28 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         var results = resultQueryToken.Query.GetExecutableQueryOver(session)
                             .TransformUsing(Transformers.DistinctRootEntity)
-                            .List();
+                            .List()
+                            .Select(x =>
+                                {
+                                    return new
+                                    {
+                                        x.AcknowledgedBy,
+                                        x.AssignedBy,
+                                        x.CurrentState,
+                                        x.DateAcknowledged,
+                                        x.DateAssigned,
+                                        x.Id,
+                                        x.IsAcknowledged,
+                                        x.PersonAssigned,
+                                        WatchShift = new
+                                        {
+                                            x.WatchShift.Id,
+                                            x.WatchShift.Range,
+                                            x.WatchShift.ShiftType,
+                                            x.WatchShift.Title
+                                        }
+                                    };
+                                }); ;
 
                         token.SetResult(results);
 

@@ -478,7 +478,6 @@ namespace CCServ.ClientAccess.Endpoints
                     resultToken.Query = resultToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
                 
-                
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
                 var results = resultToken.Query.GetExecutableQueryOver(session).List<Person>().Select(x =>
                 {

@@ -77,7 +77,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchAssignmentMapping()
             {
-                Id(x => x.Id).GeneratedBy.Assigned();
+                Id(x => x.Id).GeneratedBy.Assigned().UnsavedValue(Guid.Empty);
 
                 References(x => x.WatchShift).Not.Nullable();
                 References(x => x.PersonAssigned).Not.Nullable();
@@ -133,7 +133,15 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                     {
-                        return Restrictions.Eq(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString());
+                        Guid id;
+
+                        if (!Guid.TryParse(token.SearchParameter.Value.ToString(), out id))
+                        {
+                            token.Errors.Add("Your id was not in the proper format.");
+                            return null;
+                        }
+
+                        return Restrictions.Eq(token.SearchParameter.Key.Name, id);
                     });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
@@ -142,7 +150,7 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<WatchAssignment>(x => x.WatchShift.Id).In(QueryOver.Of<ReferenceLists.Watchbill.WatchAssignmentState>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                    return Subqueries.WhereProperty<WatchAssignment>(x => x.CurrentState.Id).In(QueryOver.Of<ReferenceLists.Watchbill.WatchAssignmentState>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
@@ -153,8 +161,16 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    throw new NotImplementedException();
-                    //TODO
+                    var queryToken = new Person.PersonQueryProvider().CreateSimpleSearchQuery(token.SearchParameter.Value);
+                    if (queryToken.HasErrors)
+                    {
+                        token.Errors.AddRange(queryToken.Errors);
+                        return null;
+                    }
+
+                    var finalCriteria = queryToken.Query.DetachedCriteria.SetProjection(Projections.Property<Person>(x => x.Id));
+
+                    return Subqueries.PropertyIn(token.SearchParameter.Key.Name, queryToken.Query.DetachedCriteria);
                 });
 
                 ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(

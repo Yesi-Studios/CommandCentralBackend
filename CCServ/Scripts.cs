@@ -136,6 +136,42 @@ namespace CCServ
 
                         transaction.Commit();
                     }
+
+                    
+                }
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    using (var transaction = session.BeginTransaction())
+                    {
+                        var watchbill = session.QueryOver<Watchbill>().List().First();
+                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
+                        var user1 = session.QueryOver<Person>().Where(x => x.Username == "user1").SingleOrDefault();
+
+                        foreach (var day in watchbill.WatchDays)
+                        {
+                            foreach (var shift in day.WatchShifts)
+                            {
+                                shift.WatchAssignments.Add(new WatchAssignment
+                                {
+                                    AcknowledgedBy = user0,
+                                    AssignedBy = user0,
+                                    CurrentState = WatchAssignmentStates.Acknowledged,
+                                    DateAcknowledged = DateTime.UtcNow,
+                                    DateAssigned = DateTime.UtcNow,
+                                    Id = Guid.NewGuid(),
+                                    IsAcknowledged = true,
+                                    PersonAssigned = user1,
+                                    WatchShift = shift
+                                });
+
+                                session.Save(shift.WatchAssignments.Last());
+                            }
+                        }
+
+                        transaction.Commit();
+
+                    }
                 }
             }
 
