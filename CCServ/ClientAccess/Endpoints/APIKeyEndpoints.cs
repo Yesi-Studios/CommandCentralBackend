@@ -19,22 +19,16 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadAPIKeys", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadAPIKeys(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadAPIKeys(MessageToken token)
         {
-            //Just make sure the client is logged in.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to view API keys.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", HttpStatusCodes.Unauthorized);
 
             //Client has permission, show them the api keys and the names.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())

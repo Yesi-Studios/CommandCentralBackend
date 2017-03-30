@@ -77,12 +77,12 @@ namespace CCServ.ClientAccess
         public override string ToString()
         {
             return "{0} | {1} | \n\t\tCall Time: {2}\n\t\tProcessing Time: {3}\n\t\tHost: {4}\n\t\tApp Name: {5}\n\t\tSession ID: {6}"
-                .FormatS(Id, 
-                CalledEndpoint, 
-                CallTime.ToString(CultureInfo.InvariantCulture), 
-                DateTime.UtcNow.Subtract(CallTime).ToString(), 
-                HostAddress, 
-                APIKey == null ? "null" : APIKey.ApplicationName, 
+                .FormatS(Id,
+                CalledEndpoint,
+                CallTime.ToString(CultureInfo.InvariantCulture),
+                DateTime.UtcNow.Subtract(CallTime).ToString(),
+                HostAddress,
+                APIKey == null ? "null" : APIKey.ApplicationName,
                 AuthenticationSession == null ? "null" : AuthenticationSession.Id.ToString());
         }
 
@@ -154,6 +154,28 @@ namespace CCServ.ClientAccess
                 Map(x => x.CalledEndpoint);
                 Map(x => x.HandledTime);
                 Map(x => x.HostAddress);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Contains extension method meant to make dealing with message tokens a little easier.
+    /// </summary>
+    public static class MessageTokenExtensions
+    {
+        /// <summary>
+        /// Throws a command central bad request exception if not all of the keys are contained in the dictionary.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="dict"></param>
+        /// <param name="keys"></param>
+        public static void ContainsKeysOrThrow<TKey, TValue>(this IDictionary<TKey, TValue> dict, params TKey[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (!dict.ContainsKey(key))
+                    throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), HttpStatusCodes.BadRequest);
             }
         }
     }
