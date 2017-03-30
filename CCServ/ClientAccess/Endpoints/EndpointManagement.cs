@@ -24,58 +24,5 @@ namespace CCServ.ClientAccess.Endpoints
         {
             token.SetResult(ServiceManagement.ServiceManager.EndpointDescriptions.Keys.ToList());
         }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
-        /// Given the name of an endpoint, switches it from active to inactive or vice versa.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        static void SwitchEndpoint(MessageToken token)
-        {
-            //Just make sure the client is logged in.
-            if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to manage endpoints.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                throw new CommandCentralException("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            //Ok, the client has permission to manage endpoints, let's see what endpoint they're talking about.
-            if (!token.Args.ContainsKey("endpoint"))
-            {
-                throw new CommandCentralException("You failed to send an 'endpoint' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            string endpoint = token.Args["endpoint"] as string;
-
-            ServiceEndpoint serviceEndpoint;
-            if (!ServiceManagement.ServiceManager.EndpointDescriptions.TryGetValue(endpoint, out serviceEndpoint))
-            {
-                throw new CommandCentralException("The endpoint parameter you sent was not a real endpoint.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Since we got a real endpoint let's go ahead and switch it.
-            serviceEndpoint.IsActive = !serviceEndpoint.IsActive;
-
-            //Now give the client the state of all endpoints.
-            token.SetResult(ServiceManagement.ServiceManager.EndpointDescriptions.Select(x => new
-            {
-                x.Value.EndpointMethodAttribute.EndpointName,
-                x.Value.IsActive
-            }).ToList());
-
-            Log.Critical("The service endpoint, '{0}', was switched to the state, '{1}', by {2}.".FormatS(serviceEndpoint.EndpointMethodAttribute.EndpointName, serviceEndpoint.IsActive, token.AuthenticationSession.Person.ToString()));
-        }
     }
 }
