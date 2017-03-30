@@ -18,50 +18,24 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "SubmitFeedback", AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_SubmitFeedback(MessageToken token)
+        [EndpointMethod(AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
+        private static void SubmitFeedback(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to submit feedback.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            //Here we're going to get the two required parameters, title and body, and then do some basic validation.
-            if (!token.Args.ContainsKey("title"))
-            {
-                throw new CommandCentralException("You failed to send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("title", "body");
 
             string title = token.Args["title"] as string;
 
             if (string.IsNullOrWhiteSpace(title) || title.Length > 50)
-            {
-                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                throw new CommandCentralException("Your 'title' parameter must not be empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("body"))
-            {
-                throw new CommandCentralException("You failed to send a 'body' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", HttpStatusCodes.BadRequest);
 
             string body = token.Args["body"] as string;
 
             if (string.IsNullOrWhiteSpace(body) || body.Length > 1000)
-            {
-                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", HttpStatusCodes.BadRequest);
 
             var model = new Email.Models.FeedbackEmailModel
             {

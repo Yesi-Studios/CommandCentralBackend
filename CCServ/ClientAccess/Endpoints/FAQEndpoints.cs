@@ -29,7 +29,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void LoadFAQ(MessageToken token)
         {
-            token.Args.ContainsKeysOrThrow("faqid");
+            token.Args.AssertContainsKeys("faqid");
 
             //Get the Id.
             if (!Guid.TryParse(token.Args["faqid"] as string, out Guid faqId))
@@ -102,7 +102,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (token.AuthenticationSession == null)
                 throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            token.Args.ContainsKeysOrThrow("faq");
+            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
@@ -184,7 +184,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (token.AuthenticationSession == null)
                 throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            token.Args.ContainsKeysOrThrow("faq");
+            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))

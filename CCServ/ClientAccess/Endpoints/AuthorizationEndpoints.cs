@@ -83,7 +83,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (token.AuthenticationSession == null)
                 throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            token.Args.ContainsKeysOrThrow("personid", "permissiongroups");
+            token.Args.AssertContainsKeys("personid", "permissiongroups");
 
             //Get the person's Id.
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))

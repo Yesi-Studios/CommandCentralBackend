@@ -170,7 +170,7 @@ namespace CCServ.ClientAccess
         /// <typeparam name="TValue"></typeparam>
         /// <param name="dict"></param>
         /// <param name="keys"></param>
-        public static void ContainsKeysOrThrow<TKey, TValue>(this IDictionary<TKey, TValue> dict, params TKey[] keys)
+        public static void AssertContainsKeys<TKey, TValue>(this IDictionary<TKey, TValue> dict, params TKey[] keys)
         {
             foreach (var key in keys)
             {
