@@ -46,7 +46,12 @@ namespace CCServ
         /// Indicates an issue occurred during authentication.
         /// </summary>
         [CorrespondingErrorType(ErrorType = ClientAccess.ErrorTypes.Authentication)]
-        AuthenticationFailed = HttpStatusCode.Forbidden
+        AuthenticationFailed = HttpStatusCode.Forbidden,
+        /// <summary>
+        /// Indicates that a lock is owned on a profile.
+        /// </summary>
+        [CorrespondingErrorType(ErrorType = ClientAccess.ErrorTypes.LockOwned)]
+        LockOwned = HttpStatusCode.Forbidden
 
     }
 }

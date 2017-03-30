@@ -275,40 +275,25 @@ namespace CCServ.ClientAccess.Endpoints
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
+            //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
 
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("Your person id parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
+
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
+                    //Now let's load the person and then set any fields the client isn't allowed to see to null.
+                    var person = session.Get<Person>(personId) ??
+                        throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
 
-                    Person person = session.Get<Person>(personId);
-
-                    if (person == null)
-                    {
-                        token.AddErrorMessage("Your person id parameter was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
-                    var result = person.GetChainOfCommand();
-
-                    token.SetResult(result);
+                    token.SetResult(person.GetChainOfCommand());
 
                     transaction.Commit();
                 }
@@ -318,8 +303,6 @@ namespace CCServ.ClientAccess.Endpoints
                     throw;
                 }
             }
-
-
         }
 
         /// <summary>
@@ -343,19 +326,13 @@ namespace CCServ.ClientAccess.Endpoints
 
             //If you can search persons then we'll assume you can search/return the required fields.
             if (!token.Args.ContainsKey("searchterm"))
-            {
-                token.AddErrorMessage("You did not send a 'searchterm' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You did not send a 'searchterm' parameter.", HttpStatusCodes.BadRequest);
 
             string searchTerm = token.Args["searchterm"] as string;
 
             //Let's require a search term.  That's nice.
             if (String.IsNullOrEmpty(searchTerm))
-            {
-                token.AddErrorMessage("You must send a search term. A blank term isn't valid. Sorry :(", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You must send a search term. A blank term isn't valid. Sorry :(", HttpStatusCodes.BadRequest);
 
             bool showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
@@ -368,36 +345,30 @@ namespace CCServ.ClientAccess.Endpoints
                 var queryProvider = new Person.PersonQueryProvider();
 
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
-                var resultToken = queryProvider.CreateSimpleSearchQuery(searchTerm);
-
-                if (resultToken.HasErrors)
-                {
-                    token.AddErrorMessages(resultToken.Errors, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                var query = queryProvider.CreateQuery(QueryTypes.Simple, searchTerm);
 
                 var simpleSearchMembers = queryProvider.GetMembersThatAreUsedIn(QueryTypes.Simple);
 
                 //If we weren't told to show hidden, then hide hidden members.
                 if (!showHidden)
                 {
-                    resultToken.Query = resultToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
+                    query = query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
 
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
-                var results = resultToken.Query.GetExecutableQueryOver(session).List<Person>().Select(x =>
+                var results = query.GetExecutableQueryOver(session).List<Person>().Select(person =>
                 {
 
                     //Do our permissions check here for each person.
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, x).ReturnableFields["Main"]["Person"];
+                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person).ReturnableFields["Main"]["Person"];
 
                     Dictionary<string, string> result = new Dictionary<string, string>();
-                    result.Add("Id", x.Id.ToString());
-                    foreach (var member in simpleSearchMembers)
+                    result.Add("Id", person.Id.ToString());
+                    foreach (var member in simpleSearchMembers.Select(x => x.GetProperty()))
                     {
                         if (returnableFields.Contains(member.Name))
                         {
-                            var value = (member as PropertyInfo).GetValue(x);
+                            var value = (member as PropertyInfo).GetValue(person);
 
                             if (value == null)
                             {
@@ -442,17 +413,12 @@ namespace CCServ.ClientAccess.Endpoints
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //Let's find which fields the client wants to search in.  This should be a dictionary.
             if (!token.Args.ContainsKey("filters"))
-            {
-                token.AddErrorMessage("You didn't send a 'filters' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You didn't send a 'filters' parameter.", HttpStatusCodes.BadRequest);
+
             Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
             //Ok, let's figure out what fields the client is allowed to search.
@@ -467,12 +433,8 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     case "Division":
                         {
-                            //The client wants to limit everything to their Division.  Sweet.  Do they have a division?
                             if (token.AuthenticationSession.Person.Division == null)
-                            {
-                                token.AddErrorMessage("You can't limit by division if you don't have a division.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                                throw new CommandCentralException("You can't limit by division if you don't have a division.", HttpStatusCodes.BadRequest);
 
                             //First, if the filters have division, delete it.
                             if (filters.ContainsKey("Division"))
@@ -482,21 +444,14 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                            {
-                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                                return;
-                            }
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
 
                             break;
                         }
                     case "Department":
                         {
-                            //The client wants to limit everything to their Department.  Sweet.
                             if (token.AuthenticationSession.Person.Department == null)
-                            {
-                                token.AddErrorMessage("You can't limit by department if you don't have a department.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                                throw new CommandCentralException("You can't limit by department if you don't have a department.", HttpStatusCodes.BadRequest);
 
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
@@ -506,21 +461,15 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                            {
-                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                                return;
-                            }
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
 
                             break;
+                            
                         }
                     case "Command":
                         {
-                            //The client wants to limit everything to their Command.  Sweet.
-                            if (token.AuthenticationSession.Person.Command == null)
-                            {
-                                token.AddErrorMessage("You can't limit by command if you don't have a command.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                            if (token.AuthenticationSession.Person.Department == null)
+                                throw new CommandCentralException("You can't limit by command if you don't have a command.", HttpStatusCodes.BadRequest);
 
                             //First, if the filters have command, delete it.
                             if (filters.ContainsKey("Command"))
@@ -530,17 +479,14 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                            {
-                                token.AddErrorMessage("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                                return;
-                            }
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
 
                             break;
                         }
                     default:
                         {
-                            token.AddErrorMessage("The searchlevel you sent was not in the correct format.  It must only be Command, Department, or Division.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            throw new CommandCentralException("The searchlevel you sent was not in the correct format.  " +
+                                "It must only be Command, Department, or Division.", HttpStatusCodes.BadRequest);
                         }
                 }
             }
@@ -551,11 +497,7 @@ namespace CCServ.ClientAccess.Endpoints
                 var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
 
                 if (failures.Any())
-                {
-                    //There were one or more fields you weren't allowed to search in.
-                    token.AddErrorMessage("You weren't allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                    return;
-                }
+                    throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
             }
 
             //Now let's determine if we're doing a geo query.
@@ -566,10 +508,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")))
             {
                 if (!token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
-                {
-                    token.AddErrorMessage("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                    throw new CommandCentralException("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", HttpStatusCodes.BadRequest);
 
                 //Ok, we're doing a geo query.
                 isGeoQuery = true;
@@ -582,10 +521,8 @@ namespace CCServ.ClientAccess.Endpoints
 
             //And the fields the client wants to return.
             if (!token.Args.ContainsKey("returnfields"))
-            {
-                token.AddErrorMessage("You didn't send a 'returnfields' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You didn't send a 'returnfields' parameter.", HttpStatusCodes.BadRequest); ;
+
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
             //Instruct us to show hidden profiles, or hide them.
@@ -600,9 +537,11 @@ namespace CCServ.ClientAccess.Endpoints
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
-                //Ok the client can search and return everything.  Now we need to build the actual query.
-                //To do this we need to determine what type each property is and then add it to the query.
-                var queryOver = session.QueryOver<Person>();
+                var convertedFilters = filters.ToDictionary(
+                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key),
+                    x => x.Value);
+
+                var query = new Person.PersonQueryProvider().CreateQuery(QueryTypes.Advanced, convertedFilters);
 
                 //So you remember the searchlevel from before?  We need to use that here.  If the client gave it to us.
                 if (token.Args.ContainsKey("searchlevel"))
@@ -612,26 +551,19 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         case "Division":
                             {
-
-                                var disjunction = Restrictions.Disjunction();
-                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().Where(x => x.Id == token.AuthenticationSession.Person.Division.Id).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
+                                query.Where(Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().Where(x => x.Id == token.AuthenticationSession.Person.Division.Id).Select(x => x.Id)));
 
                                 break;
                             }
                         case "Department":
                             {
-                                var disjunction = Restrictions.Disjunction();
-                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().Where(x => x.Id == token.AuthenticationSession.Person.Department.Id).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
+                                query.Where(Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().Where(x => x.Id == token.AuthenticationSession.Person.Department.Id).Select(x => x.Id)));
 
                                 break;
                             }
                         case "Command":
                             {
-                                var disjunction = Restrictions.Disjunction();
-                                disjunction.Add(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().Where(x => x.Id == token.AuthenticationSession.Person.Command.Id).Select(x => x.Id)));
-                                queryOver = queryOver.Where(disjunction);
+                                query.Where(Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().Where(x => x.Id == token.AuthenticationSession.Person.Command.Id).Select(x => x.Id)));
 
                                 break;
                             }
@@ -642,29 +574,19 @@ namespace CCServ.ClientAccess.Endpoints
                     }
                 }
 
-                var convertedFilters = filters.ToDictionary(
-                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key),
-                    x => x.Value);
-
-                var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQuery(convertedFilters, queryOver);
+                
 
                 //The client is telling us to show hidden profiles or not.
                 if (!showHidden)
                 {
-                    resultQueryToken.Query = resultQueryToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
-                }
-
-                if (resultQueryToken.HasErrors)
-                {
-                    token.AddErrorMessages(resultQueryToken.Errors, ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
+                    query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
                 List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
 
-                var rawResults = resultQueryToken.Query.GetExecutableQueryOver(session)
+                var rawResults = query.GetExecutableQueryOver(session)
                     .TransformUsing(Transformers.DistinctRootEntity) //This part here "should" give us distinct elements.
                     .List<Person>();
 
@@ -770,37 +692,24 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdatePerson(MessageToken token)
         {
-
-            //First make sure we have a session.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to edit a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //Ok, now we need to find the person the client sent us and try to parse it into a person.
             if (!token.Args.ContainsKey("person"))
-            {
-                token.AddErrorMessage("In order to update a person, you must send a person... ", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You failed to send a person parameter.", HttpStatusCodes.BadRequest);
 
             //Try the parse
             Person personFromClient;
             try
             {
-                personFromClient = token.Args["person"].CastJToken<Person>();
-
-                if (personFromClient == null)
-                {
-                    token.AddErrorMessage("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                personFromClient = token.Args["person"].CastJToken<Person>() ??
+                    throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", HttpStatusCodes.BadRequest);
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", HttpStatusCodes.BadRequest);
             }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
@@ -809,42 +718,23 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-
                     //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
                     ProfileLock profileLock = session.QueryOver<ProfileLock>()
                                             .Where(x => x.LockedPerson.Id == personFromClient.Id)
-                                            .SingleOrDefault();
-
-                    //If we got no profile lock, then bail
-                    if (profileLock == null)
-                    {
-                        token.AddErrorMessage("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                                            .SingleOrDefault() ??
+                                            throw new CommandCentralException("In order to edit this person, you must first take a lock on the person.", HttpStatusCodes.Forbidden);
 
                     //We also require the lock to be valid.
                     if (!profileLock.IsValid())
-                    {
-                        token.AddErrorMessage("Your lock on this profile is no longer valid.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                        throw new CommandCentralException("Your lock on this profile is no longer valid.", HttpStatusCodes.Forbidden);
 
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
-                    {
-                        token.AddErrorMessage("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                        throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), HttpStatusCodes.LockOwned);
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-                    Person personFromDB = session.Get<Person>(personFromClient.Id);
-
-                    //Did we get a person?  If not, the person the client gave us is bullshit.
-                    if (personFromDB == null)
-                    {
-                        token.AddErrorMessage("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    Person personFromDB = session.Get<Person>(personFromClient.Id) ??
+                        throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", HttpStatusCodes.BadRequest);
 
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
@@ -859,8 +749,6 @@ namespace CCServ.ClientAccess.Endpoints
 
                         property.SetValue(personFromDB, property.GetValue(personFromClient));
                     }
-
-
 
                     //Determine what changed.
                     var changes = session.GetVariantProperties(personFromDB)
@@ -877,29 +765,19 @@ namespace CCServ.ClientAccess.Endpoints
                     //Ok, let's validate the entire person object.  This will be what it used to look like plus the changes from the client.
                     var results = new Person.PersonValidator().Validate(personFromDB);
 
-                    //If there are any errors with the validation, let's throw those back to the client.
-                    if (results.Errors.Any())
-                    {
-                        token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    if (!results.IsValid)
+                        throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
                     var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
-                    {
-                        token.AddErrorMessages(unauthorizedEdits.Select(x => "You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                        throw new AggregateException(unauthorizedEdits.Select(x => new CommandCentralException("You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName), HttpStatusCodes.Forbidden)));
 
                     //Since this was all good, just add the changes to the person's profile.
                     changes.ForEach(x => personFromDB.Changes.Add(x));
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
-
-                    //And then we're done!
-                    token.SetResult("Success");
 
                     transaction.Commit();
                 }
@@ -925,12 +803,9 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void GetPersonMetadata(MessageToken token)
         {
-            //Just make sure the client is logged in.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to access this endpoint.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             var searchStrategy = new Person.PersonQueryProvider();
             Dictionary<string, object> result = new Dictionary<string, object>();
