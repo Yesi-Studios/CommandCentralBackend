@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NHibernate;
 using AtwoodUtils;
 using NHibernate.Criterion;
+using System.Linq.Expressions;
 
 namespace CCServ.DataAccess
 {
@@ -23,18 +24,17 @@ namespace CCServ.DataAccess
         /// <summary>
         /// The list of all property groups included in this query strategy.
         /// </summary>
-        private List<PropertyGroupPart<T>> PropertyGroups { get; set; }
+        private List<PropertyGroupPart<T>> PropertyGroups { get; set; } = new List<PropertyGroupPart<T>>();
 
         #endregion
 
         #region ctors
 
         /// <summary>
-        /// Creates a new query strat and initializes the property groups to an empty collection.
+        /// Creates a new query strat.
         /// </summary>
         public QueryStrategy()
         {
-            PropertyGroups = new List<PropertyGroupPart<T>>();
         }
 
         #endregion
@@ -44,20 +44,12 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Used to select a number of memers from T and begin a property group selection.
         /// </summary>
-        /// <param name="members"></param>
+        /// <param name="expressions"></param>
         /// <returns></returns>
-        public PropertyGroupPart<T> ForProperties(IEnumerable<MemberInfo> members)
+        public PropertyGroupPart<T> ForProperties(params Expression<Func<T, object>>[] expressions)
         {
-            PropertyGroupPart<T> part = new PropertyGroupPart<T>
-            {
-                ParentQueryStrategy = this,
-                Properties = members.ToList(),
-                CriteriaProvider = null
-            };
-
-            PropertyGroups.Add(part);
-
-            return part;
+            PropertyGroups.Add(new PropertyGroupPart<T>(this, expressions));
+            return PropertyGroups.Last();
         }
 
         /// <summary>
@@ -68,15 +60,6 @@ namespace CCServ.DataAccess
         public IEnumerable<MemberInfo> GetMembersThatAreUsedIn(QueryTypes type)
         {
             return PropertyGroups.Where(x => x.CanSearchIn(type)).SelectMany(x => x.Properties);
-        }
-
-        /// <summary>
-        /// Gets all members from this query strat that have been marked as identifiers.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<MemberInfo> GetIdentifiers()
-        {
-            return PropertyGroups.Where(x => x.AreIdintifiers).SelectMany(x => x.Properties);
         }
 
         /// <summary>

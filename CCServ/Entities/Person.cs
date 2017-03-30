@@ -1062,7 +1062,7 @@ namespace CCServ.Entities
             /// </summary>
             public PersonQueryProvider()
             {
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                ForProperties(
                     x => x.Id,
                     x => x.SSN,
                     x => x.Suffix,
@@ -1075,19 +1075,18 @@ namespace CCServ.Entities
                     x => x.JobTitle,
                     x => x.EmergencyContactInstructions,
                     x => x.ContactRemarks,
-                    x => x.DoDId))
+                    x => x.DoDId)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
                     return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
-                });
-
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                }); ;
+                              
+                ForProperties(
                     x => x.LastName,
                     x => x.FirstName,
-                    x => x.MiddleName))
-                .UsedAsIdentifiers()
+                    x => x.MiddleName)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1095,8 +1094,8 @@ namespace CCServ.Entities
                     return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.HasCompletedAWARE))
+                ForProperties(
+                    x => x.HasCompletedAWARE)
                 .AsType(SearchDataTypes.Boolean)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1115,14 +1114,14 @@ namespace CCServ.Entities
                         return Restrictions.Eq(token.SearchParameter.Key.Name, value);
                     });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
+                ForProperties(
                     x => x.DateOfBirth,
                     x => x.GTCTrainingDate,
                     x => x.ADAMSTrainingDate,
                     x => x.DateOfArrival,
                     x => x.EAOS,
                     x => x.DateOfDeparture,
-                    x => x.PRD))
+                    x => x.PRD)
                 .AsType(SearchDataTypes.DateTime)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1179,8 +1178,8 @@ namespace CCServ.Entities
 
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Sex))
+                ForProperties(
+                    x => x.Sex)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1188,8 +1187,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.BilletAssignment))
+                ForProperties(
+                    x => x.BilletAssignment)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1197,8 +1196,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.BilletAssignment.Id).In(QueryOver.Of<BilletAssignment>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Ethnicity))
+                ForProperties(
+                    x => x.Ethnicity)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1206,8 +1205,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.ReligiousPreference))
+                ForProperties(
+                    x => x.ReligiousPreference)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1215,9 +1214,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Paygrade))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.Paygrade)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1225,9 +1223,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Designation))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.Designation)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1235,9 +1232,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Division))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.Division)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1245,9 +1241,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Department))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.Department)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1255,10 +1250,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.Command))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.Command)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1266,8 +1259,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.PrimaryNEC))
+                ForProperties(
+                    x => x.PrimaryNEC)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1275,8 +1268,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.SecondaryNECs))
+                ForProperties(
+                    x => x.SecondaryNECs)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1288,8 +1281,8 @@ namespace CCServ.Entities
                     return Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.WatchQualifications))
+                ForProperties(
+                    x => x.WatchQualifications)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1301,8 +1294,8 @@ namespace CCServ.Entities
                     return Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.DutyStatus))
+                ForProperties(
+                    x => x.DutyStatus)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1310,9 +1303,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.UIC))
-                .UsedAsIdentifiers()
+                ForProperties(
+                    x => x.UIC)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
@@ -1320,8 +1312,8 @@ namespace CCServ.Entities
                     return Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.CurrentMusterRecord))
+                ForProperties(
+                    x => x.CurrentMusterRecord)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1338,8 +1330,8 @@ namespace CCServ.Entities
                         .Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.EmailAddresses))
+                ForProperties(
+                    x => x.EmailAddresses)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -1350,8 +1342,8 @@ namespace CCServ.Entities
                     return Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<Person>(
-                    x => x.PhysicalAddresses))
+                ForProperties(
+                    x => x.PhysicalAddresses)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>

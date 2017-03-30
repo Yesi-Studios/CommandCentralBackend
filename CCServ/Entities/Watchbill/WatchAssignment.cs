@@ -127,8 +127,8 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public  WatchAssignmentQueryProvider()
             {
-                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
-                    x => x.Id))
+                ForProperties(
+                    x => x.Id)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -144,8 +144,8 @@ namespace CCServ.Entities.Watchbill
                         return Restrictions.Eq(token.SearchParameter.Key.Name, id);
                     });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
-                    x => x.CurrentState))
+                ForProperties(
+                    x => x.CurrentState)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -153,10 +153,10 @@ namespace CCServ.Entities.Watchbill
                     return Subqueries.WhereProperty<WatchAssignment>(x => x.CurrentState.Id).In(QueryOver.Of<ReferenceLists.Watchbill.WatchAssignmentState>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                ForProperties(
                     x => x.PersonAssigned,
                     x => x.AssignedBy,
-                    x => x.AcknowledgedBy))
+                    x => x.AcknowledgedBy)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -173,8 +173,8 @@ namespace CCServ.Entities.Watchbill
                     return Subqueries.PropertyIn(token.SearchParameter.Key.Name, queryToken.Query.DetachedCriteria);
                 });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
-                    x => x.IsAcknowledged))
+                ForProperties(
+                    x => x.IsAcknowledged)
                 .AsType(SearchDataTypes.Boolean)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
@@ -193,9 +193,9 @@ namespace CCServ.Entities.Watchbill
                         return Restrictions.Eq(token.SearchParameter.Key.Name, value);
                     });
 
-                ForProperties(PropertySelector.SelectPropertiesFrom<WatchAssignment>(
+                ForProperties(
                     x => x.DateAssigned,
-                    x => x.DateAcknowledged))
+                    x => x.DateAcknowledged)
                 .AsType(SearchDataTypes.DateTime)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
