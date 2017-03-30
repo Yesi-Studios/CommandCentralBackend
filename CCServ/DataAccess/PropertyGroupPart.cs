@@ -23,12 +23,12 @@ namespace CCServ.DataAccess
         /// <summary>
         /// The parent query strategy provider that created this property group.
         /// </summary>
-        public QueryStrategy<T> ParentQueryStrategy { get; set; }
+        public QueryStrategyProvider<T> ParentQueryStrategy { get; set; }
 
         /// <summary>
         /// The members references in this property group.
         /// </summary>
-        public HashSet<MemberInfo> Properties { get; set; } = new HashSet<MemberInfo>();
+        public HashSet<Expression<Func<T, object>>> Expressions { get; set; } = new HashSet<Expression<Func<T, object>>>();
 
         /// <summary>
         /// The criteria provider instructs the data layer, given a query term, how to query for this property.
@@ -52,16 +52,16 @@ namespace CCServ.DataAccess
         /// <summary>
         /// Creates a new property group.
         /// </summary>
-        public PropertyGroupPart(QueryStrategy<T> parent, IEnumerable<Expression<Func<T, object>>> expressions)
+        public PropertyGroupPart(QueryStrategyProvider<T> parent, IEnumerable<Expression<Func<T, object>>> expressions)
         {
             if (!expressions.Any())
                 throw new ArgumentException("You must have at least one property!");
 
-            foreach (var prop in expressions.Select(x => x.GetProperty()))
+            foreach (var exp in expressions)
             {
-                if (!this.Properties.Add(prop))
+                if (!this.Expressions.Add(exp))
                 {
-                    throw new ArgumentException("You may not duplicate values!  Value duplicated: {0}".FormatS(prop.Name));
+                    throw new ArgumentException("You may not duplicate values!  Value duplicated: {0}".FormatS(exp.GetPropertyName()));
                 }
             }
 

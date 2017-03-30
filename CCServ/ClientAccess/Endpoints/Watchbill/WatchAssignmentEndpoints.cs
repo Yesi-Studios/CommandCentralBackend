@@ -120,7 +120,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var resultQueryToken = new WatchAssignment.WatchAssignmentQueryProvider().CreateAdvancedQueryFor(convertedFilters);
+                        var resultQueryToken = new WatchAssignment.WatchAssignmentQueryProvider().CreateAdvancedQuery(convertedFilters);
 
                         var results = resultQueryToken.Query.GetExecutableQueryOver(session)
                             .TransformUsing(Transformers.DistinctRootEntity)

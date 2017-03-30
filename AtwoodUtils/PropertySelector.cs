@@ -37,6 +37,17 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Returns the expression.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static Expression<Func<T, object>> SelectExpressionFrom<T>(Expression<Func<T, object>> expression)
+        {
+            return expression;
+        }
+
+        /// <summary>
         /// Selects a number of properties from a given type that are all of the same given type.
         /// </summary>
         /// <typeparam name="T"></typeparam>

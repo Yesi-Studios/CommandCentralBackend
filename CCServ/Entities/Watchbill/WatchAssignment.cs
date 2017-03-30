@@ -9,6 +9,7 @@ using NHibernate.Type;
 using CCServ.DataAccess;
 using AtwoodUtils;
 using NHibernate.Criterion;
+using CCServ.Entities.ReferenceLists.Watchbill;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -120,7 +121,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// Provides searching strategies for the watch assignment object.
         /// </summary>
-        public class WatchAssignmentQueryProvider : QueryStrategy<WatchAssignment>
+        public class WatchAssignmentQueryProvider : QueryStrategyProvider<WatchAssignment>
         {
             /// <summary>
             /// Provides searching strategies for the watch assignment object.
@@ -133,15 +134,7 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                     {
-                        Guid id;
-
-                        if (!Guid.TryParse(token.SearchParameter.Value.ToString(), out id))
-                        {
-                            token.Errors.Add("Your id was not in the proper format.");
-                            return null;
-                        }
-
-                        return Restrictions.Eq(token.SearchParameter.Key.Name, id);
+                        return CommonQueryStrategies.IdQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                     });
 
                 ForProperties(
@@ -150,7 +143,7 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<WatchAssignment>(x => x.CurrentState.Id).In(QueryOver.Of<ReferenceLists.Watchbill.WatchAssignmentState>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                    return CommonQueryStrategies.ReferenceListValueQuery(token.SearchParameter.Key, token.SearchParameter.Value);
                 });
 
                 ForProperties(
@@ -161,16 +154,8 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    var queryToken = new Person.PersonQueryProvider().CreateSimpleSearchQuery(token.SearchParameter.Value);
-                    if (queryToken.HasErrors)
-                    {
-                        token.Errors.AddRange(queryToken.Errors);
-                        return null;
-                    }
-
-                    var finalCriteria = queryToken.Query.DetachedCriteria.SetProjection(Projections.Property<Person>(x => x.Id));
-
-                    return Subqueries.PropertyIn(token.SearchParameter.Key.Name, queryToken.Query.DetachedCriteria);
+                    return Subqueries.PropertyIn(token.SearchParameter.Key.GetPropertyName(), 
+                        new Person.PersonQueryProvider().CreateQuery(QueryTypes.Simple, token.SearchParameter.Value).DetachedCriteria.SetProjection(Projections.Id()));
                 });
 
                 ForProperties(
@@ -179,18 +164,7 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                     {
-                        bool value;
-                        try
-                        {
-                            value = (bool)token.SearchParameter.Value;
-                        }
-                        catch (Exception)
-                        {
-                            token.Errors.Add("An error occurred while parsing your boolean search value.");
-                            return null;
-                        }
-
-                        return Restrictions.Eq(token.SearchParameter.Key.Name, value);
+                        return CommonQueryStrategies.BooleanQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                     });
 
                 ForProperties(
@@ -200,56 +174,7 @@ namespace CCServ.Entities.Watchbill
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    //First cast the value given to a JSON array.
-                    var value = ((Dictionary<string, DateTime?>)token.SearchParameter.Value);
-
-                    DateTime? from = null;
-                    DateTime? to = null;
-
-                    if (value.ContainsKey("From"))
-                    {
-                        from = value["From"];
-                    }
-
-                    if (value.ContainsKey("To"))
-                    {
-                        to = value["To"];
-                    }
-
-                    if (to == null && from == null)
-                    {
-                        token.Errors.Add("Both dates in your range may not be empty.");
-                        return null;
-                    }
-
-                    //Do the validation.
-                    if ((from.HasValue && to.HasValue) && from > to)
-                    {
-                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to));
-                        return null;
-                    }
-
-                    if (from == to)
-                    {
-                        return Restrictions.And(
-                                Restrictions.Ge(token.SearchParameter.Key.Name, from.Value.Date),
-                                Restrictions.Le(token.SearchParameter.Key.Name, from.Value.Date.AddHours(24)));
-                    }
-                    else if (from == null)
-                    {
-                        return Restrictions.Le(token.SearchParameter.Key.Name, to);
-                    }
-                    else if (to == null)
-                    {
-                        return Restrictions.Ge(token.SearchParameter.Key.Name, from);
-                    }
-                    else
-                    {
-                        return Restrictions.And(
-                                Restrictions.Ge(token.SearchParameter.Key.Name, from),
-                                Restrictions.Le(token.SearchParameter.Key.Name, to));
-                    }
-
+                    return CommonQueryStrategies.DateTimeQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                 });
 
             }

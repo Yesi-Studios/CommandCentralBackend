@@ -38,28 +38,29 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void CreatePerson(MessageToken token)
         {
-            //Just make sure the client is logged in.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to create a person.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.CreatePerson.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-            {
-                token.AddErrorMessage("You don't have permission to create persons.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You don't have permission to do that.", HttpStatusCodes.Unauthorized);
 
             //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
             if (!token.Args.ContainsKey("person"))
+                throw new CommandCentralException("You failed to send a 'person' parameter.", HttpStatusCodes.BadRequest);
+
+            Person personFromClient;
+
+            try
             {
-                token.AddErrorMessage("You failed to send a 'person' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                personFromClient = token.Args["person"].CastJToken<Person>();
+            }
+            catch
+            {
+                throw new CommandCentralException("An error occured while processing your person object.", HttpStatusCodes.BadRequest);
             }
 
-            var personFromClient = token.Args["person"].CastJToken<Person>();
 
             //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
             //For security we're going to take only the parameters that we need explicitly from the client.  All others will be thrown out. #whitelisting
@@ -92,18 +93,15 @@ namespace CCServ.ClientAccess.Endpoints
             //Now for validation!
             var results = new Person.PersonValidator().Validate(newPerson);
 
-            if (results.Errors.Any())
-            {
-                token.AddErrorMessages(results.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!results.IsValid)
+                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             //Cool, since everything is good to go, let's also add the account history.
             newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
-            {
-                AccountHistoryEventType = AccountHistoryTypes.Creation,
-                EventTime = token.CallTime
-            } };
+                {
+                    AccountHistoryEventType = AccountHistoryTypes.Creation,
+                    EventTime = token.CallTime
+                }};
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -111,19 +109,14 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Let's make sure no one with that SSN exists...
-                    var result = session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).SingleOrDefault();
-
-                    if (result != null)
-                    {
-                        token.AddErrorMessage("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var result = session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).SingleOrDefault() ??
+                        throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", HttpStatusCodes.BadRequest);
 
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
                     session.Save(newPerson);
 
-                    //And now return the person's Id.
-                    token.SetResult(newPerson.Id);
+                    //And now return the person.
+                    token.SetResult(newPerson);
 
                     transaction.Commit();
                 }
@@ -152,40 +145,22 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadPerson(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to load persons.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
-                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
 
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
-                return;
-
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("The person Id you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
-                var person = session.Get<Person>(personId);
-
-                //If person is null then we need to stop here.
-                if (person == null)
-                {
-                    token.AddErrorMessage("The Id you sent appears to be invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                var person = session.Get<Person>(personId) ??
+                    throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
 
                 //Now that we have the person back, let's resolve the permissions for this person.
                 var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
@@ -219,35 +194,6 @@ namespace CCServ.ClientAccess.Endpoints
                                     wasSet = true;
                                     break;
                                 }
-                            case "currentmusterstatus":
-                                {
-                                    if (person.CurrentMusterRecord == null)
-                                    {
-                                        returnData.Add(propertyName, null);
-                                    }
-                                    else
-                                    {
-                                        returnData.Add(propertyName, new
-                                        {
-                                            person.CurrentMusterRecord.Command,
-                                            person.CurrentMusterRecord.Department,
-                                            person.CurrentMusterRecord.Division,
-                                            person.CurrentMusterRecord.DutyStatus,
-                                            person.CurrentMusterRecord.HasBeenSubmitted,
-                                            person.CurrentMusterRecord.Id,
-                                            person.CurrentMusterRecord.MusterDate,
-                                            Musteree = person.CurrentMusterRecord.Musteree,
-                                            Musterer = person.CurrentMusterRecord.Musterer == null ? null : person.CurrentMusterRecord.Musterer,
-                                            person.CurrentMusterRecord.MusterStatus,
-                                            person.CurrentMusterRecord.Paygrade,
-                                            person.CurrentMusterRecord.SubmitTime,
-                                            person.CurrentMusterRecord.UIC
-                                        });
-                                    }
-
-                                    wasSet = true;
-                                    break;
-                                }
                             case "accounthistory":
                                 {
                                     returnData.Add(propertyName, person.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList());
@@ -255,26 +201,6 @@ namespace CCServ.ClientAccess.Endpoints
                                     wasSet = true;
                                     break;
                                 }
-                            case "changes":
-                                {
-                                    //Here we're going to iterate back through the returnable fields in order to return only those changes the client can see.
-                                    //Then we'll select out those changes, casting the editee/editor to basic person DTOs.  
-                                    returnData.Add(propertyName, person.Changes.Where(x => returnableFields.Contains(x.PropertyName, StringComparer.CurrentCultureIgnoreCase)).Select(x => new
-                                    {
-                                        Editee = x.Editee,
-                                        Editor = x.Editor,
-                                        x.PropertyName,
-                                        x.OldValue,
-                                        x.NewValue,
-                                        x.Time,
-                                        x.Remarks,
-                                        x.Id
-                                    }).ToList());
-
-                                    wasSet = true;
-                                    break;
-                                }
-
                         }
 
                         if (!wasSet)
@@ -310,47 +236,30 @@ namespace CCServ.ClientAccess.Endpoints
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //First, let's make sure the args are present.
             if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
 
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("The person ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
 
             //Let's load the person we were given.  We need the object for the permissions check.
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
-                Person person = session.Get<Person>(personId);
-
-                if (person == null)
-                {
-                    token.AddErrorMessage("The person Id you sent did not resolve to an actual person. :(", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                //Now let's load the person and then set any fields the client isn't allowed to see to null.
+                var person = session.Get<Person>(personId) ??
+                    throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
                 bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
                     .ReturnableFields["Main"]["Person"].Contains(PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
 
                 if (!canView)
-                {
-                    token.AddErrorMessage("You don't have permission to view the account history for this person's profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                    throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", HttpStatusCodes.Unauthorized);
 
-                token.SetResult(session.Get<Person>(personId).AccountHistory);
+                token.SetResult(person.AccountHistory);
             }
         }
 
@@ -410,7 +319,7 @@ namespace CCServ.ClientAccess.Endpoints
                 }
             }
 
-            
+
         }
 
         /// <summary>
@@ -430,10 +339,7 @@ namespace CCServ.ClientAccess.Endpoints
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to search.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //If you can search persons then we'll assume you can search/return the required fields.
             if (!token.Args.ContainsKey("searchterm"))
@@ -477,7 +383,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     resultToken.Query = resultToken.Query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
-                
+
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
                 var results = resultToken.Query.GetExecutableQueryOver(session).List<Person>().Select(x =>
                 {
@@ -740,7 +646,7 @@ namespace CCServ.ClientAccess.Endpoints
                     x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key),
                     x => x.Value);
 
-                var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQueryFor(convertedFilters, queryOver);
+                var resultQueryToken = new Person.PersonQueryProvider().CreateAdvancedQuery(convertedFilters, queryOver);
 
                 //The client is telling us to show hidden profiles or not.
                 if (!showHidden)
@@ -954,7 +860,7 @@ namespace CCServ.ClientAccess.Endpoints
                         property.SetValue(personFromDB, property.GetValue(personFromClient));
                     }
 
-                    
+
 
                     //Determine what changed.
                     var changes = session.GetVariantProperties(personFromDB)

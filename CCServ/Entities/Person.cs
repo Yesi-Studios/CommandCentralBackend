@@ -1055,7 +1055,7 @@ namespace CCServ.Entities
         /// <summary>
         /// Provides searching strategies for the person object.
         /// </summary>
-        public class PersonQueryProvider : QueryStrategy<Person>
+        public class PersonQueryProvider : QueryStrategyProvider<Person>
         {
             /// <summary>
             /// Provides searching strategies for the person object.
@@ -1080,8 +1080,8 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
-                }); ;
+                    return CommonQueryStrategies.StringQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
+                });
                               
                 ForProperties(
                     x => x.LastName,
@@ -1091,7 +1091,7 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
                 {
-                    return Restrictions.InsensitiveLike(token.SearchParameter.Key.Name, token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
+                    return CommonQueryStrategies.StringQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                 });
 
                 ForProperties(
@@ -1100,18 +1100,7 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                     {
-                        bool value;
-                        try 
-	                    {	        
-		                    value = (bool)token.SearchParameter.Value;
-	                    }
-	                    catch (Exception)
-	                    {
-                            token.Errors.Add("An error occurred while parsing your boolean search value.");
-                            return null;
-	                    }
-
-                        return Restrictions.Eq(token.SearchParameter.Key.Name, value);
+                        return CommonQueryStrategies.BooleanQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                     });
 
                 ForProperties(
@@ -1126,146 +1115,35 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    //First cast the value given to a JSON array.
-                    var value = ((Dictionary<string, DateTime?>)token.SearchParameter.Value);
-
-                    DateTime? from = null;
-                    DateTime? to = null;
-
-                    if (value.ContainsKey("From"))
-                    {
-                        from = value["From"];
-                    }
-
-                    if (value.ContainsKey("To"))
-                    {
-                        to = value["To"];
-                    }
-
-                    if (to == null && from == null)
-                    {
-                        token.Errors.Add("Both dates in your range may not be empty.");
-                        return null;
-                    }
-
-                    //Do the validation.
-                    if ((from.HasValue && to.HasValue) && from > to)
-                    {
-                        token.Errors.Add("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to));
-                        return null;
-                    }
-
-                    if (from == to)
-                    {
-                        return Restrictions.And(
-                                Restrictions.Ge(token.SearchParameter.Key.Name, from.Value.Date),
-                                Restrictions.Le(token.SearchParameter.Key.Name, from.Value.Date.AddHours(24)));
-                    }
-                    else if (from == null)
-                    {
-                        return Restrictions.Le(token.SearchParameter.Key.Name, to);
-                    }
-                    else if (to == null)
-                    {
-                        return Restrictions.Ge(token.SearchParameter.Key.Name, from);
-                    }
-                    else
-                    {
-                        return Restrictions.And(
-                                Restrictions.Ge(token.SearchParameter.Key.Name, from),
-                                Restrictions.Le(token.SearchParameter.Key.Name, to));
-                    }
-
+                    return CommonQueryStrategies.DateTimeQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                 });
 
                 ForProperties(
-                    x => x.Sex)
+                    x => x.Sex,
+                    x => x.BilletAssignment,
+                    x => x.Ethnicity,
+                    x => x.ReligiousPreference,
+                    x => x.DutyStatus)
                 .AsType(SearchDataTypes.String)
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<Person>(x => x.Sex.Id).In(QueryOver.Of<Sex>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                    return CommonQueryStrategies.ReferenceListValueQuery(token.SearchParameter.Key, token.SearchParameter.Value);
                 });
 
                 ForProperties(
-                    x => x.BilletAssignment)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.BilletAssignment.Id).In(QueryOver.Of<BilletAssignment>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Ethnicity)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Ethnicity.Id).In(QueryOver.Of<Ethnicity>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.ReligiousPreference)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.ReligiousPreference.Id).In(QueryOver.Of<ReligiousPreference>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Paygrade)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Paygrade.Id).In(QueryOver.Of<Paygrade>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Designation)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Designation.Id).In(QueryOver.Of<Designation>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Division)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Division.Id).In(QueryOver.Of<Division>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Department)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Department.Id).In(QueryOver.Of<Department>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
-                    x => x.Command)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.Command.Id).In(QueryOver.Of<Command>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
-
-                ForProperties(
+                    x => x.Paygrade,
+                    x => x.Designation,
+                    x => x.Division,
+                    x => x.Department,
+                    x => x.Command,
+                    x => x.UIC,
                     x => x.PrimaryNEC)
                 .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
+                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<Person>(x => x.PrimaryNEC.Id).In(QueryOver.Of<NEC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                    return CommonQueryStrategies.ReferenceListValueQuery(token.SearchParameter.Key, token.SearchParameter.Value);
                 });
 
                 ForProperties(
@@ -1278,7 +1156,48 @@ namespace CCServ.Entities
 
                     token.Query = token.Query.JoinAlias(x => x.SecondaryNECs, () => necAlias);
 
-                    return Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
+                    //First we need to get what the client gave us into a list of Guids.
+                    if (token.SearchParameter.Value == null)
+                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+
+                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
+                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
+                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+
+                    List<string> values = new List<string>();
+                    if (token.SearchParameter.Value is string)
+                    {
+                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else if (token.SearchParameter.Value is IEnumerable<string>)
+                    {
+                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Hit default case in switch.");
+                    }
+
+                    var disjunction = new Disjunction();
+
+                    foreach (var value in values)
+                    {
+                        disjunction.Add(Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                    }
+
+                    return disjunction;
                 });
 
                 ForProperties(
@@ -1291,26 +1210,50 @@ namespace CCServ.Entities
 
                     token.Query = token.Query.JoinAlias(x => x.WatchQualifications, () => qualAlias);
 
-                    return Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
-                });
+                    //First we need to get what the client gave us into a list of Guids.
+                    if (token.SearchParameter.Value == null)
+                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
 
-                ForProperties(
-                    x => x.DutyStatus)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.DutyStatus.Id).In(QueryOver.Of<DutyStatus>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
-                });
+                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
+                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
+                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
 
-                ForProperties(
-                    x => x.UIC)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced, QueryTypes.Simple)
-                .UsingStrategy(token =>
-                {
-                    return Subqueries.WhereProperty<Person>(x => x.UIC.Id).In(QueryOver.Of<UIC>().WhereRestrictionOn(x => x.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere).Select(x => x.Id));
+                    List<string> values = new List<string>();
+                    if (token.SearchParameter.Value is string)
+                    {
+                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else if (token.SearchParameter.Value is IEnumerable<string>)
+                    {
+                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Hit default case in switch.");
+                    }
+
+                    var disjunction = new Disjunction();
+
+                    foreach (var value in values)
+                    {
+                        disjunction.Add(Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                    }
+
+                    return disjunction;
                 });
+                
 
                 ForProperties(
                     x => x.CurrentMusterRecord)
@@ -1318,16 +1261,8 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    return Subqueries.WhereProperty<Person>(x => x.CurrentMusterRecord.Id).In(QueryOver.Of<MusterRecord>().Where(Restrictions.Disjunction()
-                        .Add<MusterRecord>(x => x.Command.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Department.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Division.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.DutyStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.MusterStatus.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.Paygrade.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                        .Add<MusterRecord>(x => x.UIC.IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere)))
-                        .And(x => x.MusterDate == MusterRecord.GetMusterDate(DateTime.UtcNow))
-                        .Select(x => x.Id));
+
+                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Muster records are not currently queryable from this page.", HttpStatusCodes.BadRequest);
                 });
 
                 ForProperties(
@@ -1339,7 +1274,48 @@ namespace CCServ.Entities
                     EmailAddress addressAlias = null;
                     token.Query = token.Query.JoinAlias(x => x.EmailAddresses, () => addressAlias);
 
-                    return Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere);
+                    //First we need to get what the client gave us into a list of Guids.
+                    if (token.SearchParameter.Value == null)
+                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+
+                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
+                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
+                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+
+                    List<string> values = new List<string>();
+                    if (token.SearchParameter.Value is string)
+                    {
+                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else if (token.SearchParameter.Value is IEnumerable<string>)
+                    {
+                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
+                        {
+                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+
+                            values.Add(value.Trim());
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Hit default case in switch.");
+                    }
+
+                    var disjunction = new Disjunction();
+
+                    foreach (var value in values)
+                    {
+                        disjunction.Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                    }
+
+                    return disjunction;
                 });
 
                 ForProperties(
@@ -1348,13 +1324,7 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    PhysicalAddress addressAlias = null;
-                    token.Query = token.Query.JoinAlias(x => x.PhysicalAddresses, () => addressAlias);
-
-                    return Restrictions.Disjunction().Add(Restrictions.On(() => addressAlias.City).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                                                     .Add(Restrictions.On(() => addressAlias.State).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                                                     .Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere))
-                                                     .Add(Restrictions.On(() => addressAlias.ZipCode).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Physical Addresses are not currently queryable from this page.", HttpStatusCodes.BadRequest);
                 });
             }
         }
