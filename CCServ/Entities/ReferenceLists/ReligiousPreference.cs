@@ -33,7 +33,7 @@ namespace CCServ.Entities.ReferenceLists
                     var result = relPref.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -41,7 +41,7 @@ namespace CCServ.Entities.ReferenceLists
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<ReligiousPreference>().Where(x => x.Value.IsInsensitiveLike(relPref.Value)).RowCount() != 0)
                     {
-                        token.AddErrorMessage("The value, '{0}', already exists in the list.".FormatWith(relPref.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(relPref.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -84,7 +84,7 @@ namespace CCServ.Entities.ReferenceLists
 
                     if (relPref == null)
                     {
-                        token.AddErrorMessage("That religious preference Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That religious preference Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -107,7 +107,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".FormatS(relPref, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".FormatS(relPref, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                     }

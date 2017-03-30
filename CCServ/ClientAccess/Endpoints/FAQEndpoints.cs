@@ -32,7 +32,7 @@ namespace CCServ.ClientAccess.Endpoints
             //Get the FAQ Id we're supposed to load.
             if (!token.Args.ContainsKey("faqid"))
             {
-                token.AddErrorMessage("You didn't send an 'faqid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send an 'faqid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -40,7 +40,7 @@ namespace CCServ.ClientAccess.Endpoints
             Guid faqId;
             if (!Guid.TryParse(token.Args["faqid"] as string, out faqId))
             {
-                token.AddErrorMessage("The faqid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The faqid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -110,19 +110,19 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create or update an FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to create or update an FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
 
             if (!token.Args.ContainsKey("faq"))
             {
-                token.AddErrorMessage("You failed to send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -143,7 +143,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (!validationResult.IsValid)
             {
-                token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                         if (resultsCount != 0)
                         {
-                            token.AddErrorMessage("It appears as though an FAQ with that name or question already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("It appears as though an FAQ with that name or question already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -208,20 +208,20 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to manage the FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to manage the FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
 
             //Let's see if the parameters are here.
             if (!token.Args.ContainsKey("faq"))
             {
-                token.AddErrorMessage("You didn't send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -234,7 +234,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -248,7 +248,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (faqFromDB == null)
                     {
-                        token.AddErrorMessage("A faq with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        throw new CommandCentralException("A faq with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                         return;
                     }
 

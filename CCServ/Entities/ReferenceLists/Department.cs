@@ -57,7 +57,7 @@ namespace CCServ.Entities.ReferenceLists
 
                     if (department == null)
                     {
-                        token.AddErrorMessage("That department Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That department Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -84,7 +84,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                     }
@@ -131,7 +131,7 @@ namespace CCServ.Entities.ReferenceLists
                             Guid commandId;
                             if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
                             {
-                                token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return null;
                             }
 
@@ -179,14 +179,14 @@ namespace CCServ.Entities.ReferenceLists
                     Guid commandId;
                     if (!Guid.TryParse(item.Value<string>("commandid"), out commandId))
                     {
-                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
                     var commandFromClient = session.Get<Command>(commandId);
                     if (commandFromClient == null)
                     {
-                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -198,7 +198,7 @@ namespace CCServ.Entities.ReferenceLists
                     var result = departmentFromClient.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 

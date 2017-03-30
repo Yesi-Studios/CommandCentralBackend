@@ -28,20 +28,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchinputid"))
             {
-                token.AddErrorMessage("You failed to send a 'watchinputid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchinputid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid watchInputId;
             if (!Guid.TryParse(token.Args["watchinputid"] as string, out watchInputId))
             {
-                token.AddErrorMessage("Your watch input id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your watch input id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchInputFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -85,13 +85,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchinputs"))
             {
-                token.AddErrorMessage("You failed to send a 'watchinputs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchinputs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -102,7 +102,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch inputs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch inputs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             if (validationResults.Any(x => !x.IsValid))
             {
-                token.AddErrorMessages(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var personFromDB = session.Get<Entities.Person>(input.Person.Id);
                             if (personFromDB == null)
                             {
-                                token.AddErrorMessage("The person Id given by an input was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("The person Id given by an input was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
@@ -147,7 +147,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
                                 && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
                             {
-                                token.AddErrorMessage("You are not authorized to submit inputs for this person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                 return;
                             }
 
@@ -159,7 +159,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             if (watchShiftsFromDB.Count != input.WatchShifts.Count)
                             {
-                                token.AddErrorMessage("One or more of your watch shifts' Ids were invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("One or more of your watch shifts' Ids were invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
@@ -167,14 +167,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var watchbill = watchShiftsFromDB.First().WatchDays.First().Watchbill;
                             if (watchShiftsFromDB.Any(x => x.WatchDays.First().Watchbill.Id != watchbill.Id))
                             {
-                                token.AddErrorMessage("Your requested watch inputs were not all for the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("Your requested watch inputs were not all for the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
                             //Let's also check the watchbill's state.
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
                             {
-                                token.AddErrorMessage("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
@@ -212,13 +212,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchinput"))
             {
-                token.AddErrorMessage("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -229,7 +229,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -237,7 +237,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             if (!valdiationResult.IsValid)
             {
-                token.AddErrorMessages(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -251,7 +251,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchInputFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -261,7 +261,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         //Check the state.
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
                         {
-                            token.AddErrorMessage("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -271,7 +271,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()])
                         {
-                            token.AddErrorMessage("You are not authorized to edit inputs for this person.  " +
+                            throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
                                 "If this is your own input and you need to change the date range, " +
                                 "please delete the input and then re-create it for the proper range.",
                                 ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
@@ -315,13 +315,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchinput"))
             {
-                token.AddErrorMessage("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchinput' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -332,7 +332,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch input.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -346,7 +346,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchInputFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -355,7 +355,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         //Check the state.
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
                         {
-                            token.AddErrorMessage("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -367,7 +367,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             && watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id
                             && watchInputFromDB.SubmittedBy.Id != token.AuthenticationSession.Person.Id)
                         {
-                            token.AddErrorMessage("You are not authorized to edit inputs for this person.  " +
+                            throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
                                 "If this is your own input and you need to change the date range, " +
                                 "please delete the input and then re-create it for the proper range.",
                                 ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);

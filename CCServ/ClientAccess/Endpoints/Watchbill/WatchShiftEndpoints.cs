@@ -26,20 +26,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchshiftid"))
             {
-                token.AddErrorMessage("You failed to send a 'watchshiftid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchshiftid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid watchShiftId;
             if (!Guid.TryParse(token.Args["watchshiftid"] as string, out watchShiftId))
             {
-                token.AddErrorMessage("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -53,7 +53,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchShiftFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -83,13 +83,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchshifts"))
             {
-                token.AddErrorMessage("You failed to send a 'watchshifts' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchshifts' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -100,7 +100,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch shifts.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch shifts.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -117,7 +117,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             if (validationResults.Any(x => !x.IsValid))
             {
-                token.AddErrorMessages(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -137,27 +137,27 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             if (days.Count != shift.WatchDays.Count)
                             {
-                                token.AddErrorMessage("One or more of your watch days' Ids were invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("One or more of your watch days' Ids were invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
                             var watchbill = days.First().Watchbill;
                             if (days.Any(x => x.Watchbill.Id != watchbill.Id))
                             {
-                                token.AddErrorMessage("Your requested watch days were not all from the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("Your requested watch days were not all from the same watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             {
-                                token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                                throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                                 return;
                             }
 
                             //Check the state.
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
                             {
-                                token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                                 return;
                             }
 
@@ -195,13 +195,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchshift"))
             {
-                token.AddErrorMessage("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -212,7 +212,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -220,7 +220,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             if (!valdiationResult.IsValid)
             {
-                token.AddErrorMessages(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -234,7 +234,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchShiftFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -242,7 +242,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
-                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;
                         }
 
@@ -251,7 +251,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial 
                             && (watchShiftFromClient.ShiftType != watchShiftFromDB.ShiftType || watchShiftFromClient.Range != watchShiftFromDB.Range))
                         {
-                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -264,7 +264,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (!watchbillValidationResult.IsValid)
                         {
-                            token.AddErrorMessages(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralExceptions(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -296,13 +296,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("watchshift"))
             {
-                token.AddErrorMessage("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'watchshift' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -313,7 +313,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -327,7 +327,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (watchShiftFromDB == null)
                         {
-                            token.AddErrorMessage("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -335,14 +335,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
-                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;
                         }
 
                         //Check the state.
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
                         {
-                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 

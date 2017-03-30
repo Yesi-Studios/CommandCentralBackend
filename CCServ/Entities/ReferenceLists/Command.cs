@@ -56,7 +56,7 @@ namespace CCServ.Entities.ReferenceLists
                     var result = commandFromClient.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -105,7 +105,7 @@ namespace CCServ.Entities.ReferenceLists
 
                     if (command == null)
                     {
-                        token.AddErrorMessage("That command Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That command Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -133,7 +133,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the command, {0}, because it is referenced on {1} profile(s).".FormatS(command, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the command, {0}, because it is referenced on {1} profile(s).".FormatS(command, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                     }

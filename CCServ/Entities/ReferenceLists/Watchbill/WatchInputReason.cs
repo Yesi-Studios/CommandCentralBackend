@@ -36,7 +36,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                     var result = reason.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -44,7 +44,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<WatchInputReason>().Where(x => x.Value.IsInsensitiveLike(reason.Value)).RowCount() != 0)
                     {
-                        token.AddErrorMessage("The value, '{0}', already exists in the list.".FormatWith(reason.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(reason.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -78,7 +78,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// <param name="token"></param>
         public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            token.AddErrorMessage("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", ErrorTypes.Validation, System.Net.HttpStatusCode.MethodNotAllowed);
+            throw new CommandCentralException("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", ErrorTypes.Validation, System.Net.HttpStatusCode.MethodNotAllowed);
             return;
         }
 

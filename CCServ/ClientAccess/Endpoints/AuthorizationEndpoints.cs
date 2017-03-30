@@ -38,20 +38,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                 return;
             }
 
             if (!token.Args.ContainsKey("personid"))
             {
-                token.AddErrorMessage("You failed to send a 'personid' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'personid' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
-                token.AddErrorMessage("The person id you send was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The person id you send was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                 if (person == null)
                 {
-                    token.AddErrorMessage("The person id you sent was not correct.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    throw new CommandCentralException("The person id you sent was not correct.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -95,28 +95,28 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
                 return;
             }
 
             //Get the person's Id.
             if (!token.Args.ContainsKey("personid"))
             {
-                token.AddErrorMessage("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
-                token.AddErrorMessage("Your person Id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your person Id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             //What permission groups does the client want this person to be in?
             if (!token.Args.ContainsKey("permissiongroups"))
             {
-                token.AddErrorMessage("You failed to send a 'permissiongroups' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'permissiongroups' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -130,7 +130,7 @@ namespace CCServ.ClientAccess.Endpoints
             catch
             {
                 //If that cast failed.
-                token.AddErrorMessage("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -145,7 +145,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (person == null)
                     {
-                        token.AddErrorMessage("Your person Id parameter was wrong. lol.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("Your person Id parameter was wrong. lol.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -272,7 +272,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (failures.Any())
                     {
-                        token.AddErrorMessage("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                         return;
                     }
 

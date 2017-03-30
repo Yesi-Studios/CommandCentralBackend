@@ -28,13 +28,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("eligibilitygroup"))
             {
-                token.AddErrorMessage("You failed to send a 'eligibilitygroup' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'eligibilitygroup' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -45,7 +45,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("There was an issue while parsing your eligibility group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("There was an issue while parsing your eligibility group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -53,7 +53,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             if (!validationResults.IsValid)
             {
-                token.AddErrorMessages(validationResults.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(validationResults.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -67,7 +67,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (groupFromDB == null)
                         {
-                            token.AddErrorMessage("Your eligibility group's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your eligibility group's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -79,14 +79,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (persons.Count != groupFromClient.EligiblePersons.Count)
                         {
-                            token.AddErrorMessage("One or more of the persons in your eligibility group were not valid..", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("One or more of the persons in your eligibility group were not valid..", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
                         //Now we just need to make sure the client is in the command level of the group's chain of command.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(groupFromDB.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                         {
-                            token.AddErrorMessage("You are not allowed to edit the membership of this group.  You must be in the same chain of command as the group and be at the command level.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                            throw new CommandCentralException("You are not allowed to edit the membership of this group.  You must be in the same chain of command as the group and be at the command level.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                             return;
                         }
 

@@ -24,14 +24,14 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to submit feedback.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to submit feedback.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Here we're going to get the two required parameters, title and body, and then do some basic validation.
             if (!token.Args.ContainsKey("title"))
             {
-                token.AddErrorMessage("You failed to send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -39,19 +39,19 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (string.IsNullOrWhiteSpace(title) || title.Length > 50)
             {
-                token.AddErrorMessage("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(title))
             {
-                token.AddErrorMessage("Your 'title' parameter must not be empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your 'title' parameter must not be empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             if (!token.Args.ContainsKey("body"))
             {
-                token.AddErrorMessage("You failed to send a 'body' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'body' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -59,7 +59,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (string.IsNullOrWhiteSpace(body) || body.Length > 1000)
             {
-                token.AddErrorMessage("Your 'body' parameter must not be empty or greater than 1000 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 

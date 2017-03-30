@@ -43,14 +43,14 @@ namespace CCServ.Entities.ReferenceLists
                     Guid departmentId;
                     if (!Guid.TryParse(item.Value<string>("departmentid"), out departmentId))
                     {
-                        token.AddErrorMessage("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
                     var departmentFromClient = session.Get<Department>(departmentId);
                     if (departmentFromClient == null)
                     {
-                        token.AddErrorMessage("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -62,7 +62,7 @@ namespace CCServ.Entities.ReferenceLists
                     var result = divisionFromClient.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -126,7 +126,7 @@ namespace CCServ.Entities.ReferenceLists
 
                     if (division == null)
                     {
-                        token.AddErrorMessage("That division Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That division Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -152,7 +152,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the division, {0}, because it is referenced on {1} profile(s).".FormatS(division, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the division, {0}, because it is referenced on {1} profile(s).".FormatS(division, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                     }
@@ -194,7 +194,7 @@ namespace CCServ.Entities.ReferenceLists
                         Guid departmentId;
                         if (!Guid.TryParse(token.Args["departmentid"] as string, out departmentId))
                         {
-                            token.AddErrorMessage("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("The department id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return null;
                         }
 

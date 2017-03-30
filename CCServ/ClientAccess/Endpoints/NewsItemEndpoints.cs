@@ -27,14 +27,14 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Get the news item ID we're supposed to load.
             if (!token.Args.ContainsKey("newsitemid"))
             {
-                token.AddErrorMessage("You didn't send an 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send an 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace CCServ.ClientAccess.Endpoints
             Guid newsItemId;
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
             {
-                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -87,7 +87,7 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -102,7 +102,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (limit <= 0)
                     {
-                        token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -142,22 +142,22 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to create a news item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to create a news item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
 
             //Let's see if the parameters are here.
             if (!token.Args.ContainsKey("title"))
-                token.AddErrorMessage("You didn't send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
             if (!token.Args.ContainsKey("paragraphs"))
-                token.AddErrorMessage("You didn't send a 'paragraphs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'paragraphs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
 
             if (token.HasError)
                 return;
@@ -173,7 +173,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while attempting to cast your parahraphs.  It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("There was an error while attempting to cast your parahraphs.  It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -194,7 +194,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (!results.IsValid)
             {
                 //Send back the error messages.
-                token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralExceptions(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -237,20 +237,20 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to manage the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to manage the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
 
             //Let's see if the parameters are here.
             if (!token.Args.ContainsKey("newsitemid"))
             {
-                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -258,7 +258,7 @@ namespace CCServ.ClientAccess.Endpoints
             Guid newsItemId;
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
             {
-                token.AddErrorMessage("The news item id you sent was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -283,7 +283,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (newsItem == null)
                     {
-                        token.AddErrorMessage("A news item with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        throw new CommandCentralException("A news item with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                         return;
                     }
 
@@ -298,7 +298,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (errors.Any())
                     {
-                        token.AddErrorMessages(errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -332,20 +332,20 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
             }
 
             //Get the news item id.
             if (!token.Args.ContainsKey("newsitemid"))
             {
-                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -353,7 +353,7 @@ namespace CCServ.ClientAccess.Endpoints
             Guid newsItemId;
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
             {
-                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -367,7 +367,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (newsItemFromDB == null)
                     {
-                        token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
+                        throw new CommandCentralException("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
                         return;
                     }
 

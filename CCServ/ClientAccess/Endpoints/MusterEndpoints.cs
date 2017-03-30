@@ -28,20 +28,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("mustereeid"))
             {
-                token.AddErrorMessage("You failed to send a 'mustereeid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send a 'mustereeid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid mustereeId;
             if (!Guid.TryParse(token.Args["mustereeid"] as string, out mustereeId))
             {
-                token.AddErrorMessage("Your mustereeid parameter was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your mustereeid parameter was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -58,7 +58,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                         if (limit <= 0)
                         {
-                            token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
 
@@ -114,20 +114,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("musterdate"))
             {
-                token.AddErrorMessage("You must send a 'musterdate' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You must send a 'musterdate' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             DateTime musterDate;
             if (!(token.Args["musterdate"] is DateTime))
             {
-                token.AddErrorMessage("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
             else
@@ -176,20 +176,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to submit muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to submit muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
-                token.AddErrorMessage("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             //Did we get what we needed?
             if (!token.Args.ContainsKey("mustersubmissions"))
             {
-                token.AddErrorMessage("You must send a 'mustersubmissions' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You must send a 'mustersubmissions' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -203,14 +203,14 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to format your 'mustersubmissions' argument.  It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("There was an error while trying to format your 'mustersubmissions' argument.  It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             //Validate the muster statuses
             if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
             {
-                token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -229,7 +229,7 @@ namespace CCServ.ClientAccess.Endpoints
                 //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
                 if (persons.Any(x => !MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x)))
                 {
-                    token.AddErrorMessage("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                    throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                     return;
                 }
 
@@ -241,7 +241,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         if (persons[x].DutyStatus == DutyStatuses.Loss)
                         {
-                            token.AddErrorMessage("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                         else
@@ -283,7 +283,7 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
@@ -413,20 +413,20 @@ namespace CCServ.ClientAccess.Endpoints
             //Let's make sure we have permission to finalize muster.  You can finalize muster if you're logged in (no shit) and a command level muster... person.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to finalize the muster.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to finalize the muster.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
-                token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
-                token.AddErrorMessage("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 

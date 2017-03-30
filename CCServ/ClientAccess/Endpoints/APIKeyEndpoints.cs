@@ -25,14 +25,14 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to view API keys.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to view API keys.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
-                token.AddErrorMessage("You don't have permission to view API keys - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 

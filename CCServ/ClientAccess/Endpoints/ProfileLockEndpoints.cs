@@ -33,20 +33,20 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("personid"))
             {
-                token.AddErrorMessage("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid personId;
             if (!Guid.TryParse(token.Args["personid"] as string, out personId))
             {
-                token.AddErrorMessage("The 'personid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The 'personid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -69,7 +69,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (person == null)
                     {
-                        token.AddErrorMessage("That person id does not correlate to a real person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That person id does not correlate to a real person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -93,7 +93,7 @@ namespace CCServ.ClientAccess.Endpoints
                             if (profileLock.IsValid())
                             {
                                 //If we're here then there is a lock, it is owned by someone else, and the lock has not aged off.
-                                token.AddErrorMessage("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
+                                throw new CommandCentralException("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned, System.Net.HttpStatusCode.Forbidden);
                                 return;
                             }
                             else
@@ -165,20 +165,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You need to be logged in to request profile locks.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("profilelockid"))
             {
-                token.AddErrorMessage("You didn't send a 'profilelockid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You didn't send a 'profilelockid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid profileLockId;
             if (!Guid.TryParse(token.Args["profilelockid"] as string, out profileLockId))
             {
-                token.AddErrorMessage("The 'profilelockid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The 'profilelockid' parameter", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -193,7 +193,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 {
-                    token.AddErrorMessage("In order to force a lock to release, you must have access to the Admin Tools.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                    throw new CommandCentralException("In order to force a lock to release, you must have access to the Admin Tools.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                     return;
                 }
             }
@@ -208,7 +208,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (profileLock == null)
                     {
-                        token.AddErrorMessage("That profile lock id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That profile lock id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -235,7 +235,7 @@ namespace CCServ.ClientAccess.Endpoints
                             else
                             {
                                 //Welp, if we got there then the client isn't allowed to release this lock.
-                                token.AddErrorMessage("You do not have permission to release the profile lock and it is still valid.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
+                                throw new CommandCentralException("You do not have permission to release the profile lock and it is still valid.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
                                 return;
                             }
 

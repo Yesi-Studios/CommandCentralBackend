@@ -33,7 +33,7 @@ namespace CCServ.Entities.ReferenceLists
                     var result = ethnicity.Validate();
                     if (!result.IsValid)
                     {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -41,7 +41,7 @@ namespace CCServ.Entities.ReferenceLists
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<Ethnicity>().Where(x => x.Value.IsInsensitiveLike(ethnicity.Value)).RowCount() != 0)
                     {
-                        token.AddErrorMessage("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -84,7 +84,7 @@ namespace CCServ.Entities.ReferenceLists
 
                     if (ethnicity == null)
                     {
-                        token.AddErrorMessage("That ethnicity Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                        throw new CommandCentralException("That ethnicity Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                         return;
                     }
 
@@ -107,7 +107,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                             return;
                         }
                     }

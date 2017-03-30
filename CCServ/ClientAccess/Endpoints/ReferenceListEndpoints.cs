@@ -154,14 +154,14 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 if (!Guid.TryParse(token.Args["id"] as string, out id))
                 {
-                    token.AddErrorMessage("Your id was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                    throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                     return;
                 }
             }
 
             if (id != default(Guid) && entityNames.Count != 1)
             {
-                token.AddErrorMessage("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -194,20 +194,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
             {
-                token.AddErrorMessage("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("entityname"))
             {
-                token.AddErrorMessage("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
             string entityName = token.Args["entityname"] as string;
@@ -218,13 +218,13 @@ namespace CCServ.ClientAccess.Endpoints
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
             {
-                token.AddErrorMessage("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             if (!token.Args.ContainsKey("item"))
             {
-                token.AddErrorMessage("You failed to send an item parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an item parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
             var item = token.Args["item"].CastJToken();
@@ -245,20 +245,20 @@ namespace CCServ.ClientAccess.Endpoints
         {
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
             {
-                token.AddErrorMessage("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             if (!token.Args.ContainsKey("entityname"))
             {
-                token.AddErrorMessage("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
             string entityName = token.Args["entityname"] as string;
@@ -269,20 +269,20 @@ namespace CCServ.ClientAccess.Endpoints
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
             {
-                token.AddErrorMessage("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             if (!token.Args.ContainsKey("id"))
             {
-                token.AddErrorMessage("You failed to send an id parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an id parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
             Guid id;
             if (!Guid.TryParse(token.Args["id"] as string, out id))
             {
-                token.AddErrorMessage("Your id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("Your id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 

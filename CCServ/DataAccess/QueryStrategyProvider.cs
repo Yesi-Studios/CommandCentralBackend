@@ -89,7 +89,7 @@ namespace CCServ.DataAccess
             {
                 case QueryTypes.Advanced:
                     {
-                        var filters = searchData as Dictionary<MemberInfo, object> ??
+                        var filters = searchData as Dictionary<Expression<Func<T, object>>, object> ??
                             throw new CommandCentralException("Your search data must be in the format of a dicionary of filters.", HttpStatusCodes.BadRequest);
 
                         return CreateAdvancedQuery(filters);

@@ -38,21 +38,21 @@ namespace CCServ.ClientAccess.Endpoints
             //Just make sure the client is logged in.
             if (token.AuthenticationSession == null)
             {
-                token.AddErrorMessage("You must be logged in to manage endpoints.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You must be logged in to manage endpoints.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
             {
-                token.AddErrorMessage("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You don't have permission to manage endpoints - you must be a developer.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
                 return;
             }
 
             //Ok, the client has permission to manage endpoints, let's see what endpoint they're talking about.
             if (!token.Args.ContainsKey("endpoint"))
             {
-                token.AddErrorMessage("You failed to send an 'endpoint' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("You failed to send an 'endpoint' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace CCServ.ClientAccess.Endpoints
             ServiceEndpoint serviceEndpoint;
             if (!ServiceManagement.ServiceManager.EndpointDescriptions.TryGetValue(endpoint, out serviceEndpoint))
             {
-                token.AddErrorMessage("The endpoint parameter you sent was not a real endpoint.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+                throw new CommandCentralException("The endpoint parameter you sent was not a real endpoint.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
                 return;
             }
 
