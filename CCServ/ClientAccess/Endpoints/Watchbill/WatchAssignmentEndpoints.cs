@@ -166,8 +166,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("An error occurred while parsing your 'watchassignments' parameter.", HttpStatusCodes.BadRequest);
             }
 
-            //TODO LEFT HERE
-
             var watchAssignmentsToInsert = watchAssignmentsFromClient.Select(x =>
                 {
                     return new WatchAssignment
@@ -184,11 +182,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             var validationResults = watchAssignmentsToInsert.Select(x => new WatchAssignment.WatchAssignmentValidator().Validate(x)).ToList();
 
-            if (validationResults.Any(x => !x.IsValid))
-            {
-                token.AddErrorMessages(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            var invalidResults = validationResults.Where(x => !x.IsValid);
+            if (invalidResults.Any())
+                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -201,22 +197,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         foreach (var assignment in watchAssignmentsToInsert)
                         {
-                            var personFromDB = session.Get<Entities.Person>(assignment.PersonAssigned.Id);
+                            var personFromDB = session.Get<Entities.Person>(assignment.PersonAssigned.Id) ??
+                                throw new CommandCentralException("A person's id was not valid.", HttpStatusCodes.BadRequest);
 
-                            if (personFromDB == null)
-                            {
-                                token.AddErrorMessage("A person's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
                             assignment.PersonAssigned = personFromDB;
 
-                            var shiftFromDB = session.Get<WatchShift>(assignment.WatchShift.Id);
+                            var shiftFromDB = session.Get<WatchShift>(assignment.WatchShift.Id) ??
+                                throw new CommandCentralException("A shift's id was not valid.", HttpStatusCodes.BadRequest);
 
-                            if (shiftFromDB == null)
-                            {
-                                token.AddErrorMessage("A shift's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
                             assignment.WatchShift = shiftFromDB;
 
                             //Now we need to know what watchbill we're talking about.
@@ -226,15 +214,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             }
                             else if (watchbill.Id != shiftFromDB.WatchDays.First().Watchbill.Id)
                             {
-                                token.AddErrorMessage("You may not submit watch assignments for multiple watchbills at the same time.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
+                                throw new CommandCentralException("You may not submit watch assignments for multiple watchbills at the same time.", HttpStatusCodes.BadRequest);
                             }
 
                             //Let's make sure the person we're about to assign is in the eligibility group.
                             if (!watchbill.EligibilityGroup.EligiblePersons.Any(x => x.Id == personFromDB.Id))
                             {
-                                token.AddErrorMessage("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
+                                throw new CommandCentralException("You may not add this person to shift in this watchbill because they are not eligible for it.", HttpStatusCodes.BadRequest);
                             }
                         }
 
@@ -258,23 +244,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             //We have to make sure that the watch assignments were submitted in a pair, and that the business rules about those are kept.  They're complicated and make my head hurt.
                             if (watchAssignmentsToInsert.Count != 2)
                             {
-                                token.AddErrorMessage("You may not swap watches unless your watches are submitted in pairs.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
+                                throw new CommandCentralException("You may not swap watches unless your watches are submitted in pairs.", HttpStatusCodes.BadRequest);
                             }
 
                             //Make sure they actually swap each other.
                             if (watchAssignmentsToInsert.First().PersonAssigned.Id != watchAssignmentsToInsert.Last().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id ||
                                 watchAssignmentsToInsert.Last().PersonAssigned.Id != watchAssignmentsToInsert.First().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id)
                             {
-                                token.AddErrorMessage("You may not submit new watch assignments unless the previously assigned people for each shift are the other assignment's person.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
+                                throw new CommandCentralException("You may not submit new watch assignments unless the previously assigned people for each shift are the other assignment's person.", HttpStatusCodes.BadRequest);
                             }
 
                             //And they're not the same shift.  That would be weird.
                             if (watchAssignmentsToInsert.First().WatchShift.Id == watchAssignmentsToInsert.Last().WatchShift.Id)
                             {
-                                token.AddErrorMessage("The watch shifts may not be the same during a watch swap.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
+                                throw new CommandCentralException("The watch shifts may not be the same during a watch swap.", HttpStatusCodes.BadRequest);
                             }
 
                             //Ok, now let's start iterating to check the permissions.  If everything is good, we'll update the watches after this loop.
@@ -295,8 +278,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                         {
                                             if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(assignment.PersonAssigned))
                                             {
-                                                token.AddErrorMessage("You may not add watch assignments for a person not in your department.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                                return;
+                                                throw new CommandCentralException("You may not add watch assignments for a person not in your department.", HttpStatusCodes.Unauthorized);
                                             }
                                             break;
                                         }
@@ -304,16 +286,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                         {
                                             if (!token.AuthenticationSession.Person.IsInSameDivisionAs(assignment.PersonAssigned))
                                             {
-                                                token.AddErrorMessage("You may not add watch assignments for a person not in your division.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                                return;
+                                                throw new CommandCentralException("You may not add watch assignments for a person not in your division.", HttpStatusCodes.Unauthorized);
                                             }
                                             break;
                                         }
                                     case ChainOfCommandLevels.None:
                                     case ChainOfCommandLevels.Self:
                                         {
-                                            token.AddErrorMessage("You lack sufficient permissions to add watch assignments.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                            break;
+                                            throw new CommandCentralException("You lack sufficient permissions to add watch assignments.", HttpStatusCodes.Unauthorized);
                                         }
                                     default:
                                         {
@@ -327,8 +307,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         }
                         else
                         {
-                            token.AddErrorMessage("You may not add watch assignments to a watchbill in this state with your permissions.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
+                            throw new CommandCentralException("You may not add watch assignments to a watchbill in this state with your permissions.", HttpStatusCodes.Unauthorized);
                         }
 
                         //Well if we got down here, some change occurred!  Let's update the watchbill.
