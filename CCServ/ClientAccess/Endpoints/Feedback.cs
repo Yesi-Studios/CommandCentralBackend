@@ -69,6 +69,5 @@ namespace CCServ.ClientAccess.Endpoints
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.Feedback_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
-
     }
 }
