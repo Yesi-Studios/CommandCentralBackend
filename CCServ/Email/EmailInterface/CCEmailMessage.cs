@@ -322,7 +322,7 @@ namespace CCServ.Email.EmailInterface
         {
             assembly = assembly ?? Assembly.GetCallingAssembly();
 
-            ContentType mimeType = new System.Net.Mime.ContentType("text/html");
+            ContentType mimeType = new ContentType("text/html");
 
             var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
 
@@ -380,8 +380,7 @@ namespace CCServ.Email.EmailInterface
                 .WaitAndRetry(_clients.Count - 1, count => retryDelay, (exception, waitDuration, retryCount, context) =>
                 {
                     attemptClient = _clients[retryCount];
-                    if (retryCallback != null)
-                        retryCallback(exception, waitDuration, retryCount);
+                    retryCallback?.Invoke(exception, waitDuration, retryCount);
                 })
                 .ExecuteAndCapture(() =>
                 {
@@ -390,8 +389,7 @@ namespace CCServ.Email.EmailInterface
 
                 if (result.Outcome == OutcomeType.Failure)
                 {
-                    if (failureCallback != null)
-                        failureCallback(result.FinalException);
+                    failureCallback?.Invoke(result.FinalException);
                 }
             });
 

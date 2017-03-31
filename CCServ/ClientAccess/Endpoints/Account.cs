@@ -56,7 +56,7 @@ namespace CCServ.ClientAccess.Endpoints
                         var person = session.QueryOver<Person>()
                             .Where(x => x.Username == username)
                             .SingleOrDefault<Person>() ??
-                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.AuthenticationFailed);
+                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
 
                         if (!PasswordHash.ValidatePassword(password, person.PasswordHash))
                         {
@@ -90,7 +90,7 @@ namespace CCServ.ClientAccess.Endpoints
                             transaction.Commit();
 
                             //Finally, tell the client something went wrong.
-                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.AuthenticationFailed);
+                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
                         }
                         else
                         {
@@ -119,7 +119,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                         transaction.Commit();
                     }
-                    catch
+                    catch (Exception e) when (e.GetType() != typeof(CommandCentralException))
                     {
                         transaction.Rollback();
                         throw;

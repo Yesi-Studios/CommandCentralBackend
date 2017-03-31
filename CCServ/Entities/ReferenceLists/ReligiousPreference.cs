@@ -32,18 +32,12 @@ namespace CCServ.Entities.ReferenceLists
                     //Validate it.
                     var result = relPref.Validate();
                     if (!result.IsValid)
-                    {
-                        throw new CommandCentralExceptions(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<ReligiousPreference>().Where(x => x.Value.IsInsensitiveLike(relPref.Value)).RowCount() != 0)
-                    {
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(relPref.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(relPref.Value), HttpStatusCodes.BadRequest);
 
                     var relPrefFromDB = session.Get<ReligiousPreference>(relPref.Id);
 
@@ -80,13 +74,8 @@ namespace CCServ.Entities.ReferenceLists
             {
                 try
                 {
-                    var relPref = session.Get<ReligiousPreference>(id);
-
-                    if (relPref == null)
-                    {
-                        throw new CommandCentralException("That religious preference Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var relPref = session.Get<ReligiousPreference>(id) ??
+                        throw new CommandCentralException("That religious preference Id was not valid.", HttpStatusCodes.BadRequest);
 
                     var persons = session.QueryOver<Person>().Where(x => x.ReligiousPreference == relPref).List();
 
@@ -107,8 +96,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".FormatS(relPref, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            throw new CommandCentralException("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".FormatS(relPref, persons.Count), HttpStatusCodes.Forbidden);
                         }
                     }
                     else
@@ -131,7 +119,7 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <param name="id"></param>
         /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
+        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {

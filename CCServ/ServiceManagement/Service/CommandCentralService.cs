@@ -74,6 +74,8 @@ namespace CCServ.ServiceManagement.Service
         /// <returns></returns>
         public string InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
+            AddHeadersToOutgoingResponse(WebOperationContext.Current);
+
             //The token we're going to use for this request.
             MessageToken token = new MessageToken();
 
@@ -206,7 +208,18 @@ namespace CCServ.ServiceManagement.Service
                         }
                         catch (CommandCentralException e)
                         {
-                            throw new NotImplementedException();
+                            session.SaveOrUpdate(token);
+                            transaction.Commit();
+
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = (System.Net.HttpStatusCode)e.StatusCode;
+
+                            return new ReturnContainer
+                            {
+                                ErrorMessages = new List<string> { e.Message },
+                                ErrorType = typeof(HttpStatusCodes).GetMembers().First(x => x.Name == e.StatusCode.ToString()).GetCustomAttribute<CorrespondingErrorTypeAttribute>().ErrorType,
+                                ReturnValue = null,
+                                StatusCode = (System.Net.HttpStatusCode)e.StatusCode
+                            }.Serialize();
                         }
                         catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                         {
@@ -220,6 +233,7 @@ namespace CCServ.ServiceManagement.Service
 
                             //Set the outgoing status code and then release.
                             WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
                             return new ReturnContainer
                             {
                                 ErrorMessages = new List<string> { "A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
@@ -238,6 +252,7 @@ namespace CCServ.ServiceManagement.Service
 
                 //Set the outgoing status code and then release.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
                 return new ReturnContainer
                 {
                     ErrorMessages = new List<string> { "It appears our database is currently offline.  We'll be back up and running shortly!" },

@@ -23,7 +23,7 @@ namespace CCServ.ClientAccess
         /// <summary>
         /// The error message to be sent back to the client.  If this has a value, HasError should be set to true.
         /// </summary>
-        public List<string> ErrorMessages { get; set; }
+        public List<string> ErrorMessages { get; set; } = new List<string>();
 
         /// <summary>
         /// Indicates what type of error is contained in the error message.  Is HasError is false, then this value should be null.
