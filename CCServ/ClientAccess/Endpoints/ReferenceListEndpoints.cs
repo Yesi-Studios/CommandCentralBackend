@@ -20,8 +20,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadReferenceLists", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadReferenceLists(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void LoadReferenceLists(MessageToken token)
         {
             List<string> entityNames = new List<string>();
             if (token.Args.ContainsKey("entitynames"))
@@ -154,25 +154,18 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 if (!Guid.TryParse(token.Args["id"] as string, out id))
                 {
-                    throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
+                    throw new CommandCentralException("Your id was not in the right format.", HttpStatusCodes.BadRequest);
                 }
             }
 
             if (id != default(Guid) && entityNames.Count != 1)
-            {
-                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", HttpStatusCodes.BadRequest);
 
             Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
             //Cool we have a real item and an Id.  Now let's call its loader.
             foreach (var metadata in metadataWithEntityNames)
             {
                 var lists = (Activator.CreateInstance(metadata.Value.GetMappedClass(NHibernate.EntityMode.Poco)) as ReferenceListItemBase).Load(id, token);
-
-                if (token.HasError)
-                    return;
 
                 lists.ForEach(x => NHibernate.NHibernateUtil.Initialize(x));
 
@@ -189,27 +182,19 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "UpdateOrInsertReferenceList", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdateOrInsertList(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void UpdateOrInsertList(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("entityname", "item");
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-            {
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("entityname"))
-            {
-                throw new CommandCentralException("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", HttpStatusCodes.Unauthorized);
+            
             string entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
@@ -217,16 +202,8 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-            {
-                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("item"))
-            {
-                throw new CommandCentralException("You failed to send an item parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("That entity was not a valid editable reference list.", HttpStatusCodes.BadRequest);
+            
             var item = token.Args["item"].CastJToken();
 
             (Activator.CreateInstance(metadata.GetMappedClass(NHibernate.EntityMode.Poco)) as EditableReferenceListItemBase)
@@ -240,27 +217,19 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "DeleteReferenceList", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteReferenceList(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteReferenceList(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to update or insert reference lists.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("entityname", "id");
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-            {
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", HttpStatusCodes.Unauthorized);
 
-            if (!token.Args.ContainsKey("entityname"))
-            {
-                throw new CommandCentralException("You failed to send an entityname parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
             string entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
@@ -268,23 +237,10 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-            {
-                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("That entity was not a valid editable reference list.", HttpStatusCodes.BadRequest);
 
-            if (!token.Args.ContainsKey("id"))
-            {
-                throw new CommandCentralException("You failed to send an id parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid id;
-            if (!Guid.TryParse(token.Args["id"] as string, out id))
-            {
-                throw new CommandCentralException("Your id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+                throw new CommandCentralException("Your id parameter was in the wrong format.", HttpStatusCodes.BadRequest);
 
             bool forceDelete = false;
             if (token.Args.ContainsKey("forcedelete"))
@@ -295,6 +251,5 @@ namespace CCServ.ClientAccess.Endpoints
             (Activator.CreateInstance(metadata.GetMappedClass(NHibernate.EntityMode.Poco)) as EditableReferenceListItemBase)
                 .Delete(id, forceDelete, token);
         }
-
     }
 }
