@@ -85,8 +85,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
-
     }
 }
