@@ -24,19 +24,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void EditWatchEligibilityGroupMembership(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("eligibilitygroup"))
-            {
-                throw new CommandCentralException("You failed to send a 'eligibilitygroup' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("eligibilitygroup");
 
             WatchEligibilityGroup groupFromClient;
             try
@@ -45,17 +37,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("There was an issue while parsing your eligibility group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("There was an issue while parsing your eligibility group.", HttpStatusCodes.BadRequest);
             }
 
             var validationResults = new WatchEligibilityGroup.WatchEligibilityGroupValidator().Validate(groupFromClient);
 
             if (!validationResults.IsValid)
-            {
-                throw new CommandCentralExceptions(validationResults.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(validationResults.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -63,13 +51,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var groupFromDB = session.Get<WatchEligibilityGroup>(groupFromClient.Id);
-
-                        if (groupFromDB == null)
-                        {
-                            throw new CommandCentralException("Your eligibility group's id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var groupFromDB = session.Get<WatchEligibilityGroup>(groupFromClient.Id) ??
+                            throw new CommandCentralException("Your eligibility group's id was not valid.", HttpStatusCodes.BadRequest);
 
                         //Let's make sure that all of them are real people.
                         var persons = session.QueryOver<Entities.Person>()
@@ -78,17 +61,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             .List();
 
                         if (persons.Count != groupFromClient.EligiblePersons.Count)
-                        {
-                            throw new CommandCentralException("One or more of the persons in your eligibility group were not valid..", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new CommandCentralException("One or more of the persons in your eligibility group were not valid.", HttpStatusCodes.BadRequest);
 
                         //Now we just need to make sure the client is in the command level of the group's chain of command.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(groupFromDB.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            throw new CommandCentralException("You are not allowed to edit the membership of this group.  You must be in the same chain of command as the group and be at the command level.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                            throw new CommandCentralException("You are not allowed to edit the membership of this group.  " +
+                                "You must be in the same chain of command as the group and be at the command level.", HttpStatusCodes.Unauthorized);
 
                         //Now we need to add or remove all the people.
                         //This method will cause a pretty big batch update to occur on the database but that's ok.
