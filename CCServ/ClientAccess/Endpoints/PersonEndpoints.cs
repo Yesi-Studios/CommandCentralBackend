@@ -657,7 +657,7 @@ namespace CCServ.ClientAccess.Endpoints
                             throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), HttpStatusCodes.BadRequest);
 
                         //if the client isn't allowed to return this field, replace its value with "redacted"
-                        if (returnableFields.Contains(propertyName))
+                        if (returnableFields.Any(x => String.Equals(propertyName, x, StringComparison.CurrentCultureIgnoreCase)))
                         {
                             var value = propertyInfo.GetValue(person);
                             returnData.Add(propertyInfo.Name, value == null ? "" : value.ToString());
