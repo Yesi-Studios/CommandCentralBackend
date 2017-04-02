@@ -651,9 +651,12 @@ namespace CCServ.ClientAccess.Endpoints
                     var returnData = new Dictionary<string, string>();
 
                     //Now just set the fields the client is allowed to see.
-                    foreach (var propertyName in returnableFields.Intersect(returnFields, StringComparer.CurrentCultureIgnoreCase))
+                    foreach (var propertyName in returnableFields)
                     {
                         var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName);
+
+                        if (propertyInfo == null)
+                            throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), HttpStatusCodes.BadRequest);
 
                         //if the client isn't allowed to return this field, replace its value with "redacted"
                         if (returnableFields.Contains(propertyName))
