@@ -14,9 +14,21 @@ namespace CCServ.ClientAccess.Endpoints
     static class AuthorizationEndpoints
     {
         /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Returns all permission group definitions to the client.
+        /// </summary>
+        /// <param name="token"></param>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void LoadPermissionGroups(MessageToken token)
+        {
+            token.SetResult(Authorization.Groups.PermissionGroup.AllPermissionGroups.ToList());
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Returns all permission group definitions to the client for the specific client.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>

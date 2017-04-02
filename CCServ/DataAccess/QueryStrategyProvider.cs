@@ -129,7 +129,7 @@ namespace CCServ.DataAccess
 
                 foreach (var propertyExpression in searchParameters.Keys)
                 {
-                    var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Contains(propertyExpression));
+                    var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => y.GetPropertyName().Equals(propertyExpression.GetPropertyName())));
 
                     if (propertyGroup == null)
                     {
@@ -162,7 +162,7 @@ namespace CCServ.DataAccess
 
             foreach (var filter in filters)
             {
-                var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Contains(filter.Key));
+                var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => y.GetPropertyName().Equals(filter.Key.GetPropertyName())));
 
                 if (propertyGroup == null)
                 {

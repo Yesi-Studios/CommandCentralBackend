@@ -54,10 +54,13 @@ namespace CCServ.Entities.ReferenceLists
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null)
                 return false;
 
-            ReferenceListItemBase other = (ReferenceListItemBase)obj;
+            var other = obj as ReferenceListItemBase;
+
+            if (other == null)
+                return false;
 
             return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
         }

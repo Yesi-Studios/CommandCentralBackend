@@ -109,14 +109,16 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Let's make sure no one with that SSN exists...
-                    var result = session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).SingleOrDefault() ??
+                    if (session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).RowCount() != 0)
+                    {
                         throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", HttpStatusCodes.BadRequest);
+                    }
 
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
                     session.Save(newPerson);
 
                     //And now return the person.
-                    token.SetResult(newPerson);
+                    token.SetResult(newPerson.Id);
 
                     transaction.Commit();
                 }
@@ -391,7 +393,7 @@ namespace CCServ.ClientAccess.Endpoints
                 token.SetResult(new
                 {
                     Results = results,
-                    Fields = simpleSearchMembers.Select(x => x.Name)
+                    Fields = simpleSearchMembers.Select(x => x.GetPropertyName())
                 });
             }
         }
@@ -538,7 +540,7 @@ namespace CCServ.ClientAccess.Endpoints
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 var convertedFilters = filters.ToDictionary(
-                    x => (MemberInfo)PropertySelector.SelectPropertyFrom<Person>(x.Key),
+                    x => PropertySelector.SelectExpressionFrom<Person>(x.Key),
                     x => x.Value);
 
                 var query = new Person.PersonQueryProvider().CreateQuery(QueryTypes.Advanced, convertedFilters);

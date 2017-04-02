@@ -1160,41 +1160,25 @@ namespace CCServ.Entities
                     if (token.SearchParameter.Value == null)
                         throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
 
-                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
-                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
-                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+                    var str = (string)token.SearchParameter.Value;
+
+                    if (String.IsNullOrWhiteSpace(str))
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
 
                     List<string> values = new List<string>();
-                    if (token.SearchParameter.Value is string)
+                    foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
-                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+                        if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else if (token.SearchParameter.Value is IEnumerable<string>)
-                    {
-                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
-
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("Hit default case in switch.");
+                        values.Add(value.Trim());
                     }
 
                     var disjunction = new Disjunction();
 
                     foreach (var value in values)
                     {
-                        disjunction.Add(Restrictions.On(() => necAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                        disjunction.Add(Restrictions.On(() => necAlias.Value).IsInsensitiveLike(value, MatchMode.Anywhere));
                     }
 
                     return disjunction;
@@ -1214,41 +1198,25 @@ namespace CCServ.Entities
                     if (token.SearchParameter.Value == null)
                         throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
 
-                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
-                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
-                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+                    var str = (string)token.SearchParameter.Value;
+
+                    if (String.IsNullOrWhiteSpace(str))
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
 
                     List<string> values = new List<string>();
-                    if (token.SearchParameter.Value is string)
+                    foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
-                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+                        if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else if (token.SearchParameter.Value is IEnumerable<string>)
-                    {
-                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
-
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("Hit default case in switch.");
+                        values.Add(value.Trim());
                     }
 
                     var disjunction = new Disjunction();
 
                     foreach (var value in values)
                     {
-                        disjunction.Add(Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                        disjunction.Add(Restrictions.On(() => qualAlias.Value).IsInsensitiveLike(value, MatchMode.Anywhere));
                     }
 
                     return disjunction;
@@ -1278,41 +1246,25 @@ namespace CCServ.Entities
                     if (token.SearchParameter.Value == null)
                         throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
 
-                    if (!(token.SearchParameter.Value is string) || !(token.SearchParameter.Value is IEnumerable<string>))
-                        throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
-                            "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+                    var str = (string)token.SearchParameter.Value;
+
+                    if (String.IsNullOrWhiteSpace(str))
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
 
                     List<string> values = new List<string>();
-                    if (token.SearchParameter.Value is string)
+                    foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
-                        foreach (var value in ((string)token.SearchParameter.Value).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
+                        if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else if (token.SearchParameter.Value is IEnumerable<string>)
-                    {
-                        foreach (var value in (IEnumerable<string>)token.SearchParameter.Value)
-                        {
-                            if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                                throw new CommandCentralException("One of your values was not valid.", HttpStatusCodes.BadRequest);
-
-                            values.Add(value.Trim());
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("Hit default case in switch.");
+                        values.Add(value.Trim());
                     }
 
                     var disjunction = new Disjunction();
 
                     foreach (var value in values)
                     {
-                        disjunction.Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(token.SearchParameter.Value.ToString(), MatchMode.Anywhere));
+                        disjunction.Add(Restrictions.On(() => addressAlias.Address).IsInsensitiveLike(value, MatchMode.Anywhere));
                     }
 
                     return disjunction;

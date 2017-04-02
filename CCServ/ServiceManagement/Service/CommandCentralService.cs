@@ -18,6 +18,7 @@ using CCServ.ClientAccess;
 using CCServ.Logging;
 using Polly;
 using Humanizer;
+using System.Net;
 
 namespace CCServ.ServiceManagement.Service
 {
@@ -201,9 +202,27 @@ namespace CCServ.ServiceManagement.Service
 
                             return new ReturnContainer
                             {
-                                StatusCode = System.Net.HttpStatusCode.OK,
+                                StatusCode = HttpStatusCode.OK,
                                 ErrorType = ErrorTypes.Null,
                                 ReturnValue = token.Result
+                            }.Serialize();
+                        }
+                        catch (AggregateException e) when (e.InnerExceptions.All(x => x.GetType() == typeof(CommandCentralException)))
+                        {
+                            if (e.InnerExceptions.GroupBy(x => ((CommandCentralException)x).StatusCode).Count() != 1)
+                                throw new Exception("An aggregate exception was through with multiple status codes.");
+
+                            session.SaveOrUpdate(token);
+                            transaction.Commit();
+
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)((CommandCentralException)e.InnerExceptions.First()).StatusCode;
+
+                            return new ReturnContainer
+                            {
+                                ErrorMessages = e.InnerExceptions.Select(x => x.Message).ToList(),
+                                ErrorType = typeof(HttpStatusCodes).GetMembers().First(x => x.Name == ((CommandCentralException)e.InnerExceptions.First()).StatusCode.ToString()).GetCustomAttribute<CorrespondingErrorTypeAttribute>().ErrorType,
+                                ReturnValue = null,
+                                StatusCode = WebOperationContext.Current.OutgoingResponse.StatusCode
                             }.Serialize();
                         }
                         catch (CommandCentralException e)
@@ -211,14 +230,14 @@ namespace CCServ.ServiceManagement.Service
                             session.SaveOrUpdate(token);
                             transaction.Commit();
 
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = (System.Net.HttpStatusCode)e.StatusCode;
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)e.StatusCode;
 
                             return new ReturnContainer
                             {
                                 ErrorMessages = new List<string> { e.Message },
                                 ErrorType = typeof(HttpStatusCodes).GetMembers().First(x => x.Name == e.StatusCode.ToString()).GetCustomAttribute<CorrespondingErrorTypeAttribute>().ErrorType,
                                 ReturnValue = null,
-                                StatusCode = (System.Net.HttpStatusCode)e.StatusCode
+                                StatusCode = (HttpStatusCode)e.StatusCode
                             }.Serialize();
                         }
                         catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
@@ -251,14 +270,14 @@ namespace CCServ.ServiceManagement.Service
                 Log.Exception(e, "An error occurred while trying to create a database session.", token);
 
                 //Set the outgoing status code and then release.
-                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                WebOperationContext.Current.OutgoingResponse.StatusCode = HttpStatusCode.InternalServerError;
 
                 return new ReturnContainer
                 {
                     ErrorMessages = new List<string> { "It appears our database is currently offline.  We'll be back up and running shortly!" },
                     ErrorType = ErrorTypes.Fatal,
                     ReturnValue = null,
-                    StatusCode = System.Net.HttpStatusCode.InternalServerError
+                    StatusCode = HttpStatusCode.InternalServerError
                 }.Serialize();
             }
         }
@@ -334,7 +353,7 @@ namespace CCServ.ServiceManagement.Service
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Origin", "*");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             current.OutgoingResponse.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Accept,Authorization");
-            current.OutgoingResponse.Headers.Add(System.Net.HttpResponseHeader.ContentType, "application/json");
+            current.OutgoingResponse.Headers.Add(HttpResponseHeader.ContentType, "application/json");
         }
 
         /// <summary>

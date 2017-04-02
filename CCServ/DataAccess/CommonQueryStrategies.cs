@@ -26,35 +26,20 @@ namespace CCServ.DataAccess
         {
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
 
-            if (!(searchValue is string) || !(searchValue is IEnumerable<string>))
-                throw new CommandCentralException("When searching for an Id, your search value must be either a string of ids, delineated by white space, semi colones, or commas, or an array of Ids.", HttpStatusCodes.BadRequest);
+            var str = (string)searchValue;
 
-            List<Guid> ids = new List<Guid>();
-            if (searchValue is string)
+            if (String.IsNullOrWhiteSpace(str))
+                throw new CommandCentralException("Your search value must be a string of ids, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+
+            List<Guid> values = new List<Guid>();
+            foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                foreach (var value in ((string)searchValue).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (!Guid.TryParse(value.Trim(), out Guid result))
-                        throw new CommandCentralException("One of your Id values was not a Guid.  Command Central uses Guids for all Ids.", HttpStatusCodes.BadRequest);
+                if (!Guid.TryParse(value, out Guid result))
+                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                    ids.Add(result);
-                }
-            }
-            else if (searchValue is IEnumerable<string>)
-            {
-                foreach (var value in (IEnumerable<string>)searchValue)
-                {
-                    if (!Guid.TryParse(value.Trim(), out Guid result))
-                        throw new CommandCentralException("One of your Id values was not a Guid.  Command Central uses Guids for all Ids.", HttpStatusCodes.BadRequest);
-
-                    ids.Add(result);
-                }
-            }
-            else
-            {
-                throw new NotImplementedException("Hit default case in IdQuery method.");
+                values.Add(result);
             }
 
             //Now that we have the Guids, let's put them all together as restrictions.
@@ -62,7 +47,7 @@ namespace CCServ.DataAccess
 
             var disjunction = new Disjunction();
 
-            foreach (var id in ids)
+            foreach (var id in values)
             {
                 disjunction.Add(Restrictions.Eq(propertyName, id));
             }
@@ -79,48 +64,31 @@ namespace CCServ.DataAccess
         /// <returns></returns>
         public static ICriterion ReferenceListValueQuery<T>(Expression<Func<T, object>> propertyExpression, object searchValue)
         {
-
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
 
-            if (!(searchValue is string) || !(searchValue is IEnumerable<string>))
-                throw new CommandCentralException("When searching for a value, your search value must be either a string of values, " +
-                    "delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+            var str = (string)searchValue;
+
+            if (String.IsNullOrWhiteSpace(str))
+                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
 
             List<string> values = new List<string>();
-            if (searchValue is string)
+            foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                foreach (var value in ((string)searchValue).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                        throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                    values.Add(value.Trim());
-                }
-            }
-            else if (searchValue is IEnumerable<string>)
-            {
-                foreach (var value in (IEnumerable<string>)searchValue)
-                {
-                    if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                        throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
-
-                    values.Add(value.Trim());
-                }
-            }
-            else
-            {
-                throw new NotImplementedException("Hit default case in IdQuery method.");
+                values.Add(value.Trim());
             }
 
             var disjunction = new Disjunction();
 
             foreach (var value in values)
             {
-                var selectionExpression = System.Linq.Expressions.Expression.Lambda<Func<T, object>>(System.Linq.Expressions.Expression.Property(propertyExpression, "Id"));
+                //var selectionExpression = System.Linq.Expressions.Expression.Lambda<Func<T, object>>(System.Linq.Expressions.Expression.Property(propertyExpression, "Id"));
 
-                var method = typeof(QueryOver).GetMethod("Of").MakeGenericMethod(((PropertyInfo)propertyExpression.GetProperty()).PropertyType);
+                var method = typeof(QueryOver).GetMethods().First(x => x.Name == "Of" && x.IsGenericMethod).MakeGenericMethod(((PropertyInfo)propertyExpression.GetProperty()).PropertyType);
 
                 var subQueryOver = (QueryOver)method.Invoke(null, null);
                 var criteria = subQueryOver.DetachedCriteria.Add(Restrictions.On<Entities.ReferenceLists.ReferenceListItemBase>(x => x.Value).IsInsensitiveLike(value, MatchMode.Anywhere)).SetProjection(Projections.Id());
@@ -222,35 +190,20 @@ namespace CCServ.DataAccess
         {
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
 
-            if (!(searchValue is string) || !(searchValue is IEnumerable<string>))
-                throw new CommandCentralException("When searching for a value, your search value must be either a string of values, delineated by white space, semi colones, or commas, or an array of values.", HttpStatusCodes.BadRequest);
+            var str = (string)searchValue;
+
+            if (String.IsNullOrWhiteSpace(str))
+                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
 
             List<string> values = new List<string>();
-            if (searchValue is string)
+            foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                foreach (var value in ((string)searchValue).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                        throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
+                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
 
-                    values.Add(value.Trim());
-                }
-            }
-            else if (searchValue is IEnumerable<string>)
-            {
-                foreach (var value in (IEnumerable<string>)searchValue)
-                {
-                    if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                        throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
-
-                    values.Add(value.Trim());
-                }
-            }
-            else
-            {
-                throw new NotImplementedException("Hit default case in IdQuery method.");
+                values.Add(value.Trim());
             }
 
             var disjunction = new Disjunction();

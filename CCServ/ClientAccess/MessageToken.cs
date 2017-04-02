@@ -130,7 +130,7 @@ namespace CCServ.ClientAccess
         /// <param name="result"></param>
         public virtual void SetResult(object result)
         {
-            Result = Newtonsoft.Json.Linq.JToken.FromObject(result);
+            Result = Newtonsoft.Json.Linq.JToken.FromObject(result, Newtonsoft.Json.JsonSerializer.Create(SerializationSettings.StandardSettings));
         }
 
         #endregion

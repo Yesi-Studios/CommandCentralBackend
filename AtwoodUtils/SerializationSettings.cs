@@ -20,7 +20,7 @@ namespace AtwoodUtils
             Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
             ContractResolver = new CustomContractResolver(),
             PreserveReferencesHandling = PreserveReferencesHandling.All,
-            ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.Indented,
             DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
