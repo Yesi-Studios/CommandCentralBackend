@@ -21,30 +21,18 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadNewsItem(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            //Get the news item ID we're supposed to load.
-            if (!token.Args.ContainsKey("newsitemid"))
-            {
-                token.AddErrorMessage("You didn't send an 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("newsitemid");
 
             //Ok, so there is a newsitemid!  Is it legit?
-            Guid newsItemId;
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
-            {
-                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", HttpStatusCodes.BadRequest);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -81,15 +69,12 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadNewsItems", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadNewsItems(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadNewsItems(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -101,10 +86,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var limit = Convert.ToInt32(token.Args["limit"]);
 
                     if (limit <= 0)
-                    {
-                        token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("Your limit must be greater than zero.", HttpStatusCodes.BadRequest);
 
                     query = (NHibernate.IQueryOver<NewsItem, NewsItem>)query.OrderBy(x => x.CreationTime).Desc.Take(limit);
                 }
@@ -135,36 +117,21 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "CreateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_CreateNewsItem(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void CreateNewsItem(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to create a news item.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("title", "paragraphs");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
-            {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-            }
-
-            //Let's see if the parameters are here.
-            if (!token.Args.ContainsKey("title"))
-                token.AddErrorMessage("You didn't send a 'title' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            if (!token.Args.ContainsKey("paragraphs"))
-                token.AddErrorMessage("You didn't send a 'paragraphs' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            if (token.HasError)
-                return;
+                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
 
             string title = token.Args["title"] as string;
             List<string> paragraphs = null;
-
 
             //Do the cast here in case it fails.
             try
@@ -173,8 +140,8 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while attempting to cast your parahraphs.  It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("There was an error while attempting to cast your parahraphs.  " +
+                    "It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), HttpStatusCodes.BadRequest);
             }
 
             //Now build the whole news item.
@@ -188,15 +155,10 @@ namespace CCServ.ClientAccess.Endpoints
             };
 
             //Now we just need to validate the news item object and throw back any errors if we get them.
-            CCServ.Entities.NewsItem.NewsItemValidator validator = new CCServ.Entities.NewsItem.NewsItemValidator();
-            var results = validator.Validate(newsItem);
+            var results = new NewsItem.NewsItemValidator().Validate(newsItem);
 
             if (!results.IsValid)
-            {
-                //Send back the error messages.
-                token.AddErrorMessages(results.Errors.Select(x => x.ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ToString(), HttpStatusCodes.BadRequest)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -217,8 +179,6 @@ namespace CCServ.ClientAccess.Endpoints
                    throw;
                 }
             }
-
-
         }
 
         /// <summary>
@@ -231,36 +191,24 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "UpdateNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdateNewsItem(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void UpdateNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to manage the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("newsitemid");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-            }
-
-            //Let's see if the parameters are here.
-            if (!token.Args.ContainsKey("newsitemid"))
-            {
-                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
             }
 
             //Get the news item id from the client.
-            Guid newsItemId;
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
-            {
-                token.AddErrorMessage("The news item id you sent was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+                throw new CommandCentralException("The news item id you sent was not in a valid format.", HttpStatusCodes.BadRequest);
 
             //Before we go get the news item from the database, let's get the title and the paragraphs from the client.  Both are optional.
             string title = null;
@@ -277,15 +225,9 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-
                     //Ok, it's a good news item so now we're going to compare it to the one in the database.
-                    NewsItem newsItem = session.Get<NewsItem>(newsItemId);
-
-                    if (newsItem == null)
-                    {
-                        token.AddErrorMessage("A news item with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                        return;
-                    }
+                    NewsItem newsItem = session.Get<NewsItem>(newsItemId) ??
+                        throw new CommandCentralException("A news item with that Id was not found in the database.", HttpStatusCodes.BadRequest);
 
                     //Ok, now let's put the values into the news item and then ask if it's valid.
                     if (!string.IsNullOrEmpty(title))
@@ -294,14 +236,11 @@ namespace CCServ.ClientAccess.Endpoints
                     if (paragraphs != null)
                         newsItem.Paragraphs = paragraphs;
 
-                    var errors = new CCServ.Entities.NewsItem.NewsItemValidator().Validate(newsItem).Errors;
+                    var validationResult = new NewsItem.NewsItemValidator().Validate(newsItem);
 
-                    if (errors.Any())
-                    {
-                        token.AddErrorMessages(errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
+                    if (!validationResult.IsValid)
+                        throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                    
                     //Ok, so it's valid.  Now let's save it.
                     session.Update(newsItem);
 
@@ -326,36 +265,24 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "DeleteNewsItem", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteNewsItem(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteNewsItem(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("newsitemid");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                token.AddErrorMessage("You do not have permission to manage the news.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
             }
 
-            //Get the news item id.
-            if (!token.Args.ContainsKey("newsitemid"))
-            {
-                token.AddErrorMessage("You didn't send a 'newsitemid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Ok, so there is a news item id!  Is it legit?
-            Guid newsItemId;
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out newsItemId))
-            {
-                token.AddErrorMessage("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            //Get the news item id from the client.
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+                throw new CommandCentralException("The news item id you sent was not in a valid format.", HttpStatusCodes.BadRequest);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -363,13 +290,8 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
-                    var newsItemFromDB = session.Get<NewsItem>(newsItemId);
-
-                    if (newsItemFromDB == null)
-                    {
-                        token.AddErrorMessage("A message token with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                        return;
-                    }
+                    var newsItemFromDB = session.Get<NewsItem>(newsItemId) ??
+                        throw new CommandCentralException("A message token with that Id was not found in the database.", HttpStatusCodes.BadRequest);
 
                     session.Delete(newsItemFromDB);
 
@@ -382,6 +304,5 @@ namespace CCServ.ClientAccess.Endpoints
                 }
             }
         }
-
     }
 }

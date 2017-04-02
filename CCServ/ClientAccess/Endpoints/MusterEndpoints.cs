@@ -19,89 +19,6 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Loads all muster records for a given musteree using the given limit.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadMusterRecordsByMusteree(MessageToken token)
-        {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
-
-            if (!token.Args.ContainsKey("mustereeid"))
-            {
-                token.AddErrorMessage("You failed to send a 'mustereeid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid mustereeId;
-            if (!Guid.TryParse(token.Args["mustereeid"] as string, out mustereeId))
-            {
-                token.AddErrorMessage("Your mustereeid parameter was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-                    var query = session.QueryOver<MusterRecord>().Where(x => x.Musteree.Id == mustereeId);
-
-                    if (token.Args.ContainsKey("limit"))
-                    {
-                        var limit = Convert.ToInt32(token.Args["limit"]);
-
-                        if (limit <= 0)
-                        {
-                            token.AddErrorMessage("Your limit must be greater than zero.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
-
-                        query = (NHibernate.IQueryOver<MusterRecord, MusterRecord>)query.OrderBy(x => x.MusterDate).Desc.Take(limit);
-                    }
-
-                    //Set the result.
-                    token.SetResult(query.List().Select(x =>
-                    {
-                        return new
-                        {
-                            x.Command,
-                            x.Department,
-                            x.Designation,
-                            x.Division,
-                            x.DutyStatus,
-                            x.HasBeenSubmitted,
-                            x.Id,
-                            x.MusterDate,
-                            Musteree = x.Musteree == null ? null : x.Musteree,
-                            Musterer = x.Musterer == null ? null : x.Musterer,
-                            x.MusterStatus,
-                            x.Paygrade,
-                            x.Remarks,
-                            x.SubmitTime,
-                            x.UIC
-                        };
-                    }));
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
         /// Loads all muster records for a given muster date. This will be converted to a muster date based on the rollover time shift.  Recommend that you submit the date time without a time portion or with the time portion set to midnight - although it doesn't matter.
         /// <para />
         /// Client Parameters: <para />
@@ -112,23 +29,16 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadMusterRecordsByMusterDay(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("musterdate"))
-            {
-                token.AddErrorMessage("You must send a 'musterdate' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("musterdate");
 
             DateTime musterDate;
             if (!(token.Args["musterdate"] is DateTime))
             {
-                token.AddErrorMessage("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("Your 'musterdate' parameter was not in a valid format.", HttpStatusCodes.BadRequest);
             }
             else
             {
@@ -174,44 +84,35 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void SubmitMuster(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to submit muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+
+            token.Args.AssertContainsKeys("mustersubmissions");
 
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
-                token.AddErrorMessage("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //Did we get what we needed?
-            if (!token.Args.ContainsKey("mustersubmissions"))
-            {
-                token.AddErrorMessage("You must send a 'mustersubmissions' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), HttpStatusCodes.Forbidden);
             }
 
             Dictionary<Guid, JToken> musterSubmissions = null;
-            //When we try to parse the JSON from the request, we'll do it in a try catch because there's no convenient, performant TryParse implementation for this.
             try
             {
+                //TODO: why the fuck did I do this?
                 musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>()
                     .Select(x => new KeyValuePair<Guid, JToken>(x.Key, new { status = x.Value, remarks = "" }.Serialize().DeserializeToJObject()))
                     .ToDictionary(x => x.Key, x => x.Value);
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to format your 'mustersubmissions' argument.  It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("There was an error while trying to format your 'mustersubmissions' argument.  " +
+                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), HttpStatusCodes.BadRequest);
             }
 
             //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
+            if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
             {
-                token.AddErrorMessage("One or more requested muster statuses were not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("One or more requested muster statuses were not valid.", HttpStatusCodes.BadRequest);
             }
 
             //This is the session in which we're going to do our muster updates.  We do it separately in case something terrible happens to the currently logged in user.
@@ -219,19 +120,12 @@ namespace CCServ.ClientAccess.Endpoints
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
-                //Tell the session we'll handle commits through the transaction, otherwise every property update on the current muster status will result in an update.
-                session.CacheMode = NHibernate.CacheMode.Ignore;
-                session.FlushMode = NHibernate.FlushMode.Commit;
-
-                //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  Fetch the command/dep/div so we can use it without lazy loading.
+                //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  
                 var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys).List();
 
                 //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
                 if (persons.Any(x => !MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x)))
-                {
-                    token.AddErrorMessage("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                    return;
-                }
+                    throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", HttpStatusCodes.Unauthorized);
 
                 //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
                 for (int x = 0; x < persons.Count; x++)
@@ -241,8 +135,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         if (persons[x].DutyStatus == DutyStatuses.Loss)
                         {
-                            token.AddErrorMessage("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), HttpStatusCodes.BadRequest);
                         }
                         else
                         {
@@ -281,11 +174,9 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadMusterablePersonsForToday(MessageToken token)
         {
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to view muster records.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //Where we're going to keep all the persons the client can muster.
             List<Person> musterablePersons = new List<Person>();
@@ -339,7 +230,7 @@ namespace CCServ.ClientAccess.Endpoints
                         }
                 }
 
-                //Here we also want to limit the msuterable persons query to only those people   
+                //Here we also want to limit the musterable persons query to only those people   
 
                 //Now that we have the results from the database, let's project them into our results.  This won't be the final DTO, we're going to layer on some additional information for the client to use.
                 //Because Atwood is a good code monkey. Oh yes he is.
@@ -410,25 +301,16 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
         private static void FinalizeMuster(MessageToken token)
         {
-            //Let's make sure we have permission to finalize muster.  You can finalize muster if you're logged in (no shit) and a command level muster... person.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to finalize the muster.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-            {
-                token.AddErrorMessage("You are not authorized to finalize muster.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You are not authorized to finalize muster.", HttpStatusCodes.BadRequest);
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
-            {
-                token.AddErrorMessage("The muster has already been finalized.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("The muster has already been finalized.", HttpStatusCodes.Forbidden);
 
             //So we should be good to finalize the muster.
             MusterRecord.FinalizeMuster(token);

@@ -37,6 +37,31 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Returns the expression.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static Expression<Func<T, object>> SelectExpressionFrom<T>(Expression<Func<T, object>> expression)
+        {
+            return expression;
+        }
+
+        /// <summary>
+        /// Returns the expression.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static Expression<Func<T, object>> SelectExpressionFrom<T>(string propertyName)
+        {
+            var parameter = Expression.Parameter(typeof(T));
+            var memberExpression = Expression.Property(parameter, propertyName);
+            var lambdaExpression = Expression.Lambda<Func<T, object>>(memberExpression, parameter);
+            return lambdaExpression;
+        }
+
+        /// <summary>
         /// Selects a number of properties from a given type that are all of the same given type.
         /// </summary>
         /// <typeparam name="T"></typeparam>

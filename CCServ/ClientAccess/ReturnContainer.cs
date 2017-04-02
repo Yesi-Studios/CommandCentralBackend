@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace CCServ.ClientAccess
@@ -9,14 +10,20 @@ namespace CCServ.ClientAccess
     public class ReturnContainer
     {
         /// <summary>
-        /// A boolean that indicates if this return container contains an exception.  If this is true, error message should be set, else ReturnValue should be set.
+        /// A boolean that indicates if this return container contains an exception.
         /// </summary>
-        public bool HasError { get; set; }
+        public bool HasError
+        {
+            get
+            {
+                return ErrorMessages.Any();
+            }
+        }
 
         /// <summary>
         /// The error message to be sent back to the client.  If this has a value, HasError should be set to true.
         /// </summary>
-        public List<string> ErrorMessages { get; set; }
+        public List<string> ErrorMessages { get; set; } = new List<string>();
 
         /// <summary>
         /// Indicates what type of error is contained in the error message.  Is HasError is false, then this value should be null.

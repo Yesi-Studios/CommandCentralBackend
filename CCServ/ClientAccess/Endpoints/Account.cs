@@ -35,21 +35,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "Login", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_Login(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void Login(MessageToken token)
         {
             //Let's see if the parameters are here.
-            if (!token.Args.ContainsKey("username"))
-                token.AddErrorMessage("You didn't send a 'username' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
+            if (!token.Args.ContainsKeys("username", "password"))
+                throw new CommandCentralException("You must send both a 'username' and a 'password' parameter.", HttpStatusCodes.BadRequest);
 
-            if (!token.Args.ContainsKey("password"))
-                token.AddErrorMessage("You didn't send a 'password' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            if (!token.HasError)
+            using (var session = NHibernateHelper.CreateStatefulSession())
             {
-
-                //If the token has no error then we need a session and a transaction
-                using (var session = NHibernateHelper.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -61,15 +55,10 @@ namespace CCServ.ClientAccess.Endpoints
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                         var person = session.QueryOver<Person>()
                             .Where(x => x.Username == username)
-                            .SingleOrDefault<Person>();
+                            .SingleOrDefault<Person>() ??
+                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
 
-                        if (person == null)
-                        {
-                            token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                            return;
-                        }
-
-                        if (!ClientAccess.PasswordHash.ValidatePassword(password, person.PasswordHash))
+                        if (!PasswordHash.ValidatePassword(password, person.PasswordHash))
                         {
                             //A login to the client's account failed.  We need to send an email.
                             if (!person.EmailAddresses.Any())
@@ -88,9 +77,6 @@ namespace CCServ.ClientAccess.Endpoints
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_HTML.html", model)
                                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
-                            //Put the error in the token and shake it all up.
-                            token.AddErrorMessage("Either the username or password is wrong.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-
                             //Now we also need to add the event to client's account history.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
@@ -100,6 +86,11 @@ namespace CCServ.ClientAccess.Endpoints
 
                             session.Save(person);
 
+                            //commit the transaction cause we're about to bail out of here.
+                            transaction.Commit();
+
+                            //Finally, tell the client something went wrong.
+                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
                         }
                         else
                         {
@@ -128,7 +119,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                         transaction.Commit();
                     }
-                    catch
+                    catch (Exception e) when (e.GetType() != typeof(CommandCentralException))
                     {
                         transaction.Rollback();
                         throw;
@@ -144,15 +135,12 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "Logout", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_Logout(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void Logout(MessageToken token)
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to update the news.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //First we need to release any profile locks owned by this person.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -206,8 +194,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "BeginRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_BeginRegistration(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void BeginRegistration(MessageToken token)
         {
 
             //Let's do our work in a new session so that we don't affect the authentication information.
@@ -216,30 +204,19 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-
-                    session.FlushMode = NHibernate.FlushMode.Always;
-
                     //First off, we need the link that the client wants us to use to finish registration.
                     if (!token.Args.ContainsKey("continuelink"))
-                    {
-                        token.AddErrorMessage("You failed to send a 'continuelink' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("You failed to send a 'continuelink' parameter!", HttpStatusCodes.BadRequest);
+
                     string continueLink = token.Args["continueLink"] as string;
 
                     //Let's just do some basic validation and make sure it's a real URI.
                     if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                    {
-                        token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
 
                     //We also need the client's ssn.  This is the account they want to claim.
                     if (!token.Args.ContainsKey("ssn"))
-                    {
-                        token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("You didn't send a 'ssn' parameter.", HttpStatusCodes.BadRequest);
 
                     string ssn = token.Args["ssn"] as string;
 
@@ -247,14 +224,8 @@ namespace CCServ.ClientAccess.Endpoints
                     //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
                     var person = session.QueryOver<Person>()
                         .Where(x => x.SSN == ssn)
-                        .SingleOrDefault<Person>();
-
-                    //If no result came back, this will be null
-                    if (person == null)
-                    {
-                        token.AddErrorMessage("That ssn belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        .SingleOrDefault<Person>() ??
+                        throw new CommandCentralException("That ssn belongs to no profile.", HttpStatusCodes.BadRequest);
 
                     //Ok, so we have a single profile.  Let's see if it's already been claimed.
                     if (person.IsClaimed)
@@ -279,19 +250,14 @@ namespace CCServ.ClientAccess.Endpoints
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
-                        token.AddErrorMessage("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
+                        throw new CommandCentralException("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
+                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", HttpStatusCodes.BadRequest);
                     }
 
                     //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
-                    var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
-                    if (dodEmailAddress == null)
-                    {
-                        token.AddErrorMessage("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
-                                              "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                    var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress) ??
+                        throw new CommandCentralException("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
+                                              "  Please make sure that Admin or IMO has updated your account with your email address.", HttpStatusCodes.Forbidden);
 
                     //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                     var pendingAccountConfirmation = new PendingAccountConfirmation
@@ -341,9 +307,6 @@ namespace CCServ.ClientAccess.Endpoints
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
-                    //Ok, Jesus Christ.  I think we're finally done.
-                    token.SetResult("Success");
-
                     transaction.Commit();
                 }
                 catch
@@ -368,29 +331,17 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "CompleteRegistration", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_CompleteRegistration(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void CompleteRegistration(MessageToken token)
         {
             //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("username"))
-                token.AddErrorMessage("You didn't send a 'username' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            if (!token.Args.ContainsKey("password"))
-                token.AddErrorMessage("You didn't send a 'password' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            if (!token.Args.ContainsKey("accountconfirmationid"))
-                token.AddErrorMessage("You didn't send a 'accountconfirmationid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
-                return;
+            if (!token.Args.ContainsKeys("username", "password", "accountconfirmationid"))
+                throw new CommandCentralException("You must send a 'username', 'password', and 'accountconfirmationid' parameter.", HttpStatusCodes.BadRequest);
 
             string username = token.Args["username"] as string;
             string password = token.Args["password"] as string;
-            Guid accountConfirmationId;
-            if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out accountConfirmationId))
-            {
-                token.AddErrorMessage("The account confirmation ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out Guid accountConfirmationId))
+                throw new CommandCentralException("The account confirmation ID you sent was not in the right format.", HttpStatusCodes.BadRequest);
 
             //Now we're going to try to find a pending account confirmation for the Id the client gave us.  
             //If we find one, we're going to look at the time on it and make sure it is still valid.
@@ -404,12 +355,8 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationId);
-                    if (pendingAccountConfirmation == null)
-                    {
-                        token.AddErrorMessage("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationId) ??
+                        throw new CommandCentralException("For the account confirmation Id that you provided, no account registration process has been started.", HttpStatusCodes.BadRequest);
 
                     //Is the record valid?
                     if (!pendingAccountConfirmation.IsValid())
@@ -417,8 +364,10 @@ namespace CCServ.ClientAccess.Endpoints
                         //If not we need to delete the record and then tell the client to start over.
                         session.Delete(pendingAccountConfirmation);
 
-                        token.AddErrorMessage("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
+                        //Commit the transaction before bailing.
+                        transaction.Commit();
+
+                        throw new CommandCentralException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", HttpStatusCodes.BadRequest);
                     }
 
                     //Ok now that we know the record is valid, let's see if the person is already claimed.  This is exceptional.
@@ -427,7 +376,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //Alright, we're ready to update the person then!
                     pendingAccountConfirmation.Person.Username = username;
-                    pendingAccountConfirmation.Person.PasswordHash = ClientAccess.PasswordHash.CreateHash(password);
+                    pendingAccountConfirmation.Person.PasswordHash = PasswordHash.CreateHash(password);
                     pendingAccountConfirmation.Person.IsClaimed = true;
 
                     //Also put the account history object on the person.
@@ -455,8 +404,6 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
                     session.Delete(pendingAccountConfirmation);
-
-                    token.SetResult("Success");
 
                     transaction.Commit();
                 }
@@ -488,14 +435,8 @@ namespace CCServ.ClientAccess.Endpoints
         private static void EndpointMethod_BeginPasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("email"))
-                token.AddErrorMessage("You didn't send a 'email' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            if (!token.Args.ContainsKey("ssn"))
-                token.AddErrorMessage("You didn't send a 'ssn' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
-                return;
+            if (!token.Args.ContainsKeys("email", "ssn", "continuelink"))
+                throw new CommandCentralException("You must send an 'email', 'ssn', and 'continuelink' parameter.", HttpStatusCodes.BadRequest);
 
             string email = token.Args["email"] as string;
             string ssn = token.Args["ssn"] as string;
@@ -508,31 +449,18 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                token.AddErrorMessage("The mail parameter you sent was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("The mail parameter you sent was not valid.", HttpStatusCodes.BadRequest);
             }
 
             if (mailAddress.Host != ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost)
-            {
-                token.AddErrorMessage("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", HttpStatusCodes.BadRequest);
 
             //Let's get the continue link
-            if (!token.Args.ContainsKey("continuelink"))
-            {
-                token.AddErrorMessage("You failed to send a 'continuelink' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
             var continueLink = token.Args["continuelink"] as string;
 
             //Let's just do some basic validation and make sure it's a real URI.
             if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-            {
-                token.AddErrorMessage("The continue link you sent was not a valid URI.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
 
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
@@ -551,20 +479,12 @@ namespace CCServ.ClientAccess.Endpoints
                         .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
                         .Where(x => x.Address == email)
                         .TransformUsing(Transformers.DistinctRootEntity)
-                        .SingleOrDefault<Person>();
-
-                    if (person == null)
-                    {
-                        token.AddErrorMessage("That ssn/email address combination belongs to no profile.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        .SingleOrDefault<Person>() ??
+                        throw new CommandCentralException("That ssn/email address combination belongs to no profile.", HttpStatusCodes.AuthenticationFailed);
 
                     //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
                     if (!person.IsClaimed)
-                    {
-                        token.AddErrorMessage("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                        throw new CommandCentralException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", HttpStatusCodes.Forbidden);
 
                     //Ok, let's wipe out any old password reset attempts the person might have.
                     foreach (var pendingReset in session.QueryOver<PendingPasswordReset>().Where(x => x.Person == person).List())
@@ -636,24 +556,15 @@ namespace CCServ.ClientAccess.Endpoints
         {
 
             //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("passwordresetid"))
-                token.AddErrorMessage("You didn't send a 'passwordresetid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-            if (!token.Args.ContainsKey("password"))
-                token.AddErrorMessage("You didn't send a 'password' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-
-            //If there were any errors from the above checks, then stop now.
-            if (token.HasError)
-                return;
+            if (!token.Args.ContainsKeys("passwordresetid", "password"))
+                throw new CommandCentralException("You must send a 'passwordresetid' and a 'password' parameter.", HttpStatusCodes.BadRequest);
 
             string password = token.Args["password"] as string;
-            Guid passwordResetId;
-            if (!Guid.TryParse(token.Args["passwordresetid"] as string, out passwordResetId))
-            {
-                token.AddErrorMessage("The password reset ID you sent was not in the right format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["passwordresetid"] as string, out Guid passwordResetId))
+                throw new CommandCentralException("The password reset ID you sent was not in the right format.", HttpStatusCodes.BadRequest);
+            
             //Create the hash.
-            string passwordHash = ClientAccess.PasswordHash.CreateHash(password);
+            string passwordHash = PasswordHash.CreateHash(password);
 
             //Ok, we're going to use the password reset Id to load the pending password reset.
             //If we get one, we'll make sure it's still valid.
@@ -665,13 +576,9 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetId);
-
-                    if (pendingPasswordReset == null)
-                    {
-                        token.AddErrorMessage("That password reset Id does not correspond to an actual password reset event.  Try initiating a password reset first.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
-                    }
+                    var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetId) ??
+                        throw new CommandCentralException("That password reset Id does not correspond to an actual password reset event.  " +
+                        "Try initiating a password reset first.", HttpStatusCodes.BadRequest);
 
                     //Is the record still valid?
                     if (!pendingPasswordReset.IsValid())
@@ -679,8 +586,9 @@ namespace CCServ.ClientAccess.Endpoints
                         //If not we need to delete the record and then tell the client to start over.
                         session.Delete(pendingPasswordReset);
 
-                        token.AddErrorMessage("It appears you waited too long to reset your password!  Please restart the password reset process.", ErrorTypes.Validation, System.Net.HttpStatusCode.Forbidden);
-                        return;
+                        transaction.Commit();
+
+                        throw new CommandCentralException("It appears you waited too long to reset your password!  Please restart the password reset process.", HttpStatusCodes.Forbidden);
                     }
 
                     //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
@@ -711,8 +619,6 @@ namespace CCServ.ClientAccess.Endpoints
 
                     session.Delete(pendingPasswordReset);
 
-                    token.SetResult("Success");
-
                     transaction.Commit();
                 }
                 catch
@@ -730,21 +636,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "ChangePassword", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_ChangePassword(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void ChangePassword(MessageToken token)
         {
-            //Just make sure the client is logged in.
+            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to change your password.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             if (!token.Args.ContainsKeys("oldpassword", "newpassword"))
-            {
-                token.AddErrorMessage("You must send an oldpassword and newpassword parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You must send an oldpassword and newpassword parameter.", HttpStatusCodes.BadRequest);
 
             string oldPassword = token.Args["oldpassword"] as string;
             string newPassword = token.Args["newpassword"] as string;
@@ -752,10 +652,7 @@ namespace CCServ.ClientAccess.Endpoints
             //First let's confirm the old password is actually the client's old password.
             var correct = PasswordHash.ValidatePassword(oldPassword, token.AuthenticationSession.Person.PasswordHash);
             if (!correct)
-            {
-                token.AddErrorMessage("Your old password was incorrect.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+                throw new CommandCentralException("Your old password was incorrect.", HttpStatusCodes.Unauthorized);
 
             //Now we need to do the password update work in another session
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -811,22 +708,16 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "ForgotUsername", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_ForgotUsername(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void ForgotUsername(MessageToken token)
         {
             if (!token.Args.ContainsKey("ssn"))
-            {
-                token.AddErrorMessage("You failed to send an 'ssn' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You failed to send an 'ssn' parameter!", HttpStatusCodes.BadRequest);
 
             string ssn = token.Args["ssn"] as string;
 
             if (string.IsNullOrWhiteSpace(ssn))
-            {
-                token.AddErrorMessage("The ssn must not be null or empty.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("The ssn must not be null or empty.", HttpStatusCodes.BadRequest);
 
             //Now let's go load the user with this ssn.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -834,27 +725,15 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault();
-
-                    if (person == null)
-                    {
-                        token.AddErrorMessage("That ssn was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault() ??
+                        throw new CommandCentralException("That ssn was not valid.", HttpStatusCodes.BadRequest);
 
                     if (!person.IsClaimed)
-                    {
-                        token.AddErrorMessage("Please register your account first!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("Please register your account first!", HttpStatusCodes.Forbidden);
 
                     //Now let's get the client's DOD email address.
-                    var emailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress);
-
-                    if (emailAddress == null)
-                    {
+                    var emailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress) ??
                         throw new Exception("The user, '{0}', has a claimed account but no DOD email address.  Somehow.".FormatS(person.ToString()));
-                    }
 
                     var model = new Email.Models.ForgotPasswordModel
                     {

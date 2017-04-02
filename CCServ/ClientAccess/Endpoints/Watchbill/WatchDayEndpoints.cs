@@ -25,23 +25,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchdayid"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchdayid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchdayid");
 
-            Guid watchDayId;
-            if (!Guid.TryParse(token.Args["watchdayid"] as string, out watchDayId))
-            {
-                token.AddErrorMessage("Your watch day id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["watchdayid"] as string, out Guid watchDayId))
+                throw new CommandCentralException("Your watch day id parameter's format was invalid.", HttpStatusCodes.BadRequest);
 
             //Now let's go get the watch day from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -50,13 +39,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchDayFromDB = session.Get<WatchDay>(watchDayId);
-
-                        if (watchDayFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchDayFromDB = session.Get<WatchDay>(watchDayId) ??
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
 
                         token.SetResult(watchDayFromDB);
 
@@ -83,16 +67,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchdays"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchdays' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchdays");
 
             List<WatchDay> watchDaysFromClient;
             try
@@ -101,8 +78,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch days.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watch days.", HttpStatusCodes.BadRequest);
             }
 
             var watchDaysToInsert = watchDaysFromClient.Select(x => new WatchDay
@@ -114,12 +90,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }).ToList();
 
             var validationResults = watchDaysToInsert.Select(x => new WatchDay.WatchDayValidator().Validate(x)).ToList();
-
-            if (validationResults.Any(x => !x.IsValid))
-            {
-                token.AddErrorMessages(validationResults.SelectMany(x => x.Errors).Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            var invalidResults = validationResults.Where(x => !x.IsValid);
+            if (invalidResults.Any())
+                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -130,26 +103,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         foreach (var day in watchDaysToInsert)
                         {
                             //Let's get the watchbill the client says this watch day will be assigned to.
-                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(day.Watchbill.Id);
-
-                            if (watchbill == null)
-                            {
-                                token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(day.Watchbill.Id) ??
+                                throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                            {
-                                token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                return;
-                            }
+                                throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                             //Check the state.
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                            {
-                                token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
+                                    "Please consider changing its state first.", HttpStatusCodes.Forbidden);
 
                             watchbill.WatchDays.Add(day);
 
@@ -181,16 +145,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchday"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchday' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchday");
 
             WatchDay watchDayFromClient;
             try
@@ -199,17 +156,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch day.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watch day.", HttpStatusCodes.BadRequest);
             }
 
             var valdiationResult = new WatchDay.WatchDayValidator().Validate(watchDayFromClient);
 
             if (!valdiationResult.IsValid)
-            {
-                token.AddErrorMessages(valdiationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -217,27 +170,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id);
-
-                        if (watchDayFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                            throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                         //Ok let's swap the properties now.
                         //Check the state.
                         if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && watchDayFromClient.Date != watchDayFromDB.Date)
-                        {
-                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
                         watchDayFromDB.Date = watchDayFromClient.Date;
                         watchDayFromDB.Remarks = watchDayFromClient.Remarks;
@@ -246,10 +189,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchDayFromDB.Watchbill);
 
                         if (!watchbillValidationResult.IsValid)
-                        {
-                            token.AddErrorMessages(watchbillValidationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new AggregateException(watchbillValidationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                         session.Update(watchDayFromDB);
 
@@ -278,16 +218,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchday"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchday' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchday");
 
             WatchDay watchDayFromClient;
             try
@@ -296,8 +229,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watch day.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watch day.", HttpStatusCodes.BadRequest);
             }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -306,26 +238,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id);
-
-                        if (watchDayFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            token.AddErrorMessage("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                            throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                         //Check the state.
                         if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                        {
-                            token.AddErrorMessage("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
                         session.Delete(watchDayFromDB);
 
@@ -338,7 +260,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
     }
 }

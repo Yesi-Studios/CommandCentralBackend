@@ -26,31 +26,19 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchbillid"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchbillid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchbillid");
 
-            Guid watchbillId;
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out watchbillId))
-            {
-                token.AddErrorMessage("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id parameter's format was invalid.", HttpStatusCodes.BadRequest);
 
             bool doPopulation = false;
             if (token.Args.ContainsKey("dopopulation"))
             {
                 if (!Boolean.TryParse(token.Args["dopopulation"] as string, out doPopulation))
                 {
-                    token.AddErrorMessage("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
+                    throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", HttpStatusCodes.BadRequest);
                 }
             }
 
@@ -61,30 +49,19 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId);
-
-                        if (watchbillFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
 
                         if (doPopulation)
                         {
                             //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
                             //but we may as well restrict it because the population method is very expensive.
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                            {
-                                token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                                return;
-                            }
+                                throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                             //And make sure we're at a state where population can occur.
                             if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
-                            {
-                                token.AddErrorMessage("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return;
-                            }
+                                throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", HttpStatusCodes.Forbidden);
 
                             watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                         }
@@ -114,10 +91,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -151,16 +125,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            if (!token.Args.ContainsKey("watchbill"))
-            {
-                token.AddErrorMessage("You failed to send a 'watchbill' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchbill");
 
             Entities.Watchbill.Watchbill watchbillFromClient;
             try
@@ -169,8 +136,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
             }
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
@@ -189,25 +155,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
 
             if (!validationResult.IsValid)
-            {
-                token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             //Let's make sure the client is allowed to make a watchbill with this eligibility group.
-            var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id));
-
-            if (ellGroup == null)
-            {
-                token.AddErrorMessage("You failed to provide a proper eligibilty group.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id)) ??
+                throw new CommandCentralException("You failed to provide a proper eligibilty group.", HttpStatusCodes.BadRequest);
 
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(ellGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-            {
-                token.AddErrorMessage("You are not allowed to create a watchbill tied to that eligibility group.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You are not allowed to create a watchbill tied to that eligibility group.  " +
+                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -240,20 +196,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdateWatchbill(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            //Now we need to determine who can update this watchbill.
-            if (!token.Args.ContainsKey("watchbill"))
-            {
-                token.AddErrorMessage("You failed to send a watchbill parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchbill");
 
             Entities.Watchbill.Watchbill watchbillFromClient;
             try
@@ -262,17 +209,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while deserializing your watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
             }
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromClient);
 
             if (!validationResult.IsValid)
-            {
-                token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -281,20 +224,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id);
-
-                        if (watchbillFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                            throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
+                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                         //Now let's move the properties over that are editable.
                         watchbillFromDB.Title = watchbillFromClient.Title;
@@ -332,20 +268,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void DeleteWatchbill(MessageToken token)
         {
-
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
 
-            //Now we need to determine who can update this watchbill.
-            if (!token.Args.ContainsKey("watchbill"))
-            {
-                token.AddErrorMessage("You failed to send a watchbill parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("watchbill");
 
             Entities.Watchbill.Watchbill watchbillFromClient;
             try
@@ -354,8 +281,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                token.AddErrorMessage("An error occurred while deserializing your watchbill.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
             }
 
             //Now let's go get the watchbill from the database.
@@ -365,27 +291,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id);
-
-                        if (watchbillFromDB == null)
-                        {
-                            token.AddErrorMessage("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        {
-                            token.AddErrorMessage("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                            return;
-                        }
+                            throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
+                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
 
                         //Check the state.
                         if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                        {
-                            token.AddErrorMessage("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new CommandCentralException("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
                         session.Delete(watchbillFromDB);
 

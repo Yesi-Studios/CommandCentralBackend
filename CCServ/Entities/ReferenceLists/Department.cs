@@ -53,14 +53,9 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     //First try to get the department.
-                    var department = session.Get<Department>(id);
-
-                    if (department == null)
-                    {
-                        token.AddErrorMessage("That department Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
-
+                    var department = session.Get<Department>(id) ??
+                        throw new CommandCentralException("That department Id was not valid.", HttpStatusCodes.BadRequest);
+                    
                     //Ok, now find all the entities it's a part of.
                     var persons = session.QueryOver<Person>().Where(x => x.Department == department).List();
 
@@ -84,8 +79,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            throw new CommandCentralException("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), HttpStatusCodes.Forbidden);
                         }
                     }
                     else
@@ -128,12 +122,8 @@ namespace CCServ.Entities.ReferenceLists
                         if (token.Args.ContainsKey("commandid"))
                         {
                             //Yes we were!
-                            Guid commandId;
-                            if (!Guid.TryParse(token.Args["commandid"] as string, out commandId))
-                            {
-                                token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                                return null;
-                            }
+                            if (!Guid.TryParse(token.Args["commandid"] as string, out Guid commandId))
+                                throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
 
                             //Cool, give them back the departments in this command.
                             results = session.QueryOver<Department>()
@@ -176,19 +166,11 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     //First try to get the command this thing is supposed to be a part of.
-                    Guid commandId;
-                    if (!Guid.TryParse(item.Value<string>("commandid"), out commandId))
-                    {
-                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    if (!Guid.TryParse(item.Value<string>("commandid"), out Guid commandId))
+                        throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
 
-                    var commandFromClient = session.Get<Command>(commandId);
-                    if (commandFromClient == null)
-                    {
-                        token.AddErrorMessage("The command id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var commandFromClient = session.Get<Command>(commandId) ??
+                        throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
 
                     //Cool the command is legit.  Let's build the department.
                     var departmentFromClient = item.CastJToken<Department>();
@@ -197,15 +179,10 @@ namespace CCServ.Entities.ReferenceLists
                     //Now validate it.
                     var result = departmentFromClient.Validate();
                     if (!result.IsValid)
-                    {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                     //Try to get it.
                     var departmentFromDB = session.Get<Department>(departmentFromClient.Id);
-
-                    
 
                     //If it's null then add it.
                     if (departmentFromDB == null)
