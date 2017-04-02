@@ -129,7 +129,7 @@ namespace CCServ.DataAccess
 
                 foreach (var propertyExpression in searchParameters.Keys)
                 {
-                    var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => y.GetPropertyName().Equals(propertyExpression.GetPropertyName())));
+                    var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => String.Equals(y.GetPropertyName(), propertyExpression.GetPropertyName(), StringComparison.CurrentCultureIgnoreCase)));
 
                     if (propertyGroup == null)
                     {
@@ -162,7 +162,7 @@ namespace CCServ.DataAccess
 
             foreach (var filter in filters)
             {
-                var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => y.GetPropertyName().Equals(filter.Key.GetPropertyName())));
+                var propertyGroup = PropertyGroups.FirstOrDefault(x => x.Expressions.Any(y => String.Equals(y.GetPropertyName(), filter.Key.GetPropertyName(), StringComparison.CurrentCultureIgnoreCase)));
 
                 if (propertyGroup == null)
                 {
