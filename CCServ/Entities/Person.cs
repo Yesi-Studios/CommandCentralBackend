@@ -648,7 +648,7 @@ namespace CCServ.Entities
                         session.Save(commands.Last());
                         session.Flush();
 
-                        for (int y = 0; y < Utilities.GetRandomNumber(2, 5); y++)
+                        for (int y = 0; y < Utilities.GetRandomNumber(8, 10); y++)
                         {
                             commands.Last().Departments.Add(new Department
                             {
@@ -1276,7 +1276,18 @@ namespace CCServ.Entities
                 .CanBeUsedIn(QueryTypes.Advanced)
                 .UsingStrategy(token =>
                 {
-                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Physical Addresses are not currently queryable from this page.", HttpStatusCodes.BadRequest);
+                    PhysicalAddress addressAlias = null;
+                    token.Query.JoinAlias(x => x.PhysicalAddresses, () => addressAlias);
+
+                    var query = new PhysicalAddress.PhysicalAddressQueryProvider().CreateQuery(QueryTypes.Simple, token.SearchParameter.Value);
+
+                    using (var session = NHibernateHelper.CreateStatefulSession())
+                    {
+                        var ids = query.GetExecutableQueryOver(session).Select(x => x.Id).List<Guid>();
+
+                        return Restrictions.On(() => addressAlias.Id).IsIn(ids.ToList());
+                    }
+
                 });
             }
         }

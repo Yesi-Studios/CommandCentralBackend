@@ -433,36 +433,71 @@ namespace CCServ.Entities.Watchbill
         /// <param name="dateTime"></param>
         public virtual void PopulateWatchbill(Person client, DateTime dateTime)
         {
+            /*if (client == null)
+                throw new ArgumentNullException("client");*/
+
             //First we need to know how many shifts of each type are in this watchbill.
             //And we need to know how many eligible people in each department there are.
-            var shifts = this.WatchDays.SelectMany(x => x.WatchShifts).ToList();
+            var shuffledShifts = this.WatchDays.SelectMany(x => x.WatchShifts).ToList().Shuffle();
+            var remainingShifts = new List<WatchShift>(shuffledShifts);
             var eligiblePersonsByDepartment = this.EligibilityGroup.EligiblePersons.GroupBy(x => x.Department).ToList();
-            var shiftsByDepartmentCount = new Dictionary<ReferenceLists.Department, Dictionary<WatchShiftType, int>>();
 
-            foreach (var shift in shifts)
+            var percentagesByDepartment = new Dictionary<ReferenceLists.Department, double>();
+
+            foreach (var group in eligiblePersonsByDepartment)
             {
-                foreach (var departmentGroup in eligiblePersonsByDepartment)
+                percentagesByDepartment.Add(group.Key, ((double)group.Count() / (double)this.EligibilityGroup.EligiblePersons.Count) * 100);
+                var final = ((double)shuffledShifts.Count * (int)((double)group.Count() / (double)this.EligibilityGroup.EligiblePersons.Count));
+                var shiftsForThisGroup = remainingShifts.Take((int)final).ToList();
+
+                Console.WriteLine("Shifts selected for {0} : {1}", group.Key, shiftsForThisGroup.Count);
+
+                //Now we need to order the persons based on their previously stood watches.
+                var sortedPersons = group.ToList().OrderBy(x =>
                 {
-                    int n3 = departmentGroup.Key.GetHashCode();
+                    return x.WatchAssignments.Where(y => y.CurrentState == WatchAssignmentStates.Completed).Sum(y => y.WatchShift.Points);
+                }).RepeatIndefinitely().Take(shiftsForThisGroup.Count).ToList();
 
-                    if (!shiftsByDepartmentCount.ContainsKey(departmentGroup.Key))
-                        shiftsByDepartmentCount.Add(departmentGroup.Key, new Dictionary<WatchShiftType, int>());
+                for (int x = 0; x < shiftsForThisGroup.Count; x++)
+                {
+                    remainingShifts.Remove(shiftsForThisGroup[x]);
 
-                    int n1 = shiftsByDepartmentCount.First().Key.GetHashCode();
-                    int n2 = departmentGroup.Key.GetHashCode();
-
-                    if (!shiftsByDepartmentCount[departmentGroup.Key].ContainsKey(shift.ShiftType))
-                        shiftsByDepartmentCount[departmentGroup.Key].Add(shift.ShiftType, 0);
-
-                    if (!departmentGroup.Any(x => !shift.ShiftType.RequiredWatchQualifications.Except(x.WatchQualifications).Any()))
-                        shiftsByDepartmentCount[departmentGroup.Key][shift.ShiftType]++;
+                    shiftsForThisGroup[x].WatchAssignments.Add(new WatchAssignment
+                    {
+                        AssignedBy = client,
+                        CurrentState = WatchAssignmentStates.Assigned,
+                        DateAssigned = dateTime,
+                        Id = Guid.NewGuid(),
+                        PersonAssigned = sortedPersons[x],
+                        WatchShift = shiftsForThisGroup[x]
+                    });
                 }
             }
 
-            int i = 0;
+            var departmentsByPercentageRemainder = percentagesByDepartment.OrderBy(x => x.Value);
+            foreach (var shift in remainingShifts)
+            {
 
-            //Next, we're going to walk the shifts we have to fill, and see how many are eligible for each shift from each department.
-            //We do this to build our available percentages by department.
+            }
+                
+
+
+            Console.WriteLine("".FormatS());
+            Console.WriteLine("Ell persons: {0}".FormatS(this.EligibilityGroup.EligiblePersons.Count));
+            Console.WriteLine("remaining shifts: {0}".FormatS(remainingShifts.Count));
+            Console.WriteLine("departments: {0}".FormatS(eligiblePersonsByDepartment.Count));
+            Console.WriteLine("shifts: {0}".FormatS(shuffledShifts.Count));
+            
+            foreach (var group in eligiblePersonsByDepartment)
+            {
+                Console.WriteLine("Total in {0}: {1}".FormatS(group.Key.ToString(), group.Count()));
+            }
+
+            foreach (var group in eligiblePersonsByDepartment)
+            {
+                Console.WriteLine("Total shifts for {0}: {1}".FormatS(group.Key.ToString(), 
+                    this.WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchAssignments)).Where(x => x.CurrentState == WatchAssignmentStates.Assigned).Where(x => x.PersonAssigned.Department == group.Key).Count()));
+            }
         }
 
         #endregion

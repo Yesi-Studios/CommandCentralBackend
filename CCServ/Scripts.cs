@@ -75,7 +75,8 @@ namespace CCServ
                                 Id = Guid.NewGuid(),
                                 ShiftType = WatchShiftTypes.JOOD,
                                 Title = "jood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
+                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
+                                Points = 1
                             });
 
                             watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
@@ -84,7 +85,8 @@ namespace CCServ
                                 Id = Guid.NewGuid(),
                                 ShiftType = WatchShiftTypes.JOOD,
                                 Title = "jood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
+                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
+                                Points = 2
                             });
 
                             watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
@@ -93,7 +95,8 @@ namespace CCServ
                                 Id = Guid.NewGuid(),
                                 ShiftType = WatchShiftTypes.OOD,
                                 Title = "ood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() }
+                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
+                                Points = 3
                             });
 
                         }
@@ -136,11 +139,9 @@ namespace CCServ
 
                         transaction.Commit();
                     }
-
-                    
                 }
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                /*using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 {
                     using (var transaction = session.BeginTransaction())
                     {
@@ -170,12 +171,22 @@ namespace CCServ
                         }
 
                         transaction.Commit();
+                    }
+                }*/
 
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    using (var transaction = session.BeginTransaction())
+                    {
+                        var watchbill = session.QueryOver<Watchbill>().List().First();
+                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
+
+                        watchbill.PopulateWatchbill(user0, DateTime.Now);
+
+                        transaction.Commit();
                     }
                 }
             }
-
-
         }
     }
 }

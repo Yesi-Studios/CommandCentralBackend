@@ -26,7 +26,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The watch day that owns this watch shift.
         /// </summary>
-        public virtual IList<WatchDay> WatchDays { get; set; }
+        public virtual IList<WatchDay> WatchDays { get; set; } = new List<WatchDay>();
 
         /// <summary>
         /// A free text field allowing for this shift to be given a title.
@@ -36,24 +36,29 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The range, containing the dates that the shift starts and ends.
         /// </summary>
-        public virtual TimeRange Range { get; set; }
+        public virtual TimeRange Range { get; set; } = new TimeRange();
 
         /// <summary>
         /// The watch inputs that have been given for this shift.  This is all the persons that have said they can not stand this shift and their given reasons.
         /// </summary>
-        public virtual IList<WatchInput> WatchInputs { get; set; }
+        public virtual IList<WatchInput> WatchInputs { get; set; } = new List<WatchInput>();
 
         /// <summary>
         /// The list of all the assignments for this shift.  Only one assignment should be considered the current assignment while the rest should be only historical.
         /// <para />
         /// An empty collection here indicates this shift has not yet been assigned.
         /// </summary>
-        public virtual IList<WatchAssignment> WatchAssignments { get; set; }
+        public virtual IList<WatchAssignment> WatchAssignments { get; set; } = new List<WatchAssignment>();
 
         /// <summary>
         /// Indicates the type of this shift:  Is it JOOD, OOD, etc.
         /// </summary>
         public virtual ReferenceLists.Watchbill.WatchShiftType ShiftType { get; set; }
+
+        /// <summary>
+        /// The point value for this shift.
+        /// </summary>
+        public virtual double Points { get; set; }
 
         #endregion
 
@@ -64,11 +69,6 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public WatchShift()
         {
-            WatchDays = new List<WatchDay>();
-            WatchInputs = new List<WatchInput>();
-            WatchAssignments = new List<WatchAssignment>();
-
-            Range = new TimeRange();
         }
 
         #endregion
@@ -93,6 +93,7 @@ namespace CCServ.Entities.Watchbill
                 HasManyToMany(x => x.WatchDays).Inverse();
 
                 Map(x => x.Title).Not.Nullable();
+                Map(x => x.Points).Not.Nullable();
                 Component(x => x.Range, x =>
                     {
                         x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
@@ -111,6 +112,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchShiftValidator()
             {
+                RuleFor(x => x.Points).NotEmpty().GreaterThanOrEqualTo(0);
                 RuleFor(x => x.ShiftType).NotEmpty();
                 RuleFor(x => x.Title).NotEmpty().Length(1, 50);
                 RuleFor(x => x.WatchDays).NotEmpty();

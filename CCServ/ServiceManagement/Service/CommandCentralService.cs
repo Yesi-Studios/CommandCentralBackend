@@ -119,7 +119,6 @@ namespace CCServ.ServiceManagement.Service
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                     "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(ServiceManager.CurrentConfigState.DeveloperDistroAddress),
                                     HttpStatusCodes.NotFound);
-                                //TODO : WebOperationContext.Current.OutgoingResponse.StatusCode = token.StatusCode;
 
                             //If the endpoint was retrieved successfully, then assign it here.
                             token.EndpointDescription = description;
