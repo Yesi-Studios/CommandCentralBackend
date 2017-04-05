@@ -22,7 +22,6 @@ namespace CCServ.CLI
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
-            
             try
             {
                 if (!Environment.UserInteractive)

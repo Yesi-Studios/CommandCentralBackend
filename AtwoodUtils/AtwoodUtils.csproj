@@ -63,6 +63,7 @@
     <Compile Include="CustomContractResolver.cs" />
     <Compile Include="DisplayUtilities.cs" />
     <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="ConditionalForeverList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertySelector.cs" />
     <Compile Include="SerializationSettings.cs" />
