@@ -438,7 +438,7 @@ namespace CCServ.Entities.Watchbill
 
             //First we need to know how many shifts of each type are in this watchbill.
             //And we need to know how many eligible people in each department there are.
-            var shuffledShiftsByType = this.WatchDays.SelectMany(x => x.WatchShifts).ToList().Shuffle().GroupBy(x => x.ShiftType);
+            var shuffledShiftsByType = this.WatchDays.SelectMany(x => x.WatchShifts).Distinct().Shuffle().GroupBy(x => x.ShiftType);
 
             foreach (var shiftGroup in shuffledShiftsByType)
             {
@@ -463,21 +463,27 @@ namespace CCServ.Entities.Watchbill
 
                 foreach (var personsGroup in personsByDepartment)
                 {
-                    var final = (double)shiftGroup.Count() * ((double)personsGroup.Count() / (double)totalPersonsWithQuals);
-                    assignedShiftsByDepartment.Add(personsGroup.Key, final);
+                    //It's important to point out here that the assigned shifts will most likely not fall out as a perfect integer.
+                    //We'll handle remaining shifts later.  For now, we just need to assign the whole number value of shifts.
+                    var assignedShifts = (double)shiftGroup.Count() * ((double)personsGroup.Count() / (double)totalPersonsWithQuals);
+                    assignedShiftsByDepartment.Add(personsGroup.Key, assignedShifts);
 
-                    var shiftsForThisGroup = remainingShifts.Take((int)final).ToList();
+                    //From our list of shifts, take as many as we're supposed to assign.
+                    var shiftsForThisGroup = remainingShifts.Take((int)assignedShifts).ToList();
 
                     for (int x = 0; x < shiftsForThisGroup.Count; x++)
                     {
+                        //Ok, since we're going to assign it, we can go ahead and remove it.
                         remainingShifts.Remove(shiftsForThisGroup[x]);
 
+                        //Determine who is about to stand this watch.
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
                             return shiftsForThisGroup[x].WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id);
                         }, out Person personToAssign))
                             throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
 
+                        //Create the watch assignment.
                         shiftsForThisGroup[x].WatchAssignments.Add(new WatchAssignment
                         {
                             AssignedBy = client,
@@ -490,6 +496,9 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
 
+                //At this step, we run into a bit of a problem.  Because the assigned shifts don't come out as perfect integers, we'll have some shifts left over.
+                //I chose to use the Hamilton assignment method with the Hare quota here in order to distrubte the rest of the shifts.
+                //https://en.wikipedia.org/wiki/Largest_remainder_method
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
                 {
