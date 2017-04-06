@@ -20,6 +20,10 @@ namespace AtwoodUtils
         private Stack<T> _remaining;
         private Stack<T> _original;
 
+        /// <summary>
+        /// Creates a new forever list from the given source.
+        /// </summary>
+        /// <param name="source"></param>
         public ConditionalForeverList(IEnumerable<T> source)
         {
             if (!source.Any())
@@ -69,6 +73,5 @@ namespace AtwoodUtils
             item = default(T);
             return false;
         }
-
     }
 }

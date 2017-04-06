@@ -455,7 +455,7 @@ namespace CCServ.Entities.Watchbill
 
                 var assignablePersonsByDepartment = personsByDepartment.Select(x =>
                 {
-                    return new KeyValuePair<ReferenceLists.Department, ForeverList<Person>>(x.Key, new ForeverList<Person>(x.ToList().OrderBy(y =>
+                    return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(y =>
                     {
                         return y.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z => z.WatchShift.Points);
                     })));
@@ -472,13 +472,19 @@ namespace CCServ.Entities.Watchbill
                     {
                         remainingShifts.Remove(shiftsForThisGroup[x]);
 
+                        if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
+                        {
+                            return shiftsForThisGroup[x].WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id);
+                        }, out Person personToAssign))
+                            throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
+
                         shiftsForThisGroup[x].WatchAssignments.Add(new WatchAssignment
                         {
                             AssignedBy = client,
                             CurrentState = WatchAssignmentStates.Assigned,
                             DateAssigned = dateTime,
                             Id = Guid.NewGuid(),
-                            PersonAssigned = assignablePersonsByDepartment[personsGroup.Key].Next(),
+                            PersonAssigned = personToAssign,
                             WatchShift = shiftsForThisGroup[x]
                         });
                     }
@@ -487,13 +493,19 @@ namespace CCServ.Entities.Watchbill
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
                 {
+                    if (!assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
+                    {
+                        return shift.WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id);
+                    }, out Person personToAssign))
+                        throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
+
                     shift.WatchAssignments.Add(new WatchAssignment
                     {
                         AssignedBy = client,
                         CurrentState = WatchAssignmentStates.Assigned,
                         DateAssigned = dateTime,
                         Id = Guid.NewGuid(),
-                        PersonAssigned = assignablePersonsByDepartment[finalAssignments.First().Key].Next(),
+                        PersonAssigned = personToAssign,
                         WatchShift = shift
                     });
 
