@@ -427,7 +427,11 @@ namespace CCServ.Entities.Watchbill
         }
 
         /// <summary>
-        /// TODO
+        /// Populates the current watchbill:
+        /// 
+        /// First we group all the shifts by their type, then we look at all people that are available for that watch.  
+        /// We then determine how many people each department is responsible for supplying based as a percentage of the total people.
+        /// This causes some shifts not to get assigned so we assign those using the Hamilton assignment method.
         /// </summary>
         /// <param name="client"></param>
         /// <param name="dateTime"></param>
