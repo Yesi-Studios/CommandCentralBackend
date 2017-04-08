@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NHibernate;
 using NHibernate.Criterion;
+using System.Linq.Expressions;
 
 namespace CCServ.DataAccess
 {
@@ -20,18 +21,12 @@ namespace CCServ.DataAccess
         /// </summary>
         public QueryOver<T, T> Query { get; set; }
 
-        /// <summary>
-        /// Contains references to all those aliases that have been used by the application.  Required plumbing for NHibernate.
-        /// 
-        /// The key is the name of the type, while the object is the type itself.
-        /// </summary>
-        public Dictionary<Guid, object> Aliases { get; set; }
+        private KeyValuePair<Expression<Func<T, object>>, object> _searchParameter;
 
-        private KeyValuePair<MemberInfo, object> _searchParameter;
         /// <summary>
         /// The search parameter.
         /// </summary>
-        public KeyValuePair<MemberInfo, object> SearchParameter
+        public KeyValuePair<Expression<Func<T, object>>, object> SearchParameter
         {
             get
             {
@@ -49,28 +44,12 @@ namespace CCServ.DataAccess
         }
 
         /// <summary>
-        /// Any errors that may have occurred.
+        /// Creates a new query token.
         /// </summary>
-        public List<string> Errors { get; set; }
-
-        /// <summary>
-        /// Are there any errors?
-        /// </summary>
-        public bool HasErrors
+        public QueryToken(QueryOver<T, T> query, KeyValuePair<Expression<Func<T, object>>, object> searchParameter)
         {
-            get
-            {
-                return Errors.Any();
-            }
-        }
-
-        /// <summary>
-        /// Creates a new query token, initializing the collections.
-        /// </summary>
-        public QueryToken()
-        {
-            Errors = new List<string>();
-            Aliases = new Dictionary<Guid, object>();
+            this.Query = query ?? throw new ArgumentNullException("query");
+            this.SearchParameter = searchParameter;
         }
     }
 }

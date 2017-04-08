@@ -106,8 +106,10 @@
     <Reference Include="System.Management" />
     <Reference Include="System.Net" />
     <Reference Include="System.Printing" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Razor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.Razor.2.0.20715.0\lib\net40\System.Web.Razor.dll</HintPath>
       <Private>True</Private>
@@ -123,6 +125,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\Groups\Definitions\CommandQuarterdeckWatchbill.cs" />
+    <Compile Include="Authorization\Groups\Definitions\DepartmentQuarterdeckWatchbill.cs" />
+    <Compile Include="Authorization\Groups\Definitions\DivisionQuarterdeckWatchbill.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventBase.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
@@ -165,8 +170,13 @@
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ProfileLockEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ReferenceListEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchAssignmentEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchbillEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchDayEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchEligibilityGroupEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchInputEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchShiftEndpoints.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
-    <Compile Include="ClientAccess\MessageStatesEnum.cs" />
     <Compile Include="ClientAccess\MessageToken.cs" />
     <Compile Include="ClientAccess\PasswordHash.cs" />
     <Compile Include="ClientAccess\ReturnContainer.cs" />
@@ -177,16 +187,16 @@
     <Compile Include="CLI\Options\UninstallOptions.cs" />
     <Compile Include="CLI\Program.cs" />
     <Compile Include="CLI\SecurityModes.cs" />
+    <Compile Include="CommandCentralException.cs" />
     <Compile Include="CustomTypes\Time.cs" />
+    <Compile Include="DataAccess\CommonQueryStrategies.cs" />
     <Compile Include="DataAccess\NHibernateHelper.cs" />
     <Compile Include="DataAccess\PropertyGroupPart.cs" />
-    <Compile Include="DataAccess\QueryResultToken.cs" />
-    <Compile Include="DataAccess\QueryStrategy.cs" />
+    <Compile Include="DataAccess\QueryStrategyProvider.cs" />
     <Compile Include="DataAccess\QueryToken.cs" />
     <Compile Include="DataAccess\QueryTypesEnum.cs" />
     <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
-    <Compile Include="DTOs\BasicPersonDTO.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
     <Compile Include="Email\Models\AssignmentChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
@@ -203,13 +213,38 @@
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchReassignedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
+    <Compile Include="Email\Models\WatchAssignedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillPublishedEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillUnderReviewEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillOpenForInputsEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillInputRequiredEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
+    <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
+    <Compile Include="CorrespondingErrorTypeAttribute.cs" />
+    <Compile Include="HttpStatusCodesEnum.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignments.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentStates.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroup.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroups.cs" />
+    <Compile Include="Entities\Watchbill\WatchAssignment.cs" />
+    <Compile Include="Entities\Watchbill\Watchbill.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatuses.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchInputReason.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftType.cs" />
+    <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftTypes.cs" />
+    <Compile Include="Entities\Watchbill\WatchDay.cs" />
+    <Compile Include="Entities\Watchbill\WatchInput.cs" />
+    <Compile Include="Entities\Watchbill\WatchInputRequirement.cs" />
+    <Compile Include="Entities\Watchbill\WatchShift.cs" />
     <Compile Include="Scripts.cs" />
     <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
@@ -340,6 +375,38 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\PasswordChanged_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\WatchbillInputRequired_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\WatchbillOpenForInputs_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\WatchAssigned_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\WatchbillClosedForInputs_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\WatchbillOpenForReview_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\WatchbillPublished_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\WatchReassignedAdded_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Email\Templates\WatchReassignedRemoved_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

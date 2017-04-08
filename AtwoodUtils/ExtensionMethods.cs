@@ -12,13 +12,40 @@ namespace AtwoodUtils
 {
     public static class ExtensionMethods
     {
-        
+        /// <summary>
+        /// Does a shuffle using the Fisher-Yates shuffle algorithm.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static IList<T> Shuffle<T>(this IEnumerable<T> source)
+        {
+            var list = source.ToList();
 
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = ThreadSafeRandom.ThisThreadsRandom.Next(n + 1);
+                Utilities.Swap(list[k], list[n]);
+            }
+
+            return list;
+        }
+
+        public static IEnumerable<T> RepeatIndefinitely<T>(this IEnumerable<T> source)
+        {
+            var list = source.ToList();
+
+            while (true)
+            {
+                foreach (var item in list)
+                    yield return item;
+            }
+        }
 
         public static string Truncate(this string str, int length, string message = "|| MESSAGE TRUNCATED ||")
         {
-
-
             if (length < 0)
             {
                 throw new ArgumentOutOfRangeException("length", "Length must be greater than or equal to 0!");

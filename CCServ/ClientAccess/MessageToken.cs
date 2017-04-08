@@ -36,34 +36,6 @@ namespace CCServ.ClientAccess
         /// </summary>
         public virtual Dictionary<string, object> Args { get; set; }
 
-        private string _rawRequestBody = "";
-        /// <summary>
-        /// The body of the request prior to processing.  This should not be used in actual processing because the output is truncated to 10000 characters or set to REDACTED if the service endpoint doesn't allow its logging.
-        /// </summary>
-        public virtual string RawRequestBodyForLogging
-        {
-            get
-            {
-                bool allowLogging = false;
-
-                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowArgumentLogging)
-                    allowLogging = true;
-
-                if (allowLogging)
-                {
-                    return _rawRequestBody.Truncate(10000);
-                }
-                else
-                {
-                    return "REDACTED";
-                }
-            }
-            set
-            {
-                _rawRequestBody = value;
-            }
-        }
-
         /// <summary>
         /// The endpoint that was called by the client.
         /// </summary>
@@ -75,68 +47,9 @@ namespace CCServ.ClientAccess
         public virtual ServiceEndpoint EndpointDescription { get; set; }
 
         /// <summary>
-        /// Any error messages that occur during the request are pushed to this property.
+        /// The resultant object, set by SetResult.
         /// </summary>
-        public virtual IList<string> ErrorMessages { get; set; }
-
-        /// <summary>
-        /// Indicates if any error messages are contained in the error message collection.
-        /// <para/>
-        /// If this value is true, the result can not be set.
-        /// </summary>
-        public virtual bool HasError
-        {
-            get { return ErrorMessages.Any(); }
-                 
-        }
-
-        /// <summary>
-        /// Describes the error state, if any, that this message token is in.
-        /// </summary>
-        public virtual ErrorTypes ErrorType { get; set; }
-
-        /// <summary>
-        /// The status code that describes the message token's state.
-        /// </summary>
-        public virtual System.Net.HttpStatusCode StatusCode { get; set; }
-
-        /// <summary>
-        /// The resultant object.
-        /// </summary>
-        public virtual object Result { get; set; }
-
-        /// <summary>
-        /// The final result, set by SetResult, is the string intended to be returned to the client. 
-        /// </summary>
-        public virtual string FinalResult { get; set; }
-
-        /// <summary>
-        /// Gets raw response body of this request.  This is simple a property accessor to this.ConstructResponse() for logging purposes.
-        /// </summary>
-        public virtual string RawResponseBody
-        {
-            get
-            {
-                bool allowLogging = false;
-
-                if (EndpointDescription != null && EndpointDescription.EndpointMethodAttribute.AllowResponseLogging)
-                    allowLogging = true;
-
-                if (allowLogging)
-                {
-                    return ConstructResponseString().Truncate(10000);
-                }
-                else
-                {
-                    return "REDACTED";
-                }
-            }
-        }
-
-        /// <summary>
-        /// The current state of the message interaction.
-        /// </summary>
-        public virtual MessageStates State { get; set; }
+        public virtual Newtonsoft.Json.Linq.JToken Result { get; set; }
 
         /// <summary>
         /// The time at which the message was handled, either successfully or otherwise, and the response was sent to the client.
@@ -163,18 +76,14 @@ namespace CCServ.ClientAccess
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} | {1} | {2}\n\t\tCall Time: {3}\n\t\tProcessing Time: {4}\n\t\tHost: {5}\n\t\tApp Name: {6}\n\t\tSession ID: {7}\n\t\tError Code: {8}\n\t\tStatus Code: {9}\n\t\tMessages: {10}"
-                .FormatS(Id, 
-                CalledEndpoint, 
-                State, 
-                CallTime.ToString(CultureInfo.InvariantCulture), 
-                DateTime.UtcNow.Subtract(CallTime).ToString(), 
-                HostAddress, 
-                APIKey == null ? "null" : APIKey.ApplicationName, 
-                AuthenticationSession == null ? "null" : AuthenticationSession.Id.ToString(),
-                ErrorType,
-                StatusCode,
-                string.Join("|", ErrorMessages));
+            return "{0} | {1} | \n\t\tCall Time: {2}\n\t\tProcessing Time: {3}\n\t\tHost: {4}\n\t\tApp Name: {5}\n\t\tSession ID: {6}"
+                .FormatS(Id,
+                CalledEndpoint,
+                CallTime.ToString(CultureInfo.InvariantCulture),
+                DateTime.UtcNow.Subtract(CallTime).ToString(),
+                HostAddress,
+                APIKey == null ? "null" : APIKey.ApplicationName,
+                AuthenticationSession == null ? "null" : AuthenticationSession.Id.ToString());
         }
 
         #endregion
@@ -188,11 +97,6 @@ namespace CCServ.ClientAccess
         {
             Id = Guid.NewGuid();
             CallTime = DateTime.UtcNow;
-            ErrorMessages = new List<string>();
-            State = MessageStates.Received;
-            //Initialize the status code to OK.  If the error message is ever set, then that'll change.
-            StatusCode = System.Net.HttpStatusCode.OK;
-            ErrorType = ErrorTypes.Null;
         }
 
         #endregion
@@ -200,63 +104,22 @@ namespace CCServ.ClientAccess
         #region Helper Methods
 
         /// <summary>
-        /// Sets the request body and optionally attempts to convert the request body into the args dictionary.  If this conversion fails, the error message will be added to the token.
+        /// Sets the args of the message token.
         /// </summary>
         /// <param name="body" />
         /// <param name="convert" />
-        public virtual void SetRequestBody(string body, bool convert)
+        public virtual void SetArgs(string body)
         {
-            RawRequestBodyForLogging = body;
-
-            if (convert)
+            try
             {
-                try
-                {
-                    var dict = body.Deserialize<Dictionary<string, object>>();
-                    Args = new Dictionary<string, object>(dict, StringComparer.OrdinalIgnoreCase);
-                }
-                catch
-                {
-                    AddErrorMessage("There was an error while attempting to parse your request body.  This request body should be JSON in the form of a dictionary.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                }
+                var dict = body.Deserialize<Dictionary<string, object>>();
+                Args = new Dictionary<string, object>(dict, StringComparer.OrdinalIgnoreCase);
             }
-
-        }
-
-        /// <summary>
-        /// Adds an error message to the error messages collection and sets the error type and the status code.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="error"></param>
-        /// <param name="status"></param>
-        public virtual void AddErrorMessage(string message, ErrorTypes error, System.Net.HttpStatusCode status)
-        {
-            //In any case, we set the result to null.  An error occurred, so we don't really care about the result.
-            Result = null;
-
-            ErrorMessages.Add(message);
-            this.ErrorType = error;
-            this.StatusCode = status;
-
-            FinalResult = ConstructResponseString();
-        }
-
-        /// <summary>
-        /// Adds multiple error messages to the error messages collection and sets the error type and the status code.
-        /// </summary>
-        /// <param name="messages"></param>
-        /// <param name="error"></param>
-        /// <param name="status"></param>
-        public virtual void AddErrorMessages(IEnumerable<string> messages, ErrorTypes error, System.Net.HttpStatusCode status)
-        {
-            //In any case, we set the result to null.  An error occurred, so we don't really care about the result.
-            Result = null;
-            
-            messages.ToList().ForEach(x => ErrorMessages.Add(x));
-            this.ErrorType = error;
-            this.StatusCode = status;
-
-            FinalResult = ConstructResponseString();
+            catch
+            {
+                throw new CommandCentralException("There was an error while attempting to parse your request body.  " +
+                    "This request body should be JSON in the form of a dictionary.", HttpStatusCodes.BadRequest);
+            }
         }
 
         /// <summary>
@@ -267,44 +130,7 @@ namespace CCServ.ClientAccess
         /// <param name="result"></param>
         public virtual void SetResult(object result)
         {
-            if (HasError)
-                throw new Exception("You can not set the result on a message that has errors.");
-
-            Result = result;
-
-            FinalResult = ConstructResponseString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string of a return container than contains the response that should be sent back to the client for this object.
-        /// </summary>
-        /// <returns></returns>
-        public virtual string ConstructResponseString()
-        {
-            return new ReturnContainer
-            {
-                ErrorMessages = ErrorMessages.ToList(),
-                ErrorType = ErrorType,
-                HasError = HasError,
-                ReturnValue = Result,
-                StatusCode = StatusCode
-            }.Serialize();
-        }
-
-        /// <summary>
-        /// Returns the return container that should be returned to the client.
-        /// </summary>
-        /// <returns></returns>
-        public virtual ReturnContainer ConstructReturnContainer()
-        {
-            return new ReturnContainer
-            {
-                ErrorMessages = ErrorMessages.ToList(),
-                ErrorType = ErrorType,
-                HasError = HasError,
-                ReturnValue = Result,
-                StatusCode = StatusCode
-            };
+            Result = Newtonsoft.Json.Linq.JToken.FromObject(result, Newtonsoft.Json.JsonSerializer.Create(SerializationSettings.StandardSettings));
         }
 
         #endregion
@@ -325,22 +151,32 @@ namespace CCServ.ClientAccess
                 References(x => x.AuthenticationSession).Nullable();
 
                 Map(x => x.CallTime);
-                Map(x => x.RawRequestBodyForLogging).Length(10000);
                 Map(x => x.CalledEndpoint);
-                Map(x => x.HasError).Access.ReadOnly();
-                Map(x => x.ErrorType);
-                Map(x => x.StatusCode);
-                Map(x => x.State);
                 Map(x => x.HandledTime);
                 Map(x => x.HostAddress);
-                Map(x => x.RawResponseBody).Length(10000).Access.ReadOnly();
-
-                HasMany(x => x.ErrorMessages)
-                    .KeyColumn("MessageTokenId")
-                    .Element("ErrorMessage", map => map.Length(10000))
-                    .Not.LazyLoad();
             }
         }
+    }
 
+    /// <summary>
+    /// Contains extension method meant to make dealing with message tokens a little easier.
+    /// </summary>
+    public static class MessageTokenExtensions
+    {
+        /// <summary>
+        /// Throws a command central bad request exception if not all of the keys are contained in the dictionary.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="dict"></param>
+        /// <param name="keys"></param>
+        public static void AssertContainsKeys<TKey, TValue>(this IDictionary<TKey, TValue> dict, params TKey[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (!dict.ContainsKey(key))
+                    throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), HttpStatusCodes.BadRequest);
+            }
+        }
     }
 }

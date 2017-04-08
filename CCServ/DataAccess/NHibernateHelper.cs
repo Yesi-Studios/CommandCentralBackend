@@ -40,6 +40,58 @@ namespace CCServ.DataAccess
             }
         }
 
+        /// <summary>
+        /// Initializes the NHibernate Helper with the given connection settings.
+        /// </summary>
+        /// <param name="options"></param>
+        private static void ConfigureNHibernate(CLI.Options.LaunchOptions options)
+        {
+            string connectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
+                .FormatS(options.Server, options.Database, options.Username, options.Password, options.CertificatePassword, options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.DBOnly ? "Required" : "None");
+
+            if (options.PrintSQL)
+            {
+                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString)
+                            .ShowSql())
+                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
+                            .ProviderClass<SysCacheProvider>())
+                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                            .BuildConfiguration();
+            }
+            else
+            {
+                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString))
+                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
+                            .ProviderClass<SysCacheProvider>())
+                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
+                            .BuildConfiguration();
+            }
+
+            //We're going to save the schema in case the host wants to use it later.
+            _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
+        }
+
+        /// <summary>
+        /// Builds the session factory and extracts the class metadata. 
+        /// </summary>
+        private static void FinishNHibernateSetup()
+        {
+            _sessionFactory = config.BuildSessionFactory();
+
+            _allClassMetadata = new ConcurrentDictionary<string, IClassMetadata>(
+                _sessionFactory.GetAllClassMetadata()
+                    .ToList()
+                    .Select(x =>
+                    {
+                        return new KeyValuePair<string, IClassMetadata>(
+                            x.Key.Split('.').Last(),
+                            x.Value);
+                    })
+                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+        }
+
+
+
         #region Helper Methods
 
         /// <summary>

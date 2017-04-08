@@ -61,7 +61,7 @@ namespace CCServ.ClientAccess
         /// Determines if this session has expired given a max age of inactivity.
         /// </summary>
         /// <returns></returns>
-        public virtual bool IsValid()
+        public virtual bool IsInvalid()
         {
             if (!IsActive)
                 return false;

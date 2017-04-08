@@ -23,8 +23,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "TestException", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_TestException(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void TestException(MessageToken token)
         {
             throw new Exception("TEST TEST TEST");
         }
@@ -36,8 +36,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "CriticalMessage", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_CriticalMessage(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void CriticalMessage(MessageToken token)
         {
             Logging.Log.Critical("TEST TEST TEST");
         }

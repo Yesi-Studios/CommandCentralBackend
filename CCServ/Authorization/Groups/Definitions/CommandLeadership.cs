@@ -7,6 +7,9 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
+    /// <summary>
+    /// The Command Leadership permission group. For the top leadership in the command.
+    /// </summary>
     public class CommandLeadership : PermissionGroup
     {
         /// <summary>
@@ -19,7 +22,7 @@ namespace CCServ.Authorization.Groups.Definitions
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership),
                 typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
+            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
 
             HasAccessLevel(ChainOfCommandLevels.Command);
 
