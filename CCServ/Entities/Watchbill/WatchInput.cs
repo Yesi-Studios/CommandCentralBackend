@@ -87,6 +87,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.ConfirmedBy);
                 
                 HasMany(x => x.Comments)
+                    .Cascade.AllDeleteOrphan()
                     .KeyColumn("EntityOwner_id")
                     .ForeignKeyConstraintName("none");
 

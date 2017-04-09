@@ -186,6 +186,66 @@ namespace CCServ
                         transaction.Commit();
                     }
                 }*/
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    using (var transaction = session.BeginTransaction())
+                    {
+                        var watchbill = session.QueryOver<Watchbill>().List().First();
+                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
+
+                        var inputReason = session.QueryOver<WatchInputReason>().List().First();
+
+                        foreach (var person in watchbill.EligibilityGroup.EligiblePersons)
+                        {
+                            foreach (var shift in watchbill.WatchDays.SelectMany(x => x.WatchShifts))
+                            {
+                                if (Utilities.GetRandomNumber(0, 100) > 90)
+                                {
+                                    shift.WatchInputs.Add(new WatchInput
+                                    {
+                                        DateSubmitted = DateTime.UtcNow,
+                                        Id = Guid.NewGuid(),
+                                        InputReason = inputReason,
+                                        Person = person,
+                                        SubmittedBy = user0,
+                                        WatchShifts = new List<WatchShift> { shift }
+                                    });
+                                }
+                            }
+                        }
+
+                        session.Update(watchbill);
+
+                        transaction.Commit();
+                    }
+                }
+
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    using (var transaction = session.BeginTransaction())
+                    {
+                        var watchbill = session.QueryOver<Watchbill>().List().First();
+                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
+
+                        foreach (var input in watchbill.WatchDays.SelectMany(x => x.WatchShifts).SelectMany(x => x.WatchInputs).Distinct())
+                        {
+                            input.Comments.Add(new Comment
+                            {
+                                Creator = user0,
+                                Id = Guid.NewGuid(),
+                                Text = "test",
+                                Time = DateTime.UtcNow
+                            });
+
+                            session.Update(input);
+                        }
+
+                        transaction.Commit();
+                    }
+                }
+                
+
             }
         }
     }
