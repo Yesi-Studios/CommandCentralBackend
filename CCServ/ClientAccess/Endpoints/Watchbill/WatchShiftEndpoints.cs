@@ -62,7 +62,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchShifts(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchshifts");
+            token.Args.AssertContainsKeys("watchshifts", "watchbillid");
 
             List<WatchShift> watchShiftsFromClient;
             try
@@ -74,19 +74,21 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("An error occurred while trying to parse your watch shifts.", HttpStatusCodes.BadRequest);
             }
 
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was in the wrong format.", HttpStatusCodes.BadRequest);
+
             var watchShiftsToInsert = watchShiftsFromClient.Select(x => new WatchShift
             {
                 Id = Guid.NewGuid(),
                 Range = x.Range,
                 ShiftType = x.ShiftType,
-                Title = x.Title,
-                WatchDays = x.WatchDays
+                Title = x.Title
             }).ToList();
 
-            var validationResults = watchShiftsToInsert.Select(x => new WatchShift.WatchShiftValidator().Validate(x)).ToList();
+            /*var validationResults = watchShiftsToInsert.Select(x => new WatchShift.WatchShiftValidator().Validate(x)).ToList();
             var invalidResults = validationResults.Where(x => !x.IsValid);
             if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));
+                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));*/
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -94,20 +96,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill id was not valid.", HttpStatusCodes.BadRequest);
+
+                        var watchbillDayTimeRanges = watchbill.WatchDays.Select(x => new TimeRange { Start = x.Date, End = x.Date.AddHours(24) }).ToList();
+
                         foreach (var shift in watchShiftsToInsert)
                         {
-                            //Let's get the days the client says this shift will be a part of.
-                            var days = session.QueryOver<WatchDay>()
-                                .WhereRestrictionOn(x => x.Id)
-                                .IsIn(shift.WatchDays.Select(x => x.Id).Cast<object>().ToArray())
-                                .List();
 
-                            if (days.Count != shift.WatchDays.Count)
-                                throw new CommandCentralException("One or more of your watch days' Ids were invalid.", HttpStatusCodes.BadRequest);
+                            var intersectingRanges = Utilities.FindTimeRangeIntersections(watchbillDayTimeRanges, new List<TimeRange> { shift.Range });
+                            //Let's get the days that the watch shift will be a part of.
 
-                            var watchbill = days.First().Watchbill;
-                            if (days.Any(x => x.Watchbill.Id != watchbill.Id))
-                                throw new CommandCentralException("Your requested watch days were not all from the same watchbill.", HttpStatusCodes.BadRequest);
+                            shift.WatchDays = new List<WatchDay>();
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
@@ -118,10 +118,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
                                     "Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
-                            foreach (var day in days)
+                            /*foreach (var day in days)
                             {
                                 day.WatchShifts.Add(shift);
-                            }
+                            }*/
 
                             session.Update(watchbill);
                         }

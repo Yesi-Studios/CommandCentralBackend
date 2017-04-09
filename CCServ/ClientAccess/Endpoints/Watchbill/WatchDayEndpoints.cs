@@ -111,6 +111,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             watchbill.WatchDays.Add(day);
 
+                            day.Watchbill = watchbill;
+
                             session.Update(watchbill);
                         }
 

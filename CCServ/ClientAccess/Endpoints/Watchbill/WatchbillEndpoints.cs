@@ -63,7 +63,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                         }
 
-                        token.SetResult(watchbillFromDB);
+                        token.SetResult(new 
+                        {
+                            watchbillFromDB.CreatedBy,
+                            watchbillFromDB.CurrentState,
+                            watchbillFromDB.EligibilityGroup,
+                            watchbillFromDB.Id,
+                            watchbillFromDB.InputRequirements,
+                            watchbillFromDB.LastStateChange,
+                            watchbillFromDB.LastStateChangedBy,
+                            watchbillFromDB.Title,
+                            watchbillFromDB.WatchDays
+                        });
 
                         transaction.Commit();
                     }
