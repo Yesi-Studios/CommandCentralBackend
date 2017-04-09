@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
+using Itenso.TimePeriod;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -82,13 +83,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 Id = Guid.NewGuid(),
                 Range = x.Range,
                 ShiftType = x.ShiftType,
-                Title = x.Title
+                Title = x.Title,
+                WatchDays = new List<WatchDay>(),
+                Points = x.Points
             }).ToList();
-
-            /*var validationResults = watchShiftsToInsert.Select(x => new WatchShift.WatchShiftValidator().Validate(x)).ToList();
-            var invalidResults = validationResults.Where(x => !x.IsValid);
-            if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));*/
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -99,32 +97,35 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", HttpStatusCodes.BadRequest);
 
-                        var watchbillDayTimeRanges = watchbill.WatchDays.Select(x => new TimeRange { Start = x.Date, End = x.Date.AddHours(24) }).ToList();
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                            throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Forbidden);
+
+                        //Check the state.
+                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
+                                "Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
                         foreach (var shift in watchShiftsToInsert)
                         {
+                            var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End);
 
-                            var intersectingRanges = Utilities.FindTimeRangeIntersections(watchbillDayTimeRanges, new List<TimeRange> { shift.Range });
-                            //Let's get the days that the watch shift will be a part of.
-
-                            shift.WatchDays = new List<WatchDay>();
-
-                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                                throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Forbidden);
-
-                            //Check the state.
-                            if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
-                                    "Please consider changing its state first.", HttpStatusCodes.BadRequest);
-
-                            /*foreach (var day in days)
+                            foreach (var day in watchbill.WatchDays)
                             {
-                                day.WatchShifts.Add(shift);
-                            }*/
+                                if (shiftRange.IntersectsWith(new Itenso.TimePeriod.TimeRange(day.Date, day.Date.AddHours(24))))
+                                {
+                                    shift.WatchDays.Add(day);
+                                    day.WatchShifts.Add(shift);
+                                }
+                            }
 
-                            session.Update(watchbill);
                         }
+
+                        var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
+                        if (!validationResult.IsValid)
+                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+
+                        session.Update(watchbill);
 
                         token.SetResult(watchShiftsToInsert);
 

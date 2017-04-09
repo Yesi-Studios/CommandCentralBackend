@@ -117,13 +117,13 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.WatchShifts).NotEmpty();
                 RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
 
-                When(x => x.ConfirmedBy != null || x.DateConfirmed.HasValue || x.DateConfirmed.Value != default(DateTime) || x.IsConfirmed, () =>
+                /*When(x => x.ConfirmedBy != null || x.DateConfirmed.HasValue || x.DateConfirmed.Value != default(DateTime) || x.IsConfirmed, () =>
                 {
                     RuleFor(x => x.DateConfirmed).NotEmpty();
                     RuleFor(x => x.DateConfirmed).Must(x => x.Value != default(DateTime));
                     RuleFor(x => x.IsConfirmed).Must(x => x == true);
                     RuleFor(x => x.ConfirmedBy).NotEmpty();
-                });
+                });*/
             }
         }
     }

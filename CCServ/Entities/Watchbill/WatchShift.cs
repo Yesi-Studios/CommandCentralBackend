@@ -112,7 +112,7 @@ namespace CCServ.Entities.Watchbill
             /// </summary>
             public WatchShiftValidator()
             {
-                RuleFor(x => x.Points).NotEmpty().GreaterThanOrEqualTo(0);
+                RuleFor(x => x.Points).GreaterThanOrEqualTo(0);
                 RuleFor(x => x.ShiftType).NotEmpty();
                 RuleFor(x => x.Title).NotEmpty().Length(1, 50);
                 RuleFor(x => x.WatchDays).NotEmpty();
