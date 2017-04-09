@@ -73,7 +73,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             watchbillFromDB.LastStateChange,
                             watchbillFromDB.LastStateChangedBy,
                             watchbillFromDB.Title,
-                            watchbillFromDB.WatchDays
+                            WatchDays = watchbillFromDB.WatchDays.OrderBy(x => x.Date).ToList()
                         });
 
                         transaction.Commit();
