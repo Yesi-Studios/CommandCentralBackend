@@ -98,25 +98,23 @@ namespace CCServ.Entities.Watchbill
                 Custom(watchDay =>
                     {
                         var shiftsByType = watchDay.WatchShifts.GroupBy(x => x.ShiftType);
-                        var conflictsByType = shiftsByType.Select(x =>
-                            {
-                                var ranges = x.ToList().Select(y => y.Range);
-
-                                return new
-                                {
-                                    ShiftType = x.Key,
-                                    Conflicts = Utilities.FindTimeRangeIntersections(ranges).Distinct()
-                                };
-                            })
-                            .ToList();
 
                         List<string> errorElements = new List<string>();
 
-                        foreach (var group in conflictsByType)
+                        foreach (var group in shiftsByType)
                         {
-                            if (group.Conflicts.Any())
+                            var shifts = group.ToList();
+                            foreach (var shift in shifts)
                             {
-                                errorElements.Add("{0} shifts: {1}".FormatS(group.ShiftType.Value, String.Join(" ; ", group.Conflicts.Select(x => x.ToString()))));
+                                var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, false);
+                                foreach (var otherShift in shifts.Where(x => x.Id != shift.Id))
+                                {
+                                    var otherShiftRange = new Itenso.TimePeriod.TimeRange(otherShift.Range.Start, otherShift.Range.End, false);
+                                    if (shiftRange.IntersectsWith(otherShiftRange))
+                                    {
+                                        errorElements.Add("{0} shifts: {1}".FormatS(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
+                                    }
+                                }
                             }
                         }
 

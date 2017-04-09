@@ -40,7 +40,7 @@ namespace CCServ
                             Id = Guid.NewGuid(),
                             Title = "Quarterdeck Watchbill",
                             LastStateChangedBy = user0,
-                            LastStateChange = DateTime.Now.AddHours(5)
+                            LastStateChange = DateTime.UtcNow
                         };
                         watchbill.EligibilityGroup = WatchEligibilityGroups.Quarterdeck;
                         session.Save(watchbill);
@@ -63,41 +63,12 @@ namespace CCServ
                         {
                             watchbill.WatchDays.Add(new WatchDay
                             {
-                                Date = DateTime.Now.AddHours(5).Date.AddDays(watchbill.WatchDays.Count),
+                                Date = DateTime.UtcNow.AddHours(5).Date.AddDays(watchbill.WatchDays.Count),
                                 Id = Guid.NewGuid(),
                                 Remarks = "test",
                                 Watchbill = watchbill
                             });
 
-                            watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
-                            {
-                                Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(1), End = watchbill.WatchDays.Last().Date.Date.AddHours(8) },
-                                Id = Guid.NewGuid(),
-                                ShiftType = WatchShiftTypes.JOOD,
-                                Title = "jood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
-                                Points = 1
-                            });
-
-                            watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
-                            {
-                                Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(9), End = watchbill.WatchDays.Last().Date.Date.AddHours(12) },
-                                Id = Guid.NewGuid(),
-                                ShiftType = WatchShiftTypes.JOOD,
-                                Title = "jood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
-                                Points = 2
-                            });
-
-                            watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
-                            {
-                                Range = new TimeRange { Start = watchbill.WatchDays.Last().Date.Date.AddHours(4), End = watchbill.WatchDays.Last().Date.Date.AddHours(6) },
-                                Id = Guid.NewGuid(),
-                                ShiftType = WatchShiftTypes.OOD,
-                                Title = "ood watch",
-                                WatchDays = new List<WatchDay> { watchbill.WatchDays.Last() },
-                                Points = 3
-                            });
 
                         }
 
@@ -187,64 +158,6 @@ namespace CCServ
                     }
                 }*/
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                {
-                    using (var transaction = session.BeginTransaction())
-                    {
-                        var watchbill = session.QueryOver<Watchbill>().List().First();
-                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
-
-                        var inputReason = session.QueryOver<WatchInputReason>().List().First();
-
-                        foreach (var person in watchbill.EligibilityGroup.EligiblePersons)
-                        {
-                            foreach (var shift in watchbill.WatchDays.SelectMany(x => x.WatchShifts))
-                            {
-                                if (Utilities.GetRandomNumber(0, 100) > 90)
-                                {
-                                    shift.WatchInputs.Add(new WatchInput
-                                    {
-                                        DateSubmitted = DateTime.UtcNow,
-                                        Id = Guid.NewGuid(),
-                                        InputReason = inputReason,
-                                        Person = person,
-                                        SubmittedBy = user0,
-                                        WatchShifts = new List<WatchShift> { shift }
-                                    });
-                                }
-                            }
-                        }
-
-                        session.Update(watchbill);
-
-                        transaction.Commit();
-                    }
-                }
-
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                {
-                    using (var transaction = session.BeginTransaction())
-                    {
-                        var watchbill = session.QueryOver<Watchbill>().List().First();
-                        var user0 = session.QueryOver<Person>().Where(x => x.Username == "user0").SingleOrDefault();
-
-                        foreach (var input in watchbill.WatchDays.SelectMany(x => x.WatchShifts).SelectMany(x => x.WatchInputs).Distinct())
-                        {
-                            input.Comments.Add(new Comment
-                            {
-                                Creator = user0,
-                                Id = Guid.NewGuid(),
-                                Text = "test",
-                                Time = DateTime.UtcNow
-                            });
-
-                            session.Update(input);
-                        }
-
-                        transaction.Commit();
-                    }
-                }
-                
 
             }
         }

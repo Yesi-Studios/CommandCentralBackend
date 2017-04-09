@@ -43,69 +43,6 @@ namespace AtwoodUtils
             return (radians);
         }
 
-        public static IEnumerable<TimeRange> FindTimeRangeIntersections(IEnumerable<TimeRange> list)
-        {
-            foreach (var a in list)
-            {
-                foreach (var b in list)
-                {
-                    if ((a.Start < b.End && b.Start < a.End) && !Object.ReferenceEquals(a, b))
-                    {
-                        yield return a;
-                    }
-                }
-            }
-        }
-
-        public static IEnumerable<TimeRange> FindTimeRangeIntersections(IEnumerable<TimeRange> listX, IEnumerable<TimeRange> listY)
-        {
-            var iteratorX = listX.GetEnumerator();
-            var iteratorY = listY.GetEnumerator();
-            TimeRange lastX = null;
-            TimeRange lastY = null;
-            iteratorX.MoveNext();
-            iteratorY.MoveNext();
-            while (iteratorX.Current != null && iteratorY.Current != null)
-            {
-                TimeRange x = iteratorX.Current;
-                TimeRange y = iteratorY.Current;
-
-                // Move iterators if needed:
-                if (x.End.CompareTo(y.Start) < 0)
-                {
-                    iteratorX.MoveNext();
-                    continue;
-                }
-                if (y.End.CompareTo(x.Start) < 0)
-                {
-                    iteratorY.MoveNext();
-                    continue;
-                }
-
-                // Add items to the resulting set, if the items aren't already there:
-                if (lastX != x)
-                {
-                    yield return x;
-                    lastX = x;
-                }
-                if (lastY != y)
-                {
-                    yield return y;
-                    lastY = y;
-                }
-
-                // Determine which iterator should be moved first:
-                if (y.End.CompareTo(x.End) >= 0)
-                {
-                    iteratorX.MoveNext();
-                }
-                else
-                {
-                    iteratorY.MoveNext();
-                }
-            }
-        }
-
         private static Random random = new Random();
         public static string RandomString(int length)
         {
