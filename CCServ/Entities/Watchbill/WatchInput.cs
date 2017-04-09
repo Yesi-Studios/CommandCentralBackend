@@ -12,7 +12,7 @@ namespace CCServ.Entities.Watchbill
     /// <summary>
     /// Represents a watch input object.  This is the way that a person indicates they can not stand a watch.
     /// </summary>
-    public class WatchInput
+    public class WatchInput : ICommentable
     {
 
         #region Properties

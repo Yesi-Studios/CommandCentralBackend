@@ -178,5 +178,15 @@ namespace CCServ.ClientAccess
                     throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), HttpStatusCodes.BadRequest);
             }
         }
+
+        /// <summary>
+        /// Throws an error if the token doesn't have a valid login session.
+        /// </summary>
+        /// <param name="token"></param>
+        public static void AssertLoggedIn(this MessageToken token)
+        {
+            if (token.AuthenticationSession == null)
+                throw new CommandCentralException("You must be logged in.", HttpStatusCodes.AuthenticationFailed);
+        }
     }
 }

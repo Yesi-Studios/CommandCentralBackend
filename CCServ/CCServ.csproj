@@ -162,6 +162,7 @@
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\Account.cs" />
+    <Compile Include="ClientAccess\Endpoints\CommentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\FAQEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Feedback.cs" />
@@ -227,6 +228,7 @@
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="CorrespondingErrorTypeAttribute.cs" />
     <Compile Include="HttpStatusCodesEnum.cs" />
+    <Compile Include="ICommentable.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignments.cs" />
