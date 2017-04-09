@@ -25,10 +25,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadWatchInput(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinputid");
 
             if (!Guid.TryParse(token.Args["watchinputid"] as string, out Guid watchInputId))
@@ -66,10 +63,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void CreateWatchInputs(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinputs");
 
             List<WatchInput> watchInputsFromClient;
@@ -166,10 +160,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdateWatchInput(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinput");
 
             WatchInput watchInputFromClient;
@@ -246,10 +237,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void DeleteWatchInput(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinput");
 
             WatchInput watchInputFromClient;
@@ -300,7 +288,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
     }
 }

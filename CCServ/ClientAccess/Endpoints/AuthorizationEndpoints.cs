@@ -35,12 +35,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadPermissionGroupsByPerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            if (!token.Args.ContainsKey("personid"))
-                throw new CommandCentralException("You failed to send a 'personid' parameter!", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person id you send was in the wrong format.", HttpStatusCodes.BadRequest);
@@ -78,10 +74,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdatePermissionGroupsByPerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid", "permissiongroups");
 
             //Get the person's Id.

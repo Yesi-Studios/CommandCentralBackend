@@ -21,10 +21,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
         private static void SubmitFeedback(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("title", "body");
 
             string title = token.Args["title"] as string;

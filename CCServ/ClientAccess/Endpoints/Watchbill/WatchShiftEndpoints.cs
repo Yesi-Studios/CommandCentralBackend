@@ -23,10 +23,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadWatchShift(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchshiftid");
 
             if (!Guid.TryParse(token.Args["watchshiftid"] as string, out Guid watchShiftId))
@@ -64,10 +61,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void CreateWatchShifts(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchshifts");
 
             List<WatchShift> watchShiftsFromClient;
@@ -155,10 +149,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdateWatchShift(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchshift");
 
             WatchShift watchShiftFromClient;
@@ -233,10 +224,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void DeleteWatchShift(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchshift");
 
             WatchShift watchShiftFromClient;

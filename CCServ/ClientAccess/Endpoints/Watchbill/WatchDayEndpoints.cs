@@ -23,10 +23,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadWatchDay(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchdayid");
 
             if (!Guid.TryParse(token.Args["watchdayid"] as string, out Guid watchDayId))
@@ -65,10 +62,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void CreateWatchDays(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchdays");
 
             List<WatchDay> watchDaysFromClient;
@@ -143,10 +137,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdateWatchDay(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchday");
 
             WatchDay watchDayFromClient;
@@ -216,10 +207,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void DeleteWatchDay(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
+            token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchday");
 
             WatchDay watchDayFromClient;

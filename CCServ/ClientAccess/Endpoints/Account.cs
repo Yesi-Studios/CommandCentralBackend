@@ -38,9 +38,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void Login(MessageToken token)
         {
-            //Let's see if the parameters are here.
-            if (!token.Args.ContainsKeys("username", "password"))
-                throw new CommandCentralException("You must send both a 'username' and a 'password' parameter.", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("username", "password");
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
@@ -138,9 +136,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void Logout(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+            token.AssertLoggedIn();
 
             //First we need to release any profile locks owned by this person.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -165,6 +161,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             token.AuthenticationSession.IsActive = false;
+            token.AuthenticationSession.LogoutTime = token.CallTime;
 
             //Cool, we also need to update the client.
             token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
@@ -198,28 +195,21 @@ namespace CCServ.ClientAccess.Endpoints
         private static void BeginRegistration(MessageToken token)
         {
 
+            token.Args.AssertContainsKeys("continuelink", "ssn");
+
+            string ssn = token.Args["ssn"] as string;
+            string continueLink = token.Args["continueLink"] as string;
+
+            //Let's just do some basic validation and make sure it's a real URI.
+            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
+                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
+
             //Let's do our work in a new session so that we don't affect the authentication information.
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    //First off, we need the link that the client wants us to use to finish registration.
-                    if (!token.Args.ContainsKey("continuelink"))
-                        throw new CommandCentralException("You failed to send a 'continuelink' parameter!", HttpStatusCodes.BadRequest);
-
-                    string continueLink = token.Args["continueLink"] as string;
-
-                    //Let's just do some basic validation and make sure it's a real URI.
-                    if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                        throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
-
-                    //We also need the client's ssn.  This is the account they want to claim.
-                    if (!token.Args.ContainsKey("ssn"))
-                        throw new CommandCentralException("You didn't send a 'ssn' parameter.", HttpStatusCodes.BadRequest);
-
-                    string ssn = token.Args["ssn"] as string;
-
                     //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
                     //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
                     var person = session.QueryOver<Person>()
@@ -334,9 +324,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void CompleteRegistration(MessageToken token)
         {
-            //First, let's make sure the args are present.
-            if (!token.Args.ContainsKeys("username", "password", "accountconfirmationid"))
-                throw new CommandCentralException("You must send a 'username', 'password', and 'accountconfirmationid' parameter.", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("username", "password", "accountconfirmationid");
 
             string username = token.Args["username"] as string;
             string password = token.Args["password"] as string;
@@ -435,11 +423,17 @@ namespace CCServ.ClientAccess.Endpoints
         private static void EndpointMethod_BeginPasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
-            if (!token.Args.ContainsKeys("email", "ssn", "continuelink"))
-                throw new CommandCentralException("You must send an 'email', 'ssn', and 'continuelink' parameter.", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("email", "ssn", "continuelink");
 
             string email = token.Args["email"] as string;
             string ssn = token.Args["ssn"] as string;
+
+            //Let's get the continue link
+            var continueLink = token.Args["continuelink"] as string;
+
+            //Let's just do some basic validation and make sure it's a real URI.
+            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
+                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
 
             //Let's validate the email.  
             System.Net.Mail.MailAddress mailAddress = null;
@@ -454,13 +448,6 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (mailAddress.Host != ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost)
                 throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", HttpStatusCodes.BadRequest);
-
-            //Let's get the continue link
-            var continueLink = token.Args["continuelink"] as string;
-
-            //Let's just do some basic validation and make sure it's a real URI.
-            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
 
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
@@ -554,10 +541,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(EndpointName = "CompletePasswordReset", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void EndpointMethod_CompletePasswordReset(MessageToken token)
         {
-
             //First, let's make sure the args are present.
-            if (!token.Args.ContainsKeys("passwordresetid", "password"))
-                throw new CommandCentralException("You must send a 'passwordresetid' and a 'password' parameter.", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("passwordresetid", "password");
 
             string password = token.Args["password"] as string;
             if (!Guid.TryParse(token.Args["passwordresetid"] as string, out Guid passwordResetId))
@@ -639,12 +624,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void ChangePassword(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            if (!token.Args.ContainsKeys("oldpassword", "newpassword"))
-                throw new CommandCentralException("You must send an oldpassword and newpassword parameter.", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("oldpassword", "newpassword");
 
             string oldPassword = token.Args["oldpassword"] as string;
             string newPassword = token.Args["newpassword"] as string;
@@ -711,8 +692,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void ForgotUsername(MessageToken token)
         {
-            if (!token.Args.ContainsKey("ssn"))
-                throw new CommandCentralException("You failed to send an 'ssn' parameter!", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("ssn");
 
             string ssn = token.Args["ssn"] as string;
 

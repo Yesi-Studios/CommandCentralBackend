@@ -61,15 +61,15 @@ namespace CCServ.ClientAccess
         /// Determines if this session has expired given a max age of inactivity.
         /// </summary>
         /// <returns></returns>
-        public virtual bool IsInvalid()
+        public virtual bool IsValid()
         {
             if (!IsActive)
                 return false;
 
             if (DateTime.UtcNow.Subtract(LastUsedTime) >= _maxAge)
-                return true;
+                return false;
 
-            return false;
+            return true;
         }
 
         #endregion

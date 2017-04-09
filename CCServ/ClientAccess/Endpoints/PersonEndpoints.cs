@@ -147,13 +147,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadPerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("personid"))
-                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
@@ -236,14 +231,9 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadAccountHistoryByPerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("personid"))
-                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
-
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid");
+            
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
 
@@ -275,13 +265,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void GetChainOfCommandOfPerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //First, let's make sure the args are present.
-            if (!token.Args.ContainsKey("personid"))
-                throw new CommandCentralException("You didn't send a 'personid' parameter", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
@@ -322,13 +307,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void SimpleSearchPersons(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //If you can search persons then we'll assume you can search/return the required fields.
-            if (!token.Args.ContainsKey("searchterm"))
-                throw new CommandCentralException("You did not send a 'searchterm' parameter.", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("searchterm");
 
             string searchTerm = token.Args["searchterm"] as string;
 
@@ -413,13 +393,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void AdvancedSearchPersons(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //Let's find which fields the client wants to search in.  This should be a dictionary.
-            if (!token.Args.ContainsKey("filters"))
-                throw new CommandCentralException("You didn't send a 'filters' parameter.", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("filters");
 
             Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
@@ -695,13 +670,8 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void UpdatePerson(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            //Ok, now we need to find the person the client sent us and try to parse it into a person.
-            if (!token.Args.ContainsKey("person"))
-                throw new CommandCentralException("You failed to send a person parameter.", HttpStatusCodes.BadRequest);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("person");
 
             //Try the parse
             Person personFromClient;
@@ -806,9 +776,7 @@ namespace CCServ.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void GetPersonMetadata(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+            token.AssertLoggedIn();
 
             var searchStrategy = new Person.PersonQueryProvider();
             Dictionary<string, object> result = new Dictionary<string, object>();

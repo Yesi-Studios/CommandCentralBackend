@@ -27,13 +27,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadWatchAssignment(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
-
-            if (!token.Args.ContainsKey("watchassignmentid"))
-                throw new CommandCentralException("You failed to send a 'watchassignmentid' parameter.", HttpStatusCodes.BadRequest);
-
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchassignmentid");
 
             if (!Guid.TryParse(token.Args["watchassignmentid"] as string, out Guid watchAssignmentId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", HttpStatusCodes.BadRequest);
@@ -70,13 +65,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void SearchWatchAssignments(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("filters");
 
-            //Let's find which fields the client wants to search in.  This should be a dictionary.
-            if (!token.Args.ContainsKey("filters"))
-                throw new CommandCentralException("You failed to send a 'filters' parameter.", HttpStatusCodes.BadRequest);
+            //Get the filters!
             Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
             //Make sure all the keys are real
@@ -147,14 +139,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void CreateWatchAssignments(MessageToken token)
         {
-
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+            token.AssertLoggedIn();
 
             //Ok, now we need to find the person the client sent us and try to parse it into a person.
-            if (!token.Args.ContainsKey("watchassignments"))
-                throw new CommandCentralException("You failed to send a watchassignments parameter.", HttpStatusCodes.BadRequest);
+            token.Args.AssertContainsKeys("watchassignments");
 
             List<WatchAssignment> watchAssignmentsFromClient;
             try
@@ -326,6 +314,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
         }
 
+        /// <summary>
+        /// Convenience method for swapping watch assignments.
+        /// </summary>
+        /// <param name="shift"></param>
+        /// <param name="newAssignment"></param>
+        /// <param name="watchbill"></param>
         private static void SupercedeWatchAssignment(WatchShift shift, WatchAssignment newAssignment, Entities.Watchbill.Watchbill watchbill)
         {
             WatchAssignment supercededWatchAssignment = null;

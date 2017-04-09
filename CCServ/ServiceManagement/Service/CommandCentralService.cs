@@ -379,7 +379,7 @@ namespace CCServ.ServiceManagement.Service
                 throw new CommandCentralException("That authentication token does not belong to an actual authenticated session.  " +
                 "Consider logging in so as to attain a token.", HttpStatusCodes.AuthenticationFailed);
 
-            if (authenticationSession.IsInvalid())
+            if (!authenticationSession.IsValid())
                 throw new CommandCentralException("The session has timed out or is no longer valid.  Please sign back in.", HttpStatusCodes.AuthenticationFailed);
 
             token.AuthenticationSession = authenticationSession;
