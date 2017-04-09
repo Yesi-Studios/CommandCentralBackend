@@ -106,8 +106,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
                                 "Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
+
                         foreach (var shift in watchShiftsToInsert)
                         {
+                            //Check the shift type.
+                            var shiftTypeFromDB = session.Get<Entities.ReferenceLists.Watchbill.WatchShiftType>(shift.ShiftType.Id) ??
+                                throw new CommandCentralException("Your shift type was not valid.", HttpStatusCodes.BadRequest);
+
+                            shift.ShiftType = shiftTypeFromDB;
+
                             var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End);
 
                             foreach (var day in watchbill.WatchDays)

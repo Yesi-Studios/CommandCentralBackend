@@ -579,7 +579,7 @@ namespace CCServ.Entities.Watchbill
 
                 Custom(watchbill =>
                 {
-                    /*var shiftsByType = watchbill.WatchDays.SelectMany(x => x.WatchShifts).Distinct().GroupBy(x => x.ShiftType);
+                    var shiftsByType = watchbill.WatchDays.SelectMany(x => x.WatchShifts).Distinct().GroupBy(x => x.ShiftType);
 
                     List<string> errorElements = new List<string>();
 
@@ -605,7 +605,7 @@ namespace CCServ.Entities.Watchbill
                         string str = "One or more shifts with the same type overlap:  {0}"
                             .FormatS(String.Join(" | ", errorElements));
                         return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchDay>(x => x.WatchShifts).Name, str);
-                    }*/
+                    }
 
                     return null;
                 });
