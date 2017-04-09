@@ -119,6 +119,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 }
                             }
 
+                            if (!shift.WatchDays.Any())
+                                throw new CommandCentralException("Your shift falls outside the range of the watchbill's days.  Please consider creating a day first that encompasses the shift's duration.", HttpStatusCodes.BadRequest);
                         }
 
                         var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
