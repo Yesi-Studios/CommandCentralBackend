@@ -200,7 +200,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Updates a watch day.
+        /// Deletes a watch day.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -238,6 +238,62 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
                         session.Delete(watchDayFromDB);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Deletes multiple watch days.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteWatchDays(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchdays");
+
+            List<WatchDay> watchDays;
+            try
+            {
+                watchDays = token.Args["watchdays"].CastJToken<List<WatchDay>>();
+            }
+            catch
+            {
+                throw new CommandCentralException("An error occurred while trying to parse your watch days.", HttpStatusCodes.BadRequest);
+            }
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var day in watchDays)
+                        {
+                            var watchDayFromDB = session.Get<WatchDay>(day.Id) ??
+                                throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
+
+                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                                throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                            
+                            //Check the state.
+                            if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
+
+                            session.Delete(watchDayFromDB);
+                        }
 
                         transaction.Commit();
                     }
