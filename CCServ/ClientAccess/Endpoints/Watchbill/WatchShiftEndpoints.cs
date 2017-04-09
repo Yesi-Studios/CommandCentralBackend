@@ -109,6 +109,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         foreach (var shift in watchShiftsToInsert)
                         {
+                            if (shift.ShiftType == null)
+                                throw new CommandCentralException("Your watch shift type is invalid.", HttpStatusCodes.BadRequest);
+
                             //Check the shift type.
                             var shiftTypeFromDB = session.Get<Entities.ReferenceLists.Watchbill.WatchShiftType>(shift.ShiftType.Id) ??
                                 throw new CommandCentralException("Your shift type was not valid.", HttpStatusCodes.BadRequest);
