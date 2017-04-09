@@ -270,7 +270,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
                                 "Please consider changing its state first.", HttpStatusCodes.BadRequest);
 
-                        session.Delete(watchShiftFromDB);
+                        foreach (var day in watchShiftFromDB.WatchDays)
+                            day.WatchShifts.Remove(watchShiftFromDB);
+
+                        session.Update(watchbill);
 
                         transaction.Commit();
                     }

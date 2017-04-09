@@ -174,7 +174,7 @@ namespace CCServ
                     }
                 }*/
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                /*using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 {
                     using (var transaction = session.BeginTransaction())
                     {
@@ -185,7 +185,7 @@ namespace CCServ
 
                         transaction.Commit();
                     }
-                }
+                }*/
             }
         }
     }

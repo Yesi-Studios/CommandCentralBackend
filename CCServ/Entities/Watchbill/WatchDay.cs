@@ -73,7 +73,7 @@ namespace CCServ.Entities.Watchbill
 
                 References(x => x.Watchbill).Not.Nullable();
 
-                HasManyToMany(x => x.WatchShifts).Cascade.All();
+                HasManyToMany(x => x.WatchShifts).Cascade.AllDeleteOrphan();
 
                 Map(x => x.Date).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.Remarks).Length(1000);
