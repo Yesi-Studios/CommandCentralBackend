@@ -576,6 +576,39 @@ namespace CCServ.Entities.Watchbill
 
                 RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
+
+                Custom(watchbill =>
+                {
+                    /*var shiftsByType = watchbill.WatchDays.SelectMany(x => x.WatchShifts).Distinct().GroupBy(x => x.ShiftType);
+
+                    List<string> errorElements = new List<string>();
+
+                    foreach (var group in shiftsByType)
+                    {
+                        var shifts = group.ToList();
+                        foreach (var shift in shifts)
+                        {
+                            var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, false);
+                            foreach (var otherShift in shifts.Where(x => x.Id != shift.Id))
+                            {
+                                var otherShiftRange = new Itenso.TimePeriod.TimeRange(otherShift.Range.Start, otherShift.Range.End, false);
+                                if (shiftRange.IntersectsWith(otherShiftRange))
+                                {
+                                    errorElements.Add("{0} shifts: {1}".FormatS(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
+                                }
+                            }
+                        }
+                    }
+
+                    if (errorElements.Any())
+                    {
+                        string str = "One or more shifts with the same type overlap:  {0}"
+                            .FormatS(String.Join(" | ", errorElements));
+                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchDay>(x => x.WatchShifts).Name, str);
+                    }*/
+
+                    return null;
+                });
             }
         }
 
