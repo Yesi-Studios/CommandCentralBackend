@@ -396,7 +396,7 @@ namespace CCServ.ClientAccess.Endpoints
         private static void AdvancedSearchPersons(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("filters");
+            token.Args.AssertContainsKeys("filters", "returnfields");
 
             Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
@@ -497,10 +497,6 @@ namespace CCServ.ClientAccess.Endpoints
                 centerLong = (double)token.Args["centerlong"];
                 radius = (double)token.Args["radius"];
             }
-
-            //And the fields the client wants to return.
-            if (!token.Args.ContainsKey("returnfields"))
-                throw new CommandCentralException("You didn't send a 'returnfields' parameter.", HttpStatusCodes.BadRequest); ;
 
             List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
