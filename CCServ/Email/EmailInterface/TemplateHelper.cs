@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +11,7 @@ namespace CCServ.Email.EmailInterface
 {
     internal static class TemplateHelper
     {
-        private static Dictionary<string, string> _compiledTemplates = new Dictionary<string, string>();
+        private static ConcurrentDictionary<string, string> _compiledTemplates = new ConcurrentDictionary<string, string>();
 
         /// <summary>
         /// Renders the given template.
@@ -21,6 +22,7 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public static string RenderTemplate(string resourcePath, object model, Assembly assembly)
         {
+
             if (!_compiledTemplates.TryGetValue(resourcePath, out string template))
             {
                 using (var stream = assembly.GetManifestResourceStream(resourcePath))
@@ -28,7 +30,7 @@ namespace CCServ.Email.EmailInterface
                 {
                     var newTemplate = reader.ReadToEnd();
 
-                    _compiledTemplates.Add(resourcePath, newTemplate);
+                    _compiledTemplates.TryAdd(resourcePath, newTemplate);
                     template = newTemplate;
                 }
             }

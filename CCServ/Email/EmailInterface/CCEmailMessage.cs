@@ -27,6 +27,8 @@ namespace CCServ.Email.EmailInterface
         /// </summary>
         private List<SmtpClient> _clients;
 
+        private Task _renderingTask;
+
         /// <summary>
         /// Creates a new CCEmailMessage with the following defaults:
         /// <para />
@@ -55,26 +57,6 @@ namespace CCServ.Email.EmailInterface
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
                     .UsingSMTPHosts(ServiceManagement.ServiceManager.CurrentConfigState.DODSMTPAddress, "localhost");
-        }
-
-        /// <summary>
-        /// Creates a default email message which does not use the smtp email server for the DoD.  Intended for testing.
-        /// </summary>
-        /// <returns></returns>
-        public static CCEmailMessage CreateHomeTestingDefault()
-        {
-            return CCEmailMessage
-                    .From(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .HighProperty()
-                    .UsingSMTPHosts("localhost");
         }
 
         /// <summary>
@@ -320,15 +302,18 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public CCEmailMessage HTMLAlternateViewUsingTemplateFromEmbedded(string resourcePath, object model, Assembly assembly = null)
         {
-            assembly = assembly ?? Assembly.GetCallingAssembly();
+            _renderingTask = new Task(() =>
+            {
+                assembly = typeof(CCEmailMessage).Assembly;
 
-            ContentType mimeType = new ContentType("text/html");
+                ContentType mimeType = new ContentType("text/html");
 
-            var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
+                var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
 
-            AlternateView view = AlternateView.CreateAlternateViewFromString(content, mimeType);
+                AlternateView view = AlternateView.CreateAlternateViewFromString(content, mimeType);
 
-            Message.AlternateViews.Add(view);
+                Message.AlternateViews.Add(view);
+            });
 
             return this;
         }
@@ -372,6 +357,8 @@ namespace CCServ.Email.EmailInterface
             }
 
             SmtpClient attemptClient = _clients.First();
+
+            _renderingTask.RunSynchronously();
 
             Task.Run(() =>
             {

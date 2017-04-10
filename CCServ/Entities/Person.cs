@@ -406,8 +406,9 @@ namespace CCServ.Entities
 
         #region ctors
 
-
-
+        /// <summary>
+        /// Creates a new person.
+        /// </summary>
         public Person()
         {
             UserPreferences = new Dictionary<string, string>();

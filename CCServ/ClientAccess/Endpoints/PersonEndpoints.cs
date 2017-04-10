@@ -344,8 +344,10 @@ namespace CCServ.ClientAccess.Endpoints
                     //Do our permissions check here for each person.
                     var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person).ReturnableFields["Main"]["Person"];
 
-                    Dictionary<string, string> result = new Dictionary<string, string>();
-                    result.Add("Id", person.Id.ToString());
+                    Dictionary<string, string> result = new Dictionary<string, string>
+                    {
+                        { "Id", person.Id.ToString() }
+                    };
                     foreach (var member in simpleSearchMembers.Select(x => x.GetProperty()))
                     {
                         if (returnableFields.Contains(member.Name))
