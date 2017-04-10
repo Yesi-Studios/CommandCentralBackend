@@ -76,13 +76,7 @@ namespace CCServ.Entities.Watchbill
             {
                 RuleFor(x => x.Person).NotEmpty();
 
-                When(x => x.AnsweredBy != null || x.DateAnswered.HasValue || x.DateAnswered.Value != default(DateTime) || x.IsAnswered, () =>
-                {
-                    RuleFor(x => x.DateAnswered).NotEmpty();
-                    RuleFor(x => x.DateAnswered).Must(x => x.Value != default(DateTime));
-                    RuleFor(x => x.IsAnswered).Must(x => x == true);
-                    RuleFor(x => x.AnsweredBy).NotEmpty();
-                });
+                
             }
         }
     }
