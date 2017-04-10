@@ -21,8 +21,7 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public static string RenderTemplate(string resourcePath, object model, Assembly assembly)
         {
-            string template;
-            if (!_compiledTemplates.TryGetValue(resourcePath, out template))
+            if (!_compiledTemplates.TryGetValue(resourcePath, out string template))
             {
                 using (var stream = assembly.GetManifestResourceStream(resourcePath))
                 using (var reader = new StreamReader(stream))
