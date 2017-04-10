@@ -24,7 +24,8 @@ namespace CCServ.Authorization.Groups.Definitions
             CanAccessSubModules(SubModules.EditNews, SubModules.AdminTools, SubModules.CreatePerson, SubModules.EditFAQ);
 
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(CommandLeadership), 
-                typeof(Admin), typeof(Developers), typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
+                typeof(Admin), typeof(Developers), typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster), 
+                typeof(CommandQuarterdeckWatchbill), typeof(DepartmentQuarterdeckWatchbill), typeof(DivisionQuarterdeckWatchbill));
 
             InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
 
