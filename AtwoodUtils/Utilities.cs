@@ -115,13 +115,11 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static MemberInfo GetProperty<T>(this Expression<Func<T, object>> expression)
         {
-            MemberExpression memberExp = expression.Body as MemberExpression;
-            if (memberExp != null)
+            if (expression.Body is MemberExpression memberExp)
                 return memberExp.Member;
 
             // for unary types like datetime or guid
-            UnaryExpression unaryExp = expression.Body as UnaryExpression;
-            if (unaryExp != null)
+            if (expression.Body is UnaryExpression unaryExp)
             {
                 memberExp = unaryExp.Operand as MemberExpression;
                 if (memberExp != null)
@@ -239,7 +237,21 @@ namespace AtwoodUtils
             if (left.Count == 0 && right.Count == 0)
                 return true;
 
-            var elementType = left.First().GetType();
+            Type elementType;
+            
+            if (left.FirstOrDefault() != null)
+            {
+                elementType = left.First().GetType();
+            }
+            else if (right.FirstOrDefault() != null)
+            {
+                elementType = right.First().GetType();
+            }
+            else
+            {
+                throw new Exception("How did you get here, cotton eye joe?");
+            }
+
             var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.SafeEquals(keyPropertyName));
             HashSet<object> foundIds = new HashSet<object>();
 

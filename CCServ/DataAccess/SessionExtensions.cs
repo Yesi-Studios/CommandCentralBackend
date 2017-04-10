@@ -113,8 +113,8 @@ namespace CCServ.DataAccess
                         yield return new Change
                         {
                             Id = Guid.NewGuid(),
-                            NewValue = currentValue == null ? null : currentValue.ToString(),
-                            OldValue = previousValue == null ? null : previousValue.ToString(),
+                            NewValue = currentValue?.ToString(),
+                            OldValue = previousValue?.ToString(),
                             PropertyName = propertyName
                         };
                     }
