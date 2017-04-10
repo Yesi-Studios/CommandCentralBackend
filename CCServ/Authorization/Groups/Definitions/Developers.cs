@@ -28,7 +28,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
 
-            CanAccessModule("QuarterdeckWatchbill");
+            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
 
             CanAccessModule("Main")
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(

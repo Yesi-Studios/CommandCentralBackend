@@ -47,7 +47,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                             .Resolve(token.AuthenticationSession.Person, personFromDB);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
+                        if (!resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()]
                                 && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
                             throw new CommandCentralException("You are not authorized to submit inputs for this person.", HttpStatusCodes.BadRequest);
 
@@ -67,8 +67,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
-
     }
 }

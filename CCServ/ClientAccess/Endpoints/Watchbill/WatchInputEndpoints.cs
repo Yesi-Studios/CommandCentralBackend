@@ -107,10 +107,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                                 .Resolve(token.AuthenticationSession.Person, personFromDB);
 
-                            if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
-                                && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
-                                throw new CommandCentralException("You are not authorized to submit inputs for this person.", HttpStatusCodes.BadRequest);
-
                             //Now we just have to be certain that the watch shifts are all real and from the same watchbill.
                             var watchShiftsFromDB = session.QueryOver<WatchShift>()
                                 .WhereRestrictionOn(x => x.Id)
@@ -124,6 +120,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var watchbill = watchShiftsFromDB.First().WatchDays.First().Watchbill;
                             if (watchShiftsFromDB.Any(x => x.WatchDays.First().Watchbill.Id != watchbill.Id))
                                 throw new CommandCentralException("Your requested watch inputs were not all for the same watchbill.", HttpStatusCodes.BadRequest);
+
+                            if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
+                                && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
+                                throw new CommandCentralException("You are not authorized to submit inputs for this person.", HttpStatusCodes.BadRequest);
 
                             //Let's also check the watchbill's state.
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
@@ -211,7 +211,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                             .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()])
+                        if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
                             throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
                                 "If this is your own input and you need to change the date range, " +
                                 "please delete the input and then re-create it for the proper range.",
@@ -282,7 +282,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                             .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.QuarterdeckWatchbill.ToString()]
+                        if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
                             && watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id
                             && watchInputFromDB.SubmittedBy.Id != token.AuthenticationSession.Person.Id)
                             throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
