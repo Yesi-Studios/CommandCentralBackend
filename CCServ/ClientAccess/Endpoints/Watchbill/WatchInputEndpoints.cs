@@ -135,6 +135,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             input.InputReason = inputReasonFromDB;
 
+                            //We also need to find the input requirement for this person and update that.
+                            var inputRequirement = watchbill.InputRequirements.FirstOrDefault(x => x.Person.Id == personFromDB.Id) ??
+                                throw new CommandCentralException("You may not submit inputs for the person because there is no valid input requirement for that person.", HttpStatusCodes.BadRequest);
+
+                            if (!inputRequirement.IsAnswered)
+                                inputRequirement.IsAnswered = true;
+
                             foreach (var shift in watchShiftsFromDB)
                             {
                                 shift.WatchInputs.Add(input);

@@ -32,16 +32,6 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual bool IsAnswered { get; set; }
 
-        /// <summary>
-        /// The person who answered this requirement.  If it's not the Person assigned, then this is the person who did it on the person's behalf.
-        /// </summary>
-        public virtual Person AnsweredBy { get; set; }
-
-        /// <summary>
-        /// The datetime at which this requirement was marked as answered.
-        /// </summary>
-        public virtual DateTime? DateAnswered { get; set; }
-
         #endregion
 
         /// <summary>
@@ -57,10 +47,8 @@ namespace CCServ.Entities.Watchbill
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.Person).Not.Nullable();
-                References(x => x.AnsweredBy);
 
                 Map(x => x.IsAnswered).Default(false.ToString());
-                Map(x => x.DateAnswered).CustomType<UtcDateTimeType>();
             }
         }
 
@@ -75,8 +63,6 @@ namespace CCServ.Entities.Watchbill
             public WatchInputRequirementValidator()
             {
                 RuleFor(x => x.Person).NotEmpty();
-
-                
             }
         }
     }
