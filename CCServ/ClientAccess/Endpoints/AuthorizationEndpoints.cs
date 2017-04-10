@@ -14,14 +14,13 @@ namespace CCServ.ClientAccess.Endpoints
     static class AuthorizationEndpoints
     {
         /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Returns all permission group definitions to the client.
         /// </summary>
         /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadPermissionGroups", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_GetPermissionGroups(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void LoadPermissionGroups(MessageToken token)
         {
             token.SetResult(Authorization.Groups.PermissionGroup.AllPermissionGroups.ToList());
         }
@@ -29,41 +28,23 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Returns all permission group definitions to the client.
+        /// Returns all permission group definitions to the client for the specific client.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadPermissionGroupsByPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_LoadPermissionGroupsByPerson(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadPermissionGroupsByPerson(MessageToken token)
         {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid");
 
-            if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You failed to send a 'personid' parameter!", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("The person id you send was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+                throw new CommandCentralException("The person id you send was in the wrong format.", HttpStatusCodes.BadRequest);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var person = session.Get<Person>(personId);
-
-                if (person == null)
-                {
-                    token.AddErrorMessage("The person id you sent was not correct.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                    return;
-                }
+                var person = session.Get<Person>(personId) ??
+                    throw new CommandCentralException("The person id you sent was not correct.", HttpStatusCodes.BadRequest);
 
                 //Get the person's permissions and then add the defaults.
                 var groups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName))
@@ -90,35 +71,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "UpdatePermissionGroupsByPerson", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_UpdatePermissionGroupsByPerson(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void UpdatePermissionGroupsByPerson(MessageToken token)
         {
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to do that.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Forbidden);
-                return;
-            }
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("personid", "permissiongroups");
 
             //Get the person's Id.
-            if (!token.Args.ContainsKey("personid"))
-            {
-                token.AddErrorMessage("You failed to send a 'personid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            Guid personId;
-            if (!Guid.TryParse(token.Args["personid"] as string, out personId))
-            {
-                token.AddErrorMessage("Your person Id parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
-
-            //What permission groups does the client want this person to be in?
-            if (!token.Args.ContainsKey("permissiongroups"))
-            {
-                token.AddErrorMessage("You failed to send a 'permissiongroups' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+                throw new CommandCentralException("Your person Id parameter was in the wrong format.", HttpStatusCodes.BadRequest);
 
             List<string> desiredPermissionGroups = null;
 
@@ -130,8 +91,7 @@ namespace CCServ.ClientAccess.Endpoints
             catch
             {
                 //If that cast failed.
-                token.AddErrorMessage("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("Your 'permissiongroups' parameter was in the wrong format.", HttpStatusCodes.BadRequest);
             }
 
             //Now we load the person and begin the permissions edit.
@@ -141,13 +101,8 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Get the person and check if the id was legit.
-                    var person = session.Get<Person>(personId);
-
-                    if (person == null)
-                    {
-                        token.AddErrorMessage("Your person Id parameter was wrong. lol.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var person = session.Get<Person>(personId) ??
+                        throw new CommandCentralException("Your person Id parameter was wrong. lol.", HttpStatusCodes.BadRequest);
 
                     //Get the current permission groups the person is a part of.
                     var currentGroups = person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
@@ -271,10 +226,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     if (failures.Any())
-                    {
-                        token.AddErrorMessage("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-                        return;
-                    }
+                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Unauthorized);
 
                     //Now make sure we don't try to save the default permissions.
                     person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();

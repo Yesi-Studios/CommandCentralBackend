@@ -67,9 +67,9 @@ namespace CCServ.ClientAccess
                 return false;
 
             if (DateTime.UtcNow.Subtract(LastUsedTime) >= _maxAge)
-                return true;
+                return false;
 
-            return false;
+            return true;
         }
 
         #endregion

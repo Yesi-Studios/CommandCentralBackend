@@ -121,7 +121,7 @@ namespace CCServ.ServiceManagement
                     new JsonSerializerSettings
                     {
                         Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
-                        ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                        ContractResolver = new AtwoodUtils.CustomContractResolver(),
                         Formatting = Formatting.Indented,
                         DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
                         DateTimeZoneHandling = DateTimeZoneHandling.Utc
@@ -150,7 +150,7 @@ namespace CCServ.ServiceManagement
                             new JsonSerializerSettings
                             {
                                 Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
-                                ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                                ContractResolver = new AtwoodUtils.CustomContractResolver(),
                                 Formatting = Formatting.Indented,
                                 DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
                                 DateTimeZoneHandling = DateTimeZoneHandling.Utc
@@ -176,7 +176,7 @@ namespace CCServ.ServiceManagement
                         new JsonSerializerSettings
                         {
                             Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
-                            ContractResolver = new AtwoodUtils.SerializationSettings.NHibernateContractResolver(),
+                            ContractResolver = new AtwoodUtils.CustomContractResolver(),
                             Formatting = Formatting.Indented,
                             DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
                             DateTimeZoneHandling = DateTimeZoneHandling.Utc

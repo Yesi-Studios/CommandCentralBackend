@@ -84,6 +84,19 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// Swaps two values.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public static void Swap<T>(T x, T y)
+        {
+            T t = y;
+            y = x;
+            x = t;
+        }
+
+        /// <summary>
         /// For the given property of the given type, returns the name of that property.
         /// </summary>
         /// <typeparam name="T"></typeparam>

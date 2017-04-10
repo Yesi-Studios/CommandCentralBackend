@@ -54,12 +54,40 @@ namespace CCServ.Entities.ReferenceLists
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj as ReferenceListItemBase == null)
+            if (obj == null)
                 return false;
 
-            var other = (ReferenceListItemBase)obj;
+            var other = obj as ReferenceListItemBase;
+
+            if (other == null)
+                return false;
 
             return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
+        }
+
+        /// <summary>
+        /// Compares the values of two reference lists.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public static bool operator ==(ReferenceListItemBase x, ReferenceListItemBase y)
+        {
+            if (object.ReferenceEquals(null, x))
+                return object.ReferenceEquals(null, y);
+
+            return x.Equals(y);
+        }
+
+        /// <summary>
+        /// Compares the values of two reference lists.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public static bool operator !=(ReferenceListItemBase x, ReferenceListItemBase y)
+        {
+            return !(x == y);
         }
 
         /// <summary>

@@ -44,13 +44,13 @@ namespace CCServ.Email.EmailInterface
         public static CCEmailMessage CreateDefault()
         {
             return CCEmailMessage
-                    .From(new System.Net.Mail.MailAddress(
+                    .From(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new System.Net.Mail.MailAddress(
+                    .BCC(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new System.Net.Mail.MailAddress(
+                    .ReplyTo(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
@@ -61,16 +61,16 @@ namespace CCServ.Email.EmailInterface
         /// Creates a default email message which does not use the smtp email server for the DoD.  Intended for testing.
         /// </summary>
         /// <returns></returns>
-        public static CCEmailMessage CreateTestingDefault()
+        public static CCEmailMessage CreateHomeTestingDefault()
         {
             return CCEmailMessage
-                    .From(new System.Net.Mail.MailAddress(
+                    .From(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new System.Net.Mail.MailAddress(
+                    .BCC(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new System.Net.Mail.MailAddress(
+                    .ReplyTo(new MailAddress(
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
                         ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                     .HighProperty()
@@ -322,7 +322,7 @@ namespace CCServ.Email.EmailInterface
         {
             assembly = assembly ?? Assembly.GetCallingAssembly();
 
-            ContentType mimeType = new System.Net.Mime.ContentType("text/html");
+            ContentType mimeType = new ContentType("text/html");
 
             var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
 
@@ -380,8 +380,7 @@ namespace CCServ.Email.EmailInterface
                 .WaitAndRetry(_clients.Count - 1, count => retryDelay, (exception, waitDuration, retryCount, context) =>
                 {
                     attemptClient = _clients[retryCount];
-                    if (retryCallback != null)
-                        retryCallback(exception, waitDuration, retryCount);
+                    retryCallback?.Invoke(exception, waitDuration, retryCount);
                 })
                 .ExecuteAndCapture(() =>
                 {
@@ -390,8 +389,7 @@ namespace CCServ.Email.EmailInterface
 
                 if (result.Outcome == OutcomeType.Failure)
                 {
-                    if (failureCallback != null)
-                        failureCallback(result.FinalException);
+                    failureCallback?.Invoke(result.FinalException);
                 }
             });
 

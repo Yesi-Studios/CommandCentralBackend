@@ -28,6 +28,6 @@ namespace CCServ.Authorization
         /// <summary>
         /// The permission needed to edit or create FAQs.
         /// </summary>
-        EditFAQ
+        EditFAQ        
     }
 }

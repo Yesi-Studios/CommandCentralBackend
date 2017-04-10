@@ -32,18 +32,12 @@ namespace CCServ.Entities.ReferenceLists
                     //Validate it.
                     var result = ethnicity.Validate();
                     if (!result.IsValid)
-                    {
-                        token.AddErrorMessages(result.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<Ethnicity>().Where(x => x.Value.IsInsensitiveLike(ethnicity.Value)).RowCount() != 0)
-                    {
-                        token.AddErrorMessage("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), HttpStatusCodes.BadRequest);
 
                     var ethnicityFromDB = session.Get<Ethnicity>(ethnicity.Id);
 
@@ -73,20 +67,15 @@ namespace CCServ.Entities.ReferenceLists
         /// <param name="id"></param>
         /// <param name="forceDelete"></param>
         /// <param name="token"></param>
-        public override void Delete(System.Guid id, bool forceDelete, ClientAccess.MessageToken token)
+        public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    var ethnicity = session.Get<Ethnicity>(id);
-
-                    if (ethnicity == null)
-                    {
-                        token.AddErrorMessage("That ethnicity Id was not valid.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                        return;
-                    }
+                    var ethnicity = session.Get<Ethnicity>(id) ??
+                        throw new CommandCentralException("That ethnicity Id was not valid.", HttpStatusCodes.BadRequest);
 
                     var persons = session.QueryOver<Person>().Where(x => x.Ethnicity == ethnicity).List();
 
@@ -107,8 +96,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            token.AddErrorMessage("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
+                            throw new CommandCentralException("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), HttpStatusCodes.Forbidden);
                         }
                     }
                     else

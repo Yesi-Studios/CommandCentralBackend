@@ -7,8 +7,14 @@ using AtwoodUtils;
 
 namespace CCServ.Authorization.Groups.Definitions
 {
+    /// <summary>
+    /// The division level muster group.
+    /// </summary>
     public class DivisionMuster : PermissionGroup
     {
+        /// <summary>
+        /// The division level muster group.
+        /// </summary>
         public DivisionMuster()
         {
             CanEditMembershipOf(typeof(DivisionMuster));

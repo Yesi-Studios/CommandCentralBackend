@@ -26,23 +26,14 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadFAQ(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void LoadFAQ(MessageToken token)
         {
-            //Get the FAQ Id we're supposed to load.
-            if (!token.Args.ContainsKey("faqid"))
-            {
-                token.AddErrorMessage("You didn't send an 'faqid' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            token.Args.AssertContainsKeys("faqid");
 
             //Get the Id.
-            Guid faqId;
-            if (!Guid.TryParse(token.Args["faqid"] as string, out faqId))
-            {
-                token.AddErrorMessage("The faqid parameter was not in the correct format.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+            if (!Guid.TryParse(token.Args["faqid"] as string, out Guid faqId))
+                throw new CommandCentralException("The faqid parameter was not in the correct format.", HttpStatusCodes.BadRequest);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -74,8 +65,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "LoadFAQs", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_LoadFAQs(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        private static void LoadFAQs(MessageToken token)
         {
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -104,27 +95,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "CreateOrUpdateFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_CreateOrUpdateFAQ(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void CreateOrUpdateFAQ(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to create or update an FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
-            {
-                token.AddErrorMessage("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-            }
-
-            if (!token.Args.ContainsKey("faq"))
-            {
-                token.AddErrorMessage("You failed to send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", HttpStatusCodes.BadRequest);
 
             FAQ faqFromClient;
 
@@ -134,18 +113,14 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), HttpStatusCodes.BadRequest);
             }
 
             //Ok now we know we have the FAQ.  Now let's see if it's valid.
             var validationResult = new FAQ.FAQValidator().Validate(faqFromClient);
 
             if (!validationResult.IsValid)
-            {
-                token.AddErrorMessages(validationResult.Errors.Select(x => x.ErrorMessage), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -173,10 +148,7 @@ namespace CCServ.ClientAccess.Endpoints
                         var resultsCount = session.QueryOver<FAQ>().Where(x => (x.Name.IsInsensitiveLike(faqFromClient.Name) || x.Question.IsInsensitiveLike(faqFromClient.Question)) && x.Id != faqFromClient.Id).RowCount();
 
                         if (resultsCount != 0)
-                        {
-                            token.AddErrorMessage("It appears as though an FAQ with that name or question already exists.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                            return;
-                        }
+                            throw new CommandCentralException("It appears as though an FAQ with that name or question already exists.", HttpStatusCodes.BadRequest);
 
                         //Ok we're good on duplicates.  Now we can merge the FAQ.
                         session.Merge(faqFromClient);
@@ -202,28 +174,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "DeleteFAQ", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EndpointMethod_DeleteFAQ(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteFAQ(MessageToken token)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-            {
-                token.AddErrorMessage("You must be logged in to manage the FAQ.", ErrorTypes.Authentication, System.Net.HttpStatusCode.Unauthorized);
-                return;
-            }
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
-            {
-                token.AddErrorMessage("You do not have permission to manage the FAQ.", ErrorTypes.Authorization, System.Net.HttpStatusCode.Unauthorized);
-            }
-
-            //Let's see if the parameters are here.
-            if (!token.Args.ContainsKey("faq"))
-            {
-                token.AddErrorMessage("You didn't send an 'faq' parameter.", ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
-            }
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", HttpStatusCodes.BadRequest);
 
             //Get the faq
             FAQ faqFromClient;
@@ -234,8 +193,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                token.AddErrorMessage("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation, System.Net.HttpStatusCode.BadRequest);
-                return;
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), HttpStatusCodes.BadRequest);
             }
 
             //We can head right into the session since we're going to delete this FAQ.
@@ -244,13 +202,8 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var faqFromDB = session.Get<FAQ>(faqFromClient.Id);
-
-                    if (faqFromDB == null)
-                    {
-                        token.AddErrorMessage("A faq with that Id was not found in the database.", ErrorTypes.Validation, System.Net.HttpStatusCode.NotFound);
-                        return;
-                    }
+                    var faqFromDB = session.Get<FAQ>(faqFromClient.Id) ??
+                        throw new CommandCentralException("A faq with that Id was not found in the database.", HttpStatusCodes.BadRequest);
 
                     //Everything is good to go.  Let's delete it.
                     session.Delete(faqFromDB);
