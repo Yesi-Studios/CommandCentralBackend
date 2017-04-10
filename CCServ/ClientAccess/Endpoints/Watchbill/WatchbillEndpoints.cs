@@ -212,10 +212,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
             }
 
-            var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromClient);
-
-            if (!validationResult.IsValid)
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+            
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -241,6 +238,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             //It looks like the client is trying to change the state.
                             watchbillFromDB.SetState(watchbillFromClient.CurrentState, token.CallTime, token.AuthenticationSession.Person);
                         }
+
+                        var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromDB);
+
+                        if (!validationResult.IsValid)
+                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
 
                         session.Update(watchbillFromDB);
 
