@@ -129,6 +129,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
                                 throw new CommandCentralException("You may not submit inputs unless the watchbill is in the Open for Inputs state.", HttpStatusCodes.BadRequest);
 
+                            //We'll also check to make sure that the watch input reason is real.
+                            var inputReasonFromDB = session.Get<Entities.ReferenceLists.Watchbill.WatchInputReason>(input.InputReason.Id) ??
+                                throw new CommandCentralException("Your watch input reason was not valid.", HttpStatusCodes.BadRequest);
+
+                            input.InputReason = inputReasonFromDB;
+
                             foreach (var shift in watchShiftsFromDB)
                             {
                                 shift.WatchInputs.Add(input);
