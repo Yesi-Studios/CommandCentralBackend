@@ -900,6 +900,7 @@ namespace CCServ.Entities
                     .WithMessage("The sex must not be left blank.");
                 RuleFor(x => x.Remarks).Length(0, 150)
                     .WithMessage("Remarks must not exceed 150 characters.");
+                RuleFor(x => x.Command).NotEmpty().WithMessage("A person must have a department.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
                 RuleFor(x => x.Ethnicity).Must(x =>
                     {
                         if (x == null)
