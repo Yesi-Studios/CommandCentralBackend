@@ -547,7 +547,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.LastStateChangedBy).Not.Nullable();
                 References(x => x.EligibilityGroup).Not.Nullable();
 
-                HasMany(x => x.WatchDays).Cascade.AllDeleteOrphan();
+                HasMany(x => x.WatchDays).Cascade.AllDeleteOrphan().Inverse();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
 
                 Map(x => x.Title).Not.Nullable();
