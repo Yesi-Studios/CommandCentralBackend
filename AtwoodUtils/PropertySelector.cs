@@ -56,7 +56,7 @@ namespace AtwoodUtils
         public static Expression<Func<T, object>> SelectExpressionFrom<T>(string propertyName)
         {
             var parameter = Expression.Parameter(typeof(T));
-            var memberExpression = Expression.Property(parameter, propertyName);
+            var memberExpression = Expression.Convert(Expression.Property(parameter, propertyName), typeof(object));
             var lambdaExpression = Expression.Lambda<Func<T, object>>(memberExpression, parameter);
             return lambdaExpression;
         }

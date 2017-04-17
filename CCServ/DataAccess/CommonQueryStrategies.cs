@@ -128,8 +128,17 @@ namespace CCServ.DataAccess
         /// <returns></returns>
         public static ICriterion DateTimeQuery(string propertyName, object searchValue)
         {
-            var values = searchValue as IEnumerable<Dictionary<string, DateTime?>> ?? throw new CommandCentralException("Your date/time criteria must be in an array of dictionaries with " +
-                "at least a from/to and a corresponding date.", HttpStatusCodes.BadRequest);
+
+            List<Dictionary<string, DateTime?>> values;
+
+            try
+            {
+                values = searchValue.CastJToken<List<Dictionary<string, DateTime?>>>();
+            }
+            catch
+            {
+                throw new CommandCentralException("Your date/time criteria must be in an array of dictionaries with at least a from/to and a corresponding date.", HttpStatusCodes.BadRequest);
+            }
 
             var disjunction = new Disjunction();
 
