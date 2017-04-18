@@ -444,6 +444,8 @@ namespace CCServ.Entities.Watchbill
             //And we need to know how many eligible people in each department there are.
             var shuffledShiftsByType = this.WatchDays.SelectMany(x => x.WatchShifts).Distinct().Shuffle().GroupBy(x => x.ShiftType);
 
+            var minWatchDay = this.WatchDays.Min(x => x.Date);
+
             foreach (var shiftGroup in shuffledShiftsByType)
             {
                 var remainingShifts = new List<WatchShift>(shiftGroup.OrderByDescending(x => x.Points));
@@ -459,9 +461,18 @@ namespace CCServ.Entities.Watchbill
 
                 var assignablePersonsByDepartment = personsByDepartment.Select(x =>
                 {
-                    return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(y =>
+                    return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
-                        return y.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z => z.WatchShift.Points);
+                        double points = person.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z =>
+                        {
+                            int totalMonths = (int)Math.Round(z.WatchShift.WatchDays
+                            .Select(watchDay => DateTime.UtcNow.Subtract(watchDay.Date).TotalDays / (365.2425 / 12)).Max());
+
+                            return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
+
+                        });
+
+                        return points;
                     })));
                 }).ToDictionary(x => x.Key, x => x.Value);
 
@@ -483,7 +494,14 @@ namespace CCServ.Entities.Watchbill
                         //Determine who is about to stand this watch.
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
-                            return shiftsForThisGroup[x].WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id);
+                            if (shiftsForThisGroup[x].WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id))
+                                return false;
+
+                            if (person.DateOfArrival < DateTime.UtcNow.AddMonths(-3))
+                                return false;
+
+                            return true;
+
                         }, out Person personToAssign))
                             throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
 
@@ -508,7 +526,20 @@ namespace CCServ.Entities.Watchbill
                 {
                     if (!assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
                     {
-                        return shift.WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id);
+
+                        if (shift.WatchInputs.Any() && shift.WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
+                            return false;
+
+                        if (person.DateOfArrival.HasValue && minWatchDay < person.DateOfArrival.Value.AddMonths(1))
+                            return false;
+
+                        if (person.EAOS.HasValue && minWatchDay > person.EAOS.Value.AddMonths(-1))
+                            return false;
+
+                        if (person.DateOfBirth.HasValue && shift.WatchDays.Any(day => day.Date == person.DateOfBirth.Value.Date))
+                            return false;
+
+                        return true;
                     }, out Person personToAssign))
                         throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
 
