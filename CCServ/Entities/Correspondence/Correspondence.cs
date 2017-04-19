@@ -52,6 +52,21 @@ namespace CCServ.Entities.Correspondence
         public virtual string Body { get; set; }
 
         /// <summary>
+        /// Indicates if this correspondence has received final approval.  If null, then the correspondence is still in progress.
+        /// </summary>
+        public virtual bool? IsApproved { get; set; }
+
+        /// <summary>
+        /// The date/time this correspondence was denied or approved.
+        /// </summary>
+        public virtual DateTime? DateOfAction { get; set; }
+
+        /// <summary>
+        /// This is the final person who took an action on this correspondence to confirm or deny it.
+        /// </summary>
+        public virtual Person ActionPerson { get; set; }
+
+        /// <summary>
         /// The "discussion thread" for this correspondence.
         /// </summary>
         public virtual IList<Comment> Comments { get; set; }
