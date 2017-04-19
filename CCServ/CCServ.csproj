@@ -229,9 +229,13 @@
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\Comment.cs" />
+    <Compile Include="Entities\Correspondence\CorrespondenceStep.cs" />
+    <Compile Include="Entities\Correspondence\Correspondence.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="CorrespondingErrorTypeAttribute.cs" />
+    <Compile Include="Entities\ReferenceLists\Correspondence\CorrespondenceType.cs" />
     <Compile Include="HttpStatusCodesEnum.cs" />
+    <Compile Include="IAttachmentParent.cs" />
     <Compile Include="ICommentable.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
@@ -287,6 +291,7 @@
     <Compile Include="Entities\ReferenceLists\UIC.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualification.cs" />
     <Compile Include="Entities\ReferenceLists\WatchQualifications.cs" />
+    <Compile Include="Entities\FileAttachment.cs" />
     <Compile Include="Variance.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogEntry.cs" />
@@ -416,6 +421,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
