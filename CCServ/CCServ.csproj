@@ -233,6 +233,7 @@
     <Compile Include="Entities\Correspondence\Correspondence.cs" />
     <Compile Include="Entities\FAQ.cs" />
 	<Compile Include="Entities\ReferenceLists\Correspondence\CorrespondenceType.cs" />
+    <Compile Include="IAttachmentParent.cs" />
     <Compile Include="ICommentable.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
