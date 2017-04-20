@@ -230,7 +230,6 @@
     <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
-    <Compile Include="CorrespondingErrorTypeAttribute.cs" />
     <Compile Include="ICommentable.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
