@@ -1162,18 +1162,18 @@ namespace CCServ.Entities
 
                     //First we need to get what the client gave us into a list of Guids.
                     if (token.SearchParameter.Value == null)
-                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("You search value must not be null.", ErrorTypes.Validation);
 
                     var str = (string)token.SearchParameter.Value;
 
                     if (String.IsNullOrWhiteSpace(str))
-                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
                     List<string> values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                         values.Add(value.Trim());
                     }
@@ -1200,18 +1200,18 @@ namespace CCServ.Entities
 
                     //First we need to get what the client gave us into a list of Guids.
                     if (token.SearchParameter.Value == null)
-                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("You search value must not be null.", ErrorTypes.Validation);
 
                     var str = (string)token.SearchParameter.Value;
 
                     if (String.IsNullOrWhiteSpace(str))
-                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
                     List<string> values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                         values.Add(value.Trim());
                     }
@@ -1234,7 +1234,7 @@ namespace CCServ.Entities
                 .UsingStrategy(token =>
                 {
 
-                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Muster records are not currently queryable from this page.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Muster records are not currently queryable from this page.", ErrorTypes.Validation);
                 });
 
                 ForProperties(
@@ -1248,18 +1248,18 @@ namespace CCServ.Entities
 
                     //First we need to get what the client gave us into a list of Guids.
                     if (token.SearchParameter.Value == null)
-                        throw new CommandCentralException("You search value must not be null.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("You search value must not be null.", ErrorTypes.Validation);
 
                     var str = (string)token.SearchParameter.Value;
 
                     if (String.IsNullOrWhiteSpace(str))
-                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
                     List<string> values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                            throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                         values.Add(value.Trim());
                     }

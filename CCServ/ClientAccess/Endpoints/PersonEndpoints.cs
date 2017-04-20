@@ -40,15 +40,15 @@ namespace CCServ.ClientAccess.Endpoints
         {
             //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
             if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", HttpStatusCodes.AuthenticationFailed);
+                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication);
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.CreatePerson.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                throw new CommandCentralException("You don't have permission to do that.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You don't have permission to do that.", ErrorTypes.Authorization);
 
             //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
             if (!token.Args.ContainsKey("person"))
-                throw new CommandCentralException("You failed to send a 'person' parameter.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You failed to send a 'person' parameter.", ErrorTypes.Validation);
 
             Person personFromClient;
 
@@ -58,7 +58,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                throw new CommandCentralException("An error occured while processing your person object.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occured while processing your person object.", ErrorTypes.Validation);
             }
 
 
@@ -94,7 +94,7 @@ namespace CCServ.ClientAccess.Endpoints
             var results = new Person.PersonValidator().Validate(newPerson);
 
             if (!results.IsValid)
-                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //Cool, since everything is good to go, let's also add the account history.
             newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
@@ -111,7 +111,7 @@ namespace CCServ.ClientAccess.Endpoints
                     //Let's make sure no one with that SSN exists...
                     if (session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).RowCount() != 0)
                     {
-                        throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation);
                     }
 
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
@@ -151,13 +151,13 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
                 var person = session.Get<Person>(personId) ??
-                    throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now that we have the person back, let's resolve the permissions for this person.
                 var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
@@ -235,21 +235,21 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid");
             
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             //Let's load the person we were given.  We need the object for the permissions check.
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
                 var person = session.Get<Person>(personId) ??
-                    throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
                 bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
                     .ReturnableFields["Main"]["Person"].Contains(PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
 
                 if (!canView)
-                    throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", HttpStatusCodes.Unauthorized);
+                    throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", ErrorTypes.Authorization);
 
                 token.SetResult(person.AccountHistory);
             }
@@ -269,7 +269,7 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -278,7 +278,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Now let's load the person and then set any fields the client isn't allowed to see to null.
                     var person = session.Get<Person>(personId) ??
-                        throw new CommandCentralException("The Id you sent appears to be invalid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                     token.SetResult(person.GetChainOfCommand());
 
@@ -314,7 +314,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Let's require a search term.  That's nice.
             if (String.IsNullOrEmpty(searchTerm))
-                throw new CommandCentralException("You must send a search term. A blank term isn't valid. Sorry :(", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You must send a search term. A blank term isn't valid. Sorry :(", ErrorTypes.Validation);
 
             bool showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
@@ -413,7 +413,7 @@ namespace CCServ.ClientAccess.Endpoints
                     case "Division":
                         {
                             if (token.AuthenticationSession.Person.Division == null)
-                                throw new CommandCentralException("You can't limit by division if you don't have a division.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("You can't limit by division if you don't have a division.", ErrorTypes.Validation);
 
                             //First, if the filters have division, delete it.
                             if (filters.ContainsKey("Division"))
@@ -423,14 +423,14 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                         }
                     case "Department":
                         {
                             if (token.AuthenticationSession.Person.Department == null)
-                                throw new CommandCentralException("You can't limit by department if you don't have a department.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("You can't limit by department if you don't have a department.", ErrorTypes.Validation);
 
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
@@ -440,7 +440,7 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                             
@@ -448,7 +448,7 @@ namespace CCServ.ClientAccess.Endpoints
                     case "Command":
                         {
                             if (token.AuthenticationSession.Person.Department == null)
-                                throw new CommandCentralException("You can't limit by command if you don't have a command.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("You can't limit by command if you don't have a command.", ErrorTypes.Validation);
 
                             //First, if the filters have command, delete it.
                             if (filters.ContainsKey("Command"))
@@ -458,14 +458,14 @@ namespace CCServ.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                         }
                     default:
                         {
                             throw new CommandCentralException("The searchlevel you sent was not in the correct format.  " +
-                                "It must only be Command, Department, or Division.", HttpStatusCodes.BadRequest);
+                                "It must only be Command, Department, or Division.", ErrorTypes.Validation);
                         }
                 }
             }
@@ -476,7 +476,7 @@ namespace CCServ.ClientAccess.Endpoints
                 var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
 
                 if (failures.Any())
-                    throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Forbidden);
+                    throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
             }
 
             //Now let's determine if we're doing a geo query.
@@ -487,7 +487,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")))
             {
                 if (!token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
-                    throw new CommandCentralException("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation);
 
                 //Ok, we're doing a geo query.
                 isGeoQuery = true;
@@ -627,7 +627,7 @@ namespace CCServ.ClientAccess.Endpoints
                     foreach (var propertyName in returnFields)
                     {
                         var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName) ??
-                            throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), ErrorTypes.Validation);
 
                         //if the client isn't allowed to return this field, replace its value with "redacted"
                         if (returnableFields.Any(x => String.Equals(propertyName, x, StringComparison.CurrentCultureIgnoreCase)))
@@ -676,11 +676,11 @@ namespace CCServ.ClientAccess.Endpoints
             try
             {
                 personFromClient = token.Args["person"].CastJToken<Person>() ??
-                    throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation);
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation);
             }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
@@ -693,19 +693,19 @@ namespace CCServ.ClientAccess.Endpoints
                     ProfileLock profileLock = session.QueryOver<ProfileLock>()
                                             .Where(x => x.LockedPerson.Id == personFromClient.Id)
                                             .SingleOrDefault() ??
-                                            throw new CommandCentralException("In order to edit this person, you must first take a lock on the person.", HttpStatusCodes.Forbidden);
+                                            throw new CommandCentralException("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Validation);
 
                     //We also require the lock to be valid.
                     if (!profileLock.IsValid())
-                        throw new CommandCentralException("Your lock on this profile is no longer valid.", HttpStatusCodes.Forbidden);
+                        throw new CommandCentralException("Your lock on this profile is no longer valid.", ErrorTypes.Validation);
 
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
-                        throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), HttpStatusCodes.LockOwned);
+                        throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned);
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
                     Person personFromDB = session.Get<Person>(personFromClient.Id) ??
-                        throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation);
 
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
 
@@ -737,12 +737,12 @@ namespace CCServ.ClientAccess.Endpoints
                     var results = new Person.PersonValidator().Validate(personFromDB);
 
                     if (!results.IsValid)
-                        throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
                     var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
-                        throw new AggregateException(unauthorizedEdits.Select(x => new CommandCentralException("You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName), HttpStatusCodes.Forbidden)));
+                        throw new AggregateException(unauthorizedEdits.Select(x => new CommandCentralException("You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName), ErrorTypes.Validation)));
 
                     //Since this was all good, just add the changes to the person's profile.
                     changes.ForEach(x => personFromDB.Changes.Add(x));

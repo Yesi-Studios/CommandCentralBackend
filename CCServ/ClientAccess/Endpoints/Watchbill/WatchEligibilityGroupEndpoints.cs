@@ -34,13 +34,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("There was an issue while parsing your eligibility group.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("There was an issue while parsing your eligibility group.", ErrorTypes.Validation);
             }
 
             var validationResults = new WatchEligibilityGroup.WatchEligibilityGroupValidator().Validate(groupFromClient);
 
             if (!validationResults.IsValid)
-                throw new AggregateException(validationResults.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(validationResults.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -49,7 +49,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var groupFromDB = session.Get<WatchEligibilityGroup>(groupFromClient.Id) ??
-                            throw new CommandCentralException("Your eligibility group's id was not valid.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your eligibility group's id was not valid.", ErrorTypes.Validation);
 
                         //Let's make sure that all of them are real people.
                         var persons = session.QueryOver<Entities.Person>()
@@ -58,12 +58,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             .List();
 
                         if (persons.Count != groupFromClient.EligiblePersons.Count)
-                            throw new CommandCentralException("One or more of the persons in your eligibility group were not valid.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("One or more of the persons in your eligibility group were not valid.", ErrorTypes.Validation);
 
                         //Now we just need to make sure the client is in the command level of the group's chain of command.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(groupFromDB.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit the membership of this group.  " +
-                                "You must be in the same chain of command as the group and be at the command level.", HttpStatusCodes.Unauthorized);
+                                "You must be in the same chain of command as the group and be at the command level.", ErrorTypes.Authorization);
 
                         //Now we need to add or remove all the people.
                         //This method will cause a pretty big batch update to occur on the database but that's ok.

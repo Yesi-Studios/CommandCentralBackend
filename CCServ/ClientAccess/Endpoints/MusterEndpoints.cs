@@ -35,7 +35,7 @@ namespace CCServ.ClientAccess.Endpoints
             DateTime musterDate;
             if (!(token.Args["musterdate"] is DateTime))
             {
-                throw new CommandCentralException("Your 'musterdate' parameter was not in a valid format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation);
             }
             else
             {
@@ -86,7 +86,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
             {
-                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), HttpStatusCodes.Forbidden);
+                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation);
             }
 
             Dictionary<Guid, JToken> musterSubmissions = null;
@@ -100,13 +100,13 @@ namespace CCServ.ClientAccess.Endpoints
             catch (Exception e)
             {
                 throw new CommandCentralException("There was an error while trying to format your 'mustersubmissions' argument.  " +
-                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), HttpStatusCodes.BadRequest);
+                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
             }
 
             //Validate the muster statuses
             if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
             {
-                throw new CommandCentralException("One or more requested muster statuses were not valid.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("One or more requested muster statuses were not valid.", ErrorTypes.Validation);
             }
 
             //This is the session in which we're going to do our muster updates.  We do it separately in case something terrible happens to the currently logged in user.
@@ -119,7 +119,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                 //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
                 if (persons.Any(x => !MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x)))
-                    throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", HttpStatusCodes.Unauthorized);
+                    throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization);
 
                 //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
                 for (int x = 0; x < persons.Count; x++)
@@ -129,7 +129,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         if (persons[x].DutyStatus == DutyStatuses.Loss)
                         {
-                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation);
                         }
                         else
                         {
@@ -296,11 +296,11 @@ namespace CCServ.ClientAccess.Endpoints
             token.AssertLoggedIn();
 
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-                throw new CommandCentralException("You are not authorized to finalize muster.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You are not authorized to finalize muster.", ErrorTypes.Validation);
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
             if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
-                throw new CommandCentralException("The muster has already been finalized.", HttpStatusCodes.Forbidden);
+                throw new CommandCentralException("The muster has already been finalized.", ErrorTypes.Validation);
 
             //So we should be good to finalize the muster.
             MusterRecord.FinalizeMuster(token);

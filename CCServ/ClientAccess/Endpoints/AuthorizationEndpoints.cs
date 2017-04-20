@@ -39,12 +39,12 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person id you send was in the wrong format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The person id you send was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 var person = session.Get<Person>(personId) ??
-                    throw new CommandCentralException("The person id you sent was not correct.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("The person id you sent was not correct.", ErrorTypes.Validation);
 
                 //Get the person's permissions and then add the defaults.
                 var groups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName))
@@ -79,7 +79,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Get the person's Id.
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("Your person Id parameter was in the wrong format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your person Id parameter was in the wrong format.", ErrorTypes.Validation);
 
             List<string> desiredPermissionGroups = null;
 
@@ -91,7 +91,7 @@ namespace CCServ.ClientAccess.Endpoints
             catch
             {
                 //If that cast failed.
-                throw new CommandCentralException("Your 'permissiongroups' parameter was in the wrong format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation);
             }
 
             //Now we load the person and begin the permissions edit.
@@ -102,7 +102,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Get the person and check if the id was legit.
                     var person = session.Get<Person>(personId) ??
-                        throw new CommandCentralException("Your person Id parameter was wrong. lol.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your person Id parameter was wrong. lol.", ErrorTypes.Validation);
 
                     //Get the current permission groups the person is a part of.
                     var currentGroups = person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
@@ -226,7 +226,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     if (failures.Any())
-                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), HttpStatusCodes.Unauthorized);
+                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization);
 
                     //Now make sure we don't try to save the default permissions.
                     person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();

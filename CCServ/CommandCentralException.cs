@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CCServ.ClientAccess;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,17 +15,17 @@ namespace CCServ
         /// <summary>
         /// The status code contained in this exception.
         /// </summary>
-        public HttpStatusCodes StatusCode { get; private set; }
+        public ErrorTypes ErrorType { get; private set; }
 
         /// <summary>
         /// Creates a new command central exception.
         /// </summary>
         /// <param name="message"></param>
-        /// <param name="code"></param>
-        public CommandCentralException(string message, HttpStatusCodes code) 
+        /// <param name="type"></param>
+        public CommandCentralException(string message, ErrorTypes type) 
             : base(message)
         {
-            this.StatusCode = code;
+            this.ErrorType = type;
         }
     }
 }

@@ -503,7 +503,7 @@ namespace CCServ.Entities.Watchbill
                             return true;
 
                         }, out Person personToAssign))
-                            throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
 
                         //Create the watch assignment.
                         shiftsForThisGroup[x].WatchAssignments.Add(new WatchAssignment
@@ -541,7 +541,7 @@ namespace CCServ.Entities.Watchbill
 
                         return true;
                     }, out Person personToAssign))
-                        throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
 
                     shift.WatchAssignments.Add(new WatchAssignment
                     {

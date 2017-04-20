@@ -29,7 +29,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Ok, so there is a newsitemid!  Is it legit?
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -81,7 +81,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var limit = Convert.ToInt32(token.Args["limit"]);
 
                     if (limit <= 0)
-                        throw new CommandCentralException("Your limit must be greater than zero.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your limit must be greater than zero.", ErrorTypes.Validation);
 
                     query = (NHibernate.IQueryOver<NewsItem, NewsItem>)query.OrderBy(x => x.CreationTime).Desc.Take(limit);
                 }
@@ -120,7 +120,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
-                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
 
             string title = token.Args["title"] as string;
             List<string> paragraphs = null;
@@ -133,7 +133,7 @@ namespace CCServ.ClientAccess.Endpoints
             catch (Exception e)
             {
                 throw new CommandCentralException("There was an error while attempting to cast your parahraphs.  " +
-                    "It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), HttpStatusCodes.BadRequest);
+                    "It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
             }
 
             //Now build the whole news item.
@@ -150,7 +150,7 @@ namespace CCServ.ClientAccess.Endpoints
             var results = new NewsItem.NewsItemValidator().Validate(newsItem);
 
             if (!results.IsValid)
-                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ToString(), HttpStatusCodes.BadRequest)));
+                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ToString(), ErrorTypes.Validation)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -192,12 +192,12 @@ namespace CCServ.ClientAccess.Endpoints
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
             }
 
             //Get the news item id from the client.
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The news item id you sent was not in a valid format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
 
             //Before we go get the news item from the database, let's get the title and the paragraphs from the client.  Both are optional.
             string title = null;
@@ -216,7 +216,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Ok, it's a good news item so now we're going to compare it to the one in the database.
                     NewsItem newsItem = session.Get<NewsItem>(newsItemId) ??
-                        throw new CommandCentralException("A news item with that Id was not found in the database.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("A news item with that Id was not found in the database.", ErrorTypes.Validation);
 
                     //Ok, now let's put the values into the news item and then ask if it's valid.
                     if (!string.IsNullOrEmpty(title))
@@ -228,7 +228,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var validationResult = new NewsItem.NewsItemValidator().Validate(newsItem);
 
                     if (!validationResult.IsValid)
-                        throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
                     
                     //Ok, so it's valid.  Now let's save it.
                     session.Update(newsItem);
@@ -263,12 +263,12 @@ namespace CCServ.ClientAccess.Endpoints
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
-                throw new CommandCentralException("You do not have permission to manage the news.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
             }
 
             //Get the news item id from the client.
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The news item id you sent was not in a valid format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -277,7 +277,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
                     var newsItemFromDB = session.Get<NewsItem>(newsItemId) ??
-                        throw new CommandCentralException("A message token with that Id was not found in the database.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("A message token with that Id was not found in the database.", ErrorTypes.Validation);
 
                     session.Delete(newsItemFromDB);
 

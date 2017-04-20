@@ -33,7 +33,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Get the Id.
             if (!Guid.TryParse(token.Args["faqid"] as string, out Guid faqId))
-                throw new CommandCentralException("The faqid parameter was not in the correct format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The faqid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -103,7 +103,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
-                throw new CommandCentralException("You do not have permission to manage the FAQ.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Validation);
 
             FAQ faqFromClient;
 
@@ -113,14 +113,14 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
             }
 
             //Ok now we know we have the FAQ.  Now let's see if it's valid.
             var validationResult = new FAQ.FAQValidator().Validate(faqFromClient);
 
             if (!validationResult.IsValid)
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -148,7 +148,7 @@ namespace CCServ.ClientAccess.Endpoints
                         var resultsCount = session.QueryOver<FAQ>().Where(x => (x.Name.IsInsensitiveLike(faqFromClient.Name) || x.Question.IsInsensitiveLike(faqFromClient.Question)) && x.Id != faqFromClient.Id).RowCount();
 
                         if (resultsCount != 0)
-                            throw new CommandCentralException("It appears as though an FAQ with that name or question already exists.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("It appears as though an FAQ with that name or question already exists.", ErrorTypes.Validation);
 
                         //Ok we're good on duplicates.  Now we can merge the FAQ.
                         session.Merge(faqFromClient);
@@ -182,7 +182,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
-                throw new CommandCentralException("You do not have permission to manage the FAQ.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Validation);
 
             //Get the faq
             FAQ faqFromClient;
@@ -193,7 +193,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
             }
 
             //We can head right into the session since we're going to delete this FAQ.
@@ -203,7 +203,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var faqFromDB = session.Get<FAQ>(faqFromClient.Id) ??
-                        throw new CommandCentralException("A faq with that Id was not found in the database.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("A faq with that Id was not found in the database.", ErrorTypes.Validation);
 
                     //Everything is good to go.  Let's delete it.
                     session.Delete(faqFromDB);

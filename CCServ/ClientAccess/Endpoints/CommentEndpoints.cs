@@ -29,7 +29,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Get the Id.
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
-                throw new CommandCentralException("The id parameter was not in the correct format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The id parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -75,12 +75,12 @@ namespace CCServ.ClientAccess.Endpoints
             };
 
             if (!Guid.TryParse(token.Args["entityownerid"] as string, out Guid entityOwnerId))
-                throw new CommandCentralException("Your id was not in a valid format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your id was not in a valid format.", ErrorTypes.Validation);
 
             var validationResult = new Comment.CommentValidator().Validate(comment);
             if (!validationResult.IsValid)
             {
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
             }
 
             //We passed validation, let's get a sesssion and do ze work.
@@ -90,7 +90,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var owner = session.Get<ICommentable>(entityOwnerId) ??
-                        throw new CommandCentralException("Your entity owner id did not point to an actual, commentable object.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your entity owner id did not point to an actual, commentable object.", ErrorTypes.Validation);
 
                     owner.Comments.Add(comment);
 
@@ -126,7 +126,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while parsing your comment.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while parsing your comment.", ErrorTypes.Validation);
             }
 
             //We passed validation, let's get a sesssion and do ze work.
@@ -136,17 +136,17 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var commentFromDB = session.Get<Comment>(commentFromClient.Id) ??
-                        throw new CommandCentralException("Your comment does not exist.  Please consider creating it first.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your comment does not exist.  Please consider creating it first.", ErrorTypes.Validation);
 
                     if (commentFromDB.Creator.Id != token.AuthenticationSession.Person.Id)
-                        throw new CommandCentralException("Only the owner of a comment may edit it.", HttpStatusCodes.Unauthorized);
+                        throw new CommandCentralException("Only the owner of a comment may edit it.", ErrorTypes.Authorization);
 
                     commentFromDB.Text = commentFromClient.Text;
 
                     var validationResult = new Comment.CommentValidator().Validate(commentFromDB);
                     if (!validationResult.IsValid)
                     {
-                        throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
                     }
 
                     session.Update(commentFromDB);
@@ -181,7 +181,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while parsing your comment.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while parsing your comment.", ErrorTypes.Validation);
             }
 
             //We passed validation, let's get a sesssion and do ze work.
@@ -191,10 +191,10 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var commentFromDB = session.Get<Comment>(commentFromClient.Id) ??
-                        throw new CommandCentralException("Your comment does not exist.  Please consider creating it first.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("Your comment does not exist.  Please consider creating it first.", ErrorTypes.Validation);
 
                     if (commentFromDB.Creator.Id != token.AuthenticationSession.Person.Id)
-                        throw new CommandCentralException("Only the owner of a comment may edit it.", HttpStatusCodes.Unauthorized);
+                        throw new CommandCentralException("Only the owner of a comment may edit it.", ErrorTypes.Authorization);
 
                     session.Delete(commentFromDB);
 

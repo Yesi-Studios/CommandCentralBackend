@@ -28,14 +28,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.Args.AssertContainsKeys("watchbillid");
 
             if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id parameter's format was invalid.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
 
             bool doPopulation = false;
             if (token.Args.ContainsKey("dopopulation"))
             {
                 if (!Boolean.TryParse(token.Args["dopopulation"] as string, out doPopulation))
                 {
-                    throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation);
                 }
             }
 
@@ -47,18 +47,18 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         if (doPopulation)
                         {
                             //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
                             //but we may as well restrict it because the population method is very expensive.
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                                throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                             //And make sure we're at a state where population can occur.
                             if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
-                                throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", HttpStatusCodes.Forbidden);
+                                throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
 
                             watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                         }
@@ -168,7 +168,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
             }
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
@@ -187,15 +187,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
 
             if (!validationResult.IsValid)
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //Let's make sure the client is allowed to make a watchbill with this eligibility group.
             var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id)) ??
-                throw new CommandCentralException("You failed to provide a proper eligibilty group.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You failed to provide a proper eligibilty group.", ErrorTypes.Validation);
 
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(ellGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                 throw new CommandCentralException("You are not allowed to create a watchbill tied to that eligibility group.  " +
-                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                    "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -238,7 +238,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
             }
 
             
@@ -251,12 +251,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Now let's move the properties over that are editable.
                         watchbillFromDB.Title = watchbillFromClient.Title;
@@ -271,7 +271,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromDB);
 
                         if (!validationResult.IsValid)
-                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                         session.Update(watchbillFromDB);
 
@@ -309,7 +309,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
             }
 
             //Now let's go get the watchbill from the database.
@@ -320,16 +320,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
                         if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                            throw new CommandCentralException("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
                         session.Delete(watchbillFromDB);
 

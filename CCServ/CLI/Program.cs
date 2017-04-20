@@ -8,6 +8,7 @@ using CCServ.CLI.Options;
 using System.ServiceProcess;
 using System.Threading;
 using System.Globalization;
+using System.Reflection;
 
 namespace CCServ.CLI
 {

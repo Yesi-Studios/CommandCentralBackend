@@ -154,12 +154,12 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 if (!Guid.TryParse(token.Args["id"] as string, out id))
                 {
-                    throw new CommandCentralException("Your id was not in the right format.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
                 }
             }
 
             if (id != default(Guid) && entityNames.Count != 1)
-                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation);
 
             Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
             //Cool we have a real item and an Id.  Now let's call its loader.
@@ -190,7 +190,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
             
             string entityName = token.Args["entityname"] as string;
 
@@ -199,7 +199,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-                throw new CommandCentralException("That entity was not a valid editable reference list.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
             
             var item = token.Args["item"].CastJToken();
 
@@ -222,7 +222,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
 
             string entityName = token.Args["entityname"] as string;
 
@@ -231,10 +231,10 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-                throw new CommandCentralException("That entity was not a valid editable reference list.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
 
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
-                throw new CommandCentralException("Your id parameter was in the wrong format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your id parameter was in the wrong format.", ErrorTypes.Validation);
 
             bool forceDelete = false;
             if (token.Args.ContainsKey("forcedelete"))

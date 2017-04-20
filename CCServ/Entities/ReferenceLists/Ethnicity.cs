@@ -32,12 +32,12 @@ namespace CCServ.Entities.ReferenceLists
                     //Validate it.
                     var result = ethnicity.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<Ethnicity>().Where(x => x.Value.IsInsensitiveLike(ethnicity.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(ethnicity.Value), ErrorTypes.Validation);
 
                     var ethnicityFromDB = session.Get<Ethnicity>(ethnicity.Id);
 
@@ -75,7 +75,7 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     var ethnicity = session.Get<Ethnicity>(id) ??
-                        throw new CommandCentralException("That ethnicity Id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That ethnicity Id was not valid.", ErrorTypes.Validation);
 
                     var persons = session.QueryOver<Person>().Where(x => x.Ethnicity == ethnicity).List();
 
@@ -96,7 +96,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), HttpStatusCodes.Forbidden);
+                            throw new CommandCentralException("We were unable to delete the ethnicity, {0}, because it is referenced on {1} profile(s).".FormatS(ethnicity, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else

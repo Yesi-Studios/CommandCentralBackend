@@ -8,6 +8,7 @@ using NHibernate;
 using AtwoodUtils;
 using NHibernate.Criterion;
 using System.Linq.Expressions;
+using CCServ.ClientAccess;
 
 namespace CCServ.DataAccess
 {
@@ -90,14 +91,14 @@ namespace CCServ.DataAccess
                 case QueryTypes.Advanced:
                     {
                         var filters = searchData as Dictionary<Expression<Func<T, object>>, object> ??
-                            throw new CommandCentralException("Your search data must be in the format of a dicionary of filters.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your search data must be in the format of a dicionary of filters.", ErrorTypes.Validation);
 
                         return CreateAdvancedQuery(filters);
                     }
                 case QueryTypes.Simple:
                     {
                         var searchTerms = searchData as string ??
-                            throw new CommandCentralException("Your search terms must be a string and not be null.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your search terms must be a string and not be null.", ErrorTypes.Validation);
 
                         return CreateSimpleSearchQuery(searchTerms, GetMembersThatAreUsedIn(QueryTypes.Simple));
                     }
@@ -135,7 +136,7 @@ namespace CCServ.DataAccess
                     {
                         throw new CommandCentralException("The member, {0}, declared no search strategy!  ".FormatS(propertyExpression.GetPropertyName()) +
                             "This is most likely because it is not searchable.  " +
-                            "If you believe this is in error, please contact us.", HttpStatusCodes.BadRequest);
+                            "If you believe this is in error, please contact us.", ErrorTypes.Validation);
                     }
                     else
                     {
@@ -168,7 +169,7 @@ namespace CCServ.DataAccess
                 {
                     throw new CommandCentralException("The member, {0}, declared no search strategy!  ".FormatS(filter.Key.Name) +
                             "This is most likely because it is not searchable.  " +
-                            "If you believe this is in error, please contact us.", HttpStatusCodes.BadRequest);
+                            "If you believe this is in error, please contact us.", ErrorTypes.Validation);
                 }
                 else
                 {

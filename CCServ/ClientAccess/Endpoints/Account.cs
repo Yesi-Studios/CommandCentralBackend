@@ -54,7 +54,7 @@ namespace CCServ.ClientAccess.Endpoints
                         var person = session.QueryOver<Person>()
                             .Where(x => x.Username == username)
                             .SingleOrDefault<Person>() ??
-                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Either the username or password is wrong.", ErrorTypes.Validation);
 
                         if (!PasswordHash.ValidatePassword(password, person.PasswordHash))
                         {
@@ -88,7 +88,7 @@ namespace CCServ.ClientAccess.Endpoints
                             transaction.Commit();
 
                             //Finally, tell the client something went wrong.
-                            throw new CommandCentralException("Either the username or password is wrong.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Either the username or password is wrong.", ErrorTypes.Validation);
                         }
                         else
                         {
@@ -202,7 +202,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Let's just do some basic validation and make sure it's a real URI.
             if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The continue link you sent was not a valid URI.", ErrorTypes.Validation);
 
             //Let's do our work in a new session so that we don't affect the authentication information.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -215,7 +215,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var person = session.QueryOver<Person>()
                         .Where(x => x.SSN == ssn)
                         .SingleOrDefault<Person>() ??
-                        throw new CommandCentralException("That ssn belongs to no profile.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That ssn belongs to no profile.", ErrorTypes.Validation);
 
                     //Ok, so we have a single profile.  Let's see if it's already been claimed.
                     if (person.IsClaimed)
@@ -241,13 +241,13 @@ namespace CCServ.ClientAccess.Endpoints
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                         throw new CommandCentralException("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
-                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", HttpStatusCodes.BadRequest);
+                                              "  If you believe this is in error or if you are the rightful owner of this account, please call the development team immediately.", ErrorTypes.Validation);
                     }
 
                     //If we get here, then the account isn't claimed.  Now we need a DOD email address to send the account verification email to.
                     var dodEmailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress) ??
                         throw new CommandCentralException("We were unable to start the registration process because it appears your profile has no DOD email address (@mail.mil) assigned to it." +
-                                              "  Please make sure that Admin or IMO has updated your account with your email address.", HttpStatusCodes.Forbidden);
+                                              "  Please make sure that Admin or IMO has updated your account with your email address.", ErrorTypes.Validation);
 
                     //Well, looks like we have a DOD email address and there are no old pending account confirmations sitting in the database.  Let's make an account confirmation... thing.
                     var pendingAccountConfirmation = new PendingAccountConfirmation
@@ -329,7 +329,7 @@ namespace CCServ.ClientAccess.Endpoints
             string username = token.Args["username"] as string;
             string password = token.Args["password"] as string;
             if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out Guid accountConfirmationId))
-                throw new CommandCentralException("The account confirmation ID you sent was not in the right format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The account confirmation ID you sent was not in the right format.", ErrorTypes.Validation);
 
             //Now we're going to try to find a pending account confirmation for the Id the client gave us.  
             //If we find one, we're going to look at the time on it and make sure it is still valid.
@@ -344,7 +344,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationId) ??
-                        throw new CommandCentralException("For the account confirmation Id that you provided, no account registration process has been started.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation);
 
                     //Is the record valid?
                     if (!pendingAccountConfirmation.IsValid())
@@ -355,7 +355,7 @@ namespace CCServ.ClientAccess.Endpoints
                         //Commit the transaction before bailing.
                         transaction.Commit();
 
-                        throw new CommandCentralException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("It appears you waited too long to register your account and it has become inactive!  Please restart the registration process.", ErrorTypes.Validation);
                     }
 
                     //Ok now that we know the record is valid, let's see if the person is already claimed.  This is exceptional.
@@ -433,7 +433,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //Let's just do some basic validation and make sure it's a real URI.
             if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                throw new CommandCentralException("The continue link you sent was not a valid URI.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The continue link you sent was not a valid URI.", ErrorTypes.Validation);
 
             //Let's validate the email.  
             System.Net.Mail.MailAddress mailAddress = null;
@@ -443,11 +443,11 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                throw new CommandCentralException("The mail parameter you sent was not valid.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The mail parameter you sent was not valid.", ErrorTypes.Validation);
             }
 
             if (mailAddress.Host != ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost)
-                throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation);
 
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
@@ -467,11 +467,11 @@ namespace CCServ.ClientAccess.Endpoints
                         .Where(x => x.Address == email)
                         .TransformUsing(Transformers.DistinctRootEntity)
                         .SingleOrDefault<Person>() ??
-                        throw new CommandCentralException("That ssn/email address combination belongs to no profile.", HttpStatusCodes.AuthenticationFailed);
+                        throw new CommandCentralException("That ssn/email address combination belongs to no profile.", ErrorTypes.Authentication);
 
                     //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
                     if (!person.IsClaimed)
-                        throw new CommandCentralException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", HttpStatusCodes.Forbidden);
+                        throw new CommandCentralException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation);
 
                     //Ok, let's wipe out any old password reset attempts the person might have.
                     foreach (var pendingReset in session.QueryOver<PendingPasswordReset>().Where(x => x.Person == person).List())
@@ -546,7 +546,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             string password = token.Args["password"] as string;
             if (!Guid.TryParse(token.Args["passwordresetid"] as string, out Guid passwordResetId))
-                throw new CommandCentralException("The password reset ID you sent was not in the right format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The password reset ID you sent was not in the right format.", ErrorTypes.Validation);
             
             //Create the hash.
             string passwordHash = PasswordHash.CreateHash(password);
@@ -563,7 +563,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetId) ??
                         throw new CommandCentralException("That password reset Id does not correspond to an actual password reset event.  " +
-                        "Try initiating a password reset first.", HttpStatusCodes.BadRequest);
+                        "Try initiating a password reset first.", ErrorTypes.Validation);
 
                     //Is the record still valid?
                     if (!pendingPasswordReset.IsValid())
@@ -573,7 +573,7 @@ namespace CCServ.ClientAccess.Endpoints
 
                         transaction.Commit();
 
-                        throw new CommandCentralException("It appears you waited too long to reset your password!  Please restart the password reset process.", HttpStatusCodes.Forbidden);
+                        throw new CommandCentralException("It appears you waited too long to reset your password!  Please restart the password reset process.", ErrorTypes.Validation);
                     }
 
                     //Well, now we're ready!  All we have to do now is change the password and then log the event and delete the pending password reset.
@@ -633,7 +633,7 @@ namespace CCServ.ClientAccess.Endpoints
             //First let's confirm the old password is actually the client's old password.
             var correct = PasswordHash.ValidatePassword(oldPassword, token.AuthenticationSession.Person.PasswordHash);
             if (!correct)
-                throw new CommandCentralException("Your old password was incorrect.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("Your old password was incorrect.", ErrorTypes.Authorization);
 
             //Now we need to do the password update work in another session
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -697,7 +697,7 @@ namespace CCServ.ClientAccess.Endpoints
             string ssn = token.Args["ssn"] as string;
 
             if (string.IsNullOrWhiteSpace(ssn))
-                throw new CommandCentralException("The ssn must not be null or empty.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The ssn must not be null or empty.", ErrorTypes.Validation);
 
             //Now let's go load the user with this ssn.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -706,10 +706,10 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault() ??
-                        throw new CommandCentralException("That ssn was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That ssn was not valid.", ErrorTypes.Validation);
 
                     if (!person.IsClaimed)
-                        throw new CommandCentralException("Please register your account first!", HttpStatusCodes.Forbidden);
+                        throw new CommandCentralException("Please register your account first!", ErrorTypes.Validation);
 
                     //Now let's get the client's DOD email address.
                     var emailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress) ??

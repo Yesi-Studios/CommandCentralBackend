@@ -35,12 +35,12 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                     //Validate it.
                     var result = reason.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<WatchInputReason>().Where(x => x.Value.IsInsensitiveLike(reason.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(reason.Value), HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(reason.Value), ErrorTypes.Validation);
 
                     var reasonFromDB = session.Get<WatchInputReason>(reason.Id);
 
@@ -72,7 +72,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// <param name="token"></param>
         public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            throw new CommandCentralException("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", HttpStatusCodes.BadRequest);
+            throw new CommandCentralException("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", ErrorTypes.Validation);
         }
 
         /// <summary>

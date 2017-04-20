@@ -118,7 +118,7 @@ namespace CCServ.ClientAccess
             catch
             {
                 throw new CommandCentralException("There was an error while attempting to parse your request body.  " +
-                    "This request body should be JSON in the form of a dictionary.", HttpStatusCodes.BadRequest);
+                    "This request body should be JSON in the form of a dictionary.", ErrorTypes.Validation);
             }
         }
 
@@ -175,7 +175,7 @@ namespace CCServ.ClientAccess
             foreach (var key in keys)
             {
                 if (!dict.ContainsKey(key))
-                    throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), ErrorTypes.Validation);
             }
         }
 
@@ -186,7 +186,7 @@ namespace CCServ.ClientAccess
         public static void AssertLoggedIn(this MessageToken token)
         {
             if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in.", HttpStatusCodes.AuthenticationFailed);
+                throw new CommandCentralException("You must be logged in.", ErrorTypes.Authentication);
         }
     }
 }

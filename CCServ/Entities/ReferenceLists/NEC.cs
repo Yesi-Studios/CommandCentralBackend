@@ -38,12 +38,12 @@ namespace CCServ.Entities.ReferenceLists
                     //Validate it.
                     var result = nec.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<NEC>().Where(x => x.Value.IsInsensitiveLike(nec.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(nec.Value), HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(nec.Value), ErrorTypes.Validation);
 
                     var necFromDB = session.Get<NEC>(nec.Id);
 
@@ -81,7 +81,7 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     var nec = session.Get<NEC>(id) ??
-                        throw new CommandCentralException("That nec Id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That nec Id was not valid.", ErrorTypes.Validation);
 
                     NEC necAlias = null;
 
@@ -112,7 +112,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the nec, {0}, because it is referenced on {1} profile(s).".FormatS(nec, persons.Count), HttpStatusCodes.Forbidden);
+                            throw new CommandCentralException("We were unable to delete the nec, {0}, because it is referenced on {1} profile(s).".FormatS(nec, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else

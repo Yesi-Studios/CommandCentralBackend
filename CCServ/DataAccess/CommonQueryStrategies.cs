@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
+using CCServ.ClientAccess;
 
 namespace CCServ.DataAccess
 {
@@ -26,18 +27,18 @@ namespace CCServ.DataAccess
         {
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", ErrorTypes.Validation);
 
             var str = (string)searchValue;
 
             if (String.IsNullOrWhiteSpace(str))
-                throw new CommandCentralException("Your search value must be a string of ids, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must be a string of ids, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
             List<Guid> values = new List<Guid>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (!Guid.TryParse(value, out Guid result))
-                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                 values.Add(result);
             }
@@ -66,18 +67,18 @@ namespace CCServ.DataAccess
         {
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", ErrorTypes.Validation);
 
             var str = (string)searchValue;
 
             if (String.IsNullOrWhiteSpace(str))
-                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
             List<string> values = new List<string>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                 values.Add(value.Trim());
             }
@@ -114,7 +115,7 @@ namespace CCServ.DataAccess
             }
             catch (Exception)
             {
-                throw new CommandCentralException("An error occurred while parsing your boolean search value.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while parsing your boolean search value.", ErrorTypes.Validation);
             }
 
             return Restrictions.Eq(propertyName, value);
@@ -137,7 +138,7 @@ namespace CCServ.DataAccess
             }
             catch
             {
-                throw new CommandCentralException("Your date/time criteria must be in an array of dictionaries with at least a from/to and a corresponding date.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your date/time criteria must be in an array of dictionaries with at least a from/to and a corresponding date.", ErrorTypes.Validation);
             }
 
             var disjunction = new Disjunction();
@@ -158,11 +159,11 @@ namespace CCServ.DataAccess
                 }
 
                 if (to == null && from == null)
-                    throw new CommandCentralException("You must send at least a 'from' and a 'to' date.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("You must send at least a 'from' and a 'to' date.", ErrorTypes.Validation);
 
                 //Do the validation.
                 if ((from.HasValue && to.HasValue) && from > to)
-                    throw new CommandCentralException("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to), HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to), ErrorTypes.Validation);
 
                 if (from == to)
                 {
@@ -199,18 +200,18 @@ namespace CCServ.DataAccess
         {
             //First we need to get what the client gave us into a list of Guids.
             if (searchValue == null)
-                throw new CommandCentralException("Your search value must not be null.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must not be null.", ErrorTypes.Validation);
 
             var str = (string)searchValue;
 
             if (String.IsNullOrWhiteSpace(str))
-                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
             List<string> values = new List<string>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
-                    throw new CommandCentralException("One of your values was not vallid.", HttpStatusCodes.BadRequest);
+                    throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                 values.Add(value.Trim());
             }

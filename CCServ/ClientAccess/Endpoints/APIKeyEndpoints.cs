@@ -26,7 +26,7 @@ namespace CCServ.ClientAccess.Endpoints
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.AdminTools.ToString()))
-                throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", HttpStatusCodes.Unauthorized);
+                throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", ErrorTypes.Authorization);
 
             //Client has permission, show them the api keys and the names.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())

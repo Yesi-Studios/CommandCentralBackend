@@ -54,7 +54,7 @@ namespace CCServ.Entities.ReferenceLists
                 {
                     //First try to get the department.
                     var department = session.Get<Department>(id) ??
-                        throw new CommandCentralException("That department Id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That department Id was not valid.", ErrorTypes.Validation);
                     
                     //Ok, now find all the entities it's a part of.
                     var persons = session.QueryOver<Person>().Where(x => x.Department == department).List();
@@ -79,7 +79,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), HttpStatusCodes.Forbidden);
+                            throw new CommandCentralException("We were unable to delete the department, {0}, because it is referenced on {1} profile(s).".FormatS(department, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else
@@ -123,7 +123,7 @@ namespace CCServ.Entities.ReferenceLists
                         {
                             //Yes we were!
                             if (!Guid.TryParse(token.Args["commandid"] as string, out Guid commandId))
-                                throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation);
 
                             //Cool, give them back the departments in this command.
                             results = session.QueryOver<Department>()
@@ -167,10 +167,10 @@ namespace CCServ.Entities.ReferenceLists
                 {
                     //First try to get the command this thing is supposed to be a part of.
                     if (!Guid.TryParse(item.Value<string>("commandid"), out Guid commandId))
-                        throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation);
 
                     var commandFromClient = session.Get<Command>(commandId) ??
-                        throw new CommandCentralException("The command id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation);
 
                     //Cool the command is legit.  Let's build the department.
                     var departmentFromClient = item.CastJToken<Department>();
@@ -179,7 +179,7 @@ namespace CCServ.Entities.ReferenceLists
                     //Now validate it.
                     var result = departmentFromClient.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Try to get it.
                     var departmentFromDB = session.Get<Department>(departmentFromClient.Id);

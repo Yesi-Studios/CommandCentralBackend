@@ -34,7 +34,7 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid");
 
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The 'personid' parameter was not valid", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The 'personid' parameter was not valid", ErrorTypes.Validation);
 
             //Do our work in a new session
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -52,7 +52,7 @@ namespace CCServ.ClientAccess.Endpoints
                     session.Flush();
 
                     var person = session.Get<Person>(personId) ??
-                        throw new CommandCentralException("That person id does not correlate to a real person.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That person id does not correlate to a real person.", ErrorTypes.Validation);
 
                     //Now the client has no locks.  Let's also make sure the profile we're trying to lock isn't owned by someone else.
                     var profileLock = session.QueryOver<ProfileLock>().Where(x => x.LockedPerson == person).SingleOrDefault();
@@ -74,7 +74,7 @@ namespace CCServ.ClientAccess.Endpoints
                             if (profileLock.IsValid())
                             {
                                 //If we're here then there is a lock, it is owned by someone else, and the lock has not aged off.
-                                throw new CommandCentralException("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), HttpStatusCodes.LockOwned);
+                                throw new CommandCentralException("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned);
                             }
                             else
                             {
@@ -147,7 +147,7 @@ namespace CCServ.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("profilelockid");
 
             if (!Guid.TryParse(token.Args["profilelockid"] as string, out Guid profileLockId))
-                throw new CommandCentralException("The 'profilelockid' parameter was not valid", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The 'profilelockid' parameter was not valid", ErrorTypes.Validation);
 
             bool forceRelease = false;
             if (token.Args.ContainsKey("forcerelease"))
@@ -160,7 +160,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 {
-                    throw new CommandCentralException("In order to force a lock to release, you must have access to the Admin Tools.", HttpStatusCodes.Unauthorized);
+                    throw new CommandCentralException("In order to force a lock to release, you must have access to the Admin Tools.", ErrorTypes.Authorization);
                 }
             }
 
@@ -171,7 +171,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     var profileLock = session.Get<ProfileLock>(profileLockId) ??
-                        throw new CommandCentralException("That profile lock id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That profile lock id was not valid.", ErrorTypes.Validation);
 
                     //Ok if the client doesn't own the profile lock, then we need to see if we can force it to release.
                     if (forceRelease)
@@ -194,7 +194,7 @@ namespace CCServ.ClientAccess.Endpoints
                     else
                     {
                         //Welp, if we got there then the client isn't allowed to release this lock.
-                        throw new CommandCentralException("You do not have permission to release the profile lock and it is still valid.", HttpStatusCodes.Forbidden);
+                        throw new CommandCentralException("You do not have permission to release the profile lock and it is still valid.", ErrorTypes.Validation);
                     }
 
                     transaction.Commit();

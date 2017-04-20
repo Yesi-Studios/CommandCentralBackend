@@ -55,7 +55,7 @@ namespace CCServ.Entities.ReferenceLists
                     //Now validate it.
                     var result = commandFromClient.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Try to get it.
                     var commandFromDB = session.Get<Command>(commandFromClient.Id);
@@ -99,7 +99,7 @@ namespace CCServ.Entities.ReferenceLists
                 {
                     //First try to get the command in question.
                     var command = session.Get<Command>(id) ??
-                        throw new CommandCentralException("That command Id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That command Id was not valid.", ErrorTypes.Validation);
 
                     //Ok, now find all the entities it's a part of.
                     var persons = session.QueryOver<Person>().Where(x => x.Command == command).List();
@@ -125,7 +125,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the command, {0}, because it is referenced on {1} profile(s).".FormatS(command, persons.Count), HttpStatusCodes.Forbidden);
+                            throw new CommandCentralException("We were unable to delete the command, {0}, because it is referenced on {1} profile(s).".FormatS(command, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else

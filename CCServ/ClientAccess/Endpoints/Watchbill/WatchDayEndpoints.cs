@@ -27,7 +27,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.Args.AssertContainsKeys("watchdayid");
 
             if (!Guid.TryParse(token.Args["watchdayid"] as string, out Guid watchDayId))
-                throw new CommandCentralException("Your watch day id parameter's format was invalid.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your watch day id parameter's format was invalid.", ErrorTypes.Validation);
 
             //Now let's go get the watch day from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -37,7 +37,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchDayFromDB = session.Get<WatchDay>(watchDayId) ??
-                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                         token.SetResult(watchDayFromDB);
 
@@ -72,7 +72,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watch days.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch days.", ErrorTypes.Validation);
             }
 
             var watchDaysToInsert = watchDaysFromClient.Select(x => new WatchDay
@@ -86,7 +86,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var validationResults = watchDaysToInsert.Select(x => new WatchDay.WatchDayValidator().Validate(x)).ToList();
             var invalidResults = validationResults.Where(x => !x.IsValid);
             if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, HttpStatusCodes.BadRequest))));
+                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, ErrorTypes.Validation))));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -98,16 +98,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         {
                             //Let's get the watchbill the client says this watch day will be assigned to.
                             var watchbill = session.Get<Entities.Watchbill.Watchbill>(day.Watchbill.Id) ??
-                                throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                    "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                             //Check the state.
                             if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
                                 throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
-                                    "Please consider changing its state first.", HttpStatusCodes.Forbidden);
+                                    "Please consider changing its state first.", ErrorTypes.Validation);
 
                             watchbill.WatchDays.Add(day);
 
@@ -149,13 +149,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watch day.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch day.", ErrorTypes.Validation);
             }
 
             var valdiationResult = new WatchDay.WatchDayValidator().Validate(watchDayFromClient);
 
             if (!valdiationResult.IsValid)
-                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -164,16 +164,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
-                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Ok let's swap the properties now.
                         //Check the state.
                         if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && watchDayFromClient.Date != watchDayFromDB.Date)
-                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
                         watchDayFromDB.Date = watchDayFromClient.Date;
                         watchDayFromDB.Remarks = watchDayFromClient.Remarks;
@@ -182,7 +182,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchDayFromDB.Watchbill);
 
                         if (!watchbillValidationResult.IsValid)
-                            throw new AggregateException(watchbillValidationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                            throw new AggregateException(watchbillValidationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                         session.Update(watchDayFromDB);
 
@@ -219,7 +219,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watch day.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch day.", ErrorTypes.Validation);
             }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -229,15 +229,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
-                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
                         if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
                         session.Delete(watchDayFromDB);
 
@@ -272,7 +272,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
             catch
             {
-                throw new CommandCentralException("An error occurred while trying to parse your watch days.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("An error occurred while trying to parse your watch days.", ErrorTypes.Validation);
             }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -284,15 +284,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         foreach (var day in watchDays)
                         {
                             var watchDayFromDB = session.Get<WatchDay>(day.Id) ??
-                                throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                    "You must have command level permissions in the related chain of command.", HttpStatusCodes.Unauthorized);
+                                    "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
                             
                             //Check the state.
                             if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
-                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
                             session.Delete(watchDayFromDB);
                         }

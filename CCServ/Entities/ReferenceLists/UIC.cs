@@ -32,12 +32,12 @@ namespace CCServ.Entities.ReferenceLists
                     //Validate it.
                     var result = uic.Validate();
                     if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, HttpStatusCodes.BadRequest)));
+                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<UIC>().Where(x => x.Value.IsInsensitiveLike(uic.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(uic.Value), HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(uic.Value), ErrorTypes.Validation);
 
                     var uicFromDB = session.Get<UIC>(uic.Id);
 
@@ -75,7 +75,7 @@ namespace CCServ.Entities.ReferenceLists
                 try
                 {
                     var uic = session.Get<UIC>(id) ??
-                        throw new CommandCentralException("That uic Id was not valid.", HttpStatusCodes.BadRequest);
+                        throw new CommandCentralException("That uic Id was not valid.", ErrorTypes.Validation);
 
                     var persons = session.QueryOver<Person>().Where(x => x.UIC == uic).List();
 
@@ -96,7 +96,7 @@ namespace CCServ.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the uic, {0}, because it is referenced on {1} profile(s).".FormatS(uic, persons.Count), HttpStatusCodes.BadRequest);
+                            throw new CommandCentralException("We were unable to delete the uic, {0}, because it is referenced on {1} profile(s).".FormatS(uic, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else

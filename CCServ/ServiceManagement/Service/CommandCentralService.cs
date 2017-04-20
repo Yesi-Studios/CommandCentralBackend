@@ -118,14 +118,14 @@ namespace CCServ.ServiceManagement.Service
                             if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                     "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(ServiceManager.CurrentConfigState.DeveloperDistroAddress),
-                                    HttpStatusCodes.NotFound);
+                                    ErrorTypes.Validation);
 
                             //If the endpoint was retrieved successfully, then assign it here.
                             token.EndpointDescription = description;
 
                             //If the endpoint is inactive, return an error message.
                             if (!token.EndpointDescription.IsActive)
-                                throw new CommandCentralException("The endpoint you requested is not currently available at this time.", HttpStatusCodes.ServiceUnavailable);
+                                throw new CommandCentralException("The endpoint you requested is not currently available at this time.", ErrorTypes.Validation);
 
                             //Get the IP address of the host that called us.  We can't really do this in a separate static method because if I did, I would likely put that in the Utils library,
                             //but if you put it there then for some reason it breaks the operation context and it can't find the current request. :(
@@ -136,19 +136,19 @@ namespace CCServ.ServiceManagement.Service
 
                             //Get the apikey.
                             if (!token.Args.ContainsKey("apikey"))
-                                throw new CommandCentralException("You didn't send an 'apikey' parameter.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("You didn't send an 'apikey' parameter.", ErrorTypes.Validation);
 
                             //Ok, so there is an apikey!  Is it legit?
                             Guid apiKey;
                             if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
-                                throw new CommandCentralException("The 'apikey' parameter was not in the correct format.", HttpStatusCodes.BadRequest);
+                                throw new CommandCentralException("The 'apikey' parameter was not in the correct format.", ErrorTypes.Validation);
 
                             //Ok, well it's a GUID.   Do we have it in the database?...
                             token.APIKey = session.Get<APIKey>(apiKey);
 
                             //Let's see if we caught one.
                             if (token.APIKey == null)
-                                throw new CommandCentralException("Your apikey was not valid.", HttpStatusCodes.Forbidden);
+                                throw new CommandCentralException("Your apikey was not valid.", ErrorTypes.Validation);
 
                             Log.Debug(token.ToString());
 
@@ -208,18 +208,18 @@ namespace CCServ.ServiceManagement.Service
                         }
                         catch (AggregateException e) when (e.InnerExceptions.All(x => x.GetType() == typeof(CommandCentralException)))
                         {
-                            if (e.InnerExceptions.GroupBy(x => ((CommandCentralException)x).StatusCode).Count() != 1)
-                                throw new Exception("An aggregate exception was through with multiple status codes.");
+                            if (e.InnerExceptions.GroupBy(x => ((CommandCentralException)x).ErrorType).Count() != 1)
+                                throw new Exception("An aggregate exception was thrown with multiple error types.");
 
                             session.SaveOrUpdate(token);
                             transaction.Commit();
 
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)((CommandCentralException)e.InnerExceptions.First()).StatusCode;
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)((CommandCentralException)e.InnerExceptions.First()).ErrorType.GetMatchStatusCode();
 
                             return new ReturnContainer
                             {
                                 ErrorMessages = e.InnerExceptions.Select(x => x.Message).ToList(),
-                                ErrorType = typeof(HttpStatusCodes).GetMembers().First(x => x.Name == ((CommandCentralException)e.InnerExceptions.First()).StatusCode.ToString()).GetCustomAttribute<CorrespondingErrorTypeAttribute>().ErrorType,
+                                ErrorType = ((CommandCentralException)e.InnerExceptions.First()).ErrorType,
                                 ReturnValue = null,
                                 StatusCode = WebOperationContext.Current.OutgoingResponse.StatusCode
                             }.Serialize();
@@ -229,14 +229,14 @@ namespace CCServ.ServiceManagement.Service
                             session.SaveOrUpdate(token);
                             transaction.Commit();
 
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)e.StatusCode;
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = e.ErrorType.GetMatchStatusCode();
 
                             return new ReturnContainer
                             {
                                 ErrorMessages = new List<string> { e.Message },
-                                ErrorType = typeof(HttpStatusCodes).GetMembers().First(x => x.Name == e.StatusCode.ToString()).GetCustomAttribute<CorrespondingErrorTypeAttribute>().ErrorType,
+                                ErrorType = e.ErrorType,
                                 ReturnValue = null,
-                                StatusCode = (HttpStatusCode)e.StatusCode
+                                StatusCode = WebOperationContext.Current.OutgoingResponse.StatusCode
                             }.Serialize();
                         }
                         catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
@@ -250,7 +250,7 @@ namespace CCServ.ServiceManagement.Service
                             Log.Exception(e, "A fatal, unknown error occurred in the backend service.", token);
 
                             //Set the outgoing status code and then release.
-                            WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                            WebOperationContext.Current.OutgoingResponse.StatusCode = HttpStatusCode.InternalServerError;
 
                             return new ReturnContainer
                             {
@@ -368,19 +368,19 @@ namespace CCServ.ServiceManagement.Service
 
             //Get the authenticationtoken.
             if (!token.Args.ContainsKey("authenticationtoken"))
-                throw new CommandCentralException("You failed to send an 'authenticationtoken' parameter.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("You failed to send an 'authenticationtoken' parameter.", ErrorTypes.Validation);
 
             //Ok, so there is an authenticationtoken!  Is it legit?
             if (!Guid.TryParse(token.Args["authenticationtoken"] as string, out Guid authenticationToken))
-                throw new CommandCentralException("The 'authenticationtoken' parameter was not in the correct format.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The 'authenticationtoken' parameter was not in the correct format.", ErrorTypes.Validation);
 
             //Ok, well it's a GUID.   Do we have it in the database?...
             var authenticationSession = session.Get<AuthenticationSession>(authenticationToken) ??
                 throw new CommandCentralException("That authentication token does not belong to an actual authenticated session.  " +
-                "Consider logging in so as to attain a token.", HttpStatusCodes.AuthenticationFailed);
+                "Consider logging in so as to attain a token.", ErrorTypes.Authentication);
 
             if (!authenticationSession.IsValid())
-                throw new CommandCentralException("The session has timed out or is no longer valid.  Please sign back in.", HttpStatusCodes.AuthenticationFailed);
+                throw new CommandCentralException("The session has timed out or is no longer valid.  Please sign back in.", ErrorTypes.Authentication);
 
             token.AuthenticationSession = authenticationSession;
             //HACK

@@ -27,12 +27,12 @@ namespace CCServ.ClientAccess.Endpoints
             string title = token.Args["title"] as string;
 
             if (string.IsNullOrWhiteSpace(title) || title.Length > 50)
-                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation);
 
             string body = token.Args["body"] as string;
 
             if (string.IsNullOrWhiteSpace(body) || body.Length > 1000)
-                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", HttpStatusCodes.BadRequest);
+                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", ErrorTypes.Validation);
 
             var model = new Email.Models.FeedbackEmailModel
             {
