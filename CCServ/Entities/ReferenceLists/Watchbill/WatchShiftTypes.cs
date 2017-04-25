@@ -32,7 +32,8 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         {
             Id = Guid.Parse("{858F6B78-5508-4A59-97A0-6E45AADAB2A9}"),
             Value = "JOOD",
-            Description = "This watch shift is for JOODs."
+            Description = "This watch shift is for JOODs.",
+            RequiredWatchQualifications = new[] { WatchQualifications.JOOD }
         };
 
         /// <summary>
@@ -42,7 +43,8 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         {
             Id = Guid.Parse("{F3F818F8-55D3-45DC-AF2F-1528ED290384}"),
             Value = "OOD",
-            Description = "This watch shift is for OODs."
+            Description = "This watch shift is for OODs.",
+            RequiredWatchQualifications = new[] { WatchQualifications.OOD }
         };
 
         /// <summary>
@@ -52,7 +54,8 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         {
             Id = Guid.Parse("{69F31AF9-F77B-4744-B23D-297625F8FC0C}"),
             Value = "CDO",
-            Description = "This watch shift is for CDOs."
+            Description = "This watch shift is for CDOs.",
+            RequiredWatchQualifications = new[] { WatchQualifications.CDO }
         };
 
         /// <summary>

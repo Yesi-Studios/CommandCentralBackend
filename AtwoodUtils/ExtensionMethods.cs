@@ -21,13 +21,17 @@ namespace AtwoodUtils
         public static IList<T> Shuffle<T>(this IEnumerable<T> source)
         {
             var list = source.ToList();
+            Random random = new Random(DateTime.Now.Millisecond);
 
             int n = list.Count;
             while (n > 1)
             {
                 n--;
-                int k = ThreadSafeRandom.ThisThreadsRandom.Next(n + 1);
-                Utilities.Swap(list[k], list[n]);
+                int k = random.Next(n + 1);
+
+                T t = list[k];
+                list[k] = list[n];
+                list[n] = t;
             }
 
             return list;

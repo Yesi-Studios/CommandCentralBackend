@@ -452,8 +452,9 @@ namespace CCServ.Entities.Watchbill
 
                 //Get all persons from the el group who have all the required watch qualifications for the current watch type.
                 var personsByDepartment = this.EligibilityGroup.EligiblePersons
-                    .Where(x => shiftGroup.Key.RequiredWatchQualifications.All(y => x.WatchQualifications.Contains(y)))
-                    .GroupBy(x => x.Department);
+                    .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
+                    .Shuffle()
+                    .GroupBy(person => person.Department);
 
                 var totalPersonsWithQuals = personsByDepartment.Select(x => x.Count()).Sum(x => x);
 
@@ -494,10 +495,16 @@ namespace CCServ.Entities.Watchbill
                         //Determine who is about to stand this watch.
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
-                            if (shiftsForThisGroup[x].WatchInputs.Any(input => input.IsConfirmed && input.Person.Id == person.Id))
+                            if (shiftsForThisGroup[x].WatchInputs.Any() && shiftsForThisGroup[x].WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
                                 return false;
 
-                            if (person.DateOfArrival < DateTime.UtcNow.AddMonths(-3))
+                            if (person.DateOfArrival.HasValue && minWatchDay < person.DateOfArrival.Value.AddMonths(1))
+                                return false;
+
+                            if (person.EAOS.HasValue && minWatchDay < person.EAOS.Value.AddMonths(-1))
+                                return false;
+
+                            if (person.DateOfBirth.HasValue && shiftsForThisGroup[x].WatchDays.Any(day => day.Date == person.DateOfBirth.Value.Date))
                                 return false;
 
                             return true;
@@ -524,7 +531,7 @@ namespace CCServ.Entities.Watchbill
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
                 {
-                    if (!assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
+                    if (!assignablePersonsByDepartment.Any() || !assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
                     {
 
                         if (shift.WatchInputs.Any() && shift.WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
@@ -533,7 +540,7 @@ namespace CCServ.Entities.Watchbill
                         if (person.DateOfArrival.HasValue && minWatchDay < person.DateOfArrival.Value.AddMonths(1))
                             return false;
 
-                        if (person.EAOS.HasValue && minWatchDay > person.EAOS.Value.AddMonths(-1))
+                        if (person.EAOS.HasValue && minWatchDay < person.EAOS.Value.AddMonths(-1))
                             return false;
 
                         if (person.DateOfBirth.HasValue && shift.WatchDays.Any(day => day.Date == person.DateOfBirth.Value.Date))

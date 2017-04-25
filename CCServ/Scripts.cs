@@ -77,8 +77,6 @@ namespace CCServ
                                 ShiftType = WatchShiftTypes.JOOD,
                                 Title = "test"
                             });
-
-
                         }
 
                         var results = new Watchbill.WatchbillValidator().Validate(watchbill);
