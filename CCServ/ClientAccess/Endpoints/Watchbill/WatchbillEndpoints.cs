@@ -33,10 +33,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             bool doPopulation = false;
             if (token.Args.ContainsKey("dopopulation"))
             {
-                if (!Boolean.TryParse(token.Args["dopopulation"] as string, out doPopulation))
-                {
+                bool? test = token.Args["dopopulation"] as bool?;
+                if (test.HasValue)
+                    doPopulation = test.Value;
+                else
                     throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation);
-                }
             }
 
             //Now let's go get the watchbill from the database.
