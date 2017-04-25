@@ -33,7 +33,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             bool doPopulation = false;
             if (token.Args.ContainsKey("dopopulation"))
             {
-                if (!Boolean.TryParse(token.Args["dopopulation"] as string, out doPopulation))
+                if (!Boolean.TryParse(token.Args["dopopulation"].ToString(), out doPopulation))
                 {
                     throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation);
                 }
