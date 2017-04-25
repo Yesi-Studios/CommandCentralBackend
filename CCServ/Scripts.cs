@@ -69,6 +69,15 @@ namespace CCServ
                                 Watchbill = watchbill
                             });
 
+                            watchbill.WatchDays.Last().WatchShifts.Add(new WatchShift
+                            {
+                                Id = Guid.NewGuid(),
+                                Points = 5,
+                                Range = new TimeRange { Start = watchbill.WatchDays.Last().Date, End = watchbill.WatchDays.Last().Date.Date.AddHours(8) },
+                                ShiftType = WatchShiftTypes.JOOD,
+                                Title = "test"
+                            });
+
 
                         }
 
