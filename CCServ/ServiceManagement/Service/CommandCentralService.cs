@@ -114,10 +114,9 @@ namespace CCServ.ServiceManagement.Service
                             Log.Debug(token.ToString());
 
                             //Get the endpoint
-                            ServiceEndpoint description;
-                            if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out description))
+                            if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out ServiceEndpoint description))
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(ServiceManager.CurrentConfigState.DeveloperDistroAddress),
+                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(Properties.Settings.Default.DeveloperDistroAddress),
                                     ErrorTypes.Validation);
 
                             //If the endpoint was retrieved successfully, then assign it here.
@@ -139,8 +138,7 @@ namespace CCServ.ServiceManagement.Service
                                 throw new CommandCentralException("You didn't send an 'apikey' parameter.", ErrorTypes.Validation);
 
                             //Ok, so there is an apikey!  Is it legit?
-                            Guid apiKey;
-                            if (!Guid.TryParse(token.Args["apikey"] as string, out apiKey))
+                            if (!Guid.TryParse(token.Args["apikey"] as string, out Guid apiKey))
                                 throw new CommandCentralException("The 'apikey' parameter was not in the correct format.", ErrorTypes.Validation);
 
                             //Ok, well it's a GUID.   Do we have it in the database?...
@@ -278,64 +276,6 @@ namespace CCServ.ServiceManagement.Service
                     ReturnValue = null,
                     StatusCode = HttpStatusCode.InternalServerError
                 }.Serialize();
-            }
-        }
-
-        #endregion
-
-        #region Statistics
-
-        /// <summary>
-        /// Gets stats about the service.
-        /// </summary>
-        /// <param name="mode"></param>
-        /// <param name="password"></param>
-        /// <returns></returns>
-        public string GetStatistics(string mode, string password)
-        {
-            try
-            {
-                AddHeadersToOutgoingResponse(WebOperationContext.Current);
-
-                if (password != "admin")
-                {
-                    Log.Warning("Received invalid password for statistics request.");
-                    return "YOU GET NOTHING";
-                }
-
-                Log.Debug("Received statistics request.");
-
-                switch (mode.ToLower())
-                {
-                    case "messages":
-                        {
-                            using (var session = NHibernateHelper.CreateStatefulSession())
-                            {
-                                return session.QueryOver<MessageToken>().RowCount().ToString();
-                            }
-                        }
-                    case "sessions":
-                        {
-                            using (var session = NHibernateHelper.CreateStatefulSession())
-                            {
-                                return session.QueryOver<AuthenticationSession>().RowCount().ToString();
-                            }
-                        }
-                    case "endpoints":
-                        {
-                            return new { Count = ServiceManager.EndpointDescriptions.Count, Endpoints = ServiceManager.EndpointDescriptions.Keys.OrderBy(x => x) }.Serialize(); ;
-                        }
-                    default:
-                        {
-                            return "That mode is not supported.";
-                        }
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Exception(e, "An error occurred while trying to serve statistics.");
-                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
-                return "A fatal internal error occurred.  Please see the logs.";
             }
         }
 

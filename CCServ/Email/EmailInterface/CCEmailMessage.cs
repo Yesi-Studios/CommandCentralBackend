@@ -27,6 +27,12 @@ namespace CCServ.Email.EmailInterface
         public static bool SuppressEmails { get; private set; } = false;
 
         /// <summary>
+        /// THe developer distro mail address.
+        /// </summary>
+        public static MailAddress DeveloperAddress = 
+            new MailAddress(Properties.Settings.Default.DeveloperDistroAddress, Properties.Settings.Default.DeveloperDistroDisplayName);
+
+        /// <summary>
         /// The underlying mail message.
         /// </summary>
         public MailMessage Message { get; set; }

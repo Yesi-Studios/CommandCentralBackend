@@ -54,7 +54,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.UtcNow.Subtract(SubmitTime) < ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge;
+            return DateTime.UtcNow.Subtract(SubmitTime) < TimeSpan.FromMinutes(Properties.Settings.Default.ProfileLockMaxAgeMinutes);
         }
 
         #endregion

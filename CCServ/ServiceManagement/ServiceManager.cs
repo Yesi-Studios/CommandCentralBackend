@@ -34,11 +34,6 @@ namespace CCServ.ServiceManagement
         public static ConcurrentDictionary<string, ClientAccess.ServiceEndpoint> EndpointDescriptions { get; set; }
 
         /// <summary>
-        /// The current config state that should be used by the application.
-        /// </summary>
-        public static ConfigState CurrentConfigState { get; set; }
-
-        /// <summary>
         /// The registry used for setting up reoccurring, concurrent jobs.
         /// </summary>
         public static FluentScheduler.Registry FluentSchedulerRegistry { get; set; }
@@ -109,19 +104,6 @@ namespace CCServ.ServiceManagement
         /// </summary>
         public static void StopService()
         {
-            //Before we shut down the service, we need to flush the current config to the config file.
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "config.txt");
-
-            File.WriteAllText(path, JsonConvert.SerializeObject(CurrentConfigState,
-                    new JsonSerializerSettings
-                    {
-                        Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = false } },
-                        ContractResolver = new AtwoodUtils.CustomContractResolver(),
-                        Formatting = Formatting.Indented,
-                        DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ",
-                        DateTimeZoneHandling = DateTimeZoneHandling.Utc
-                    }));
-
             if (_host != null && _host.State != CommunicationState.Closed)
                 _host.Close();
         }

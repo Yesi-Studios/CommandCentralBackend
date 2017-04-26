@@ -249,8 +249,12 @@
     <Compile Include="Entities\Watchbill\WatchInput.cs" />
     <Compile Include="Entities\Watchbill\WatchInputRequirement.cs" />
     <Compile Include="Entities\Watchbill\WatchShift.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Scripts.cs" />
-    <Compile Include="ServiceManagement\ConfigState.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="Entities\NewsItem.cs" />
@@ -318,6 +322,10 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Email\Templates\FatalError_HTML.html">

@@ -13,6 +13,7 @@ using AtwoodUtils;
 using CCServ.Logging;
 using MySql.Data.MySqlClient;
 using System.IO;
+using CCServ.ServiceManagement;
 
 namespace CCServ.DataAccess
 {
@@ -21,6 +22,9 @@ namespace CCServ.DataAccess
     /// </summary>
     public static class NHibernateHelper
     {
+
+        #region Properties
+
         private static ISessionFactory _sessionFactory;
 
         private static NHibernate.Tool.hbm2ddl.SchemaExport _schema;
@@ -40,57 +44,7 @@ namespace CCServ.DataAccess
             }
         }
 
-        /// <summary>
-        /// Initializes the NHibernate Helper with the given connection settings.
-        /// </summary>
-        /// <param name="options"></param>
-        private static void ConfigureNHibernate(CLI.Options.LaunchOptions options)
-        {
-            string connectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
-                .FormatS(options.Server, options.Database, options.Username, options.Password, options.CertificatePassword, options.SecurityMode == CLI.SecurityModes.Both || options.SecurityMode == CLI.SecurityModes.DBOnly ? "Required" : "None");
-
-            if (options.PrintSQL)
-            {
-                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString)
-                            .ShowSql())
-                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
-                            .ProviderClass<SysCacheProvider>())
-                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                            .BuildConfiguration();
-            }
-            else
-            {
-                config = Fluently.Configure().Database(MySQLConfiguration.Standard.ConnectionString(connectionString))
-                            .Cache(x => x.UseSecondLevelCache().UseQueryCache()
-                            .ProviderClass<SysCacheProvider>())
-                            .Mappings(x => x.FluentMappings.AddFromAssemblyOf<Person>())
-                            .BuildConfiguration();
-            }
-
-            //We're going to save the schema in case the host wants to use it later.
-            _schema = new NHibernate.Tool.hbm2ddl.SchemaExport(config);
-        }
-
-        /// <summary>
-        /// Builds the session factory and extracts the class metadata. 
-        /// </summary>
-        private static void FinishNHibernateSetup()
-        {
-            _sessionFactory = config.BuildSessionFactory();
-
-            _allClassMetadata = new ConcurrentDictionary<string, IClassMetadata>(
-                _sessionFactory.GetAllClassMetadata()
-                    .ToList()
-                    .Select(x =>
-                    {
-                        return new KeyValuePair<string, IClassMetadata>(
-                            x.Key.Split('.').Last(),
-                            x.Value);
-                    })
-                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
-        }
-
-
+        #endregion
 
         #region Helper Methods
 
@@ -102,16 +56,7 @@ namespace CCServ.DataAccess
         {
             return _sessionFactory.OpenSession();
         }
-
-        /// <summary>
-        /// Creates a new session from the session factory. This session is stateless and has no cache.
-        /// </summary>
-        /// <returns></returns>
-        public static IStatelessSession CreateStatelessSession()
-        {
-            return _sessionFactory.OpenStatelessSession();
-        }
-
+        
         /// <summary>
         /// Gets the Id for a given object.
         /// </summary>
@@ -176,7 +121,7 @@ namespace CCServ.DataAccess
         /// If it doesn't, we'll make it.  Then since we just had to make it, we'll then run the schema generation script.
         /// </summary>
         [ServiceManagement.StartMethod(Priority = 99)]
-        private static void SetupDatabaseAndNHibernate(CLI.Options.LaunchOptions launchOptions)
+        private static void InitializePersistenceLayer(CLI.Options.LaunchOptions launchOptions)
         {
             Log.Info("Configuring NHibernate...");
             string connectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
@@ -223,13 +168,13 @@ namespace CCServ.DataAccess
                     if (launchOptions.Rebuild)
                     {
                         Log.Info("Dropping database if it exists...");
-                        using (var command = new MySql.Data.MySqlClient.MySqlCommand("DROP DATABASE IF EXISTS {0}".FormatS(launchOptions.Database), connection))
+                        using (var command = new MySqlCommand("DROP DATABASE IF EXISTS {0}".FormatS(launchOptions.Database), connection))
                         {
                             command.ExecuteNonQuery();
                         }
                         Log.Info("Dropped database (if it exists).");
 
-                        using (var command = new MySql.Data.MySqlClient.MySqlCommand("CREATE DATABASE {0}".FormatS(launchOptions.Database), connection))
+                        using (var command = new MySqlCommand("CREATE DATABASE {0}".FormatS(launchOptions.Database), connection))
                         {
                             command.ExecuteNonQuery();
                         }
@@ -301,7 +246,7 @@ namespace CCServ.DataAccess
                     }
                 }
             }
-            catch (MySql.Data.MySqlClient.MySqlException ex)
+            catch (MySqlException ex)
             {
                 switch (ex.Number)
                 {
@@ -325,6 +270,5 @@ namespace CCServ.DataAccess
         }
 
         #endregion
-
     }
 }

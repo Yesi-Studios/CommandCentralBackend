@@ -58,10 +58,8 @@ namespace CCServ.ClientAccess.Endpoints
             Email.EmailInterface.CCEmailMessage
                 .CreateDefault()
                 .To(clientEmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, model.FriendlyName)))
-                .CC(new System.Net.Mail.MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
+                .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                .BCC(Properties.Settings.Default.DeveloperPersonalAddresses.Cast<string>())
                 .Subject("Command Central Feedback")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.Feedback_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
