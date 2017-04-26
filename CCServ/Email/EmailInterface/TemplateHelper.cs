@@ -37,7 +37,5 @@ namespace CCServ.Email.EmailInterface
 
             return RazorEngine.Razor.Parse(template, model);
         }
-
-
     }
 }
