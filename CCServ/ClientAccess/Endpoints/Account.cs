@@ -443,7 +443,7 @@ namespace CCServ.ClientAccess.Endpoints
                 throw new CommandCentralException("The mail parameter you sent was not valid.", ErrorTypes.Validation);
             }
 
-            if (mailAddress.Host != ServiceManagement.ServiceManager.CurrentConfigState.DODEmailHost)
+            if (mailAddress.Host != Properties.Settings.Default.DODEmailHost)
                 throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation);
 
             //Now we need to go load the profile that matches this email address/ssn combination.

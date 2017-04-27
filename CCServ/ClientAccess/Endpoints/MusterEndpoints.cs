@@ -174,8 +174,7 @@ namespace CCServ.ClientAccess.Endpoints
             List<Person> musterablePersons = new List<Person>();
 
             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            ChainOfCommandLevels highestLevelInMuster;
-            if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out highestLevelInMuster))
+            if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out ChainOfCommandLevels highestLevelInMuster))
                 highestLevelInMuster = ChainOfCommandLevels.None;
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -254,7 +253,7 @@ namespace CCServ.ClientAccess.Endpoints
                             x.CurrentMusterRecord.HasBeenSubmitted,
                             x.CurrentMusterRecord.Id,
                             Musteree = x.CurrentMusterRecord.Musteree,
-                            Musterer = x.CurrentMusterRecord.Musterer == null ? null : x.CurrentMusterRecord.Musterer,
+                            Musterer = x.CurrentMusterRecord.Musterer ?? null,
                             x.CurrentMusterRecord.MusterStatus,
                             x.CurrentMusterRecord.MusterDate,
                             x.CurrentMusterRecord.Paygrade,

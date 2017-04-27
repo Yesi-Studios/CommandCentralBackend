@@ -116,7 +116,7 @@ namespace CCServ.ClientAccess.Endpoints
                             newLock.SubmitTime,
                             Owner = newLock.Owner,
                             LockedPerson = newLock.LockedPerson,
-                            ExpirationTime = newLock.SubmitTime.Add(ServiceManagement.ServiceManager.CurrentConfigState.ProfileLockMaxAge)
+                            ExpirationTime = profileLock.SubmitTime.Add(TimeSpan.FromMinutes(Properties.Settings.Default.ProfileLockMaxAgeMinutes))
                         });
                     }
 
