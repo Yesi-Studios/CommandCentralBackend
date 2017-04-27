@@ -65,17 +65,11 @@ namespace CCServ.Email.EmailInterface
         public static CCEmailMessage CreateDefault()
         {
             return CCEmailMessage
-                    .From(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .BCC(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                    .ReplyTo(new MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress, 
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
+                    .From(DeveloperAddress)
+                    .BCC(DeveloperAddress)
+                    .ReplyTo(DeveloperAddress)
                     .HighProperty()
-                    .UsingSMTPHosts(ServiceManagement.ServiceManager.CurrentConfigState.DODSMTPAddress, "localhost");
+                    .UsingSMTPHosts(Properties.Settings.Default.DODSMTPAddress, "localhost");
         }
 
         #endregion

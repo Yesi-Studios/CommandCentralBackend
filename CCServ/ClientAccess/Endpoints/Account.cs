@@ -232,9 +232,6 @@ namespace CCServ.ClientAccess.Endpoints
 
                         Email.EmailInterface.CCEmailMessage
                             .CreateDefault()
-                            .CC(new System.Net.Mail.MailAddress(
-                                ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                                ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Security Alert : Reregistration Attempt")
                             .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
@@ -659,9 +656,6 @@ namespace CCServ.ClientAccess.Endpoints
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
                         .To(self.EmailAddresses.Where(x => x.IsDodEmailAddress).Select(x => new System.Net.Mail.MailAddress(x.Address, model.FriendlyName)))
-                        .BCC(new System.Net.Mail.MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
                         .Subject("Password Changed")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.PasswordChanged_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));

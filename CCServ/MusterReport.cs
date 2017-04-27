@@ -69,9 +69,7 @@ namespace CCServ
                     //Ok, now we need to send the email.
                     Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress(
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                            ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName),
+                        .To(Email.EmailInterface.CCEmailMessage.DeveloperAddress,
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-muster@mail.mil", "Muster Distro"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-n11@mail.mil", "N11"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-dept-chiefs@mail.mil", "Department Chiefs"),
@@ -79,7 +77,7 @@ namespace CCServ
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-co@mail.mil", "CO"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-cmc@mail.mil", "CMC"),
                         new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
-                        .BCC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
+                        .BCC(Properties.Settings.Default.DeveloperPersonalAddresses.Cast<string>())
                         .Subject("Muster Report - " + model.MusterDateTime.ToString("D", CultureInfo.CreateSpecificCulture("en-US")))
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));

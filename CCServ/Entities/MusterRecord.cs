@@ -493,9 +493,7 @@ namespace CCServ.Entities
                     Log.Info("Current muster date is: {0}".FormatS(GetMusterDate(DateTime.UtcNow).ToString("D")));
 
                     Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));
-                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(
-                        ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.Hours,
-                        ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.Minutes));
+                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(13, 0));
 
                     transaction.Commit();
                 }

@@ -38,10 +38,8 @@ namespace CCServ.Logging.Loggers
 
             Email.EmailInterface.CCEmailMessage
                 .CreateDefault()
-                .To(new System.Net.Mail.MailAddress(
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroAddress,
-                        ServiceManagement.ServiceManager.CurrentConfigState.DeveloperDistroDisplayName))
-                .CC(ServiceManagement.ServiceManager.CurrentConfigState.DeveloperPersonalAddresses)
+                .To(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                .CC(Properties.Settings.Default.DeveloperPersonalAddresses.Cast<string>())
                 .Subject("Command Central Critical Message")
                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
