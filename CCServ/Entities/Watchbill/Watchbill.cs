@@ -121,7 +121,7 @@ namespace CCServ.Entities.Watchbill
                 {
                     foreach (var shift in watchDay.WatchShifts)
                     {
-                        shift.WatchAssignments.Clear();
+                        shift.WatchAssignment = null;
                         shift.WatchInputs.Clear();
                     }
                 }
@@ -273,7 +273,7 @@ namespace CCServ.Entities.Watchbill
                 if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.ClosedForInputs)
                     throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
 
-                if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignments.Any())))
+                if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignment != null)))
                 {
                     throw new Exception("A watchbill may not move into the 'Under Review' state unless the all watch shifts have been assigned.");
                 }
@@ -339,7 +339,7 @@ namespace CCServ.Entities.Watchbill
 
                 //Let's send an email to each person who is on watch, informing them of their watches.
                 var assignmentsByPerson = this.WatchDays
-                    .SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchAssignments))
+                    .SelectMany(x => x.WatchShifts.Select(y => y.WatchAssignment))
                     .GroupBy(x => x.PersonAssigned);
 
                 foreach (var assignments in assignmentsByPerson)
@@ -513,7 +513,7 @@ namespace CCServ.Entities.Watchbill
                             throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
 
                         //Create the watch assignment.
-                        shiftsForThisGroup[x].WatchAssignments.Add(new WatchAssignment
+                        shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
                         {
                             AssignedBy = client,
                             CurrentState = WatchAssignmentStates.Assigned,
@@ -521,7 +521,7 @@ namespace CCServ.Entities.Watchbill
                             Id = Guid.NewGuid(),
                             PersonAssigned = personToAssign,
                             WatchShift = shiftsForThisGroup[x]
-                        });
+                        };
                     }
                 }
 
@@ -550,7 +550,7 @@ namespace CCServ.Entities.Watchbill
                     }, out Person personToAssign))
                         throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
 
-                    shift.WatchAssignments.Add(new WatchAssignment
+                    shift.WatchAssignment = new WatchAssignment
                     {
                         AssignedBy = client,
                         CurrentState = WatchAssignmentStates.Assigned,
@@ -558,7 +558,7 @@ namespace CCServ.Entities.Watchbill
                         Id = Guid.NewGuid(),
                         PersonAssigned = personToAssign,
                         WatchShift = shift
-                    });
+                    };
 
                     finalAssignments.Remove(finalAssignments.First());
                 }

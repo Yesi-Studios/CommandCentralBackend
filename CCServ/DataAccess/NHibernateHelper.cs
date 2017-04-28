@@ -162,6 +162,8 @@ namespace CCServ.DataAccess
                 {
                     connection.Open();
 
+                    
+
                     Log.Info("Database connection established.");
 
                     //Does the client want us to drop the schema?
@@ -170,12 +172,14 @@ namespace CCServ.DataAccess
                         Log.Info("Dropping database if it exists...");
                         using (var command = new MySqlCommand("DROP DATABASE IF EXISTS {0}".FormatS(launchOptions.Database), connection))
                         {
+                            command.CommandTimeout = 0;
                             command.ExecuteNonQuery();
                         }
                         Log.Info("Dropped database (if it exists).");
 
                         using (var command = new MySqlCommand("CREATE DATABASE {0}".FormatS(launchOptions.Database), connection))
                         {
+                            command.CommandTimeout = 0;
                             command.ExecuteNonQuery();
                         }
 

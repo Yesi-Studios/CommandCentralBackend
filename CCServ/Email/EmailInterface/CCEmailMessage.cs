@@ -418,7 +418,7 @@ namespace CCServ.Email.EmailInterface
             if (_clients == null)
                 throw new ArgumentNullException("clients");
 
-            if (!_clients.Any())
+            if (_clients.Any())
             {
                 SmtpClient attemptClient = _clients.First();
 
@@ -444,6 +444,10 @@ namespace CCServ.Email.EmailInterface
                     }
                 });
             }
+            else
+            {
+                Logging.Log.Debug("An email was suppressed (no smtp hosts).  Subject: {0}".FormatS(Message.Subject));
+            }
         }
 
         #endregion
@@ -457,7 +461,7 @@ namespace CCServ.Email.EmailInterface
         [StartMethod()]
         private static void InitializeEmail(CLI.Options.LaunchOptions options)
         {
-            SMTPHostAddresses = options.SMTPHosts;
+            SMTPHostAddresses = options.SMTPHosts.ToList();
         }
 
         #endregion

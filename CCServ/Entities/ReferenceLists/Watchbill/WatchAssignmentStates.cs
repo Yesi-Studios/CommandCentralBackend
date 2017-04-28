@@ -45,16 +45,6 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         };
 
         /// <summary>
-        /// This watch is no longer valid and is retained only for historical purposes.  Another watch assignment now supercedes this one.
-        /// </summary>
-        public static WatchAssignmentState Superceded = new WatchAssignmentState
-        {
-            Id = Guid.Parse("{6EC2A8D0-CE54-4681-9285-53AF2C795E12}"),
-            Value = "Superceded",
-            Description = "This watch is no longer valid and is retained only for historical purposes.  Another watch assignment now supercedes this one."
-        };
-
-        /// <summary>
         /// The assigned person stood the watch in question.
         /// </summary>
         public static WatchAssignmentState Completed = new WatchAssignmentState

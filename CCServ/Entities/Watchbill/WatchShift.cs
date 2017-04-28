@@ -13,7 +13,7 @@ namespace CCServ.Entities.Watchbill
     /// <summary>
     /// A watch shift represents a single watch, who is assigned to it, and for what day it is as well as from one time to what time.  And some other things.
     /// </summary>
-    public class WatchShift
+    public class WatchShift : ICommentable
     {
 
         #region Properties
@@ -22,6 +22,11 @@ namespace CCServ.Entities.Watchbill
         /// The unique Id of this watchshift.
         /// </summary>
         public virtual Guid Id { get; set; }
+        
+        /// <summary>
+        /// The comments for thsi shift.
+        /// </summary>
+        public virtual IList<Comment> Comments { get; set; }
 
         /// <summary>
         /// The watch day that owns this watch shift.
@@ -48,7 +53,7 @@ namespace CCServ.Entities.Watchbill
         /// <para />
         /// An empty collection here indicates this shift has not yet been assigned.
         /// </summary>
-        public virtual IList<WatchAssignment> WatchAssignments { get; set; } = new List<WatchAssignment>();
+        public virtual WatchAssignment WatchAssignment { get; set; }
 
         /// <summary>
         /// Indicates the type of this shift:  Is it JOOD, OOD, etc.
@@ -86,8 +91,7 @@ namespace CCServ.Entities.Watchbill
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.ShiftType).Not.Nullable();
-
-                HasMany(x => x.WatchAssignments);
+                References(x => x.WatchAssignment);
 
                 HasManyToMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
                 HasManyToMany(x => x.WatchDays).Inverse();

@@ -221,10 +221,23 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             watchbill.CurrentState == WatchbillStatuses.Published ||
                             watchbill.CurrentState == WatchbillStatuses.UnderReview) && isCommandCoordinator)
                         {
+
                             foreach (var assignment in watchAssignmentsToInsert)
                             {
-                                //We need to set the other assignments to "superceded"
-                                SupercedeWatchAssignment(assignment.WatchShift, assignment, watchbill);
+                                if (assignment.WatchShift.WatchAssignment.Id != assignment.Id)
+                                {
+                                    Entities.Comment comment = new Entities.Comment
+                                    {
+                                        Creator = token.AuthenticationSession.Person,
+                                        Id = Guid.NewGuid(),
+                                        Text = "watch swap TODO",
+                                        Time = token.CallTime
+                                    };
+
+                                    session.Save(comment);
+
+                                    assignment.WatchShift.WatchAssignment = assignment;
+                                }
                             }
                         }
                         else if (!isCommandCoordinator && watchbill.CurrentState == WatchbillStatuses.UnderReview)
@@ -236,8 +249,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             }
 
                             //Make sure they actually swap each other.
-                            if (watchAssignmentsToInsert.First().PersonAssigned.Id != watchAssignmentsToInsert.Last().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id ||
-                                watchAssignmentsToInsert.Last().PersonAssigned.Id != watchAssignmentsToInsert.First().WatchShift.WatchAssignments.First(x => x.CurrentState != WatchAssignmentStates.Superceded).PersonAssigned.Id)
+                            if (watchAssignmentsToInsert.First().PersonAssigned.Id != watchAssignmentsToInsert.Last().PersonAssigned.Id ||
+                                watchAssignmentsToInsert.Last().PersonAssigned.Id != watchAssignmentsToInsert.First().PersonAssigned.Id)
                             {
                                 throw new CommandCentralException("You may not submit new watch assignments unless the previously assigned people for each shift are the other assignment's person.", ErrorTypes.Validation);
                             }
@@ -288,10 +301,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                             throw new NotImplementedException("In the highest level chain of command switch in /CreateAssignments.");
                                         }
                                 }
-                            }
 
-                            SupercedeWatchAssignment(watchAssignmentsToInsert.First().WatchShift, watchAssignmentsToInsert.Last(), watchbill);
-                            SupercedeWatchAssignment(watchAssignmentsToInsert.Last().WatchShift, watchAssignmentsToInsert.First(), watchbill);
+                                watchAssignmentsToInsert.First().WatchShift.WatchAssignment = watchAssignmentsToInsert.Last();
+                                watchAssignmentsToInsert.Last().WatchShift.WatchAssignment = watchAssignmentsToInsert.First();
+                            }
                         }
                         else
                         {
@@ -313,80 +326,5 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 }
             }
         }
-
-        /// <summary>
-        /// Convenience method for swapping watch assignments.
-        /// </summary>
-        /// <param name="shift"></param>
-        /// <param name="newAssignment"></param>
-        /// <param name="watchbill"></param>
-        private static void SupercedeWatchAssignment(WatchShift shift, WatchAssignment newAssignment, Entities.Watchbill.Watchbill watchbill)
-        {
-            WatchAssignment supercededWatchAssignment = null;
-
-            //We're in the Closed for inputs or published state and the client is command level.
-            //Therefore, the client can add watch assignments all day.
-            //Now let's add the assignment to the shift and then update the other assignments.
-            foreach (var prevAssignment in shift.WatchAssignments)
-            {
-                if (prevAssignment.CurrentState != WatchAssignmentStates.Superceded)
-                {
-                    prevAssignment.CurrentState = WatchAssignmentStates.Superceded;
-
-                    //There should only ever be one watch assignment to supercede... let's make sure that's the case.
-                    if (supercededWatchAssignment != null)
-                        throw new Exception("More than one watch assignment that was not superceded was found!");
-
-                    supercededWatchAssignment = prevAssignment;
-                }
-            }
-
-            shift.WatchAssignments.Add(newAssignment);
-
-            //One more thing, let's see if we're in the published state.  If we are, then we need to send the person an email.
-            if (watchbill.CurrentState == WatchbillStatuses.Published)
-            {
-                //Let's do the previous one first.
-                var supercededAddresses = supercededWatchAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
-                if (supercededAddresses.Any())
-                {
-
-                    var model = new Email.Models.WatchReassignedEmailModel
-                    {
-                        FriendlyName = supercededWatchAssignment.PersonAssigned.ToString(),
-                        WatchAssignment = supercededWatchAssignment,
-                        Watchbill = watchbill.Title
-                    };
-
-                    Email.EmailInterface.CCEmailMessage
-                        .CreateDefault()
-                        .To(supercededAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, supercededWatchAssignment.PersonAssigned.ToString())))
-                        .Subject("Watch Reassigned")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedRemoved_HTML.html", model)
-                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                }
-
-                //Now the new watch assignment.
-                var newAddresses = newAssignment.PersonAssigned.EmailAddresses.Where(x => x.IsPreferred);
-                if (newAddresses.Any())
-                {
-                    var model = new Email.Models.WatchReassignedEmailModel
-                    {
-                        FriendlyName = newAssignment.PersonAssigned.ToString(),
-                        WatchAssignment = newAssignment,
-                        Watchbill = watchbill.Title
-                    };
-
-                    Email.EmailInterface.CCEmailMessage
-                        .CreateDefault()
-                        .To(newAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, newAssignment.PersonAssigned.ToString())))
-                        .Subject("Watch Reassigned")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchReassignedAdded_HTML.html", model)
-                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
-                }
-            }
-        }
-
-
     }
 }

@@ -87,7 +87,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                     Range = watchShift.Range,
                                     ShiftType = watchShift.ShiftType,
                                     Title = watchShift.Title,
-                                    WatchAssignments = watchShift.WatchAssignments,
+                                    WatchAssignment = watchShift.WatchAssignment,
                                     WatchDays = watchShift.WatchDays.Select(shiftWatchDay =>
                                     {
                                         return new WatchDay
