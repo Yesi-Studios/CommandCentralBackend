@@ -733,7 +733,8 @@ namespace CCServ.Entities
                             PRD = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
                             Paygrade = Paygrades.AllPaygrades.ElementAt(Utilities.GetRandomNumber(0, Paygrades.AllPaygrades.Count - 1)),
                             DutyStatus = DutyStatuses.AllDutyStatuses.ElementAt(Utilities.GetRandomNumber(0, DutyStatuses.AllDutyStatuses.Count - 1)),
-                            PermissionGroupNames = permissionGroupNames
+                            PermissionGroupNames = permissionGroupNames,
+                            WatchQualifications = ReferenceLists.WatchQualifications.AllWatchQualifications.Shuffle().Take(Utilities.GetRandomNumber(1, ReferenceLists.WatchQualifications.AllWatchQualifications.Count)).ToList()
                         };
 
                         person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);

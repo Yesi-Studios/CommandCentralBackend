@@ -17,15 +17,13 @@ namespace CCServ.Entities.ReferenceLists
         {
             var quals = typeof(WatchQualifications).GetFields().Where(x => x.FieldType == typeof(WatchQualification)).Select(x => (WatchQualification)x.GetValue(null)).ToList();
 
-            AllAccountHistoryTypes = new ConcurrentBag<WatchQualification>(quals);
-
-
+            AllWatchQualifications = new ConcurrentBag<WatchQualification>(quals);
         }
 
         /// <summary>
-        /// Contains all of the predefined account history types.
+        /// Contains all of the predefined watch qualifications types.
         /// </summary>
-        public static ConcurrentBag<WatchQualification> AllAccountHistoryTypes;
+        public static ConcurrentBag<WatchQualification> AllWatchQualifications;
 
         public static WatchQualification JOOD = new WatchQualification { Id = Guid.Parse("{726A2088-AE51-4E41-B10A-952F0CBD73C3}"), Value = "JOOD", Description = "" };
         public static WatchQualification OOD = new WatchQualification { Id = Guid.Parse("{91B60F40-C991-4DB6-A51F-3889989C2D33}"), Value = "OOD", Description = "" };
@@ -47,7 +45,7 @@ namespace CCServ.Entities.ReferenceLists
             {
                 var currentWatchQuals = session.QueryOver<WatchQualification>().List();
 
-                var missingQuals = AllAccountHistoryTypes.Except(currentWatchQuals).ToList();
+                var missingQuals = AllWatchQualifications.Except(currentWatchQuals).ToList();
 
                 Logging.Log.Info("Persisting {0} missing watch qualification(s)...".FormatS(missingQuals.Count));
                 foreach (var type in missingQuals)
