@@ -84,9 +84,9 @@ namespace CCServ.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("mustersubmissions");
 
-            if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
+            if (MusterRecord.IsMusterFinalized)
             {
-                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime), ErrorTypes.Validation);
+                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(MusterRecord.RolloverTime), ErrorTypes.Validation);
             }
 
             Dictionary<Guid, JToken> musterSubmissions = null;
@@ -270,11 +270,10 @@ namespace CCServ.ClientAccess.Endpoints
                 //And now build the final DTO that's going out the door.
                 token.SetResult(new
                 {
-                    MusterFinalized = ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized,
+                    MusterFinalized = MusterRecord.IsMusterFinalized,
                     CurrentDate = MusterRecord.GetMusterDate(token.CallTime),
                     Musters = results,
-                    RolloverTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString(),
-                    ExpectedCompletionTime = ServiceManagement.ServiceManager.CurrentConfigState.MusterDueTime.ToString()
+                    RolloverTime = MusterRecord.RolloverTime.ToString()
                 });
             }
         }
@@ -298,7 +297,7 @@ namespace CCServ.ClientAccess.Endpoints
                 throw new CommandCentralException("You are not authorized to finalize muster.", ErrorTypes.Validation);
 
             //Ok we have permission, let's make sure the muster hasn't already been finalized.
-            if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
+            if (MusterRecord.IsMusterFinalized)
                 throw new CommandCentralException("The muster has already been finalized.", ErrorTypes.Validation);
 
             //So we should be good to finalize the muster.

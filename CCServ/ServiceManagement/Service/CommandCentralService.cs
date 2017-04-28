@@ -116,7 +116,7 @@ namespace CCServ.ServiceManagement.Service
                             //Get the endpoint
                             if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out ServiceEndpoint description))
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(Properties.Settings.Default.DeveloperDistroAddress),
+                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(Email.EmailInterface.CCEmailMessage.DeveloperAddress.Address),
                                     ErrorTypes.Validation);
 
                             //If the endpoint was retrieved successfully, then assign it here.

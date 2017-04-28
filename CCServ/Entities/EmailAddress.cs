@@ -47,7 +47,7 @@ namespace CCServ.Entities
                 if (!elements.Any())
                     return false;
 
-                return elements.Last().SafeEquals(Properties.Settings.Default.DODEmailHost);
+                return elements.Last().SafeEquals("mail.mil");
             }
         }
 

@@ -13,6 +13,11 @@ namespace CCServ.Entities
     /// </summary>
     public class ProfileLock
     {
+        /// <summary>
+        /// The maximum age, as a timespawn, after which a profile lock should be considered invalid.
+        /// </summary>
+        public static TimeSpan MaxAge { get; } = TimeSpan.FromMinutes(20);
+
         #region Properties
 
         /// <summary>
@@ -54,7 +59,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public virtual bool IsValid()
         {
-            return DateTime.UtcNow.Subtract(SubmitTime) < TimeSpan.FromMinutes(Properties.Settings.Default.ProfileLockMaxAgeMinutes);
+            return DateTime.UtcNow.Subtract(SubmitTime) < MaxAge;
         }
 
         #endregion

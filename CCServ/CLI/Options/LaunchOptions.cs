@@ -101,8 +101,8 @@ namespace CCServ.CLI.Options
         /// <summary>
         /// Suppresses emails so they can never be sent.
         /// </summary>
-        [Option("suppress", HelpText = "Suppresses emails so they can never be sent.", DefaultValue = false)]
-        public bool SuppressEmails { get; set; }
+        [Option("smtphosts", HelpText = "The list of smtp servers that should be attempted, in order.", DefaultValue = new[] { "smtp.gordon.army.mil" })]
+        public List<string> SMTPHosts { get; set; }
 
     }
 }

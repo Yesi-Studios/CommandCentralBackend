@@ -16,6 +16,15 @@ namespace CCServ.Entities
     /// </summary>
     public class MusterRecord
     {
+        /// <summary>
+        /// Indicates that the muster has been finalized.
+        /// </summary>
+        public static bool IsMusterFinalized { get; set; } = false;
+
+        /// <summary>
+        /// The time at which muster should roll over.
+        /// </summary>
+        public static CustomTypes.Time RolloverTime { get; } = new CustomTypes.Time(20, 0, 0);
 
         #region Properties
 
@@ -188,9 +197,10 @@ namespace CCServ.Entities
         {
             System.Globalization.GregorianCalendar gregCalendar = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.USEnglish);
 
-            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(
-                ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.GetSeconds())), 
-                dateTime.Date.AddSeconds(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.GetSeconds())))
+            
+
+            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(MusterRecord.RolloverTime.GetSeconds())), 
+                dateTime.Date.AddSeconds(MusterRecord.RolloverTime.GetSeconds())))
                 return dateTime.Date;
             else
             {
@@ -274,7 +284,7 @@ namespace CCServ.Entities
         /// <param name="token">The token which represents the communication during which the muster was finalized.  If null, the system finalizes the muster.</param>
         public static void FinalizeMuster(MessageToken token = null)
         {
-            if (ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
+            if (IsMusterFinalized)
                 throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
@@ -284,7 +294,7 @@ namespace CCServ.Entities
                 try
                 {
                     //Set it to true to prevent anyone else trying to finalize the muster while we're processing.
-                    ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized = true;
+                    IsMusterFinalized = true;
 
                     var persons = GetMusterablePersonsQuery(session).List();
 
@@ -326,7 +336,7 @@ namespace CCServ.Entities
                     transaction.Rollback();
 
                     //Set to false because we rolled back our changes.
-                    ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized = false;
+                    IsMusterFinalized = false;
 
                     Log.Exception(e, "The finalize muster method failed!  All changes were rolled back. The muster was not finalized!");
                     
@@ -342,13 +352,13 @@ namespace CCServ.Entities
         {
             if (finalizeIfNeeded)
             {
-                if (!ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
+                if (!IsMusterFinalized)
                 {
                     FinalizeMuster();
                 }
             }
 
-            if (!ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized)
+            if (!IsMusterFinalized)
                 throw new Exception("You can't rollover the muster until it has been finalized.  Consider passing the finalizeIfNeeded flag set to true.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
@@ -368,7 +378,7 @@ namespace CCServ.Entities
                         session.Save(person);
                     }
 
-                    ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized = false;
+                    IsMusterFinalized = false;
 
                     transaction.Commit();
                 }
@@ -487,13 +497,12 @@ namespace CCServ.Entities
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
                     Log.Info("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
-                    Log.Info("Muster finalization status : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.IsMusterFinalized ? "Finalized" : "Not Finalized"));
-                    Log.Info("Expected completion time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterDueTime.ToString()));
-                    Log.Info("Rollover time : {0}".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));
+                    Log.Info("Muster finalization status : {0}".FormatS(MusterRecord.IsMusterFinalized ? "Finalized" : "Not Finalized"));
+                    Log.Info("Rollover time : {0}".FormatS(MusterRecord.RolloverTime));
                     Log.Info("Current muster date is: {0}".FormatS(GetMusterDate(DateTime.UtcNow).ToString("D")));
 
-                    Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime.ToString()));
-                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(13, 0));
+                    Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(MusterRecord.RolloverTime));
+                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(MusterRecord.RolloverTime.Hours, MusterRecord.RolloverTime.Minutes));
 
                     transaction.Commit();
                 }

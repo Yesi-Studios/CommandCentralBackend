@@ -32,14 +32,14 @@ namespace CCServ.Email.Models
         {
             get
             {
-                return ServiceManagement.ServiceManager.CurrentConfigState.MusterRolloverTime;
+                return MusterRecord.RolloverTime;
             }
         }
 
         /// <summary>
         /// The list of muster records in this report.
         /// </summary>
-        public List<Entities.MusterRecord> Records { get; set; }
+        public List<MusterRecord> Records { get; set; }
 
         /// <summary>
         /// Returns all string muster statuses.

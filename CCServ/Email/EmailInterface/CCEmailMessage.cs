@@ -22,15 +22,23 @@ namespace CCServ.Email.EmailInterface
         #region Properties
 
         /// <summary>
-        /// Instructs the email provider to suppress all emails.
-        /// </summary>
-        public static bool SuppressEmails { get; private set; } = false;
-
-        /// <summary>
         /// THe developer distro mail address.
         /// </summary>
-        public static MailAddress DeveloperAddress = 
-            new MailAddress(Properties.Settings.Default.DeveloperDistroAddress, Properties.Settings.Default.DeveloperDistroDisplayName);
+        public static MailAddress DeveloperAddress { get; } = new MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-webmaster@mail.mil", "Command Central Communications");
+
+        /// <summary>
+        /// The email addresses of the developers.
+        /// </summary>
+        public static List<MailAddress> PersonalDeveloperAddresses { get; } = new List<MailAddress>
+        {
+            new MailAddress("sundevilgoalie13@gmail.com", "Daniel Atwood"),
+            new MailAddress("anguslmm@gmail.com", "Angus McLean")
+        };
+
+        /// <summary>
+        /// The list of those smtp servers that should be used when sending emails.
+        /// </summary>
+        private static List<string> SMTPHostAddresses { get; set; } = new List<string>();
 
         /// <summary>
         /// The underlying mail message.
@@ -69,7 +77,7 @@ namespace CCServ.Email.EmailInterface
                     .BCC(DeveloperAddress)
                     .ReplyTo(DeveloperAddress)
                     .HighProperty()
-                    .UsingSMTPHosts(Properties.Settings.Default.DODSMTPAddress, "localhost");
+                    .UsingSMTPHosts(SMTPHostAddresses.ToArray());
         }
 
         #endregion
@@ -407,13 +415,11 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public void SendWithRetryAndFailure(TimeSpan retryDelay, Action<Exception, TimeSpan, int> retryCallback = null, Action<Exception> failureCallback = null)
         {
-            if (SuppressEmails)
-            {
-                if (_clients == null || !_clients.Any())
-                {
-                    throw new Exception("Clients must be configured prior to calling a send method.");
-                }
+            if (_clients == null)
+                throw new ArgumentNullException("clients");
 
+            if (!_clients.Any())
+            {
                 SmtpClient attemptClient = _clients.First();
 
                 _renderingTask.RunSynchronously();
@@ -451,7 +457,7 @@ namespace CCServ.Email.EmailInterface
         [StartMethod()]
         private static void InitializeEmail(CLI.Options.LaunchOptions options)
         {
-            SuppressEmails = options.SuppressEmails;
+            SMTPHostAddresses = options.SMTPHosts;
         }
 
         #endregion

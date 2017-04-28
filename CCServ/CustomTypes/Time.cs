@@ -12,10 +12,27 @@ namespace CCServ.CustomTypes
     /// </summary>
     public class Time
     {
+        /// <summary>
+        /// The hours component.
+        /// </summary>
         public int Hours { get; set; }
+
+        /// <summary>
+        /// The minutes component.
+        /// </summary>
         public int Minutes { get; set; }
+
+        /// <summary>
+        /// The seconds component.
+        /// </summary>
         public int Seconds { get; set; }
 
+        /// <summary>
+        /// Creates a new time object using the given hours, minutes and seconds.
+        /// </summary>
+        /// <param name="h"></param>
+        /// <param name="m"></param>
+        /// <param name="s"></param>
         public Time(uint h, uint m, uint s)
         {
             if (h > 23 || m > 59 || s > 59)
@@ -25,6 +42,10 @@ namespace CCServ.CustomTypes
             Hours = (int)h; Minutes = (int)m; Seconds = (int)s;
         }
 
+        /// <summary>
+        /// Creates a new time object from the given date time.
+        /// </summary>
+        /// <param name="dt"></param>
         public Time(DateTime dt)
         {
             Hours = dt.Hour;
@@ -32,6 +53,9 @@ namespace CCServ.CustomTypes
             Seconds = dt.Second;
         }
 
+        /// <summary>
+        /// Creates a new time object.
+        /// </summary>
         public Time()
         {
         }
@@ -64,15 +88,13 @@ namespace CCServ.CustomTypes
             if (elements.Count != 3)
                 return false;
 
-            int hours, minutes, seconds;
-
-            if (!Int32.TryParse(elements[0], out hours) || hours < 0 || hours > 24)
+            if (!Int32.TryParse(elements[0], out int hours) || hours < 0 || hours > 24)
                 return false;
 
-            if (!Int32.TryParse(elements[1], out minutes) || minutes < 0 || minutes > 59)
+            if (!Int32.TryParse(elements[1], out int minutes) || minutes < 0 || minutes > 59)
                 return false;
 
-            if (!Int32.TryParse(elements[2], out seconds) || seconds < 0 || seconds > 59)
+            if (!Int32.TryParse(elements[2], out int seconds) || seconds < 0 || seconds > 59)
                 return false;
 
             //All of our parsing went well!  Success!
@@ -86,6 +108,10 @@ namespace CCServ.CustomTypes
             return true;
         }
 
+        /// <summary>
+        /// Returns the total number of seconds represented by this Time object.
+        /// </summary>
+        /// <returns></returns>
         public int GetSeconds()
         {
             return (Hours * 3600) + (Minutes * 60) + Seconds;
