@@ -461,7 +461,8 @@ namespace CCServ.Email.EmailInterface
         [StartMethod()]
         private static void InitializeEmail(CLI.Options.LaunchOptions options)
         {
-            SMTPHostAddresses = options.SMTPHosts.ToList();
+            if (!options.SMTPHosts.All(x => String.IsNullOrWhiteSpace(x)))
+                SMTPHostAddresses = options.SMTPHosts.ToList();
         }
 
         #endregion
