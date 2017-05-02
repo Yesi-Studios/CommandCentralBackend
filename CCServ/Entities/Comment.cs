@@ -51,7 +51,7 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 
-                References(x => x.Creator).Not.Nullable();
+                References(x => x.Creator);
 
                 Map(x => x.Text).Length(1000).Not.Nullable();
                 Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
