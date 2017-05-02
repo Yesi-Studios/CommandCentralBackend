@@ -452,7 +452,7 @@ namespace CCServ.Entities.Watchbill
 
                 //Get all persons from the el group who have all the required watch qualifications for the current watch type.
                 var personsByDepartment = this.EligibilityGroup.EligiblePersons
-                    .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
+                    .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => true /*person.WatchQualifications.Contains(watchQual)*/))
                     .Shuffle()
                     .GroupBy(person => person.Department);
 

@@ -224,7 +224,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             foreach (var assignment in watchAssignmentsToInsert)
                             {
-                                if (assignment.WatchShift.WatchAssignment.Id != assignment.Id)
+                                if (assignment.WatchShift.WatchAssignment == null || assignment.WatchShift.WatchAssignment.Id != assignment.Id)
                                 {
                                     Entities.Comment comment = new Entities.Comment
                                     {
