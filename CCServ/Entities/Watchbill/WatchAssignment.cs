@@ -108,11 +108,10 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.CurrentState).NotEmpty();
                 RuleFor(x => x.DateAssigned).NotEmpty();
 
-                When(x => x.AcknowledgedBy != null || x.DateAcknowledged.HasValue || (x.DateAcknowledged != null && x.DateAcknowledged.Value != default(DateTime)) || x.IsAcknowledged, () =>
+                When(x => x.IsAcknowledged, () =>
                 {
                     RuleFor(x => x.DateAcknowledged).NotEmpty();
                     RuleFor(x => x.DateAcknowledged).Must(x => x.Value != default(DateTime));
-                    RuleFor(x => x.IsAcknowledged).Must(x => x == true);
                     RuleFor(x => x.AcknowledgedBy).NotEmpty();
                 });
             }
