@@ -224,20 +224,39 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             foreach (var assignment in watchAssignmentsToInsert)
                             {
-                                if (assignment.WatchShift.WatchAssignment == null || assignment.WatchShift.WatchAssignment.Id != assignment.Id)
+                                Entities.Comment comment;
+
+                                //In this case, a new watch assignment is being created for a shift that has never had an assignment before.
+                                if (assignment.WatchShift.WatchAssignment == null)
                                 {
-                                    Entities.Comment comment = new Entities.Comment
+                                    comment = new Entities.Comment
                                     {
-                                        Creator = token.AuthenticationSession.Person,
+                                        Creator = null,
                                         Id = Guid.NewGuid(),
-                                        Text = "watch swap TODO",
+                                        Text = "{0} was assigned to this shift by {1}.".FormatS(assignment.PersonAssigned, token.AuthenticationSession.Person),
                                         Time = token.CallTime
                                     };
-
-                                    session.Save(comment);
-
-                                    assignment.WatchShift.WatchAssignment = assignment;
                                 }
+                                //In this case, a watch change is occurring.
+                                else if (assignment.WatchShift.WatchAssignment.Id != assignment.Id)
+                                {
+                                    comment = new Entities.Comment
+                                    {
+                                        Creator = null,
+                                        Id = Guid.NewGuid(),
+                                        Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(assignment.PersonAssigned, token.AuthenticationSession.Person, assignment.WatchShift.WatchAssignment.PersonAssigned),
+                                        Time = token.CallTime
+                                    };
+                                }
+                                //Who the fuck knows about this one.
+                                else
+                                {
+                                    throw new NotImplementedException("Fell to default case in watch assignment creation.");
+                                }
+
+
+                                assignment.WatchShift.WatchAssignment = assignment;
+                                assignment.WatchShift.Comments.Add(comment);
                             }
                         }
                         else if (!isCommandCoordinator && watchbill.CurrentState == WatchbillStatuses.UnderReview)
@@ -304,6 +323,22 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                                 watchAssignmentsToInsert.First().WatchShift.WatchAssignment = watchAssignmentsToInsert.Last();
                                 watchAssignmentsToInsert.Last().WatchShift.WatchAssignment = watchAssignmentsToInsert.First();
+
+                                watchAssignmentsToInsert.First().WatchShift.Comments.Add(new Entities.Comment
+                                {
+                                    Creator = null,
+                                    Id = Guid.NewGuid(),
+                                    Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(watchAssignmentsToInsert.Last().PersonAssigned, token.AuthenticationSession.Person, watchAssignmentsToInsert.First().PersonAssigned),
+                                    Time = token.CallTime
+                                });
+
+                                watchAssignmentsToInsert.Last().WatchShift.Comments.Add(new Entities.Comment
+                                {
+                                    Creator = null,
+                                    Id = Guid.NewGuid(),
+                                    Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(watchAssignmentsToInsert.First().PersonAssigned, token.AuthenticationSession.Person, watchAssignmentsToInsert.Last().PersonAssigned),
+                                    Time = token.CallTime
+                                });
                             }
                         }
                         else
