@@ -176,28 +176,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinput");
 
-            WatchInput watchInputFromClient;
-            try
-            {
-                watchInputFromClient = token.Args["watchinput"].CastJToken<WatchInput>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch input.", ErrorTypes.Validation);
-            }
+            var jToken = token.Args["watchinput"].CastJToken();
 
-            var valdiationResult = new WatchInput.WatchInputValidator().Validate(watchInputFromClient);
+            if (!Guid.TryParse(jToken.Value<string>("Id"), out Guid id))
+                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
-            if (!valdiationResult.IsValid)
-                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
-
+            bool isClientConfirmed = jToken.Value<bool>("IsConfirmed");
+            
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
-                        var watchInputFromDB = session.Get<WatchInput>(watchInputFromClient.Id) ??
+                        var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
                         var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;
@@ -218,7 +210,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 ErrorTypes.Authorization);
 
                         //The client is looking to confirm the watch input.
-                        if (!watchInputFromDB.IsConfirmed && watchInputFromClient.IsConfirmed)
+                        if (!watchInputFromDB.IsConfirmed && isClientConfirmed)
                         {
                             watchInputFromDB.IsConfirmed = true;
                             watchInputFromDB.DateConfirmed = token.CallTime;
@@ -253,15 +245,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinput");
 
-            WatchInput watchInputFromClient;
-            try
-            {
-                watchInputFromClient = token.Args["watchinput"].CastJToken<WatchInput>();
-            }
-            catch
-            {
+            if (!Guid.TryParse(token.Args["watchinput"].CastJToken().Value<string>("Id"), out Guid id))
                 throw new CommandCentralException("An error occurred while trying to parse your watch input.", ErrorTypes.Validation);
-            }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -269,7 +254,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchInputFromDB = session.Get<WatchInput>(watchInputFromClient.Id) ??
+                        var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
                         var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;

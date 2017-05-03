@@ -22,11 +22,11 @@ namespace CCServ.Entities.Watchbill
         /// The unique Id of this watchshift.
         /// </summary>
         public virtual Guid Id { get; set; }
-        
+
         /// <summary>
         /// The comments for thsi shift.
         /// </summary>
-        public virtual IList<Comment> Comments { get; set; }
+        public virtual IList<Comment> Comments { get; set; } = new List<Comment>();
 
         /// <summary>
         /// The watch day that owns this watch shift.
@@ -91,7 +91,7 @@ namespace CCServ.Entities.Watchbill
                 Id(x => x.Id).GeneratedBy.Assigned();
 
                 References(x => x.ShiftType).Not.Nullable();
-                References(x => x.WatchAssignment);
+                References(x => x.WatchAssignment).Cascade.All();
 
                 HasManyToMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
                 HasManyToMany(x => x.WatchDays).Inverse();
