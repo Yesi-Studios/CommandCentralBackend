@@ -78,6 +78,19 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        #region Overrides
+
+        /// <summary>
+        /// Returns {Title} {Range}
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "{0} ({1})".FormatS(Title, Range);
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps this object to the database.
         /// </summary>

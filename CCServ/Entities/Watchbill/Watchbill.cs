@@ -510,7 +510,7 @@ namespace CCServ.Entities.Watchbill
                             return true;
 
                         }, out Person personToAssign))
-                            throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
+                            throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shiftsForThisGroup[x]), ErrorTypes.Validation);
 
                         //Create the watch assignment.
                         shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
@@ -548,7 +548,7 @@ namespace CCServ.Entities.Watchbill
 
                         return true;
                     }, out Person personToAssign))
-                        throw new CommandCentralException("A shift has no person that can stand it!  TODO which shift?", ErrorTypes.Validation);
+                        throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shift), ErrorTypes.Validation);
 
                     shift.WatchAssignment = new WatchAssignment
                     {
@@ -566,6 +566,32 @@ namespace CCServ.Entities.Watchbill
         }
 
         #endregion
+
+        #region Startup / Cron Alert Methods
+
+        /// <summary>
+        /// Sets up the watch alerts.  This is basically just a recurring cron method that looks to see if someone has watch coming up and if they do, sends them a notification.
+        /// </summary>
+        /// <param name="launchOptions"></param>
+        [ServiceManagement.StartMethod(Priority = 1)]
+        private static void SetupWatchAlerts(CLI.Options.LaunchOptions launchOptions)
+        {
+            FluentScheduler.JobManager.AddJob(() => SendWatchAlerts(), s => s.ToRunNow().AndEvery(1).Hours());
+        }
+
+        /// <summary>
+        /// Checks if alerts have been sent for upcoming watch assignments, and sends them if they haven't.
+        /// </summary>
+        private static void SendWatchAlerts()
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+
+            }
+        }
+
+        #endregion
+
 
         /// <summary>
         /// Maps this object to the database.

@@ -69,6 +69,21 @@ namespace AtwoodUtils
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = 13;
+                hashCode = (hashCode * 397) ^ Start.GetHashCode();
+                hashCode = (hashCode * 397) ^ End.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        /// <summary>
         /// Prints the start and end times for this range.
         /// </summary>
         /// <returns></returns>

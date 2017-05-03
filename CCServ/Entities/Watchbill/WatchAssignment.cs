@@ -64,7 +64,12 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// The current state of this watch assignment.
         /// </summary>
-        public virtual ReferenceLists.Watchbill.WatchAssignmentState CurrentState { get; set; }
+        public virtual WatchAssignmentState CurrentState { get; set; }
+
+        /// <summary>
+        /// This is the number of times we've alerted the person assigned that they have watch.
+        /// </summary>
+        public virtual int NumberOfAlertsSent { get; set; }
 
         #endregion
 
@@ -89,6 +94,7 @@ namespace CCServ.Entities.Watchbill
                 Map(x => x.DateAssigned).Not.Nullable().CustomType<UtcDateTimeType>();
                 Map(x => x.DateAcknowledged).CustomType<UtcDateTimeType>();
                 Map(x => x.IsAcknowledged).Default(false.ToString());
+                Map(x => x.NumberOfAlertsSent).Not.Nullable().Default(0.ToString());
             }
         }
 
