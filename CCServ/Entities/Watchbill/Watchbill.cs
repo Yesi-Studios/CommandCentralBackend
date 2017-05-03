@@ -656,7 +656,7 @@ namespace CCServ.Entities.Watchbill
                             foreach (var otherShift in shifts.Where(x => x.Id != shift.Id))
                             {
                                 var otherShiftRange = new Itenso.TimePeriod.TimeRange(otherShift.Range.Start, otherShift.Range.End, false);
-                                if (shiftRange.IntersectsWith(otherShiftRange))
+                                if (shiftRange.OverlapsWith(otherShiftRange))
                                 {
                                     errorElements.Add("{0} shifts: {1}".FormatS(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
                                 }
