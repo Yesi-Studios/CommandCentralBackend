@@ -215,8 +215,8 @@
 
                                             foreach (var assignment in Model.WatchAssignments)
                                             {
-                                                var text = String.Format("{0} : {1} - {2}", assignment.WatchShift.ShiftType.Value, 
-                                                            assignment.WatchShift.Range.Start.ToString("dd MMM HH:mm"), assignment.WatchShift.Range.Start.ToString("dd MMM HH:mm"));
+                                                var text = assignment.WatchShift.ToString();
+
                                                 <p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p>
                                             }
                                         }
