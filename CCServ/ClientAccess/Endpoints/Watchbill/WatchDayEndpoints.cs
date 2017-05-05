@@ -63,30 +63,27 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchDays(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchdays");
+            token.Args.AssertContainsKeys("watchdays", "watchbillid");
 
-            List<WatchDay> watchDaysFromClient;
-            try
+            var watchDaysToken = token.Args["watchdays"].CastJToken();
+
+            if (watchDaysToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
+                throw new CommandCentralException("Your watch days parameter must be an array.", ErrorTypes.Validation);
+
+            var watchDaysFromClient = new List<WatchDay>();
+
+            foreach (var day in watchDaysToken)
             {
-                watchDaysFromClient = token.Args["watchdays"].CastJToken<List<WatchDay>>();
+                watchDaysFromClient.Add(new WatchDay
+                {
+                    Date = day.Value<DateTime>(nameof(WatchDay.Date)),
+                    Id = Guid.NewGuid(),
+                    Remarks = day.Value<string>(nameof(WatchDay.Remarks))
+                });
             }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch days.", ErrorTypes.Validation);
-            }
 
-            var watchDaysToInsert = watchDaysFromClient.Select(x => new WatchDay
-            {
-                Date = x.Date,
-                Id = Guid.NewGuid(),
-                Remarks = x.Remarks,
-                Watchbill = x.Watchbill
-            }).ToList();
-
-            var validationResults = watchDaysToInsert.Select(x => new WatchDay.WatchDayValidator().Validate(x)).ToList();
-            var invalidResults = validationResults.Where(x => !x.IsValid);
-            if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, ErrorTypes.Validation))));
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -94,11 +91,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        foreach (var day in watchDaysToInsert)
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill was not valid.", ErrorTypes.Validation);
+
+                        foreach (var day in watchDaysFromClient)
                         {
-                            //Let's get the watchbill the client says this watch day will be assigned to.
-                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(day.Watchbill.Id) ??
-                                throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
+                            day.Watchbill = watchbill;
+
+                            var validationResult = new WatchDay.WatchDayValidator().Validate(day);
+                            if (!validationResult.IsValid)
+                                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
@@ -116,7 +118,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             session.Update(watchbill);
                         }
 
-                        token.SetResult(watchDaysToInsert);
+                        token.SetResult(watchDaysFromClient);
 
                         transaction.Commit();
                     }
