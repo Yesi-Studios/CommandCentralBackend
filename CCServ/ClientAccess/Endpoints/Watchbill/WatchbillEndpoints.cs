@@ -147,17 +147,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("title", "eligibilitygroupid");
 
-            Entities.Watchbill.Watchbill watchbillFromClient;
-            try
-            {
-                watchbillFromClient = token.Args["watchbill"].CastJToken<Entities.Watchbill.Watchbill>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
-            }
+            var title = token.Args["title"] as string;
+
+            if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
+                throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
+
+            var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
+                .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
+                throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
@@ -168,8 +167,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 Id = Guid.NewGuid(),
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
-                Title = watchbillFromClient.Title,
-                EligibilityGroup = watchbillFromClient.EligibilityGroup
+                Title = title,
+                EligibilityGroup = elGroup
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
