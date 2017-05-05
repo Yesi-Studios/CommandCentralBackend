@@ -281,18 +281,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void DeleteWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("id");
 
-            Entities.Watchbill.Watchbill watchbillFromClient;
-            try
-            {
-                watchbillFromClient = token.Args["watchbill"].CastJToken<Entities.Watchbill.Watchbill>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
-            }
-
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
+            
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -300,7 +293,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
