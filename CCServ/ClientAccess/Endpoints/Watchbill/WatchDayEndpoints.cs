@@ -144,20 +144,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchday");
 
-            WatchDay watchDayFromClient;
-            try
-            {
-                watchDayFromClient = token.Args["watchday"].CastJToken<WatchDay>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch day.", ErrorTypes.Validation);
-            }
+            var watchDayToken = token.Args["watchday"].CastJToken();
 
-            var valdiationResult = new WatchDay.WatchDayValidator().Validate(watchDayFromClient);
+            if (!Guid.TryParse(watchDayToken.Value<string>(nameof(WatchDay.Id)), out Guid id))
+                throw new CommandCentralException("Your watch day id was in the wrong format.", ErrorTypes.Validation);
 
-            if (!valdiationResult.IsValid)
-                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+            var dto = new
+            {
+                Date  = watchDayToken.Value<DateTime>(nameof(WatchDay.Date)),
+                Remarks = watchDayToken.Value<string>(nameof(WatchDay.Remarks)),
+                Id = id
+            };
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -165,7 +162,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
+                        var watchDayFromDB = session.Get<WatchDay>(dto.Id) ??
                             throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
@@ -174,11 +171,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         //Ok let's swap the properties now.
                         //Check the state.
-                        if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && watchDayFromClient.Date != watchDayFromDB.Date)
+                        if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && dto.Date != watchDayFromDB.Date)
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
-                        watchDayFromDB.Date = watchDayFromClient.Date;
-                        watchDayFromDB.Remarks = watchDayFromClient.Remarks;
+                        watchDayFromDB.Date = dto.Date;
+                        watchDayFromDB.Remarks = dto.Remarks;
 
                         //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
                         var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchDayFromDB.Watchbill);
