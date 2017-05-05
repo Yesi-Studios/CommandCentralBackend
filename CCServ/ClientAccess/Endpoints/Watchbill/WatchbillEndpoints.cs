@@ -213,20 +213,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateWatchbill(MessageToken token)
+        private static void UpdateWatchbillState(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("id", "stateid");
 
-            var jToken = token.Args["watchbill"].CastJToken();
-
-            if (!Guid.TryParse(jToken.Value<string>("Id"), out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchbill id was not in the right format", ErrorTypes.Validation);
 
-            if (!Guid.TryParse(jToken["CurrentState"].Value<string>("Id"), out Guid stateId))
+            if (!Guid.TryParse(token.Args["stateid"] as string, out Guid stateId))
                 throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
-
-            var clientTitle = jToken.Value<string>("Title");
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -242,9 +238,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
-
-                        //Now let's move the properties over that are editable.
-                        watchbillFromDB.Title = clientTitle;
 
                         var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(stateId) ??
                             throw new CommandCentralException("Your state id did not reference a real state.", ErrorTypes.Validation);
