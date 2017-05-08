@@ -150,14 +150,26 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             if (watchAssToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
                 throw new CommandCentralException("Your watch assignments parameter must be an array.", ErrorTypes.Validation);
 
-            var watchAssignmentsFromClient = watchAssToken.Select(x => new
+            var watchAssignmentsFromClient = watchAssToken.Select(x =>
             {
-                AssignedBy = token.AuthenticationSession.Person,
-                CurrentState = WatchAssignmentStates.Assigned,
-                DateAssigned = token.CallTime,
-                Id = Guid.NewGuid(),
-                PersonAssignedId = x.Value<string>(nameof(WatchAssignment.PersonAssigned)),
-                WatchShiftId = x.Value<string>(nameof(WatchAssignment.WatchShift))
+
+                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.PersonAssigned)), out Guid personAssignedId))
+                    throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
+
+                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.WatchShift)), out Guid watchShitId))
+                    throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
+
+                var watchAss = new
+                {
+                    AssignedBy = token.AuthenticationSession.Person,
+                    CurrentState = WatchAssignmentStates.Assigned,
+                    DateAssigned = token.CallTime,
+                    Id = Guid.NewGuid(),
+                    PersonAssignedId = personAssignedId,
+                    WatchShiftId = watchShitId
+                };
+
+                return watchAss;
             });
 
             if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
