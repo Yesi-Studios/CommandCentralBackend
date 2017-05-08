@@ -218,6 +218,7 @@
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
+    <Compile Include="Email\Models\UpcomingWatchEmailModel.cs" />
     <Compile Include="Email\Models\WatchReassignedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
     <Compile Include="Email\Models\WatchAssignedEmailModel.cs" />
@@ -421,6 +422,9 @@
     <EmbeddedResource Include="Email\Templates\WatchReassignedRemoved_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Email\Templates\UpcomingWatch_HTML.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

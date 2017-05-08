@@ -147,17 +147,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("title", "eligibilitygroupid");
 
-            Entities.Watchbill.Watchbill watchbillFromClient;
-            try
-            {
-                watchbillFromClient = token.Args["watchbill"].CastJToken<Entities.Watchbill.Watchbill>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
-            }
+            var title = token.Args["title"] as string;
+
+            if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
+                throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
+
+            var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
+                .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
+                throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
@@ -168,8 +167,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 Id = Guid.NewGuid(),
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
-                Title = watchbillFromClient.Title,
-                EligibilityGroup = watchbillFromClient.EligibilityGroup
+                Title = title,
+                EligibilityGroup = elGroup
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
@@ -214,20 +213,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateWatchbill(MessageToken token)
+        private static void UpdateWatchbillState(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("id", "stateid");
 
-            var jToken = token.Args["watchbill"].CastJToken();
-
-            if (!Guid.TryParse(jToken.Value<string>("Id"), out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchbill id was not in the right format", ErrorTypes.Validation);
 
-            if (!Guid.TryParse(jToken["CurrentState"].Value<string>("Id"), out Guid stateId))
+            if (!Guid.TryParse(token.Args["stateid"] as string, out Guid stateId))
                 throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
-
-            var clientTitle = jToken.Value<string>("Title");
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -243,9 +238,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
-
-                        //Now let's move the properties over that are editable.
-                        watchbillFromDB.Title = clientTitle;
 
                         var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(stateId) ??
                             throw new CommandCentralException("Your state id did not reference a real state.", ErrorTypes.Validation);
@@ -289,18 +281,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void DeleteWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbill");
+            token.Args.AssertContainsKeys("id");
 
-            Entities.Watchbill.Watchbill watchbillFromClient;
-            try
-            {
-                watchbillFromClient = token.Args["watchbill"].CastJToken<Entities.Watchbill.Watchbill>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watchbill.", ErrorTypes.Validation);
-            }
-
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
+            
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -308,7 +293,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillFromClient.Id) ??
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.

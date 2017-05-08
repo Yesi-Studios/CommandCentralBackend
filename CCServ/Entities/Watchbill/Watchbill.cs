@@ -150,8 +150,8 @@ namespace CCServ.Entities.Watchbill
                     //I'd basically have to create two loops to make sure we don't get any weird cross-thread behaviors.
                     emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                        .CC(addresses)
+                        .To(addresses)
+                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                         .Subject("Watchbill Inputs Required")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillInputRequired_HTML.html", model));
                 }
@@ -192,8 +192,8 @@ namespace CCServ.Entities.Watchbill
                         {
                             emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                                         .CreateDefault()
-                                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                        .CC(addressGroup)
+                                        .To(addressGroup)
+                                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                         .Subject("Watchbill Open For Inputs")
                                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model));
                         }
@@ -251,8 +251,8 @@ namespace CCServ.Entities.Watchbill
                         {
                             emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
+                                .To(addressGroup)
+                                .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                 .Subject("Watchbill Closed For Inputs")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model));                
                         }
@@ -314,8 +314,8 @@ namespace CCServ.Entities.Watchbill
                         {
                             emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
+                                .To(addressGroup)
+                                .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                 .Subject("Watchbill Under Review")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model));
                         }
@@ -352,8 +352,8 @@ namespace CCServ.Entities.Watchbill
 
                     emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                         .CreateDefault()
-                        .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                        .CC(emailAddresses)
+                        .To(emailAddresses)
+                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                         .Subject("Watch Assigned")
                         .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model));
                 }
@@ -395,8 +395,8 @@ namespace CCServ.Entities.Watchbill
                         {
                             emailMessagesToSend.Add(Email.EmailInterface.CCEmailMessage
                                 .CreateDefault()
-                                .To(new System.Net.Mail.MailAddress("sundevilgoalie13@gmail.com"))
-                                .CC(addressGroup)
+                                .To(addressGroup)
+                                .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                 .Subject("Watchbill Published")
                                 .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model));
                         }
@@ -576,7 +576,7 @@ namespace CCServ.Entities.Watchbill
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void SetupWatchAlerts(CLI.Options.LaunchOptions launchOptions)
         {
-            FluentScheduler.JobManager.AddJob(() => SendWatchAlerts(), s => s.ToRunNow().AndEvery(1).Hours());
+            FluentScheduler.JobManager.AddJob(() => SendWatchAlerts(), s => s.ToRunEvery(1).Hours().At(0));
         }
 
         /// <summary>
@@ -586,12 +586,87 @@ namespace CCServ.Entities.Watchbill
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var assignments = session.QueryOver<WatchAssignment>().Where(x => x.NumberOfAlertsSent != 2).List();
 
+                        var hourRange = new Itenso.TimePeriod.TimeRange(DateTime.UtcNow.AddHours(-1), DateTime.UtcNow);
+                        var dayRange = new Itenso.TimePeriod.TimeRange(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow);
+
+                        foreach (var assignment in assignments)
+                        {
+                            if (assignment.NumberOfAlertsSent == 0)
+                            {
+                                if (dayRange.IntersectsWith(new Itenso.TimePeriod.TimeRange(assignment.WatchShift.Range.Start)))
+                                {
+                                    var model = new Email.Models.UpcomingWatchEmailModel
+                                    {
+                                        WatchAssignment = assignment
+                                    };
+
+                                    var addresses = assignment.PersonAssigned.EmailAddresses
+                                        .Where(x => x.IsPreferred)
+                                        .Select(x => new System.Net.Mail.MailAddress(x.Address, assignment.PersonAssigned.ToString()));
+
+                                    Email.EmailInterface.CCEmailMessage
+                                        .CreateDefault()
+                                        .To(addresses)
+                                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                                        .Subject("Upcoming Watch")
+                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.UpcomingWatch_HTML.html", model)
+                                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
+                                    assignment.NumberOfAlertsSent++;
+
+                                    session.Update(assignment);
+                                }
+                            }
+                            else if (assignment.NumberOfAlertsSent == 1)
+                            {
+                                if (hourRange.IntersectsWith(new Itenso.TimePeriod.TimeRange(assignment.WatchShift.Range.Start)))
+                                {
+                                    var model = new Email.Models.UpcomingWatchEmailModel
+                                    {
+                                        WatchAssignment = assignment
+                                    };
+
+                                    var addresses = assignment.PersonAssigned.EmailAddresses
+                                        .Where(x => x.IsPreferred)
+                                        .Select(x => new System.Net.Mail.MailAddress(x.Address, assignment.PersonAssigned.ToString()));
+
+                                    Email.EmailInterface.CCEmailMessage
+                                        .CreateDefault()
+                                        .To(addresses)
+                                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                                        .Subject("Upcoming Watch")
+                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.UpcomingWatch_HTML.html", model)
+                                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+
+                                    assignment.NumberOfAlertsSent++;
+
+                                    session.Update(assignment);
+                                }
+                            }
+                            else
+                            {
+                                throw new NotImplementedException("How the fuck did we get here?");
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
         }
 
         #endregion
-
 
         /// <summary>
         /// Maps this object to the database.

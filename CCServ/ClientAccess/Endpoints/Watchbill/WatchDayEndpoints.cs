@@ -63,30 +63,27 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchDays(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchdays");
+            token.Args.AssertContainsKeys("watchdays", "watchbillid");
 
-            List<WatchDay> watchDaysFromClient;
-            try
+            var watchDaysToken = token.Args["watchdays"].CastJToken();
+
+            if (watchDaysToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
+                throw new CommandCentralException("Your watch days parameter must be an array.", ErrorTypes.Validation);
+
+            var watchDaysFromClient = new List<WatchDay>();
+
+            foreach (var day in watchDaysToken)
             {
-                watchDaysFromClient = token.Args["watchdays"].CastJToken<List<WatchDay>>();
+                watchDaysFromClient.Add(new WatchDay
+                {
+                    Date = day.Value<DateTime>(nameof(WatchDay.Date)),
+                    Id = Guid.NewGuid(),
+                    Remarks = day.Value<string>(nameof(WatchDay.Remarks))
+                });
             }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch days.", ErrorTypes.Validation);
-            }
 
-            var watchDaysToInsert = watchDaysFromClient.Select(x => new WatchDay
-            {
-                Date = x.Date,
-                Id = Guid.NewGuid(),
-                Remarks = x.Remarks,
-                Watchbill = x.Watchbill
-            }).ToList();
-
-            var validationResults = watchDaysToInsert.Select(x => new WatchDay.WatchDayValidator().Validate(x)).ToList();
-            var invalidResults = validationResults.Where(x => !x.IsValid);
-            if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, ErrorTypes.Validation))));
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -94,11 +91,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        foreach (var day in watchDaysToInsert)
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill was not valid.", ErrorTypes.Validation);
+
+                        foreach (var day in watchDaysFromClient)
                         {
-                            //Let's get the watchbill the client says this watch day will be assigned to.
-                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(day.Watchbill.Id) ??
-                                throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
+                            day.Watchbill = watchbill;
+
+                            var validationResult = new WatchDay.WatchDayValidator().Validate(day);
+                            if (!validationResult.IsValid)
+                                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
@@ -116,7 +118,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             session.Update(watchbill);
                         }
 
-                        token.SetResult(watchDaysToInsert);
+                        token.SetResult(watchDaysFromClient);
 
                         transaction.Commit();
                     }
@@ -142,20 +144,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchday");
 
-            WatchDay watchDayFromClient;
-            try
-            {
-                watchDayFromClient = token.Args["watchday"].CastJToken<WatchDay>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch day.", ErrorTypes.Validation);
-            }
+            var watchDayToken = token.Args["watchday"].CastJToken();
 
-            var valdiationResult = new WatchDay.WatchDayValidator().Validate(watchDayFromClient);
+            if (!Guid.TryParse(watchDayToken.Value<string>(nameof(WatchDay.Id)), out Guid id))
+                throw new CommandCentralException("Your watch day id was in the wrong format.", ErrorTypes.Validation);
 
-            if (!valdiationResult.IsValid)
-                throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+            var dto = new
+            {
+                Date  = watchDayToken.Value<DateTime>(nameof(WatchDay.Date)),
+                Remarks = watchDayToken.Value<string>(nameof(WatchDay.Remarks)),
+                Id = id
+            };
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -163,7 +162,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchDayFromDB = session.Get<WatchDay>(watchDayFromClient.Id) ??
+                        var watchDayFromDB = session.Get<WatchDay>(dto.Id) ??
                             throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                         if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
@@ -172,11 +171,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         //Ok let's swap the properties now.
                         //Check the state.
-                        if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && watchDayFromClient.Date != watchDayFromDB.Date)
+                        if (watchDayFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial && dto.Date != watchDayFromDB.Date)
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
-                        watchDayFromDB.Date = watchDayFromClient.Date;
-                        watchDayFromDB.Remarks = watchDayFromClient.Remarks;
+                        watchDayFromDB.Date = dto.Date;
+                        watchDayFromDB.Remarks = dto.Remarks;
 
                         //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
                         var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchDayFromDB.Watchbill);
