@@ -9,6 +9,7 @@ using CCServ.Authorization;
 using CCServ.Entities.ReferenceLists.Watchbill;
 using System.Reflection;
 using NHibernate.Transform;
+using CCServ.Entities;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -28,7 +29,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void LoadWatchAssignment(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchassignmentid");
+            token.Args.AssertContainsKeys("id");
 
             if (!Guid.TryParse(token.Args["watchassignmentid"] as string, out Guid watchAssignmentId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
@@ -142,37 +143,25 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
 
             //Ok, now we need to find the person the client sent us and try to parse it into a person.
-            token.Args.AssertContainsKeys("watchassignments");
+            token.Args.AssertContainsKeys("watchassignments", "watchbillid");
 
-            List<WatchAssignment> watchAssignmentsFromClient;
-            try
+            var watchAssToken = token.Args["watchassignments"].CastJToken();
+
+            if (watchAssToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
+                throw new CommandCentralException("Your watch assignments parameter must be an array.", ErrorTypes.Validation);
+
+            var watchAssignmentsFromClient = watchAssToken.Select(x => new
             {
-                watchAssignmentsFromClient = token.Args["watchassignments"].CastJToken<List<WatchAssignment>>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while parsing your 'watchassignments' parameter.", ErrorTypes.Validation);
-            }
+                AssignedBy = token.AuthenticationSession.Person,
+                CurrentState = WatchAssignmentStates.Assigned,
+                DateAssigned = token.CallTime,
+                Id = Guid.NewGuid(),
+                PersonAssignedId = x.Value<string>(nameof(WatchAssignment.PersonAssigned)),
+                WatchShiftId = x.Value<string>(nameof(WatchAssignment.WatchShift))
+            });
 
-            var watchAssignmentsToInsert = watchAssignmentsFromClient.Select(x =>
-                {
-                    return new WatchAssignment
-                    {
-                        AssignedBy = token.AuthenticationSession.Person,
-                        CurrentState = WatchAssignmentStates.Assigned,
-                        DateAssigned = token.CallTime,
-                        Id = Guid.NewGuid(),
-                        PersonAssigned = x.PersonAssigned,
-                        WatchShift = x.WatchShift
-                    };
-                })
-                .ToList();
-
-            var validationResults = watchAssignmentsToInsert.Select(x => new WatchAssignment.WatchAssignmentValidator().Validate(x)).ToList();
-
-            var invalidResults = validationResults.Where(x => !x.IsValid);
-            if (invalidResults.Any())
-                throw new AggregateException(invalidResults.SelectMany(x => x.Errors.Select(y => new CommandCentralException(y.ErrorMessage, ErrorTypes.Validation))));
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -181,36 +170,30 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         //Let's make sure all the watch assignments are from the same watchbill, and there shifts and people are real.
-                        Entities.Watchbill.Watchbill watchbill = null;
+                        Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        foreach (var assignment in watchAssignmentsToInsert)
+                        var watchAssignmentsToInsert = watchAssignmentsFromClient.Select(x =>
                         {
-                            var personFromDB = session.Get<Entities.Person>(assignment.PersonAssigned.Id) ??
-                                throw new CommandCentralException("A person's id was not valid.", ErrorTypes.Validation);
-
-                            assignment.PersonAssigned = personFromDB;
-
-                            var shiftFromDB = session.Get<WatchShift>(assignment.WatchShift.Id) ??
-                                throw new CommandCentralException("A shift's id was not valid.", ErrorTypes.Validation);
-
-                            assignment.WatchShift = shiftFromDB;
-
-                            //Now we need to know what watchbill we're talking about.
-                            if (watchbill == null)
+                            var assignment = new WatchAssignment
                             {
-                                watchbill = shiftFromDB.WatchDays.First().Watchbill;
-                            }
-                            else if (watchbill.Id != shiftFromDB.WatchDays.First().Watchbill.Id)
-                            {
-                                throw new CommandCentralException("You may not submit watch assignments for multiple watchbills at the same time.", ErrorTypes.Validation);
-                            }
+                                AssignedBy = x.AssignedBy,
+                                CurrentState = x.CurrentState,
+                                DateAssigned = x.DateAssigned,
+                                Id = x.Id
+                            };
 
-                            //Let's make sure the person we're about to assign is in the eligibility group.
-                            if (!watchbill.EligibilityGroup.EligiblePersons.Any(x => x.Id == personFromDB.Id))
-                            {
+                            assignment.PersonAssigned = session.Get<Person>(x.PersonAssignedId) ??
+                                throw new CommandCentralException("Your person assigned id was not valid.", ErrorTypes.Validation);
+
+                            assignment.WatchShift = session.Get<WatchShift>(x.WatchShiftId) ??
+                                throw new CommandCentralException("Your watch shift id was not valid.", ErrorTypes.Validation);
+
+                            if (!watchbill.EligibilityGroup.EligiblePersons.Any(person => person.Id == assignment.PersonAssigned.Id))
                                 throw new CommandCentralException("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation);
-                            }
-                        }
+
+                            return assignment;
+                        });
 
                         bool isCommandCoordinator = token.AuthenticationSession.Person.PermissionGroups
                                 .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
@@ -224,12 +207,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             foreach (var assignment in watchAssignmentsToInsert)
                             {
-                                Entities.Comment comment;
+                                Comment comment;
 
                                 //In this case, a new watch assignment is being created for a shift that has never had an assignment before.
                                 if (assignment.WatchShift.WatchAssignment == null)
                                 {
-                                    comment = new Entities.Comment
+                                    comment = new Comment
                                     {
                                         Creator = null,
                                         Id = Guid.NewGuid(),
@@ -240,7 +223,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 //In this case, a watch change is occurring.
                                 else if (assignment.WatchShift.WatchAssignment.Id != assignment.Id)
                                 {
-                                    comment = new Entities.Comment
+                                    comment = new Comment
                                     {
                                         Creator = null,
                                         Id = Guid.NewGuid(),
@@ -262,7 +245,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         else if (!isCommandCoordinator && watchbill.CurrentState == WatchbillStatuses.UnderReview)
                         {
                             //We have to make sure that the watch assignments were submitted in a pair, and that the business rules about those are kept.  They're complicated and make my head hurt.
-                            if (watchAssignmentsToInsert.Count != 2)
+                            if (watchAssignmentsToInsert.Count() != 2)
                             {
                                 throw new CommandCentralException("You may not swap watches unless your watches are submitted in pairs.", ErrorTypes.Validation);
                             }
@@ -324,7 +307,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 watchAssignmentsToInsert.First().WatchShift.WatchAssignment = watchAssignmentsToInsert.Last();
                                 watchAssignmentsToInsert.Last().WatchShift.WatchAssignment = watchAssignmentsToInsert.First();
 
-                                watchAssignmentsToInsert.First().WatchShift.Comments.Add(new Entities.Comment
+                                watchAssignmentsToInsert.First().WatchShift.Comments.Add(new Comment
                                 {
                                     Creator = null,
                                     Id = Guid.NewGuid(),
@@ -332,7 +315,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                     Time = token.CallTime
                                 });
 
-                                watchAssignmentsToInsert.Last().WatchShift.Comments.Add(new Entities.Comment
+                                watchAssignmentsToInsert.Last().WatchShift.Comments.Add(new Comment
                                 {
                                     Creator = null,
                                     Id = Guid.NewGuid(),
