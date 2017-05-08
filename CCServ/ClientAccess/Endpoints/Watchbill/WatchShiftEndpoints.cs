@@ -238,17 +238,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void DeleteWatchShift(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchshift");
+            token.Args.AssertContainsKeys("id");
 
-            WatchShift watchShiftFromClient;
-            try
-            {
-                watchShiftFromClient = token.Args["watchshift"].CastJToken<WatchShift>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch shift.", ErrorTypes.Validation);
-            }
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+                throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -256,7 +249,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchShiftFromDB = session.Get<WatchShift>(watchShiftFromClient.Id) ??
+                        var watchShiftFromDB = session.Get<WatchShift>(id) ??
                             throw new CommandCentralException("Your watch shift's id was not valid.  " +
                             "Please consider creating the watch shift first.", ErrorTypes.Validation);
 
