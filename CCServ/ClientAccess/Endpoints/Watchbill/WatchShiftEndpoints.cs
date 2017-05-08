@@ -25,9 +25,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void LoadWatchShift(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchshiftid");
+            token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchshiftid"] as string, out Guid watchShiftId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchShiftId))
                 throw new CommandCentralException("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
