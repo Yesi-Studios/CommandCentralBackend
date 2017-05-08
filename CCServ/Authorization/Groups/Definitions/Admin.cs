@@ -52,7 +52,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.Username,
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
-                    x => x.Changes))
+                    x => x.Changes,
+                    x => x.BilletAssignment))
                     .IfInChainOfCommand()
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
@@ -95,7 +96,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.WatchQualifications,
                     x => x.GTCTrainingDate,
                     x => x.HasCompletedAWARE,
-                    x => x.ADAMSTrainingDate))
+                    x => x.ADAMSTrainingDate,
+                    x => x.BilletAssignment))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
