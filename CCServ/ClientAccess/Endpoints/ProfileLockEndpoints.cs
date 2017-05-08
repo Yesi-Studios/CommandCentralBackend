@@ -92,7 +92,7 @@ namespace CCServ.ClientAccess.Endpoints
                             profileLock.SubmitTime,
                             Owner = profileLock.Owner,
                             LockedPerson = profileLock.LockedPerson,
-                            ExpirationTime = profileLock.SubmitTime.Add(ProfileLock.MaxAge)
+                            ExpirationTime = profileLock?.SubmitTime.Add(ProfileLock.MaxAge)
                         });
                     }
                     else
@@ -116,7 +116,7 @@ namespace CCServ.ClientAccess.Endpoints
                             newLock.SubmitTime,
                             Owner = newLock.Owner,
                             LockedPerson = newLock.LockedPerson,
-                            ExpirationTime = profileLock.SubmitTime.Add(ProfileLock.MaxAge)
+                            ExpirationTime = profileLock?.SubmitTime.Add(ProfileLock.MaxAge)
                         });
                     }
 
