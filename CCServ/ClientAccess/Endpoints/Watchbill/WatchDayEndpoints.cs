@@ -262,17 +262,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void DeleteWatchDays(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchdays");
+            token.Args.AssertContainsKeys("ids");
 
-            List<WatchDay> watchDays;
-            try
+            var idsToken = token.Args["ids"].CastJToken();
+
+            if (idsToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
+                throw new CommandCentralException("Your ids parameter must be in an array.", ErrorTypes.Validation);
+
+            var ids = idsToken.Select(x =>
             {
-                watchDays = token.Args["watchdays"].CastJToken<List<WatchDay>>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse your watch days.", ErrorTypes.Validation);
-            }
+                if (!Guid.TryParse(x.ToString(), out Guid id))
+                    throw new CommandCentralException("One or more of your ids were in the wrong format.", ErrorTypes.Validation);
+
+                return id;
+            });
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -280,9 +283,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        foreach (var day in watchDays)
+                        foreach (var id in ids)
                         {
-                            var watchDayFromDB = session.Get<WatchDay>(day.Id) ??
+                            var watchDayFromDB = session.Get<WatchDay>(id) ??
                                 throw new CommandCentralException("Your watch day's id was not valid.  Please consider creating the watch day first.", ErrorTypes.Validation);
 
                             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchDayFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
