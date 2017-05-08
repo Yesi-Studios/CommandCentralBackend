@@ -24,9 +24,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void LoadWatchDay(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchdayid");
+            token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchdayid"] as string, out Guid watchDayId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchDayId))
                 throw new CommandCentralException("Your watch day id parameter's format was invalid.", ErrorTypes.Validation);
 
             //Now let's go get the watch day from the database.
