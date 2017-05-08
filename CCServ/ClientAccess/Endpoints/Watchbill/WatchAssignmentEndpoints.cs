@@ -31,7 +31,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchassignmentid"] as string, out Guid watchAssignmentId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchAssignmentId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
