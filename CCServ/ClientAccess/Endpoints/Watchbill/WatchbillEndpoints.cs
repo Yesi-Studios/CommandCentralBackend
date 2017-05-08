@@ -25,9 +25,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void LoadWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbillid");
+            token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
 
             bool doPopulation = false;
