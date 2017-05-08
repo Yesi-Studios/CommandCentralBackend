@@ -171,18 +171,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateWatchInput(MessageToken token)
+        private static void ConfirmWatchInput(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchinput");
+            token.Args.AssertContainsKeys("id");
 
-            var jToken = token.Args["watchinput"].CastJToken();
-
-            if (!Guid.TryParse(jToken.Value<string>("Id"), out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
-            bool isClientConfirmed = jToken.Value<bool>("IsConfirmed");
-            
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
@@ -209,13 +205,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 "please delete the input and then re-create it for the proper range.",
                                 ErrorTypes.Authorization);
 
-                        //The client is looking to confirm the watch input.
-                        if (!watchInputFromDB.IsConfirmed && isClientConfirmed)
-                        {
-                            watchInputFromDB.IsConfirmed = true;
-                            watchInputFromDB.DateConfirmed = token.CallTime;
-                            watchInputFromDB.ConfirmedBy = token.AuthenticationSession.Person;
-                        }
+                        if (watchInputFromDB.IsConfirmed)
+                            return;
+
+                        watchInputFromDB.IsConfirmed = true;
+                        watchInputFromDB.DateConfirmed = token.CallTime;
+                        watchInputFromDB.ConfirmedBy = token.AuthenticationSession.Person;
 
                         session.Update(watchInputFromDB);
 
@@ -243,10 +238,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void DeleteWatchInput(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchinput");
+            token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchinput"].CastJToken().Value<string>("Id"), out Guid id))
-                throw new CommandCentralException("An error occurred while trying to parse your watch input.", ErrorTypes.Validation);
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
