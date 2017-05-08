@@ -192,6 +192,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             if (!watchbill.EligibilityGroup.EligiblePersons.Any(person => person.Id == assignment.PersonAssigned.Id))
                                 throw new CommandCentralException("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation);
 
+                            var validationResults = new WatchAssignment.WatchAssignmentValidator().Validate(assignment);
+
+                            if (!validationResults.IsValid)
+                                throw new AggregateException(validationResults.Errors.Select(error => new CommandCentralException(error.ErrorMessage, ErrorTypes.Validation)));
+
                             return assignment;
                         });
 
