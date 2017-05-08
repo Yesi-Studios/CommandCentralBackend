@@ -26,9 +26,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void LoadWatchInput(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchinputid");
+            token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["watchinputid"] as string, out Guid watchInputId))
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchInputId))
                 throw new CommandCentralException("Your watch input id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
