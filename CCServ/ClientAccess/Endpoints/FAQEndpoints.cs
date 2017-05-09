@@ -20,21 +20,13 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads a single FAQ for the given Id or returns null if it does not exist.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     faqid - The Id of the FAQ we want to load.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void LoadFAQ(MessageToken token)
+        private static void LoadFAQ(MessageToken token, DTOs.FAQEndpoints.LoadFAQ dto)
         {
-            token.Args.AssertContainsKeys("faqid");
-
-            //Get the Id.
-            if (!Guid.TryParse(token.Args["faqid"] as string, out Guid faqId))
-                throw new CommandCentralException("The faqid parameter was not in the correct format.", ErrorTypes.Validation);
-
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -43,7 +35,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
 
                     //Ok, well it's a GUID.   Do we have it in the database?...
-                    var faq = session.Get<FAQ>(faqId);
+                    var faq = session.Get<FAQ>(dto.Id);
 
                     //Unlike News Items, we don't need a DTO cause we don't have any transformations to do.  We'll just hand back exactly what we loaded.
                     token.SetResult(faq);
