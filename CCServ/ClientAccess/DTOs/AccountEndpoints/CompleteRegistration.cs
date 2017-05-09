@@ -18,18 +18,21 @@ namespace CCServ.ClientAccess.DTOs.AccountEndpoints
         /// <summary>
         /// This is the password the user wants.
         /// </summary>
+        [Required]
         [Description("This is the password the user wants.")]
         public string Password { get; set; }
 
         /// <summary>
         /// This is the username the user wants.
         /// </summary>
+        [Required]
         [Description("This is the username the user wants.")]
         public string Username { get; set; }
 
         /// <summary>
         /// The id that was sent by email to the user's .mil email address.  This is how the client proves they saw the email and therefore owns the email.
         /// </summary>
+        [Required]
         [Description("The id that was sent by email to the user's .mil email address.  This is how the client proves they saw the email and therefore owns the email.")]
         public Guid AccountConfirmationId { get; set; }
 
