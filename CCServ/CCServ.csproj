@@ -132,10 +132,11 @@
     <Compile Include="ClientAccess\DTOs\Account\CompleteRegistration.cs" />
     <Compile Include="ClientAccess\DTOs\Account\ForgotUsername.cs" />
     <Compile Include="ClientAccess\DTOs\Account\Login.cs" />
+    <Compile Include="ClientAccess\DTOs\Authorization\LoadPermissionGroupsByPerson.cs" />
+    <Compile Include="ClientAccess\DTOs\Authorization\UpdatePermissionGroupsByPerson.cs" />
     <Compile Include="ClientAccess\DTOs\DTOBase.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
-    <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
-    <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\Authorization.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
     <Compile Include="Authorization\AuthorizationUtilities.cs" />
