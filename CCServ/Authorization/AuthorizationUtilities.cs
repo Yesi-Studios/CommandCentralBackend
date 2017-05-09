@@ -29,7 +29,7 @@ namespace CCServ.Authorization
 
             foreach (var groupName in groupNames)
             {
-                var group = Groups.PermissionGroup.AllPermissionGroups.FirstOrDefault(x => x.GroupName.SafeEquals(groupName));
+                var group = Groups.PermissionGroup.AllPermissionGroups.FirstOrDefault(x => x.GroupName.InsensitiveEquals(groupName));
 
                 if (group == null)
                     throw new Exception("The group name, '{0}', was not valid.".FormatS(groupName));

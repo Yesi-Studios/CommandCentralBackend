@@ -70,7 +70,7 @@ namespace CCServ.Email.Models
         /// <returns></returns>
         public List<MusterRecord> GetRecordsWithMusterStatus(string status)
         {
-            return Records.Where(x => x.MusterStatus.SafeEquals(status)).ToList();
+            return Records.Where(x => x.MusterStatus.InsensitiveEquals(status)).ToList();
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace CCServ.Email.Models
         /// <returns></returns>
         public List<MusterRecord> GetRecordsWithDutyStatus(string status)
         {
-            return Records.Where(x => x.DutyStatus.SafeEquals(status)).ToList();
+            return Records.Where(x => x.DutyStatus.InsensitiveEquals(status)).ToList();
         }
 
     }

@@ -110,7 +110,7 @@ namespace CCServ.Authorization.Groups
         /// <returns></returns>
         public ModulePart CanAccessModule(string moduleName)
         {
-            if (Modules.Any(x => x.ModuleName.SafeEquals(moduleName)))
+            if (Modules.Any(x => x.ModuleName.InsensitiveEquals(moduleName)))
                 throw new Exception("You may not declare access to a module more than once for the same permission group.");
 
             Modules.Add(new ModulePart(moduleName) { ParentPermissionGroup = this });

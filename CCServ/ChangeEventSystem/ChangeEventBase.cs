@@ -98,7 +98,7 @@ namespace CCServ.ChangeEventSystem
                         subscribers = subscribers.Where(subscriber =>
                             {
                                 //Here we're going to get the first event whose name matches this event and of those, the highest level.
-                                var subscriptionEvent = subscriber.SubscribedEvents.FirstOrDefault(y => y.ChangeEventName.SafeEquals(this.Name) &&
+                                var subscriptionEvent = subscriber.SubscribedEvents.FirstOrDefault(y => y.ChangeEventName.InsensitiveEquals(this.Name) &&
                                     (y.ChainOfCommandLevel == ChainOfCommandLevels.Command ||
                                      y.ChainOfCommandLevel == ChainOfCommandLevels.Department ||
                                      y.ChainOfCommandLevel == ChainOfCommandLevels.Division));

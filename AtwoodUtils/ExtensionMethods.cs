@@ -202,7 +202,7 @@ namespace AtwoodUtils
         /// <param name="str1"></param>
         /// <param name="str"></param>
         /// <returns></returns>
-        public static bool SafeEquals(this string str1, string str)
+        public static bool InsensitiveEquals(this string str1, string str)
         {
             return str != null && (str1.Equals(str, StringComparison.CurrentCultureIgnoreCase));
         }

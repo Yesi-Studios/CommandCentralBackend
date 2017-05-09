@@ -25,7 +25,7 @@ namespace CCServ.Authorization.Rules
             var moduleName = this.ParentPropertyGroup.ParentModule.ModuleName;
 
             //First find the person's highest level in this module.
-            var highestLevel = (ChainOfCommandLevels)authToken.Client.PermissionGroups.SelectMany(x => x.Modules).Where(x => x.ModuleName.SafeEquals(moduleName)).Max(x => x.ParentPermissionGroup.AccessLevel);
+            var highestLevel = (ChainOfCommandLevels)authToken.Client.PermissionGroups.SelectMany(x => x.Modules).Where(x => x.ModuleName.InsensitiveEquals(moduleName)).Max(x => x.ParentPermissionGroup.AccessLevel);
 
             switch (highestLevel)
             {

@@ -125,7 +125,7 @@ namespace CCServ.ClientAccess.Endpoints
                         else
                         {
                             //Here we get the group the client is trying to edit.  We know the client is allowed to edit its membership at this point.
-                            var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.SafeEquals(groupName));
+                            var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.InsensitiveEquals(groupName));
 
                             var highestPermissionLevelInGroups = resolvedPermissions.HighestLevels
                                 .Where(x => group.ChainsOfCommandMemberOf.Select(y => y.ToString()).Contains(x.Key, StringComparer.CurrentCultureIgnoreCase))
