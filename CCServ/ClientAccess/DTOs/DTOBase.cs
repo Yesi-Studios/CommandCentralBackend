@@ -74,7 +74,7 @@ namespace CCServ.ClientAccess.DTOs
             var validatorType = GetType().GetNestedTypes().FirstOrDefault(x => Utilities.IsSubclassOfRawGeneric(typeof(AbstractValidator<>), x));
 
             if (validatorType == null)
-                return null;
+                return new FluentValidation.Results.ValidationResult();
 
             dynamic validator = Activator.CreateInstance(validatorType);
 
