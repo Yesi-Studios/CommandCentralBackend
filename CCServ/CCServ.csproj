@@ -134,6 +134,10 @@
     <Compile Include="ClientAccess\DTOs\AccountEndpoints\Login.cs" />
     <Compile Include="ClientAccess\DTOs\AuthorizationEndpoints\LoadPermissionGroupsByPerson.cs" />
     <Compile Include="ClientAccess\DTOs\AuthorizationEndpoints\UpdatePermissionGroupsByPerson.cs" />
+    <Compile Include="ClientAccess\DTOs\CommentEndpoints\CreateComment.cs" />
+    <Compile Include="ClientAccess\DTOs\CommentEndpoints\DeleteComment.cs" />
+    <Compile Include="ClientAccess\DTOs\CommentEndpoints\LoadComment.cs" />
+    <Compile Include="ClientAccess\DTOs\CommentEndpoints\UpdateComment.cs" />
     <Compile Include="ClientAccess\DTOs\DTOBase.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
