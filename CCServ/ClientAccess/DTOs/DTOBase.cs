@@ -67,8 +67,10 @@ namespace CCServ.ClientAccess.DTOs
         /// <returns></returns>
         public FluentValidation.Results.ValidationResult Validate()
         {
-            var validatorType = GetType().GetNestedTypes().FirstOrDefault(x => Utilities.IsSubclassOfRawGeneric(typeof(AbstractValidator<>), x)) ??
-                throw new NotImplementedException("All DTO types must have a validator.");
+            var validatorType = GetType().GetNestedTypes().FirstOrDefault(x => Utilities.IsSubclassOfRawGeneric(typeof(AbstractValidator<>), x));
+
+            if (validatorType == null)
+                return new FluentValidation.Results.ValidationResult();
 
             dynamic validator = Activator.CreateInstance(validatorType);
 
