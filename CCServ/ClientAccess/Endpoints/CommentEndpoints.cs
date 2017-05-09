@@ -164,7 +164,5 @@ namespace CCServ.ClientAccess.Endpoints
                 }
             }
         }
-
-
     }
 }
