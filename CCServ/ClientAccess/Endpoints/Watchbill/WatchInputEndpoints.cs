@@ -77,7 +77,28 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     {
                         var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation))
-                            .WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchInputs));
+                            .WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchInputs))
+                            .Select(watchInput => new
+                            {
+                                watchInput.Comments,
+                                watchInput.ConfirmedBy,
+                                watchInput.DateConfirmed,
+                                watchInput.DateSubmitted,
+                                watchInput.Id,
+                                watchInput.InputReason,
+                                watchInput.IsConfirmed,
+                                watchInput.Person,
+                                watchInput.SubmittedBy,
+                                WatchShifts = watchInput.WatchShifts.Select(watchShift => new
+                                {
+                                    watchShift.Comments,
+                                    watchShift.Id,
+                                    watchShift.Points,
+                                    watchShift.Range,
+                                    watchShift.ShiftType,
+                                    watchShift.Title
+                                })
+                            });
 
 
                         token.SetResult(watchinputs);
