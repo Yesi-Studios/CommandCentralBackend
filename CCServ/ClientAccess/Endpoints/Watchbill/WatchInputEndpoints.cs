@@ -56,6 +56,46 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Loads all watch inputs for a given watchbill.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadWatchInputs(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchbillid");
+
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchnill's id parameter's format was invalid.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation))
+                            .WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchInputs));
+
+
+                        token.SetResult(watchinputs);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Creates multiple watch inputs.
         /// </summary>
         /// <param name="token"></param>
