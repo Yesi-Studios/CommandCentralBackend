@@ -486,7 +486,7 @@ namespace CCServ.ClientAccess.Endpoints
             double centerLat = -1, centerLong = -1, radius = -1;
 
             //If the client sent any one of the three geoquery paramters, then make sure they sent all of them.
-            if (token.Args.Keys.Any(x => x.SafeEquals("centerlat") || x.SafeEquals("centerlong") || x.SafeEquals("radius")))
+            if (token.Args.Keys.Any(x => x.InsensitiveEquals("centerlat") || x.InsensitiveEquals("centerlong") || x.InsensitiveEquals("radius")))
             {
                 if (!token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
                     throw new CommandCentralException("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation);

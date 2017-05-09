@@ -104,7 +104,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
 
             //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
+            if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.InsensitiveEquals(x.Value<string>("status")))))
             {
                 throw new CommandCentralException("One or more requested muster statuses were not valid.", ErrorTypes.Validation);
             }
@@ -142,7 +142,7 @@ namespace CCServ.ClientAccess.Endpoints
                     persons[x].CurrentMusterRecord.HasBeenSubmitted = true;
                     persons[x].CurrentMusterRecord.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
                     persons[x].CurrentMusterRecord.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterRecord.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
+                    persons[x].CurrentMusterRecord.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.InsensitiveEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
                     persons[x].CurrentMusterRecord.SubmitTime = token.CallTime;
                     persons[x].CurrentMusterRecord.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
