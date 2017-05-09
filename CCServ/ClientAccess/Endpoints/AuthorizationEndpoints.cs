@@ -34,7 +34,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadPermissionGroupsByPerson(MessageToken token, DTOs.Authorization.LoadPermissionGroupsByPerson dto)
+        private static void LoadPermissionGroupsByPerson(MessageToken token, DTOs.AuthorizationEndpoints.LoadPermissionGroupsByPerson dto)
         {
             token.AssertLoggedIn();
 
@@ -70,7 +70,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdatePermissionGroupsByPerson(MessageToken token, DTOs.Authorization.UpdatePermissionGroupsByPerson dto)
+        private static void UpdatePermissionGroupsByPerson(MessageToken token, DTOs.AuthorizationEndpoints.UpdatePermissionGroupsByPerson dto)
         {
             token.AssertLoggedIn();
 

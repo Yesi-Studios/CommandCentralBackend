@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 using FluentValidation;
 using System.ComponentModel;
 
-namespace CCServ.ClientAccess.DTOs.Account
+namespace CCServ.ClientAccess.DTOs.AccountEndpoints
 {
     /// <summary>
     /// The dto to be used by the respective endpoint.
