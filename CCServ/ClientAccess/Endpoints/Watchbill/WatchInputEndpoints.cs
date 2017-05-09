@@ -139,14 +139,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 if (!Guid.TryParse(input["InputReason"]?.Value<string>("Id"), out Guid inputReasonId))
                     throw new CommandCentralException("Your input reason id was in the wrong format.", ErrorTypes.Validation);
 
-                if (!Guid.TryParse(input["Person"]?.Value<string>("Id"), out Guid personId))
+                if (!Guid.TryParse(input["person"]?.Value<string>("Id"), out Guid personId))
                     throw new CommandCentralException("Your person id was in the wrong format.", ErrorTypes.Validation);
 
                 var watchShiftIds = new List<Guid>();
 
                 foreach (var shift in input["WatchShifts"])
                 {
-                    watchShiftIds.Add(shift.Value<Guid>("Id"));
+                    watchShiftIds.Add(Guid.Parse(shift.Value<string>("Id")));
                 }
 
                 var newInput = new
