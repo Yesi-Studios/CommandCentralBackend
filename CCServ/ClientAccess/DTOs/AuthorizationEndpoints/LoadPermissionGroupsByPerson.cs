@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace CCServ.ClientAccess.DTOs.Authorization
+namespace CCServ.ClientAccess.DTOs.AuthorizationEndpoints
 {
     /// <summary>
     /// The dto for the related endpoint.

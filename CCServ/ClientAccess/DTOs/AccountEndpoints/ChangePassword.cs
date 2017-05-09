@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using FluentValidation;
 
-namespace CCServ.ClientAccess.DTOs.Account
+namespace CCServ.ClientAccess.DTOs.AccountEndpoints
 {
     /// <summary>
     /// The dto for the related endpoint.
