@@ -550,18 +550,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// Changes a client's password by confirming the account password and assigning a new one.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void ChangePassword(MessageToken token)
+        private static void ChangePassword(MessageToken token, DTOs.Account.ChangePassword dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("oldpassword", "newpassword");
-
-            string oldPassword = token.Args["oldpassword"] as string;
-            string newPassword = token.Args["newpassword"] as string;
 
             //First let's confirm the old password is actually the client's old password.
-            var correct = PasswordHash.ValidatePassword(oldPassword, token.AuthenticationSession.Person.PasswordHash);
+            var correct = PasswordHash.ValidatePassword(dto.OldPassword, token.AuthenticationSession.Person.PasswordHash);
             if (!correct)
                 throw new CommandCentralException("Your old password was incorrect.", ErrorTypes.Authorization);
 
@@ -573,7 +570,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     var self = session.Get<Person>(token.AuthenticationSession.Person.Id);
 
-                    self.PasswordHash = PasswordHash.CreateHash(newPassword);
+                    self.PasswordHash = PasswordHash.CreateHash(dto.NewPassword);
 
                     self.AccountHistory.Add(new AccountHistoryEvent
                     {
@@ -615,24 +612,18 @@ namespace CCServ.ClientAccess.Endpoints
         /// Sends the user an email containing their username.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void ForgotUsername(MessageToken token)
+        private static void ForgotUsername(MessageToken token, DTOs.Account.ForgotUsername dto)
         {
-            token.Args.AssertContainsKeys("ssn");
-
-            string ssn = token.Args["ssn"] as string;
-
-            if (string.IsNullOrWhiteSpace(ssn))
-                throw new CommandCentralException("The ssn must not be null or empty.", ErrorTypes.Validation);
-
             //Now let's go load the user with this ssn.
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
-                    var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault() ??
+                    var person = session.QueryOver<Person>().Where(x => x.SSN == dto.SSN).SingleOrDefault() ??
                         throw new CommandCentralException("That ssn was not valid.", ErrorTypes.Validation);
 
                     if (!person.IsClaimed)
