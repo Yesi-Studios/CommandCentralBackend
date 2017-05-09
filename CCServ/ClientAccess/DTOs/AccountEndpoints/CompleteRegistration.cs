@@ -1,39 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation.Results;
-using FluentValidation;
 using Newtonsoft.Json.Linq;
+using System.ComponentModel;
+using FluentValidation;
 
-namespace CCServ.ClientAccess.DTOs.Account
+namespace CCServ.ClientAccess.DTOs.AccountEndpoints
 {
     /// <summary>
     /// The dto to be used by the respective endpoint.
     /// </summary>
-    public class Login : DTOBase
+    public class CompleteRegistration : DTOBase
     {
         /// <summary>
-        /// This is the user's password.
+        /// This is the password the user wants.
         /// </summary>
         [Required]
-        [Description("The user's password.")]
+        [Description("This is the password the user wants.")]
         public string Password { get; set; }
 
         /// <summary>
-        /// The user's username.
+        /// This is the username the user wants.
         /// </summary>
         [Required]
-        [Description("The user's username.")]
+        [Description("This is the username the user wants.")]
         public string Username { get; set; }
 
         /// <summary>
-        /// Creates a new login DTO.
+        /// The id that was sent by email to the user's .mil email address.  This is how the client proves they saw the email and therefore owns the email.
+        /// </summary>
+        [Required]
+        [Description("The id that was sent by email to the user's .mil email address.  This is how the client proves they saw the email and therefore owns the email.")]
+        public Guid AccountConfirmationId { get; set; }
+
+        /// <summary>
+        /// Creates a new dto.
         /// </summary>
         /// <param name="obj"></param>
-        public Login(JObject obj) : base(obj)
+        public CompleteRegistration(JObject obj) : base(obj)
         {
         }
 
@@ -41,7 +48,6 @@ namespace CCServ.ClientAccess.DTOs.Account
         {
             public Validator()
             {
-
                 //TODO: add real validaiton rules.
 
                 RuleFor(x => x.Password).Must(x => true)

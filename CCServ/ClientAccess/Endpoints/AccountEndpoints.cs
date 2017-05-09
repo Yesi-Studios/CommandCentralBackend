@@ -33,7 +33,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void Login(MessageToken token, DTOs.Account.Login dto)
+        private static void Login(MessageToken token, DTOs.AccountEndpoints.Login dto)
         {
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
@@ -182,7 +182,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void BeginRegistration(MessageToken token, DTOs.Account.BeginRegistration dto)
+        private static void BeginRegistration(MessageToken token, DTOs.AccountEndpoints.BeginRegistration dto)
         {
             //Let's do our work in a new session so that we don't affect the authentication information.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -295,7 +295,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void CompleteRegistration(MessageToken token, DTOs.Account.CompleteRegistration dto)
+        private static void CompleteRegistration(MessageToken token, DTOs.AccountEndpoints.CompleteRegistration dto)
         {
             //Now we're going to try to find a pending account confirmation for the Id the client gave us.  
             //If we find one, we're going to look at the time on it and make sure it is still valid.
@@ -383,7 +383,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        static void BeginPasswordReset(MessageToken token, DTOs.Account.BeginPasswordReset dto)
+        static void BeginPasswordReset(MessageToken token, DTOs.AccountEndpoints.BeginPasswordReset dto)
         {
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
@@ -476,7 +476,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        static void CompletePasswordReset(MessageToken token, DTOs.Account.CompletePasswordReset dto)
+        static void CompletePasswordReset(MessageToken token, DTOs.AccountEndpoints.CompletePasswordReset dto)
         {
             //Create the hash.
             string passwordHash = PasswordHash.CreateHash(dto.Password);
@@ -553,7 +553,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void ChangePassword(MessageToken token, DTOs.Account.ChangePassword dto)
+        private static void ChangePassword(MessageToken token, DTOs.AccountEndpoints.ChangePassword dto)
         {
             token.AssertLoggedIn();
 
@@ -615,7 +615,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void ForgotUsername(MessageToken token, DTOs.Account.ForgotUsername dto)
+        private static void ForgotUsername(MessageToken token, DTOs.AccountEndpoints.ForgotUsername dto)
         {
             //Now let's go load the user with this ssn.
             using (var session = NHibernateHelper.CreateStatefulSession())

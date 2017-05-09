@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using FluentValidation;
 
-namespace CCServ.ClientAccess.DTOs.Authorization
+namespace CCServ.ClientAccess.DTOs.AuthorizationEndpoints
 {
     /// <summary>
     /// DTO for the endpoint.
