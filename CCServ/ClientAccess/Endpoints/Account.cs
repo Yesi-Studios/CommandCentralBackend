@@ -378,12 +378,9 @@ namespace CCServ.ClientAccess.Endpoints
         /// <para />
         /// In order to start a password reset, we're going to use the given email address and ssn to load the person's is claimed field.  If is claimed is false, 
         /// then the account hasn't been claimed yet and you can't reset the password.  
-        /// <para />
-        /// Client Parameters: <para />
-        ///     email : The email address of the account we want to reset <para/>
-        ///     ssn : The SSN of the account we want to reset.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         static void BeginPasswordReset(MessageToken token, DTOs.Account.BeginPasswordReset dto)
@@ -476,19 +473,13 @@ namespace CCServ.ClientAccess.Endpoints
         ///     password : The password the client wants the account to have.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        static void CompletePasswordReset(MessageToken token)
+        static void CompletePasswordReset(MessageToken token, DTOs.Account.CompletePasswordReset dto)
         {
-            //First, let's make sure the args are present.
-            token.Args.AssertContainsKeys("passwordresetid", "password");
-
-            string password = token.Args["password"] as string;
-            if (!Guid.TryParse(token.Args["passwordresetid"] as string, out Guid passwordResetId))
-                throw new CommandCentralException("The password reset ID you sent was not in the right format.", ErrorTypes.Validation);
-            
             //Create the hash.
-            string passwordHash = PasswordHash.CreateHash(password);
+            string passwordHash = PasswordHash.CreateHash(dto.Password);
 
             //Ok, we're going to use the password reset Id to load the pending password reset.
             //If we get one, we'll make sure it's still valid.
@@ -500,7 +491,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var pendingPasswordReset = session.Get<PendingPasswordReset>(passwordResetId) ??
+                    var pendingPasswordReset = session.Get<PendingPasswordReset>(dto.PasswordResetId) ??
                         throw new CommandCentralException("That password reset Id does not correspond to an actual password reset event.  " +
                         "Try initiating a password reset first.", ErrorTypes.Validation);
 
