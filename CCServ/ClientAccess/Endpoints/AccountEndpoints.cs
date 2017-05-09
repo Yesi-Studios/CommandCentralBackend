@@ -11,7 +11,7 @@ using AtwoodUtils;
 
 namespace CCServ.ClientAccess.Endpoints
 {
-    static class Account
+    static class AccountEndpoints
     {
         #region Login/Logout
 

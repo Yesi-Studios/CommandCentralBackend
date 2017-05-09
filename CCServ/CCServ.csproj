@@ -174,7 +174,7 @@
     <Compile Include="ClientAccess\APIKey.cs" />
     <Compile Include="ClientAccess\AuthenticationSession.cs" />
     <Compile Include="ClientAccess\EndpointMethodAttribute.cs" />
-    <Compile Include="ClientAccess\Endpoints\Account.cs" />
+    <Compile Include="ClientAccess\Endpoints\AccountEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\CommentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\FAQEndpoints.cs" />
