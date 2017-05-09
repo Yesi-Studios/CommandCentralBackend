@@ -34,7 +34,7 @@ namespace CCServ.ClientAccess
         /// <summary>
         /// The Arguments the client sent to the API.  This is the RawJSON transformed into a dictionary.  This is not mapped to the database.
         /// </summary>
-        public virtual Dictionary<string, object> Args { get; set; }
+        public virtual DTOs.DTOBase DTO { get; set; }
 
         /// <summary>
         /// The endpoint that was called by the client.

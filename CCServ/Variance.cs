@@ -81,7 +81,7 @@ namespace CCServ
                     var elementType = Utilities.GetBaseTypeOfEnumerable(variance.NewValue as IEnumerable);
 
                     //Ok, now we have the type of the element.  Let's see if it has a property called "Id".  That will help.
-                    var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.SafeEquals("id"));
+                    var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.InsensitiveEquals("id"));
 
                     var newList = variance.NewValue as IEnumerable;
                     var oldList = variance.OldValue as IEnumerable;
@@ -255,7 +255,7 @@ namespace CCServ
                         else //In this case, neither value is null.
                         {
                             //We need to know if our object has an Id property.
-                            var idProperty = variance.NewValue.GetType().GetProperties().FirstOrDefault(x => x.Name.SafeEquals("id"));
+                            var idProperty = variance.NewValue.GetType().GetProperties().FirstOrDefault(x => x.Name.InsensitiveEquals("id"));
 
                             //Yes! We have an Id property.
                             if (idProperty != null)

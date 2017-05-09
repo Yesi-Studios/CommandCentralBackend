@@ -125,6 +125,12 @@
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\BeginPasswordReset.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\BeginRegistration.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\CompleteRegistration.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\Login.cs" />
+    <Compile Include="ClientAccess\DTOs\DTOBase.cs" />
+    <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\APIKeyEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
@@ -414,6 +420,7 @@
   <ItemGroup>
     <Content Include="Email\Templates\UpcomingWatch_HTML.html" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -51,6 +51,37 @@ namespace AtwoodUtils
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
+        /// <summary>
+        /// Determines if a type is a subclass of another type, and allows for generic types.
+        /// </summary>
+        /// <param name="generic"></param>
+        /// <param name="toCheck"></param>
+        /// <returns></returns>
+        public static bool IsSubclassOfRawGeneric(Type generic, Type toCheck)
+        {
+            while (toCheck != null && toCheck != typeof(object))
+            {
+                var cur = toCheck.IsGenericType ? toCheck.GetGenericTypeDefinition() : toCheck;
+                if (generic == cur)
+                {
+                    return true;
+                }
+                toCheck = toCheck.BaseType;
+            }
+            return false;
+        }
+
+
+        /// <summary>
+        /// Gets the default value for a given type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static object GetDefault(Type type)
+        {
+            return type.IsValueType ? Activator.CreateInstance(type) : null;
+        }
+
         public static string GenerateSSN(string delimiter = "")
         {
             int iThree = GetRandomNumber(132, 921);
@@ -239,7 +270,7 @@ namespace AtwoodUtils
                 throw new Exception("How did you get here, cotton eye joe?");
             }
 
-            var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.SafeEquals(keyPropertyName));
+            var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.InsensitiveEquals(keyPropertyName));
             HashSet<object> foundIds = new HashSet<object>();
 
             foreach (var leftValue in left)

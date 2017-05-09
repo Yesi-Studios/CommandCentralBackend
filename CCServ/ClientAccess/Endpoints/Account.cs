@@ -28,35 +28,27 @@ namespace CCServ.ClientAccess.Endpoints
         /// If the username/password combo is good, we create a new session, insert it into the database and add it to the cache.
         /// <para />
         /// Finally, we return the session id to be used as the authentication token for further requests along with some other information.
-        /// <para/>
-        /// Client Parameters: <para />
-        ///     Username - The username of the account for which to attempt to login as. <para />
-        ///     Password - The plain text password related to the same account as the username.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void Login(MessageToken token)
+        private static void Login(MessageToken token, DTOs.Account.Login dto)
         {
-            token.Args.AssertContainsKeys("username", "password");
-
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
-                        string username = token.Args["username"] as string;
-                        string password = token.Args["password"] as string;
-
                         //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
                         var person = session.QueryOver<Person>()
-                            .Where(x => x.Username == username)
+                            .Where(x => x.Username == dto.Username)
                             .SingleOrDefault<Person>() ??
                             throw new CommandCentralException("Either the username or password is wrong.", ErrorTypes.Validation);
 
-                        if (!PasswordHash.ValidatePassword(password, person.PasswordHash))
+                        if (!PasswordHash.ValidatePassword(dto.Password, person.PasswordHash))
                         {
                             //A login to the client's account failed.  We need to send an email.
                             if (!person.EmailAddresses.Any())
@@ -185,25 +177,13 @@ namespace CCServ.ClientAccess.Endpoints
         /// If the account doesn't have an email address associated to it yet, throw an error.
         /// <para /> 
         /// If the account is already claimed, then trying to start the registration process for this account looks pretty bad and we send an email to a bunch of people to inform them that this happened.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     SSN - The ssn that belongs to the account for which the client wants to start the registration process.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void BeginRegistration(MessageToken token)
+        private static void BeginRegistration(MessageToken token, DTOs.Account.BeginRegistration dto)
         {
-
-            token.Args.AssertContainsKeys("continuelink", "ssn");
-
-            string ssn = token.Args["ssn"] as string;
-            string continueLink = token.Args["continueLink"] as string;
-
-            //Let's just do some basic validation and make sure it's a real URI.
-            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                throw new CommandCentralException("The continue link you sent was not a valid URI.", ErrorTypes.Validation);
-
             //Let's do our work in a new session so that we don't affect the authentication information.
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -213,7 +193,7 @@ namespace CCServ.ClientAccess.Endpoints
                     //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
                     //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
                     var person = session.QueryOver<Person>()
-                        .Where(x => x.SSN == ssn)
+                        .Where(x => x.SSN == dto.SSN)
                         .SingleOrDefault<Person>() ??
                         throw new CommandCentralException("That ssn belongs to no profile.", ErrorTypes.Validation);
 
@@ -283,7 +263,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var model = new Email.Models.AccountConfirmationEmailModel
                     {
                         ConfirmationId = pendingAccountConfirmation.Id,
-                        ConfirmEmailAddressLink = continueLink,
+                        ConfirmEmailAddressLink = dto.ContinueLink,
                         FriendlyName = person.ToString().Trim()
                     };
 
@@ -310,24 +290,13 @@ namespace CCServ.ClientAccess.Endpoints
         /// Completes the registration process by assigning a username and password to a user's account, thus allowing the user to claim the account.  If the account confirmation id isn't valid,
         /// <para />
         /// an error is thrown.  The could happen if begin registration hasn't happened yet.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     Username - The username the client wants to assign to the account. <para />
-        ///     Password - The password the client wants to assign to the account. <para />
-        ///     AccountConfirmationId - The unique Id that was sent to the user's email address by the begin registration endpoint.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void CompleteRegistration(MessageToken token)
+        private static void CompleteRegistration(MessageToken token, DTOs.Account.CompleteRegistration dto)
         {
-            token.Args.AssertContainsKeys("username", "password", "accountconfirmationid");
-
-            string username = token.Args["username"] as string;
-            string password = token.Args["password"] as string;
-            if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out Guid accountConfirmationId))
-                throw new CommandCentralException("The account confirmation ID you sent was not in the right format.", ErrorTypes.Validation);
-
             //Now we're going to try to find a pending account confirmation for the Id the client gave us.  
             //If we find one, we're going to look at the time on it and make sure it is still valid.
             //If it is, then we'll look up the person and make sure the person hasn't already been claimed. (that shouldn't be possible given the order of events but we'll throw an error anyways)
@@ -340,7 +309,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(accountConfirmationId) ??
+                    var pendingAccountConfirmation = session.Get<PendingAccountConfirmation>(dto.AccountConfirmationId) ??
                         throw new CommandCentralException("For the account confirmation Id that you provided, no account registration process has been started.", ErrorTypes.Validation);
 
                     //Is the record valid?
@@ -360,8 +329,8 @@ namespace CCServ.ClientAccess.Endpoints
                         throw new Exception("During complete registration, a valid pending account registration object was created for an already claimed account.");
 
                     //Alright, we're ready to update the person then!
-                    pendingAccountConfirmation.Person.Username = username;
-                    pendingAccountConfirmation.Person.PasswordHash = PasswordHash.CreateHash(password);
+                    pendingAccountConfirmation.Person.Username = dto.Username;
+                    pendingAccountConfirmation.Person.PasswordHash = PasswordHash.CreateHash(dto.Password);
                     pendingAccountConfirmation.Person.IsClaimed = true;
 
                     //Also put the account history object on the person.
@@ -416,36 +385,9 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "BeginPasswordReset", AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_BeginPasswordReset(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        static void BeginPasswordReset(MessageToken token, DTOs.Account.BeginPasswordReset dto)
         {
-            //First, let's make sure the args are present.
-            token.Args.AssertContainsKeys("email", "ssn", "continuelink");
-
-            string email = token.Args["email"] as string;
-            string ssn = token.Args["ssn"] as string;
-
-            //Let's get the continue link
-            var continueLink = token.Args["continuelink"] as string;
-
-            //Let's just do some basic validation and make sure it's a real URI.
-            if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
-                throw new CommandCentralException("The continue link you sent was not a valid URI.", ErrorTypes.Validation);
-
-            //Let's validate the email.  
-            System.Net.Mail.MailAddress mailAddress = null;
-            try
-            {
-                mailAddress = new System.Net.Mail.MailAddress(email);
-            }
-            catch
-            {
-                throw new CommandCentralException("The mail parameter you sent was not valid.", ErrorTypes.Validation);
-            }
-
-            if (mailAddress.Host != "mail.mil")
-                throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation);
-
             //Now we need to go load the profile that matches this email address/ssn combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
@@ -458,10 +400,10 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Find the user who has the given email address and has the given ssn.
                     var person = session.QueryOver<Person>()
-                        .Where(x => x.SSN == ssn)
+                        .Where(x => x.SSN == dto.SSN)
                         .Fetch(x => x.EmailAddresses).Eager
                         .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
-                        .Where(x => x.Address == email)
+                        .Where(x => x.Address == dto.Email)
                         .TransformUsing(Transformers.DistinctRootEntity)
                         .SingleOrDefault<Person>() ??
                         throw new CommandCentralException("That ssn/email address combination belongs to no profile.", ErrorTypes.Authentication);
@@ -502,7 +444,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         FriendlyName = person.ToString(),
                         PasswordResetId = pendingPasswordReset.Id,
-                        PasswordResetLink = continueLink
+                        PasswordResetLink = dto.ContinueLink
                     };
 
                     var dodEmailAddress = person.EmailAddresses.First(x => x.IsDodEmailAddress);
@@ -535,8 +477,8 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(EndpointName = "CompletePasswordReset", AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void EndpointMethod_CompletePasswordReset(MessageToken token)
+        [EndpointMethod(AllowArgumentLogging = false, AllowResponseLogging = true, RequiresAuthentication = false)]
+        static void CompletePasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
             token.Args.AssertContainsKeys("passwordresetid", "password");
