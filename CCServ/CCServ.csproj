@@ -127,8 +127,10 @@
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
     <Compile Include="ClientAccess\DTOs\Account\BeginPasswordReset.cs" />
     <Compile Include="ClientAccess\DTOs\Account\BeginRegistration.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\ChangePassword.cs" />
     <Compile Include="ClientAccess\DTOs\Account\CompletePasswordReset.cs" />
     <Compile Include="ClientAccess\DTOs\Account\CompleteRegistration.cs" />
+    <Compile Include="ClientAccess\DTOs\Account\ForgotUsername.cs" />
     <Compile Include="ClientAccess\DTOs\Account\Login.cs" />
     <Compile Include="ClientAccess\DTOs\DTOBase.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
