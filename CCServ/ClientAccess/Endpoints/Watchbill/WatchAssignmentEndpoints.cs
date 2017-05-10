@@ -259,8 +259,15 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         }
 
                         //After all this freaking validation, it looks like we're ready to do the actual swap.
-                        ass1.WatchShift.WatchAssignment = ass2;
-                        ass2.WatchShift.WatchAssignment = ass1;
+
+                        var shift1 = ass1.WatchShift;
+                        var shift2 = ass2.WatchShift;
+
+                        ass1.WatchShift = shift2;
+                        ass2.WatchShift = shift1;
+
+                        shift1.WatchAssignment = ass2;
+                        shift2.WatchAssignment = ass1;
 
                         //Now let's add some comments.
                         ass1.WatchShift.Comments.Add(new Comment
@@ -277,7 +284,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(ass1.PersonAssigned, token.AuthenticationSession.Person, ass2.PersonAssigned)
                         });
 
-                        session.Update(ass1.WatchShift.WatchDays.First().Watchbill);
+                        session.Update(ass1.WatchShift);
+                        session.Update(ass2.WatchShift);
 
                         transaction.Commit();
                     }
@@ -348,9 +356,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (!isCommandCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);
 
-                        if ((watchbill.CurrentState != WatchbillStatuses.ClosedForInputs ||
-                            watchbill.CurrentState != WatchbillStatuses.Published ||
-                            watchbill.CurrentState != WatchbillStatuses.UnderReview))
+                        if (watchbill.CurrentState != WatchbillStatuses.ClosedForInputs &&
+                            watchbill.CurrentState != WatchbillStatuses.Published &&
+                            watchbill.CurrentState != WatchbillStatuses.UnderReview)
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
 
                         foreach (var assignment in watchAssignmentsFromClient)
