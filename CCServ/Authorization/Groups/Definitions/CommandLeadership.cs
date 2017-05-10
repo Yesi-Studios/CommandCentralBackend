@@ -90,7 +90,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.GTCTrainingDate,
                     x => x.HasCompletedAWARE,
                     x => x.ADAMSTrainingDate,
-                    x => x.BilletAssignment))
+                    x => x.BilletAssignment,
+                    x => x.DoDId))
                     .IfInChainOfCommand();
 
             CanAccessModule("Muster");
