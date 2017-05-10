@@ -133,6 +133,166 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Swaps a number of watch assignments.  Watch assignments may only be swapped if there are two.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void SwapWatchAssignments(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("id1", "id2");
+
+            if (!Guid.TryParse(token.Args["id1"] as string, out Guid id1) ||
+                !Guid.TryParse(token.Args["id2"] as string, out Guid id2))
+            {
+                throw new CommandCentralException("One or more of your ids were in the wrong format.", ErrorTypes.Validation);
+            }
+
+            if (id1 == id2)
+                throw new CommandCentralException("Both ids may not be equal.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var ass1 = session.Get<WatchAssignment>(id1) ??
+                            throw new CommandCentralException("Your first watch assignment id was not valid.", ErrorTypes.Validation);
+
+                        var ass2 = session.Get<WatchAssignment>(id2) ??
+                            throw new CommandCentralException("Your second watch assignment id was not valid.", ErrorTypes.Validation);
+
+                        if (ass1.WatchShift.WatchAssignment == null || ass1.WatchShift.WatchAssignment == null)
+                            throw new CommandCentralException("Both given watch assignments must have shifts which have already been assigned a watch assignment.", ErrorTypes.Validation);
+
+                        if (ass1.CurrentState == WatchAssignmentStates.Completed || ass1.CurrentState == WatchAssignmentStates.Excused || ass1.CurrentState == WatchAssignmentStates.Missed
+                            || ass2.CurrentState == WatchAssignmentStates.Completed || ass2.CurrentState == WatchAssignmentStates.Excused || ass2.CurrentState == WatchAssignmentStates.Missed)
+                            throw new CommandCentralException("You may not swap assignments if one of the assignments has been completed, excused, or missed.", ErrorTypes.Validation);
+
+                        if (ass1.WatchShift.WatchDays.First().Watchbill.Id != ass2.WatchShift.WatchDays.First().Watchbill.Id)
+                            throw new CommandCentralException("You may not swap assignments if those assignments are from different watchbills.", ErrorTypes.Validation);
+
+                        if (ass1.PersonAssigned.Id == ass2.PersonAssigned.Id)
+                            throw new CommandCentralException("You may not swap shifts if both are assigned to the same person.", ErrorTypes.Validation);
+
+                        //Now we're going to do some permissions checking to ensure that the client is in the chains of command of both persons.
+                        var ass1ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass1.PersonAssigned);
+                        var ass2ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass2.PersonAssigned);
+
+                        var ass1HighestLevel = ass1ResolvedPermissions.HighestLevels[ass1.WatchShift.WatchDays.First().Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                        var ass2HighestLevel = ass2ResolvedPermissions.HighestLevels[ass2.WatchShift.WatchDays.First().Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+
+                        switch (ass1HighestLevel)
+                        {
+                            case ChainOfCommandLevels.Command:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameCommandAs(ass1.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your command.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Department:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(ass1.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your department.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Division:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameDivisionAs(ass1.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your division.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.None:
+                            case ChainOfCommandLevels.Self:
+                                {
+                                    throw new CommandCentralException("You lack sufficient permissions to swap watch assignments.", ErrorTypes.Authorization);
+                                }
+                            default:
+                                {
+                                    throw new NotImplementedException("In the highest level chain of command switch in /SwapWatchAssignments (ass1).");
+                                }
+                        }
+
+                        switch (ass2HighestLevel)
+                        {
+                            case ChainOfCommandLevels.Command:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameCommandAs(ass2.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your command.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Department:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(ass2.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your department.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Division:
+                                {
+                                    if (!token.AuthenticationSession.Person.IsInSameDivisionAs(ass2.PersonAssigned))
+                                    {
+                                        throw new CommandCentralException("You may not swap watch assignments for a person not in your division.", ErrorTypes.Authorization);
+                                    }
+                                    break;
+                                }
+                            case ChainOfCommandLevels.None:
+                            case ChainOfCommandLevels.Self:
+                                {
+                                    throw new CommandCentralException("You lack sufficient permissions to swap watch assignments.", ErrorTypes.Authorization);
+                                }
+                            default:
+                                {
+                                    throw new NotImplementedException("In the highest level chain of command switch in /SwapWatchAssignments (ass2).");
+                                }
+                        }
+
+                        //After all this freaking validation, it looks like we're ready to do the actual swap.
+                        ass1.WatchShift.WatchAssignment = ass2;
+                        ass2.WatchShift.WatchAssignment = ass1;
+
+                        //Now let's add some comments.
+                        ass1.WatchShift.Comments.Add(new Comment
+                        {
+                            Creator = null,
+                            Id = Guid.NewGuid(),
+                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(ass2.PersonAssigned, token.AuthenticationSession.Person, ass1.PersonAssigned)
+                        });
+
+                        ass2.WatchShift.Comments.Add(new Comment
+                        {
+                            Creator = null,
+                            Id = Guid.NewGuid(),
+                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(ass1.PersonAssigned, token.AuthenticationSession.Person, ass2.PersonAssigned)
+                        });
+
+                        session.Update(ass1.WatchShift.WatchDays.First().Watchbill);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Inserts a number of watch assignments.
         /// </summary>
         /// <param name="token"></param>
@@ -161,10 +321,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                 var watchAss = new
                 {
-                    AssignedBy = token.AuthenticationSession.Person,
-                    CurrentState = WatchAssignmentStates.Assigned,
-                    DateAssigned = token.CallTime,
-                    Id = Guid.NewGuid(),
                     PersonAssignedId = personAssignedId,
                     WatchShiftId = watchShitId
                 };
@@ -185,171 +341,84 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        var watchAssignmentsToInsert = watchAssignmentsFromClient.Select(x =>
-                        {
-                            var assignment = new WatchAssignment
-                            {
-                                AssignedBy = x.AssignedBy,
-                                CurrentState = x.CurrentState,
-                                DateAssigned = x.DateAssigned,
-                                Id = x.Id
-                            };
-
-                            assignment.PersonAssigned = session.Get<Person>(x.PersonAssignedId) ??
-                                throw new CommandCentralException("Your person assigned id was not valid.", ErrorTypes.Validation);
-
-                            assignment.WatchShift = session.Get<WatchShift>(x.WatchShiftId) ??
-                                throw new CommandCentralException("Your watch shift id was not valid.", ErrorTypes.Validation);
-
-                            if (!watchbill.EligibilityGroup.EligiblePersons.Any(person => person.Id == assignment.PersonAssigned.Id))
-                                throw new CommandCentralException("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation);
-
-                            var validationResults = new WatchAssignment.WatchAssignmentValidator().Validate(assignment);
-
-                            if (!validationResults.IsValid)
-                                throw new AggregateException(validationResults.Errors.Select(error => new CommandCentralException(error.ErrorMessage, ErrorTypes.Validation)));
-
-                            return assignment;
-                        });
-
                         bool isCommandCoordinator = token.AuthenticationSession.Person.PermissionGroups
                                 .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
                                     && x.AccessLevel == ChainOfCommandLevels.Command);
 
-                        //Now, if the watchbill is in the closed for inputs, published, or under review, and the client is a coordinator, then we can insert all of the assignments.
-                        if ((watchbill.CurrentState == WatchbillStatuses.ClosedForInputs ||
-                            watchbill.CurrentState == WatchbillStatuses.Published ||
-                            watchbill.CurrentState == WatchbillStatuses.UnderReview) && isCommandCoordinator)
+                        if (!isCommandCoordinator)
+                            throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);
+
+                        if ((watchbill.CurrentState != WatchbillStatuses.ClosedForInputs ||
+                            watchbill.CurrentState != WatchbillStatuses.Published ||
+                            watchbill.CurrentState != WatchbillStatuses.UnderReview))
+                            throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
+
+                        foreach (var assignment in watchAssignmentsFromClient)
                         {
 
-                            foreach (var assignment in watchAssignmentsToInsert)
+                            var personAssigned = session.Get<Person>(assignment.PersonAssignedId) ??
+                                throw new CommandCentralException("Your person assigned id was not valid.", ErrorTypes.Validation);
+
+                            var watchShift = session.Get<WatchShift>(assignment.WatchShiftId) ??
+                                throw new CommandCentralException("Your watch shift id was not valid.", ErrorTypes.Validation);
+
+                            var assignmentToInsert = new WatchAssignment
                             {
-                                Comment comment;
+                                AssignedBy = token.AuthenticationSession.Person,
+                                CurrentState = WatchAssignmentStates.Assigned,
+                                DateAssigned = token.CallTime,
+                                Id = Guid.NewGuid(),
+                                PersonAssigned = personAssigned,
+                                WatchShift = watchShift
+                            };
 
-                                //In this case, a new watch assignment is being created for a shift that has never had an assignment before.
-                                if (assignment.WatchShift.WatchAssignment == null)
-                                {
-                                    comment = new Comment
-                                    {
-                                        Creator = null,
-                                        Id = Guid.NewGuid(),
-                                        Text = "{0} was assigned to this shift by {1}.".FormatS(assignment.PersonAssigned, token.AuthenticationSession.Person),
-                                        Time = token.CallTime
-                                    };
-                                }
-                                //In this case, a watch change is occurring.
-                                else if (assignment.WatchShift.WatchAssignment.Id != assignment.Id)
-                                {
-                                    comment = new Comment
-                                    {
-                                        Creator = null,
-                                        Id = Guid.NewGuid(),
-                                        Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(assignment.PersonAssigned, token.AuthenticationSession.Person, assignment.WatchShift.WatchAssignment.PersonAssigned),
-                                        Time = token.CallTime
-                                    };
-                                }
-                                //Who the fuck knows about this one.
-                                else
-                                {
-                                    throw new NotImplementedException("Fell to default case in watch assignment creation.");
-                                }
+                            if (!watchbill.EligibilityGroup.EligiblePersons.Any(person => person.Id == assignmentToInsert.PersonAssigned.Id))
+                                throw new CommandCentralException("You may not add this person to shift in this watchbill because they are not eligible for it.", ErrorTypes.Validation);
 
+                            var validationResults = new WatchAssignment.WatchAssignmentValidator().Validate(assignmentToInsert);
 
-                                assignment.WatchShift.WatchAssignment = assignment;
-                                assignment.WatchShift.Comments.Add(comment);
-                            }
-                        }
-                        else if (!isCommandCoordinator && watchbill.CurrentState == WatchbillStatuses.UnderReview)
-                        {
-                            //We have to make sure that the watch assignments were submitted in a pair, and that the business rules about those are kept.  They're complicated and make my head hurt.
-                            if (watchAssignmentsToInsert.Count() != 2)
+                            if (!validationResults.IsValid)
+                                throw new AggregateException(validationResults.Errors.Select(error => new CommandCentralException(error.ErrorMessage, ErrorTypes.Validation)));
+
+                            //Now we're going to actually add/insert the watch assignment.
+                            Comment comment;
+
+                            //In this case, a new watch assignment is being created for a shift that has never had an assignment before.
+                            if (assignmentToInsert.WatchShift.WatchAssignment == null)
                             {
-                                throw new CommandCentralException("You may not swap watches unless your watches are submitted in pairs.", ErrorTypes.Validation);
-                            }
-
-                            //Make sure they actually swap each other.
-                            if (watchAssignmentsToInsert.First().PersonAssigned.Id != watchAssignmentsToInsert.Last().PersonAssigned.Id ||
-                                watchAssignmentsToInsert.Last().PersonAssigned.Id != watchAssignmentsToInsert.First().PersonAssigned.Id)
-                            {
-                                throw new CommandCentralException("You may not submit new watch assignments unless the previously assigned people for each shift are the other assignment's person.", ErrorTypes.Validation);
-                            }
-
-                            //And they're not the same shift.  That would be weird.
-                            if (watchAssignmentsToInsert.First().WatchShift.Id == watchAssignmentsToInsert.Last().WatchShift.Id)
-                            {
-                                throw new CommandCentralException("The watch shifts may not be the same during a watch swap.", ErrorTypes.Validation);
-                            }
-
-                            //Ok, now let's start iterating to check the permissions.  If everything is good, we'll update the watches after this loop.
-                            foreach (var assignment in watchAssignmentsToInsert)
-                            {
-                                //If we're here, we know that the person is not a command coordinator.
-                                var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
-
-                                var highestLevel = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
-
-                                switch (highestLevel)
-                                {
-                                    case ChainOfCommandLevels.Command:
-                                        {
-                                            throw new Exception("We managed to get to the command switch even though that should've been handled by the case above us.");
-                                        }
-                                    case ChainOfCommandLevels.Department:
-                                        {
-                                            if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(assignment.PersonAssigned))
-                                            {
-                                                throw new CommandCentralException("You may not add watch assignments for a person not in your department.", ErrorTypes.Authorization);
-                                            }
-                                            break;
-                                        }
-                                    case ChainOfCommandLevels.Division:
-                                        {
-                                            if (!token.AuthenticationSession.Person.IsInSameDivisionAs(assignment.PersonAssigned))
-                                            {
-                                                throw new CommandCentralException("You may not add watch assignments for a person not in your division.", ErrorTypes.Authorization);
-                                            }
-                                            break;
-                                        }
-                                    case ChainOfCommandLevels.None:
-                                    case ChainOfCommandLevels.Self:
-                                        {
-                                            throw new CommandCentralException("You lack sufficient permissions to add watch assignments.", ErrorTypes.Authorization);
-                                        }
-                                    default:
-                                        {
-                                            throw new NotImplementedException("In the highest level chain of command switch in /CreateAssignments.");
-                                        }
-                                }
-
-                                watchAssignmentsToInsert.First().WatchShift.WatchAssignment = watchAssignmentsToInsert.Last();
-                                watchAssignmentsToInsert.Last().WatchShift.WatchAssignment = watchAssignmentsToInsert.First();
-
-                                watchAssignmentsToInsert.First().WatchShift.Comments.Add(new Comment
+                                comment = new Comment
                                 {
                                     Creator = null,
                                     Id = Guid.NewGuid(),
-                                    Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(watchAssignmentsToInsert.Last().PersonAssigned, token.AuthenticationSession.Person, watchAssignmentsToInsert.First().PersonAssigned),
+                                    Text = "{0} was assigned to this shift by {1}.".FormatS(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person),
                                     Time = token.CallTime
-                                });
-
-                                watchAssignmentsToInsert.Last().WatchShift.Comments.Add(new Comment
+                                };
+                            }
+                            //In this case, a watch change is occurring.
+                            else if (assignmentToInsert.WatchShift.WatchAssignment.Id != assignmentToInsert.Id)
+                            {
+                                comment = new Comment
                                 {
                                     Creator = null,
                                     Id = Guid.NewGuid(),
-                                    Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(watchAssignmentsToInsert.First().PersonAssigned, token.AuthenticationSession.Person, watchAssignmentsToInsert.Last().PersonAssigned),
+                                    Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift."
+                                        .FormatS(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person, assignmentToInsert.WatchShift.WatchAssignment.PersonAssigned),
                                     Time = token.CallTime
-                                });
+                                };
                             }
-                        }
-                        else
-                        {
-                            throw new CommandCentralException("You may not add watch assignments to a watchbill in this state with your permissions.", ErrorTypes.Authorization);
+                            //Who the fuck knows about this one.
+                            else
+                            {
+                                throw new NotImplementedException("Fell to default case in watch assignment creation.");
+                            }
+
+
+                            assignmentToInsert.WatchShift.WatchAssignment = assignmentToInsert;
+                            assignmentToInsert.WatchShift.Comments.Add(comment);
+
                         }
 
-                        //Well if we got down here, some change occurred!  Let's update the watchbill.
                         session.Update(watchbill);
-
-                        token.SetResult(watchAssignmentsToInsert);
 
                         transaction.Commit();
                     }
