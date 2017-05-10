@@ -310,7 +310,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         {
             token.AssertLoggedIn();
 
-            //Ok, now we need to find the person the client sent us and try to parse it into a person.
             token.Args.AssertContainsKeys("watchassignments", "watchbillid");
 
             var watchAssToken = token.Args["watchassignments"].CastJToken();
