@@ -9,7 +9,7 @@ namespace CCServ.ClientAccess.Endpoints
     /// <summary>
     /// Contains the feedback endpoints.
     /// </summary>
-    static class Feedback
+    static class FeedbackEndpoints
     {
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
@@ -17,27 +17,17 @@ namespace CCServ.ClientAccess.Endpoints
         /// Receives a feedback from the client and then emails it to the developers.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowResponseLogging = true, AllowArgumentLogging = true, RequiresAuthentication = true)]
-        private static void SubmitFeedback(MessageToken token)
+        private static void SubmitFeedback(MessageToken token, DTOs.FeedbackEndpoints.SubmitFeedback dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("title", "body");
-
-            string title = token.Args["title"] as string;
-
-            if (string.IsNullOrWhiteSpace(title) || title.Length > 50)
-                throw new CommandCentralException("The title of a feedback must not be blank and its title must not be longer than 50 characters.", ErrorTypes.Validation);
-
-            string body = token.Args["body"] as string;
-
-            if (string.IsNullOrWhiteSpace(body) || body.Length > 1000)
-                throw new CommandCentralException("Your 'body' parameter must not be empty or greater than 1000 characters.", ErrorTypes.Validation);
 
             var model = new Email.Models.FeedbackEmailModel
             {
-                Body = body,
-                Title = title,
+                Body = dto.Body,
+                Title = dto.Title,
                 FriendlyName = token.AuthenticationSession.Person.ToString()
             };
 
