@@ -68,11 +68,19 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         //Now we need to add or remove all the people.
                         //This method will cause a pretty big batch update to occur on the database but that's ok.
+                        //We also don't allow people whose duty status is set to loss.  We don't want to fail though; instead,
+                        //We're just going to send a list back to the client of all those people we failed to add.
+                        List<Entities.Person> failures = new List<Entities.Person>();
                         groupFromDB.EligiblePersons.Clear();
                         foreach (var person in persons)
                         {
-                            groupFromDB.EligiblePersons.Add(person);
+                            if (person.DutyStatus == Entities.ReferenceLists.DutyStatuses.Loss)
+                                failures.Add(person);
+                            else
+                                groupFromDB.EligiblePersons.Add(person);
                         }
+
+                        token.SetResult(new { Failures = failures });
 
                         transaction.Commit();
                     }
