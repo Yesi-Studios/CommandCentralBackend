@@ -142,6 +142,7 @@
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\CreateOrUpdateFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\DeleteFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\LoadFAQ.cs" />
+    <Compile Include="ClientAccess\DTOs\FeedbackEndpoints\SubmitFeedback.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
@@ -175,7 +176,7 @@
     <Compile Include="ClientAccess\Endpoints\CommentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\FAQEndpoints.cs" />
-    <Compile Include="ClientAccess\Endpoints\Feedback.cs" />
+    <Compile Include="ClientAccess\Endpoints\FeedbackEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\NewsItemEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
