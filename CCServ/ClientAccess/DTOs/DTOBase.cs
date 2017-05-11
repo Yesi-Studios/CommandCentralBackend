@@ -24,7 +24,6 @@ namespace CCServ.ClientAccess.DTOs
         /// <summary>
         /// The api key is how the client indicates which application they are calling from.  This is purely for metrics purposes.
         /// </summary>
-        [Required]
         [Description("A Guid which represents the application from which you are calling.")]
         public Guid ApiKey { get; set; }
 
@@ -43,16 +42,21 @@ namespace CCServ.ClientAccess.DTOs
             {
                 var jProp = jProps.FirstOrDefault(x => x.Name.InsensitiveEquals(prop.Name));
 
-                //This means the property wasn't given to us.
+                //This means the property wasn't given to us.  Let's see if we can't find a default value for it.
                 if (jProp == null)
                 {
-                    if (prop.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
+                    var optionalAttribute = (OptionalAttribute)prop.GetCustomAttributes(typeof(OptionalAttribute), true).FirstOrDefault();
+
+                    //The property was not given to us, but the property is NOT optional.  Therefore we need to throw an exception.
+                    if (optionalAttribute == null)
                     {
                         throw new CommandCentralException("You must send all of the following parameters: {0}"
-                            .FormatS(String.Join(", ", properties.Where(x => x.GetCustomAttributes(typeof(RequiredAttribute), true).Any()).Select(x => x.Name))), ErrorTypes.Validation);
+                            .FormatS(String.Join(", ", properties.Where(x => !x.GetCustomAttributes(typeof(OptionalAttribute), true).Any()).Select(x => x.Name))), ErrorTypes.Validation);
                     }
 
-                    prop.SetValue(this, Utilities.GetDefault(prop.PropertyType));
+                    //Ok, so the property was not given to us, but there is an optional attribute on it.
+                    //That's ok, then we just need to grab the default value and apply it.
+                    prop.SetValue(this, optionalAttribute.DefaultValue);
                 }
                 else
                 {

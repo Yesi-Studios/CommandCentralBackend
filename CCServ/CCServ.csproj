@@ -145,7 +145,9 @@
     <Compile Include="ClientAccess\DTOs\FeedbackEndpoints\SubmitFeedback.cs" />
     <Compile Include="ClientAccess\DTOs\MusterEndpoints\LoadMusterRecordsByMusterDay.cs" />
     <Compile Include="ClientAccess\DTOs\MusterEndpoints\SubmitMuster.cs" />
-    <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
+    <Compile Include="ClientAccess\DTOs\NewsItemEndpoints\LoadNewsItem.cs" />
+    <Compile Include="ClientAccess\DTOs\NewsItemEndpoints\LoadNewsItems.cs" />
+    <Compile Include="ClientAccess\DTOs\OptionalAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
