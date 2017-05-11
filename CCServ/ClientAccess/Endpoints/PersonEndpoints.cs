@@ -102,25 +102,19 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads a single person from the database and sets those fields to null that the client is not allowed to return.  If the client requests their own profile, all fields are returned.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     personid - The ID of the person to load.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadPerson(MessageToken token)
+        private static void LoadPerson(MessageToken token, DTOs.PersonEndpoints.LoadPerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid");
-
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
-                var person = session.Get<Person>(personId) ??
+                var person = session.Get<Person>(dto.Id) ??
                     throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now that we have the person back, let's resolve the permissions for this person.
