@@ -15,44 +15,18 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads a single news item for the given Id or returns null if it does not exist.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     newsitemid - The Id of the news item we want to load.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadNewsItem(MessageToken token)
+        private static void LoadNewsItem(MessageToken token, DTOs.NewsItemEndpoints.LoadNewsItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("newsitemid");
 
-            //Ok, so there is a newsitemid!  Is it legit?
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation);
-
-            //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                //Ok, well it's a GUID.   Do we have it in the database?...
-                var newsItem = session.Get<NewsItem>(newsItemId);
-
-                //If we have no news item, then give them null.
-                if (newsItemId == null)
-                {
-                    token.SetResult(null);
-                    return;
-                }
-
-                //If we got a news item, then we need a DTO.
-                token.SetResult(new
-                {
-                    newsItem.Id,
-                    newsItem.CreationTime,
-                    Creator = newsItem.Creator,
-                    newsItem.Paragraphs,
-                    newsItem.Title
-                });
+                token.SetResult(session.Get<NewsItem>(dto.Id));
             }
         }
 
@@ -60,9 +34,6 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads all news items.
-        /// <para />
-        /// Client Parameters: <para />
-        /// None
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
