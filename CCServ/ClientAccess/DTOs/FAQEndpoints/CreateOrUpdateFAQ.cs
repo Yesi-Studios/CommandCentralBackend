@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace CCServ.ClientAccess.DTOs.FAQEndpoints
 {
@@ -26,9 +27,13 @@ namespace CCServ.ClientAccess.DTOs.FAQEndpoints
         {
         }
 
-        class Validator : AbstractValidator<CreateOrUpdateFAQ>
+        /// <summary>
+        /// Simply returns the validation results for the FAQ entity.
+        /// </summary>
+        /// <returns></returns>
+        public override ValidationResult Validate()
         {
-
+            return new Entities.FAQ.FAQValidator().Validate(this.FAQ);
         }
     }
 }
