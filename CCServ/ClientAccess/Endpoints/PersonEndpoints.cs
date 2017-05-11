@@ -29,103 +29,67 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Creates a new person in the database by taking a person object from the client, picking out only the properties we want, and saving them.  Then it returns the Id we assigned to the person.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     person - a properly formatted, optionally partial, person object containing the necessary information.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreatePerson(MessageToken token)
+        private static void CreatePerson(MessageToken token, DTOs.PersonEndpoints.CreatePerson dto)
         {
-            //Just make sure the client is logged in.  The endpoint's description should've handled this but you never know.
-            if (token.AuthenticationSession == null)
-                throw new CommandCentralException("You must be logged in to do that.", ErrorTypes.Authentication);
+            token.AssertLoggedIn();
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.CreatePerson.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 throw new CommandCentralException("You don't have permission to do that.", ErrorTypes.Authorization);
 
-            //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
-            if (!token.Args.ContainsKey("person"))
-                throw new CommandCentralException("You failed to send a 'person' parameter.", ErrorTypes.Validation);
+            var personToInsert = dto.Person.MapTo<Person>();
+            personToInsert.Id = Guid.NewGuid();
+            personToInsert.IsClaimed = false;
 
-            Person personFromClient;
+            //Initialize the new user's muster entry.
+            personToInsert.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(personToInsert, token.CallTime);
 
-            try
-            {
-                personFromClient = token.Args["person"].CastJToken<Person>();
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occured while processing your person object.", ErrorTypes.Validation);
-            }
-
-
-            //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
-            //For security we're going to take only the parameters that we need explicitly from the client.  All others will be thrown out. #whitelisting
-            Person newPerson = new Person
-            {
-                FirstName = personFromClient.FirstName,
-                MiddleName = personFromClient.MiddleName,
-                LastName = personFromClient.LastName,
-                Division = token.AuthenticationSession.Person.Division,
-                Department = token.AuthenticationSession.Person.Department,
-                Command = token.AuthenticationSession.Person.Command,
-                Paygrade = personFromClient.Paygrade,
-                UIC = personFromClient.UIC,
-                Designation = personFromClient.Designation,
-                Sex = personFromClient.Sex,
-                SSN = personFromClient.SSN,
-                DoDId = personFromClient.DoDId,
-                DateOfBirth = personFromClient.DateOfBirth,
-                DateOfArrival = personFromClient.DateOfArrival,
-                DutyStatus = personFromClient.DutyStatus,
-                Id = Guid.NewGuid(),
-                IsClaimed = false,
-                PRD = personFromClient.PRD
-            };
-            newPerson.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
-
-            //We're also going to add on the default permission groups.
-            newPerson.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
-
-            //Now for validation!
-            var results = new Person.PersonValidator().Validate(newPerson);
-
-            if (!results.IsValid)
-                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+            //Here we're going to set the new user's permission groups to default.
+            personToInsert.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
 
             //Cool, since everything is good to go, let's also add the account history.
-            newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
+            personToInsert.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                 {
                     AccountHistoryEventType = AccountHistoryTypes.Creation,
                     EventTime = token.CallTime
                 }};
 
+            //Now for validation!
+            var results = new Person.PersonValidator().Validate(personToInsert);
+
+            if (!results.IsValid)
+                throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+
             using (var session = NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
             {
-                try
+                using (var transaction = session.BeginTransaction())
                 {
-                    //Let's make sure no one with that SSN exists...
-                    if (session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).RowCount() != 0)
+                    try
                     {
-                        throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation);
+                        //Let's make sure no one with that SSN exists...
+                        if (session.QueryOver<Person>().Where(x => x.SSN == personToInsert.SSN).RowCount() != 0)
+                        {
+                            throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation);
+                        }
+
+                        //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
+                        session.Save(personToInsert);
+
+                        //And now return the person.
+                        token.SetResult(personToInsert.Id);
+
+                        transaction.Commit();
                     }
-
-                    //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
-                    session.Save(newPerson);
-
-                    //And now return the person.
-                    token.SetResult(newPerson.Id);
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
