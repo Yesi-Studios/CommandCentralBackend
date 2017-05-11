@@ -180,26 +180,20 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Returns all account history for the given person.  These are the login events, etc.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     personid - The ID of the person for whom to return the account historiiiiies.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadAccountHistoryByPerson(MessageToken token)
+        private static void LoadAccountHistoryByPerson(MessageToken token, DTOs.PersonEndpoints.LoadAccountHistoryByPerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid");
-            
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             //Let's load the person we were given.  We need the object for the permissions check.
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
-                var person = session.Get<Person>(personId) ??
+                var person = session.Get<Person>(dto.Id) ??
                     throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
@@ -219,15 +213,12 @@ namespace CCServ.ClientAccess.Endpoints
         /// Returns a person's chain of command.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void GetChainOfCommandOfPerson(MessageToken token)
+        private static void GetChainOfCommandOfPerson(MessageToken token, DTOs.PersonEndpoints.GetChainOfCommandOfPerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid");
-
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -235,7 +226,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Now let's load the person and then set any fields the client isn't allowed to see to null.
-                    var person = session.Get<Person>(personId) ??
+                    var person = session.Get<Person>(dto.Id) ??
                         throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                     token.SetResult(person.GetChainOfCommand());
@@ -256,41 +247,26 @@ namespace CCServ.ClientAccess.Endpoints
         /// Conducts a simple search.  Simple search uses a list of search terms and returns all those rows in which each term appears at least once in each of the search fields.
         /// <para/>
         /// In this case those fields are FirstName, LastName, MiddleName, UIC, Paygrade, Designation, Command, Department and Division.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     searchterm - A single string in which the search terms are broken up by a space.  Intended to be the exact input as given by the user.  This string will be split into an array of search terms by all whitespace.  The search terms are parameterized and no scrubbing of the user input is necessary.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void SimpleSearchPersons(MessageToken token)
+        private static void SimpleSearchPersons(MessageToken token, DTOs.PersonEndpoints.SimpleSearchPersons dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("searchterm");
-
-            string searchTerm = token.Args["searchterm"] as string;
-
-            //Let's require a search term.  That's nice.
-            if (String.IsNullOrEmpty(searchTerm))
-                throw new CommandCentralException("You must send a search term. A blank term isn't valid. Sorry :(", ErrorTypes.Validation);
-
-            bool showHidden = false;
-            if (token.Args.ContainsKey("showhidden"))
-            {
-                showHidden = Convert.ToBoolean(token.Args["showhidden"]);
-            }
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
                 var queryProvider = new Person.PersonQueryProvider();
 
                 //Build the query over simple search for each of the search terms.  It took like a fucking week to learn to write simple search in NHibernate.
-                var query = queryProvider.CreateQuery(QueryTypes.Simple, searchTerm);
+                var query = queryProvider.CreateQuery(QueryTypes.Simple, dto.SearchTerm);
 
                 var simpleSearchMembers = queryProvider.GetMembersThatAreUsedIn(QueryTypes.Simple);
 
                 //If we weren't told to show hidden, then hide hidden members.
-                if (!showHidden)
+                if (!dto.ShowHidden)
                 {
                     query = query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
@@ -343,30 +319,24 @@ namespace CCServ.ClientAccess.Endpoints
         /// <para />
         /// Conducts an advanced search.  Advanced search uses a series of key/value pairs where the key is a property to be searched and the value is a string of text which make up the search terms in
         /// a simple search across the property.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     filters - The properties to search and the values to search for.
-        ///     returnfields - The fields the client would like returned.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void AdvancedSearchPersons(MessageToken token)
+        private static void AdvancedSearchPersons(MessageToken token, DTOs.PersonEndpoints.AdvancedSearchPersons dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("filters", "returnfields");
-
-            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
             //Ok, let's figure out what fields the client is allowed to search.
             //This is determined, in part by the existence of the searchlevel parameter.
             //If we don't find the level limit, then continue as normal.  However, if we do find a level limit, then we need to check the client's permissions.
             //We also need to throw out any property they gave us for the relevant level and insert our own.
             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            if (token.Args.ContainsKey("searchlevel"))
+            if (!String.IsNullOrWhiteSpace(dto.SearchLevel))
             {
                 //Ok there's a search level.  We need to do something different based on division, department or command.
-                switch (token.Args["searchlevel"] as string)
+                switch (dto.SearchLevel)
                 {
                     case "Division":
                         {
@@ -374,11 +344,11 @@ namespace CCServ.ClientAccess.Endpoints
                                 throw new CommandCentralException("You can't limit by division if you don't have a division.", ErrorTypes.Validation);
 
                             //First, if the filters have division, delete it.
-                            if (filters.ContainsKey("Division"))
-                                filters.Remove("Division");
+                            if (dto.Filters.ContainsKey("Division"))
+                                dto.Filters.Remove("Division");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = dto.Filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -391,11 +361,11 @@ namespace CCServ.ClientAccess.Endpoints
                                 throw new CommandCentralException("You can't limit by department if you don't have a department.", ErrorTypes.Validation);
 
                             //First, if the filters have department, delete it.
-                            if (filters.ContainsKey("Department"))
-                                filters.Remove("Department");
+                            if (dto.Filters.ContainsKey("Department"))
+                                dto.Filters.Remove("Department");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = dto.Filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -409,11 +379,11 @@ namespace CCServ.ClientAccess.Endpoints
                                 throw new CommandCentralException("You can't limit by command if you don't have a command.", ErrorTypes.Validation);
 
                             //First, if the filters have command, delete it.
-                            if (filters.ContainsKey("Command"))
-                                filters.Remove("Command");
+                            if (dto.Filters.ContainsKey("Command"))
+                                dto.Filters.Remove("Command");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = dto.Filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -431,56 +401,31 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 //We weren't told to limit the search at all, meaning the searchable fields are the client's normal returnable fields.
                 //So let's just test the fields against that.
-                var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
+                var failures = dto.Filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
 
                 if (failures.Any())
                     throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
             }
 
             //Now let's determine if we're doing a geo query.
-            bool isGeoQuery = false;
-            double centerLat = -1, centerLong = -1, radius = -1;
-
-            //If the client sent any one of the three geoquery paramters, then make sure they sent all of them.
-            if (token.Args.Keys.Any(x => x.InsensitiveEquals("centerlat") || x.InsensitiveEquals("centerlong") || x.InsensitiveEquals("radius")))
-            {
-                if (!token.Args.ContainsKeys("centerlat", "centerlong", "radius"))
-                    throw new CommandCentralException("If you send any geo query parameter, then you must send all of them.  They are 'centerlat', 'centerlong', 'radius'.", ErrorTypes.Validation);
-
-                //Ok, we're doing a geo query.
-                isGeoQuery = true;
-
-                //Now parse everything.
-                centerLat = (double)token.Args["centerlat"];
-                centerLong = (double)token.Args["centerlong"];
-                radius = (double)token.Args["radius"];
-            }
-
-            List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
-
-            //Instruct us to show hidden profiles, or hide them.
-            bool showHidden = false;
-            if (token.Args.ContainsKey("showhidden"))
-            {
-                showHidden = (bool)token.Args["showhidden"];
-            }
+            bool isGeoQuery = dto.Radius.HasValue;
 
             //We're going to need the person object's metadata for the rest of this.
             var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
 
             using (var session = NHibernateHelper.CreateStatefulSession())
             {
-                var convertedFilters = filters.ToDictionary(
+                var convertedFilters = dto.Filters.ToDictionary(
                     x => PropertySelector.SelectExpressionFrom<Person>(x.Key),
                     x => x.Value);
 
                 var query = new Person.PersonQueryProvider().CreateQuery(QueryTypes.Advanced, convertedFilters);
 
                 //So you remember the searchlevel from before?  We need to use that here.  If the client gave it to us.
-                if (token.Args.ContainsKey("searchlevel"))
+                if (!String.IsNullOrWhiteSpace(dto.SearchLevel))
                 {
                     //Ok there's a search level.  We need to do something different based on division, department or command.
-                    switch (token.Args["searchlevel"] as string)
+                    switch (dto.SearchLevel)
                     {
                         case "Division":
                             {
@@ -510,7 +455,7 @@ namespace CCServ.ClientAccess.Endpoints
                 
 
                 //The client is telling us to show hidden profiles or not.
-                if (!showHidden)
+                if (!dto.ShowHidden)
                 {
                     query.Where(x => x.DutyStatus != DutyStatuses.Loss);
                 }
@@ -540,11 +485,11 @@ namespace CCServ.ClientAccess.Endpoints
                                 continue;
 
                             var distance = Utilities.HaversineDistance(new Utilities.LatitudeAndLongitude { Latitude = homeAddress.Latitude.Value, Longitude = homeAddress.Longitude.Value },
-                                                        new Utilities.LatitudeAndLongitude { Latitude = centerLat, Longitude = centerLong },
+                                                        new Utilities.LatitudeAndLongitude { Latitude = dto.CenterLat.Value, Longitude = dto.CenterLong.Value },
                                                         Utilities.DistanceUnit.Miles);
 
                             //If they failed the distance check, then skip the person.
-                            if (distance > radius)
+                            if (distance > dto.Radius.Value)
                                 continue;
 
                         }
@@ -558,11 +503,11 @@ namespace CCServ.ClientAccess.Endpoints
                                 if (address.Latitude.HasValue && address.Longitude.HasValue)
                                 {
                                     var distance = Utilities.HaversineDistance(new Utilities.LatitudeAndLongitude { Latitude = address.Latitude.Value, Longitude = address.Longitude.Value },
-                                                        new Utilities.LatitudeAndLongitude { Latitude = centerLat, Longitude = centerLong },
+                                                        new Utilities.LatitudeAndLongitude { Latitude = dto.CenterLat.Value, Longitude = dto.CenterLong.Value },
                                                         Utilities.DistanceUnit.Miles);
 
                                     //If we find one that passes, set passed to true and break.
-                                    if (distance < radius)
+                                    if (distance < dto.Radius.Value)
                                     {
                                         passed = true;
                                         break;
@@ -582,7 +527,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var returnData = new Dictionary<string, string>();
 
                     //Now just set the fields the client is allowed to see.
-                    foreach (var propertyName in returnFields)
+                    foreach (var propertyName in dto.ReturnFields)
                     {
                         var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName) ??
                             throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), ErrorTypes.Validation);

@@ -164,8 +164,12 @@
     <Compile Include="ClientAccess\DTOs\NewsItemEndpoints\LoadNewsItems.cs" />
     <Compile Include="ClientAccess\DTOs\NewsItemEndpoints\UpdateNewsItem.cs" />
     <Compile Include="ClientAccess\DTOs\OptionalAttribute.cs" />
+    <Compile Include="ClientAccess\DTOs\PersonEndpoints\AdvancedSearchPersons.cs" />
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\CreatePerson.cs" />
+    <Compile Include="ClientAccess\DTOs\PersonEndpoints\GetChainOfCommandOfPerson.cs" />
+    <Compile Include="ClientAccess\DTOs\PersonEndpoints\LoadAccountHistoryByPerson.cs" />
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\LoadPerson.cs" />
+    <Compile Include="ClientAccess\DTOs\PersonEndpoints\SimpleSearchPersons.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
