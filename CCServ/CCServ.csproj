@@ -150,6 +150,7 @@
     <Compile Include="ClientAccess\DTOs\CommentEndpoints\UpdateComment.cs" />
     <Compile Include="ClientAccess\DTOs\DTOBase.cs" />
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\CreateOrUpdateFAQ.cs" />
+    <Compile Include="ClientAccess\DTOs\FAQEndpoints\DeleteFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\LoadFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
