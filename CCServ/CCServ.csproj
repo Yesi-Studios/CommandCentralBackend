@@ -153,6 +153,8 @@
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\DeleteFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\FAQEndpoints\LoadFAQ.cs" />
     <Compile Include="ClientAccess\DTOs\FeedbackEndpoints\SubmitFeedback.cs" />
+    <Compile Include="ClientAccess\DTOs\MusterEndpoints\LoadMusterRecordsByMusterDay.cs" />
+    <Compile Include="ClientAccess\DTOs\MusterEndpoints\SubmitMuster.cs" />
     <Compile Include="ClientAccess\DTOs\RequiredAttribute.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
