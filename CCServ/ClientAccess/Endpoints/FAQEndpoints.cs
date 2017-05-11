@@ -33,7 +33,6 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-
                     //Ok, well it's a GUID.   Do we have it in the database?...
                     var faq = session.Get<FAQ>(dto.Id);
 
@@ -86,33 +85,16 @@ namespace CCServ.ClientAccess.Endpoints
         /// Creates or updates an FAQ.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreateOrUpdateFAQ(MessageToken token)
+        private static void CreateOrUpdateFAQ(MessageToken token, DTOs.FAQEndpoints.CreateOrUpdateFAQ dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
                 throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Validation);
-
-            FAQ faqFromClient;
-
-            try
-            {
-                faqFromClient = token.Args["faq"].CastJToken<FAQ>();
-            }
-            catch (Exception e)
-            {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
-            }
-
-            //Ok now we know we have the FAQ.  Now let's see if it's valid.
-            var validationResult = new FAQ.FAQValidator().Validate(faqFromClient);
-
-            if (!validationResult.IsValid)
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //We passed validation, let's get a sesssion and do ze work.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -121,32 +103,29 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //First, let's try to load the FAQ item.  If it doesn't exist we need to insert it.  If it does exist, we need to update it.
-                    var faqFromDB = session.Get<FAQ>(faqFromClient.Id);
+                    var faqFromDB = session.Get<FAQ>(dto.FAQ.Id);
 
                     //If null, then create
                     if (faqFromDB == null)
                     {
                         //Ok, let's create it.  That's easy, just reassign the Id, save, then return the Id.
-                        faqFromClient.Id = Guid.NewGuid();
+                        dto.FAQ.Id = Guid.NewGuid();
 
-                        session.Save(faqFromClient);
-
-                        token.SetResult(faqFromClient);
+                        session.Save(dto.FAQ);
                     }
                     else //else, upate.
                     {
                         //Ok to update we need to ensure the object is unique, then merge it.
                         //Here we ask for any FAQ where the question or name equals the desired one which is not the current one's Id.
-                        var resultsCount = session.QueryOver<FAQ>().Where(x => (x.Name.IsInsensitiveLike(faqFromClient.Name) || x.Question.IsInsensitiveLike(faqFromClient.Question)) && x.Id != faqFromClient.Id).RowCount();
+                        var resultsCount = session.QueryOver<FAQ>()
+                            .Where(x => (x.Name.IsInsensitiveLike(dto.FAQ.Name) || x.Question.IsInsensitiveLike(dto.FAQ.Question)) && x.Id != dto.FAQ.Id)
+                            .RowCount();
 
                         if (resultsCount != 0)
                             throw new CommandCentralException("It appears as though an FAQ with that name or question already exists.", ErrorTypes.Validation);
 
                         //Ok we're good on duplicates.  Now we can merge the FAQ.
-                        session.Merge(faqFromClient);
-
-                        //Now let's return it.  May as well.
-                        token.SetResult(faqFromClient);
+                        session.Merge(dto.FAQ);
                     }
 
                     transaction.Commit();
@@ -167,26 +146,13 @@ namespace CCServ.ClientAccess.Endpoints
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void DeleteFAQ(MessageToken token)
+        private static void DeleteFAQ(MessageToken token, DTOs.FAQEndpoints.DeleteFAQ dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("faq");
 
             //Make sure the client has permission to manage the FAQ.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditFAQ.ToString()))
                 throw new CommandCentralException("You do not have permission to manage the FAQ.", ErrorTypes.Validation);
-
-            //Get the faq
-            FAQ faqFromClient;
-
-            try
-            {
-                faqFromClient = token.Args["faq"].CastJToken<FAQ>();
-            }
-            catch (Exception e)
-            {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
-            }
 
             //We can head right into the session since we're going to delete this FAQ.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -194,7 +160,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var faqFromDB = session.Get<FAQ>(faqFromClient.Id) ??
+                    var faqFromDB = session.Get<FAQ>(dto.Id) ??
                         throw new CommandCentralException("A faq with that Id was not found in the database.", ErrorTypes.Validation);
 
                     //Everything is good to go.  Let's delete it.
@@ -209,6 +175,5 @@ namespace CCServ.ClientAccess.Endpoints
                 }
             }
         }
-
     }
 }

@@ -65,7 +65,7 @@ namespace CCServ.ClientAccess.DTOs
         /// Validates this object.
         /// </summary>
         /// <returns></returns>
-        public FluentValidation.Results.ValidationResult Validate()
+        public virtual FluentValidation.Results.ValidationResult Validate()
         {
             var validatorType = GetType().GetNestedTypes().FirstOrDefault(x => Utilities.IsSubclassOfRawGeneric(typeof(AbstractValidator<>), x));
 
