@@ -398,7 +398,9 @@ namespace CCServ.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("filters", "returnfields");
 
-            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
+            Dictionary<string, object> filters = token.Args["filters"]
+                .CastJToken<Dictionary<string, object>>() ??
+                    new Dictionary<string, object>();
 
             //Ok, let's figure out what fields the client is allowed to search.
             //This is determined, in part by the existence of the searchlevel parameter.

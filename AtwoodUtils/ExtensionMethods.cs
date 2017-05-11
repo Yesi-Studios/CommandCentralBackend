@@ -174,6 +174,9 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static T CastJToken<T>(this object value) where T : class, new()
         {
+            if (value == null)
+                return null;
+
             if (!(value is JToken))
                 throw new Exception("The value could not be cast to a JToken.");
 
