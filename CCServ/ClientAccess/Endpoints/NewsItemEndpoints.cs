@@ -36,9 +36,10 @@ namespace CCServ.ClientAccess.Endpoints
         /// Loads all news items.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadNewsItems(MessageToken token)
+        private static void LoadNewsItems(MessageToken token, DTOs.NewsItemEndpoints.LoadNewsItems dto)
         {
             token.AssertLoggedIn();
 
@@ -47,28 +48,13 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 var query = session.QueryOver<NewsItem>();
 
-                if (token.Args.ContainsKey("limit"))
+                if (dto.Limit.HasValue)
                 {
-                    var limit = Convert.ToInt32(token.Args["limit"]);
-
-                    if (limit <= 0)
-                        throw new CommandCentralException("Your limit must be greater than zero.", ErrorTypes.Validation);
-
-                    query = (NHibernate.IQueryOver<NewsItem, NewsItem>)query.OrderBy(x => x.CreationTime).Desc.Take(limit);
+                    query = (NHibernate.IQueryOver<NewsItem, NewsItem>)query.OrderBy(x => x.CreationTime).Desc.Take(dto.Limit.Value);
                 }
 
                 //Set the result.
-                token.SetResult(query.List().Select(x =>
-                {
-                    return new
-                    {
-                        x.Id,
-                        x.CreationTime,
-                        Creator = x.Creator,
-                        x.Paragraphs,
-                        x.Title
-                    };
-                }));
+                token.SetResult(query.List());
             }
         }
 
@@ -76,36 +62,18 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Creates a news item given a title and paragraphs.  Returns the new Id of the news item.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     title - A title for the news item. <para />
-        ///     paragraphs - The new paragraphs to be added to the new news item.   
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreateNewsItem(MessageToken token)
+        private static void CreateNewsItem(MessageToken token, DTOs.NewsItemEndpoints.CreateNewsItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("title", "paragraphs");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
                 throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
-
-            string title = token.Args["title"] as string;
-            List<string> paragraphs = null;
-
-            //Do the cast here in case it fails.
-            try
-            {
-                paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
-            }
-            catch (Exception e)
-            {
-                throw new CommandCentralException("There was an error while attempting to cast your parahraphs.  " +
-                    "It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
-            }
 
             //Now build the whole news item.
             NewsItem newsItem = new NewsItem
@@ -113,8 +81,8 @@ namespace CCServ.ClientAccess.Endpoints
                 Id = Guid.NewGuid(),
                 CreationTime = token.CallTime,
                 Creator = token.AuthenticationSession.Person,
-                Paragraphs = paragraphs,
-                Title = title
+                Paragraphs = dto.Paragraphs,
+                Title = dto.Title
             };
 
             //Now we just need to validate the news item object and throw back any errors if we get them.
@@ -131,9 +99,6 @@ namespace CCServ.ClientAccess.Endpoints
                     //Ok, it's a good news item.  Let's... stick it in.
                     session.Save(newsItem);
 
-                    //Send the Id back to the client.
-                    token.SetResult(newsItem.Id);
-
                     transaction.Commit();
                 }
                 catch
@@ -148,36 +113,20 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Updates a news item from the client.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     newsitem - A news item object you want to update.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateNewsItem(MessageToken token)
+        private static void UpdateNewsItem(MessageToken token, DTOs.NewsItemEndpoints.UpdateNewsItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("newsitemid");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
             {
                 throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
             }
-
-            //Get the news item id from the client.
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
-
-            //Before we go get the news item from the database, let's get the title and the paragraphs from the client.  Both are optional.
-            string title = null;
-            if (token.Args.ContainsKey("title"))
-                title = token.Args["title"] as string;
-
-            List<string> paragraphs = null;
-            if (token.Args.ContainsKey("paragraphs"))
-                paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
 
             //Now we can go load the news item.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -186,15 +135,12 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Ok, it's a good news item so now we're going to compare it to the one in the database.
-                    NewsItem newsItem = session.Get<NewsItem>(newsItemId) ??
+                    NewsItem newsItem = session.Get<NewsItem>(dto.Id) ??
                         throw new CommandCentralException("A news item with that Id was not found in the database.", ErrorTypes.Validation);
 
                     //Ok, now let's put the values into the news item and then ask if it's valid.
-                    if (!string.IsNullOrEmpty(title))
-                        newsItem.Title = title;
-
-                    if (paragraphs != null)
-                        newsItem.Paragraphs = paragraphs;
+                    newsItem.Title = dto.Title;
+                    newsItem.Paragraphs = dto.Paragraphs;
 
                     var validationResult = new NewsItem.NewsItemValidator().Validate(newsItem);
 
@@ -219,17 +165,14 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Deletes a news item.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     newsitemid - the Id of the news item we want to delete.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void DeleteNewsItem(MessageToken token)
+        private static void DeleteNewsItem(MessageToken token, DTOs.NewsItemEndpoints.DeleteNewsItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("newsitemid");
 
             //Make sure the client has permission to manage the news.
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
@@ -237,18 +180,14 @@ namespace CCServ.ClientAccess.Endpoints
                 throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
             }
 
-            //Get the news item id from the client.
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
-                throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
-
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
                     //Ok, well it's a GUID.   Do we have it in the database?...  Hope so!
-                    var newsItemFromDB = session.Get<NewsItem>(newsItemId) ??
-                        throw new CommandCentralException("A message token with that Id was not found in the database.", ErrorTypes.Validation);
+                    var newsItemFromDB = session.Get<NewsItem>(dto.Id) ??
+                        throw new CommandCentralException("A news item with that Id was not found in the database.", ErrorTypes.Validation);
 
                     session.Delete(newsItemFromDB);
 
