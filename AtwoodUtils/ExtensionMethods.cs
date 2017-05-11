@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using AutoMapper;
 
 namespace AtwoodUtils
 {
@@ -35,6 +36,29 @@ namespace AtwoodUtils
             }
 
             return list;
+        }
+
+        /// <summary>
+        /// Maps the source object to the given type.  The source type is inferred from the source.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static T MapTo<T>(this object source)
+        {
+            return Mapper.Map<T>(source);
+        }
+
+        /// <summary>
+        /// Maps the source object to the given type.  The source type is inferred from the source.  Using the given options.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="opts"></param>
+        /// <returns></returns>
+        public static T MapTo<T>(this object source, Action<IMappingOperationOptions> opts)
+        {
+            return Mapper.Map<T>(source, opts);
         }
 
         public static IEnumerable<T> RepeatIndefinitely<T>(this IEnumerable<T> source)
