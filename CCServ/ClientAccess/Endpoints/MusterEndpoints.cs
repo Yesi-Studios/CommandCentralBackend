@@ -20,51 +20,19 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Loads all muster records for a given muster date. This will be converted to a muster date based on the rollover time shift.  Recommend that you submit the date time without a time portion or with the time portion set to midnight - although it doesn't matter.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     musterdate - The date for which to load muster records. Keep in mind, asking for muster records for a time after the roll over time will in fact return the next day's muster records.  This is due to the rollover time shift.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadMusterRecordsByMusterDay(MessageToken token)
+        private static void LoadMusterRecordsByMusterDay(MessageToken token, DTOs.MusterEndpoints.LoadMusterRecordsByMusterDay dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("musterdate");
-
-            DateTime musterDate;
-            if (!(token.Args["musterdate"] is DateTime))
-            {
-                throw new CommandCentralException("Your 'musterdate' parameter was not in a valid format.", ErrorTypes.Validation);
-            }
-            else
-            {
-                //Here we set the date time to .Date.  This strips off the time component.
-                musterDate = ((DateTime)token.Args["musterdate"]).Date;
-            }
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //Get all records where the day of the year is the given day's muster day and the year the same.
-                var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDate == musterDate.Date).List();
-                token.SetResult(records.Select(x => new
-                {
-                    x.Command,
-                    x.Department,
-                    x.Division,
-                    x.DutyStatus,
-                    x.HasBeenSubmitted,
-                    x.Id,
-                    x.Musteree,
-                    x.Musterer,
-                    x.MusterStatus,
-                    x.MusterDate,
-                    x.Paygrade,
-                    x.SubmitTime,
-                    x.UIC,
-                    x.Remarks,
-                    x.Designation
-                }));
+                token.SetResult(session.QueryOver<MusterRecord>().Where(x => x.MusterDate == dto.MusterDate.Date).List());
             }
         }
 
@@ -72,86 +40,76 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a dictionary of personIds/MusterStatuses, attempts to submit muster for all persons, failing if a person doesn't exist for the given Id, or if the client can't submit muster for any one of the persons.  If a person has already been mustered for this day, that person is not re-mustered.  All persons who were mustered, their Ids will be returned.
-        /// <para />
-        /// Options: <para />
-        ///     mustersubmissions - A dictionary where the key is the person's Id, and the value is the MusterStatus to assign to this person.  The muster status should be a full muster status object.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void SubmitMuster(MessageToken token)
+        private static void SubmitMuster(MessageToken token, DTOs.MusterEndpoints.SubmitMuster dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("mustersubmissions");
 
             if (MusterRecord.IsMusterFinalized)
             {
                 throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(MusterRecord.RolloverTime), ErrorTypes.Validation);
             }
 
-            Dictionary<Guid, JToken> musterSubmissions = null;
-            try
-            {
-                //TODO: why the fuck did I do this?
-                musterSubmissions = token.Args["mustersubmissions"].CastJToken<Dictionary<Guid, string>>()
-                    .Select(x => new KeyValuePair<Guid, JToken>(x.Key, new { status = x.Value, remarks = "" }.Serialize().DeserializeToJObject()))
-                    .ToDictionary(x => x.Key, x => x.Value);
-            }
-            catch (Exception e)
-            {
-                throw new CommandCentralException("There was an error while trying to format your 'mustersubmissions' argument.  " +
-                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
-            }
-
-            //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.InsensitiveEquals(x.Value<string>("status")))))
-            {
-                throw new CommandCentralException("One or more requested muster statuses were not valid.", ErrorTypes.Validation);
-            }
-
             //This is the session in which we're going to do our muster updates.  We do it separately in case something terrible happens to the currently logged in user.
             //This means that if the currently logged in person updates their own muster then for the rest of this request, their muster will be invalid.  That's ok cause we shouldn't need it.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
             {
-                //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  
-                var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(musterSubmissions.Keys).List();
-
-                //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
-                if (persons.Any(x => !MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x)))
-                    throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization);
-
-                //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
-                for (int x = 0; x < persons.Count; x++)
+                using (var transaction = session.BeginTransaction())
                 {
-                    //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
-                    if (persons[x].CurrentMusterRecord == null)
+                    try
                     {
-                        if (persons[x].DutyStatus == DutyStatuses.Loss)
+                        //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  
+                        var persons = session.QueryOver<Person>().AndRestrictionOn(x => x.Id).IsIn(dto.MusterSubmissions.Keys).List();
+
+                        //Now we need to make sure the client is allowed to muster the persons the client wants to muster.
+                        if (persons.Any(x => !MusterRecord.CanClientMusterPerson(token.AuthenticationSession.Person, x)))
+                            throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization);
+
+                        //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
+                        for (int x = 0; x < persons.Count; x++)
                         {
-                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation);
-                        }
-                        else
-                        {
-                            //If the person's duty status is NOT Loss, then somehow this person never got a muster record.  This isn't good.
+                            //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
                             if (persons[x].CurrentMusterRecord == null)
-                                throw new Exception("{0}'s current muster status was null.  This is unexpected.".FormatS(persons[x].ToString()));
+                            {
+                                if (persons[x].DutyStatus == DutyStatuses.Loss)
+                                {
+                                    throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation);
+                                }
+                                else
+                                {
+                                    //If the person's duty status is NOT Loss, then somehow this person never got a muster record.  This isn't good.
+                                    if (persons[x].CurrentMusterRecord == null)
+                                        throw new Exception("{0}'s current muster status was null.  This is unexpected.".FormatS(persons[x].ToString()));
+                                }
+                            }
+
+                            persons[x].CurrentMusterRecord.HasBeenSubmitted = true;
+                            persons[x].CurrentMusterRecord.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
+                            persons[x].CurrentMusterRecord.Musterer = token.AuthenticationSession.Person;
+                            persons[x].CurrentMusterRecord.MusterStatus = (MusterStatuses.AllMusterStatuses
+                                .FirstOrDefault(musterStatus => musterStatus.Id.Equals(dto.MusterSubmissions[persons[x].Id].MusterStatusId))
+                                    ?? throw new CommandCentralException("One or more of your msuter status ids were not valid.", ErrorTypes.Validation))
+                                .Value;
+                            persons[x].CurrentMusterRecord.SubmitTime = token.CallTime;
+                            persons[x].CurrentMusterRecord.Remarks = dto.MusterSubmissions[persons[x].Id].Remarks;
+
+                            //And once we're done resetting their current muster status, let's update them.
+                            session.Update(persons[x]);
                         }
+
+                        //And then commit the transaction if it all went well.
+                        transaction.Commit();
                     }
-
-                    persons[x].CurrentMusterRecord.HasBeenSubmitted = true;
-                    persons[x].CurrentMusterRecord.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
-                    persons[x].CurrentMusterRecord.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterRecord.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.InsensitiveEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
-                    persons[x].CurrentMusterRecord.SubmitTime = token.CallTime;
-                    persons[x].CurrentMusterRecord.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
-
-                    //And once we're done resetting their current muster status, let's update them.
-                    session.Update(persons[x]);
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
-
-                //And then commit the transaction if it all went well.
-                transaction.Commit();
             }
         }
 
