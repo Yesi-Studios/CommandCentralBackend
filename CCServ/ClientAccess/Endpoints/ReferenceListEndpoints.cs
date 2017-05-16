@@ -19,160 +19,79 @@ namespace CCServ.ClientAccess.Endpoints
         /// Loads reference lists.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
-        private static void LoadReferenceLists(MessageToken token)
+        private static void LoadReferenceLists(MessageToken token, DTOs.ReferenceListEndpoints.LoadReferenceLists dto)
         {
-            List<string> entityNames = new List<string>();
-            if (token.Args.ContainsKey("entitynames"))
+            if (dto.Editable)
             {
-                entityNames = token.Args["entitynames"].CastJToken<List<string>>();
-            }
+                var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Where(x => (typeof(EditableReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
+                    .Select(x => x.Key);
 
-            //Does the client want editable lists?
-            bool editableOnly = false;
-            if (token.Args.ContainsKey("editable"))
-            {
-                editableOnly = (bool)token.Args["editable"];
-            }
-
-            bool exclude = false;
-            if (token.Args.ContainsKey("exclude"))
-            {
-                exclude = (bool)token.Args["exclude"];
-            }
-
-            //If the client gives no entity names, give back all lists.
-            if (!entityNames.Any())
-            {
-                if (editableOnly)
+                if (dto.Exclude)
                 {
-                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => (typeof(EditableReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
-                        .Select(x => x.Key);
-
-                    using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                    {
-                        var result = session.QueryOver<EditableReferenceListItemBase>()
-                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                            .List().GroupBy(x => x.GetType().Name)
-                            .ToDictionary(x => x.Key, x => x.ToList());
-
-                        foreach (var name in names)
-                        {
-                            if (!result.ContainsKey(name))
-                            {
-                                result.Add(name, new List<EditableReferenceListItemBase>());
-                            }
-                        }
-
-                        token.SetResult(result);
-                        return;
-                    }
+                    names = names.Where(x => !dto.EntityNames?.Contains(x, StringComparer.CurrentCultureIgnoreCase) ?? true);
                 }
                 else
                 {
-                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => (typeof(ReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
-                        .Select(x => x.Key);
+                    names = names.Where(x => dto.EntityNames?.Contains(x, StringComparer.CurrentCultureIgnoreCase) ?? true);
+                }
 
-                    using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                {
+                    var result = session.QueryOver<EditableReferenceListItemBase>()
+                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                        .List().GroupBy(x => x.GetType().Name)
+                        .ToDictionary(x => x.Key, x => x.ToList());
+
+                    foreach (var name in names)
                     {
-                        var result = session.QueryOver<ReferenceListItemBase>()
-                            .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                            .List().GroupBy(x => x.GetType().Name)
-                            .ToDictionary(x => x.Key, x => x.ToList());
-
-                        foreach (var name in names)
+                        if (!result.ContainsKey(name))
                         {
-                            if (!result.ContainsKey(name))
-                            {
-                                result.Add(name, new List<ReferenceListItemBase>());
-                            }
+                            result.Add(name, new List<EditableReferenceListItemBase>());
                         }
-
-                        token.SetResult(result);
-                        return;
                     }
-                }
-            }
 
-            var metadataWithEntityNames = new Dictionary<string, IClassMetadata>();
-
-            if (exclude)
-            {
-                //Here the client wants all reference list types that aren't the given ones.
-                if (editableOnly)
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
-                }
-                else
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
+                    token.SetResult(result);
+                    return;
                 }
             }
             else
             {
-                if (editableOnly)
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+                var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    .Where(x => (typeof(ReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
+                    .Select(x => x.Key);
 
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
+                if (dto.Exclude)
+                {
+                    names = names.Where(x => !dto.EntityNames?.Contains(x, StringComparer.CurrentCultureIgnoreCase) ?? true);
                 }
                 else
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
+                    names = names.Where(x => dto.EntityNames?.Contains(x, StringComparer.CurrentCultureIgnoreCase) ?? true);
                 }
-            }
 
-            //Now let's get the Id of the item the client wants.  This can be null, in which case, set the Guid to default and we'll go get multiple lists.
-            //If this isn't default afterwards, then the client may only request a single list.
-            Guid id = default(Guid);
-            if (token.Args.ContainsKey("id"))
-            {
-                if (!Guid.TryParse(token.Args["id"] as string, out id))
+                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
                 {
-                    throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
+                    var result = session.QueryOver<ReferenceListItemBase>()
+                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
+                        .List().GroupBy(x => x.GetType().Name)
+                        .ToDictionary(x => x.Key, x => x.ToList());
+
+                    foreach (var name in names)
+                    {
+                        if (!result.ContainsKey(name))
+                        {
+                            result.Add(name, new List<ReferenceListItemBase>());
+                        }
+                    }
+
+                    token.SetResult(result);
+                    return;
                 }
             }
-
-            if (id != default(Guid) && entityNames.Count != 1)
-                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation);
-
-            Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
-            //Cool we have a real item and an Id.  Now let's call its loader.
-            foreach (var metadata in metadataWithEntityNames)
-            {
-                var lists = (Activator.CreateInstance(metadata.Value.GetMappedClass(NHibernate.EntityMode.Poco)) as ReferenceListItemBase).Load(id, token);
-
-                lists.ForEach(x => NHibernate.NHibernateUtil.Initialize(x));
-
-                results.Add(metadata.Key, lists);
-            }
-
-            token.SetResult(results);
         }
 
         /// <summary>

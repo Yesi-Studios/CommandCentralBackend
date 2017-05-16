@@ -14,28 +14,6 @@ namespace CCServ.Entities.ReferenceLists
     public class AccountHistoryType : ReferenceListItemBase
     {
         /// <summary>
-        /// Loads all object or a single object if given an Id.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<AccountHistoryType>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<AccountHistoryType>(id) }.ToList();
-                }
-            }
-        }
-
-        /// <summary>
         /// Maps this object to the database.
         /// </summary>
         public class AccountHistoryTypeMapping : ClassMap<AccountHistoryType>
