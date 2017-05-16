@@ -171,6 +171,7 @@
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\LoadPerson.cs" />
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\SimpleSearchPersons.cs" />
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\UpdatePerson.cs" />
+    <Compile Include="ClientAccess\DTOs\ProfileLockEndpoints\TakeProfileLock.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
