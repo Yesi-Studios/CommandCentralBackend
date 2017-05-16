@@ -21,20 +21,14 @@ namespace CCServ.ClientAccess.Endpoints
         /// If a lock already exists on the account and it is owned by the client, the lock is renewed.  
         /// If the lock has aged off, the lock is released and the client is given the lock.  
         /// If the lock exists, is not owned by the client, and has not aged off, a LockOwned error is returned.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     personid : the person for whom to attempt to take a lock.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void TakeProfileLock(MessageToken token)
+        private static void TakeProfileLock(MessageToken token, DTOs.ProfileLockEndpoints.TakeProfileLock dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid");
-
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The 'personid' parameter was not valid", ErrorTypes.Validation);
 
             //Do our work in a new session
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -51,7 +45,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
                     session.Flush();
 
-                    var person = session.Get<Person>(personId) ??
+                    var person = session.Get<Person>(dto.PersonId) ??
                         throw new CommandCentralException("That person id does not correlate to a real person.", ErrorTypes.Validation);
 
                     //Now the client has no locks.  Let's also make sure the profile we're trying to lock isn't owned by someone else.
@@ -133,36 +127,15 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Given a person ID, attempts to take a lock on the person's profile - preventing edits to the profile by anyone else.  If a lock already exists on the account and it is owned by the client, the lock is renewed.  If the lock has aged off, the lock is released and the client is given the lock.  If the lock exists, is not owned by the client, and has not aged off, a LockOwned error is returned.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     personid : the person for whom to attempt to take a lock.
+        /// Releases all profile locks owned by the client.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void ReleaseProfileLock(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("profilelockid");
-
-            if (!Guid.TryParse(token.Args["profilelockid"] as string, out Guid profileLockId))
-                throw new CommandCentralException("The 'profilelockid' parameter was not valid", ErrorTypes.Validation);
-
-            bool forceRelease = false;
-            if (token.Args.ContainsKey("forcerelease"))
-            {
-                forceRelease = (bool)token.Args["forcerelease"];
-            }
-
-            //If the client wants to force release the lock, they must have access to the admin tools.
-            if (forceRelease)
-            {
-                if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                {
-                    throw new CommandCentralException("In order to force a lock to release, you must have access to the Admin Tools.", ErrorTypes.Authorization);
-                }
-            }
 
             //Do our work in a new session
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -170,31 +143,14 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 try
                 {
-                    var profileLock = session.Get<ProfileLock>(profileLockId) ??
-                        throw new CommandCentralException("That profile lock id was not valid.", ErrorTypes.Validation);
+                    var profileLocks = session.QueryOver<ProfileLock>().Where(x => x.Owner == token.AuthenticationSession.Person).List();
 
-                    //Ok if the client doesn't own the profile lock, then we need to see if we can force it to release.
-                    if (forceRelease)
+                    if (profileLocks.Count > 1)
+                        throw new Exception("{0} owned more than one profile lock.".FormatS(token.AuthenticationSession.Person.ToString()));
+                    
+                    foreach (var profileLock in profileLocks)
                     {
-                        //This is the easist option.  Regardless of the profile lock state, this is a person with access to admin tools.
-                        //So we're just going to drop the profile lock.
                         session.Delete(profileLock);
-                    }
-                    else if (profileLock.Owner.Id == token.AuthenticationSession.Person.Id)
-                    {
-                        //Ok, second options.  If the client owns the profile lock, they can release it.
-                        //I know I could've done these in the same if statement - I wanted to clearly see the different options.
-                        session.Delete(profileLock);
-                    }
-                    else if (!profileLock.IsValid())
-                    {
-                        //Ok, next option, if the profile lock is no longer valid, let's throw it out.
-                        session.Delete(profileLock);
-                    }
-                    else
-                    {
-                        //Welp, if we got there then the client isn't allowed to release this lock.
-                        throw new CommandCentralException("You do not have permission to release the profile lock and it is still valid.", ErrorTypes.Validation);
                     }
 
                     transaction.Commit();
