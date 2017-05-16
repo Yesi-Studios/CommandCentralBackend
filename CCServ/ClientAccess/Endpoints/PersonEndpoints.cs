@@ -566,29 +566,14 @@ namespace CCServ.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// Given a person, updates the person assuming the person is allowed to edit the properties that have changed.  Additionally, a lock must be owned on the person by the client.
-        /// <para />
-        /// Client Parameters: <para />
-        ///     person - a properly formatted JSON person to be updated.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdatePerson(MessageToken token)
+        private static void UpdatePerson(MessageToken token, DTOs.PersonEndpoints.UpdatePerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("person");
-
-            //Try the parse
-            Person personFromClient;
-            try
-            {
-                personFromClient = token.Args["person"].CastJToken<Person>() ??
-                    throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation);
-            }
-            catch
-            {
-                throw new CommandCentralException("An error occurred while trying to parse the person into its proper form.", ErrorTypes.Validation);
-            }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
             using (var session = NHibernateHelper.CreateStatefulSession())
@@ -598,7 +583,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
                     //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
                     ProfileLock profileLock = session.QueryOver<ProfileLock>()
-                                            .Where(x => x.LockedPerson.Id == personFromClient.Id)
+                                            .Where(x => x.LockedPerson.Id == dto.Person.Id)
                                             .SingleOrDefault() ??
                                             throw new CommandCentralException("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Validation);
 
@@ -611,7 +596,7 @@ namespace CCServ.ClientAccess.Endpoints
                         throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned);
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-                    Person personFromDB = session.Get<Person>(personFromClient.Id) ??
+                    Person personFromDB = session.Get<Person>(dto.Person.Id) ??
                         throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation);
 
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
@@ -625,7 +610,7 @@ namespace CCServ.ClientAccess.Endpoints
                     {
                         var property = typeof(Person).GetProperty(field);
 
-                        property.SetValue(personFromDB, property.GetValue(personFromClient));
+                        property.SetValue(personFromDB, property.GetValue(dto.Person));
                     }
 
                     //Determine what changed.
