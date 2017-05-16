@@ -38,7 +38,7 @@ namespace CCServ.Entities.Watchbill
         /// <summary>
         /// Represents the current state of the watchbill.  Different states should trigger different actions.
         /// </summary>
-        public virtual ReferenceLists.Watchbill.WatchbillStatus CurrentState { get; set; }
+        public virtual WatchbillStatus CurrentState { get; set; }
 
         /// <summary>
         /// Indicates the last time the state of this watchbill was changed.

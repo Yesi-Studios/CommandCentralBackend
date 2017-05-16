@@ -57,8 +57,8 @@ namespace CCServ.ServiceManagement
 
                 Log.Info("Starting service startup...");
 
+                FluentScheduler.JobManager.UseUtcTime();
                 FluentSchedulerRegistry = new FluentScheduler.Registry();
-                FluentSchedulerRegistry.UseUtcTime();
                 FluentScheduler.JobManager.Initialize(FluentSchedulerRegistry);
 
                 //Now we need to run all start up methods.
