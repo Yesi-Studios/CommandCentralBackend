@@ -113,29 +113,7 @@ namespace CCServ.Entities.ReferenceLists
                 }
             }
         }
-
-        /// <summary>
-        /// Load
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<Ethnicity>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<Ethnicity>(id) }.ToList();
-                }
-            }
-        }
-
+        
         /// <summary>
         /// Validates this ethnicity.
         /// </summary>

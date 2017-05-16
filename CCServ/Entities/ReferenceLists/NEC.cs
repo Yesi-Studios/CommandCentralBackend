@@ -131,32 +131,6 @@ namespace CCServ.Entities.ReferenceLists
         }
 
         /// <summary>
-        /// Load
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            List<ReferenceListItemBase> value;
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    value = session.QueryOver<NEC>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    value = new[] { (ReferenceListItemBase)session.Get<NEC>(id) }.ToList();
-                }
-            }
-
-            return value;
-        }
-
-        /// <summary>
         /// Validates an NEC.  Weeee.
         /// </summary>
         /// <returns></returns>
