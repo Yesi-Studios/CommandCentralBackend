@@ -9,32 +9,19 @@ using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
+    /// <summary>
+    /// Enumerates the different types of a person.
+    /// </summary>
     public class PersonType : ReferenceListItemBase
     {
         /// <summary>
-        /// Loads all object or a single object if given an Id.
+        /// Maps this object to the database.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<PersonType>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<PersonType>(id) }.ToList();
-                }
-            }
-        }
-
         public class PersonTypeMapping : ClassMap<PersonType>
         {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
             public PersonTypeMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();

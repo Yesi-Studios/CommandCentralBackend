@@ -9,32 +9,19 @@ using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
+    /// <summary>
+    /// Represents the different types of a phone number such as cell or home.
+    /// </summary>
     public class PhoneNumberType : ReferenceListItemBase
     {
         /// <summary>
-        /// Loads all object or a single object if given an Id.
+        /// Maps this object to the database.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<PhoneNumberType>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<PhoneNumberType>(id) }.ToList();
-                }
-            }
-        }
-
         public class PhoneNumberTypeMapping : ClassMap<PhoneNumberType>
         {
+            /// <summary>
+            /// Maps this object to the database.
+            /// </summary>
             public PhoneNumberTypeMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();

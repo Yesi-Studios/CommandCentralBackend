@@ -116,28 +116,6 @@ namespace CCServ.Entities.ReferenceLists
         }
 
         /// <summary>
-        /// Load the designation.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<Designation>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<Designation>(id) }.ToList();
-                }
-            }
-        }
-
-        /// <summary>
         /// Validates this designation.
         /// </summary>
         /// <returns></returns>

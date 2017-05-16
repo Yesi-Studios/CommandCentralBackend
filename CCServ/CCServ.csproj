@@ -162,6 +162,7 @@
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\SimpleSearchPersons.cs" />
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\UpdatePerson.cs" />
     <Compile Include="ClientAccess\DTOs\ProfileLockEndpoints\TakeProfileLock.cs" />
+    <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\LoadReferenceLists.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
@@ -293,10 +294,10 @@
     <Compile Include="Entities\ProfileLock.cs" />
     <Compile Include="Entities\ReferenceLists\AccountHistoryType.cs" />
     <Compile Include="Entities\ReferenceLists\AccountHistoryTypes.cs" />
-    <Compile Include="Entities\ReferenceLists\Command.cs" />
-    <Compile Include="Entities\ReferenceLists\Department.cs" />
+    <Compile Include="Entities\Command.cs" />
+    <Compile Include="Entities\Department.cs" />
     <Compile Include="Entities\ReferenceLists\Designation.cs" />
-    <Compile Include="Entities\ReferenceLists\Division.cs" />
+    <Compile Include="Entities\Division.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatus.cs" />
     <Compile Include="Entities\ReferenceLists\DutyStatuses.cs" />
     <Compile Include="Entities\ReferenceLists\EditableReferenceListItemBase.cs" />

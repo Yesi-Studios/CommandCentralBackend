@@ -14,29 +14,6 @@ namespace CCServ.Entities.ReferenceLists
     public class WatchQualification : ReferenceListItemBase
     {
         /// <summary>
-        /// Loads the watch qualification.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<WatchQualification>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<WatchQualification>(id) }.ToList();
-                }
-            }
-        }
-
-        /// <summary>
         /// Maps this object to the database.
         /// </summary>
         public class WatchQualificationMapping : ClassMap<WatchQualification>
