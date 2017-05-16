@@ -328,10 +328,6 @@ namespace CCServ.ClientAccess.Endpoints
         {
             token.AssertLoggedIn();
 
-            Dictionary<string, object> filters = token.Args["filters"]
-                .CastJToken<Dictionary<string, object>>() ??
-                    new Dictionary<string, object>();
-
             //Ok, let's figure out what fields the client is allowed to search.
             //This is determined, in part by the existence of the searchlevel parameter.
             //If we don't find the level limit, then continue as normal.  However, if we do find a level limit, then we need to check the client's permissions.
