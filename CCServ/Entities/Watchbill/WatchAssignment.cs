@@ -73,11 +73,63 @@ namespace CCServ.Entities.Watchbill
 
         #endregion
 
+        #region Startup Methods
+
+
+        /// <summary>
+        /// This is a terrible hack.  I'm so sorry.  Here's why we need it.
+        /// <para />
+        /// Watch assignments reference watch shifts and vice versa.  If we try to delete one, the foreign key rule fails because the other references what we're trying to delete.
+        /// The answer you'll find online to fix this problem is to set the reference of one side to null and the continue with the delete.
+        /// I think that is shit for two reasons: A) I don't want to have to do that (lol) and B) more importantly, if you try to delete the watchbill, 
+        /// As NHIbernate cascades down through the relationships deleting stuff, it runs into our parent/child relationship here and causes the aforementioned bug.
+        /// The only option would be to write the delete manually, and walk through all the objects myself.  Then, when I get to this relationship, set one side to null and
+        /// then carry on with the delete.
+        /// 
+        /// Well, turns out databases actually have the ability to deal with this problem, but NHibernate doesn't support it.  In fact, most ORMs don't support it.
+        /// On a foreign key constraint, you can add the optional text "ON DELETE CASCADE" which will force the delete action to cascade to the next object.
+        ///<para/>
+        /// So what this method does is simply update the foreign key constract to have this additional property.  Now our objects will delete properly.
+        /// It might be a hack, but of all the hacks, I think this one is the best.  It uses funtionality that should be there and simply isn't.
+        /// </summary>
+        /// <param name="options"></param>
+        [ServiceManagement.StartMethod(Priority = 80)]
+        private static void UpdateForeignKeyRule(CLI.Options.LaunchOptions options)
+        {
+            if (options.Rebuild)
+            {
+                using (var session = NHibernateHelper.CreateStatefulSession())
+                {
+                    using (var command = session.Connection.CreateCommand())
+                    {
+                        command.CommandText = "ALTER TABLE `{0}` DROP FOREIGN KEY `{1}`;  ALTER TABLE `{0}` ADD CONSTRAINT `{1}` FOREIGN KEY (`{2}_id`) REFERENCES `{2}` (`Id`) ON DELETE CASCADE"
+                            .FormatS(nameof(WatchAssignment), WatchAssignmentMapping.WatchAssignmentToWatchShiftForeignKeyName,
+                            nameof(WatchShift));
+
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Maps this object to the database.
         /// </summary>
         public class WatchAssignmentMapping : ClassMap<WatchAssignment>
         {
+            /// <summary>
+            /// This is the name of the foreign key constraint on the watch assignment table to the watch shift table.
+            /// </summary>
+            public static string WatchAssignmentToWatchShiftForeignKeyName
+            {
+                get
+                {
+                    return "FKC8CF354560D062AE";
+                }
+            }
+
             /// <summary>
             /// Maps this object to the database.
             /// </summary>
@@ -85,7 +137,7 @@ namespace CCServ.Entities.Watchbill
             {
                 Id(x => x.Id).GeneratedBy.Assigned().UnsavedValue(Guid.Empty);
 
-                References(x => x.WatchShift).Not.Nullable();
+                References(x => x.WatchShift).Not.Nullable().ForeignKey(WatchAssignmentToWatchShiftForeignKeyName);
                 References(x => x.PersonAssigned).Not.Nullable();
                 References(x => x.AssignedBy).Not.Nullable();
                 References(x => x.CurrentState).Not.Nullable();
