@@ -246,7 +246,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (watchbillFromDB.CurrentState != clientState)
                         {
                             //It looks like the client is trying to change the state.
-                            watchbillFromDB.SetState(clientState, token.CallTime, token.AuthenticationSession.Person);
+                            watchbillFromDB.SetState(clientState, token.CallTime, token.AuthenticationSession.Person, session);
                         }
 
                         var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromDB);

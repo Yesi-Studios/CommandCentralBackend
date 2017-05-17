@@ -9,6 +9,7 @@ using CCServ.Entities.ReferenceLists.Watchbill;
 using CCServ.ClientAccess;
 using System.Globalization;
 using AtwoodUtils;
+using NHibernate;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -96,7 +97,8 @@ namespace CCServ.Entities.Watchbill
         /// <param name="desiredState"></param>
         /// <param name="setTime"></param>
         /// <param name="person"></param>
-        public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person)
+        /// <param name="session"></param>
+        public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person, ISession session)
         {
             //Don't allow same changes.
             if (this.CurrentState == desiredState)
@@ -112,16 +114,18 @@ namespace CCServ.Entities.Watchbill
             //leaving a watchbill with only its days and shifts.
             if (desiredState == WatchbillStatuses.Initial)
             {
-                for (int x = this.InputRequirements.Count - 1; x >= 0; x--)
-                {
-                    this.InputRequirements.RemoveAt(x);
-                }
+                this.InputRequirements.Clear();
 
                 foreach (var watchDay in this.WatchDays)
                 {
                     foreach (var shift in watchDay.WatchShifts)
                     {
-                        shift.WatchAssignment = null;
+                        if (shift.WatchAssignment != null)
+                        {
+                            session.Delete(shift.WatchAssignment);
+                            shift.WatchAssignment = null;
+                        }
+
                         shift.WatchInputs.Clear();
                     }
                 }
@@ -163,8 +167,8 @@ namespace CCServ.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                using (var transaction = session.BeginTransaction())
+                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = internalSession.BeginTransaction())
                 {
 
                     try
@@ -178,7 +182,7 @@ namespace CCServ.Entities.Watchbill
                                 queryString += " or ";
                         }
                         queryString += " ) and person.Command = :command";
-                        var persons = session.CreateQuery(queryString)
+                        var persons = internalSession.CreateQuery(queryString)
                             .SetParameter("command", this.Command)
                             .List<Person>();
 
@@ -222,8 +226,8 @@ namespace CCServ.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                using (var transaction = session.BeginTransaction())
+                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = internalSession.BeginTransaction())
                 {
 
                     try
@@ -237,7 +241,7 @@ namespace CCServ.Entities.Watchbill
                                 queryString += " or ";
                         }
                         queryString += " ) and person.Command = :command";
-                        var persons = session.CreateQuery(queryString)
+                        var persons = internalSession.CreateQuery(queryString)
                             .SetParameter("command", this.Command)
                             .List<Person>();
 
@@ -285,8 +289,8 @@ namespace CCServ.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                using (var transaction = session.BeginTransaction())
+                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = internalSession.BeginTransaction())
                 {
 
                     try
@@ -300,7 +304,7 @@ namespace CCServ.Entities.Watchbill
                                 queryString += " or ";
                         }
                         queryString += " ) and person.Command = :command";
-                        var persons = session.CreateQuery(queryString)
+                        var persons = internalSession.CreateQuery(queryString)
                             .SetParameter("command", this.Command)
                             .List<Person>();
 
@@ -366,8 +370,8 @@ namespace CCServ.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-                using (var transaction = session.BeginTransaction())
+                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var transaction = internalSession.BeginTransaction())
                 {
 
                     try
@@ -381,7 +385,7 @@ namespace CCServ.Entities.Watchbill
                                 queryString += " or ";
                         }
                         queryString += " ) and person.Command = :command";
-                        var persons = session.CreateQuery(queryString)
+                        var persons = internalSession.CreateQuery(queryString)
                             .SetParameter("command", this.Command)
                             .List<Person>();
 
