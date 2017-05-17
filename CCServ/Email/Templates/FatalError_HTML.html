@@ -280,7 +280,27 @@
                                                                                                                 else
                                                                                                                 {
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Friendly Name: @Model.Token.AuthenticationSession.Person</span>
+                                                                                                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Friendly Name: @Model.Token.AuthenticationSession.Person</span>
+                                                                                                                    </p>
+                                                                                                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                        @if (Model.Token.AuthenticationSession.Person.PhoneNumbers != null && Model.Token.AuthenticationSession.Person.PhoneNumbers.Any())
+                                                                                                                        {
+                                                                                                                            var number = Model.Token.AuthenticationSession.Person.PhoneNumbers.FirstOrDefault(x => x.IsContactable || x.IsPreferred);
+                                                                                                                            if (number == null)
+                                                                                                                            {
+                                                                                                                                number = Model.Token.AuthenticationSession.Person.PhoneNumbers.FirstOrDefault(x => x.PhoneType.Value == "Work");
+                                                                                                                            }
+                                                                                                                            string text = "NA";
+                                                                                                                            if (number != null)
+                                                                                                                            {
+                                                                                                                                text = number.Number;
+                                                                                                                            }
+                                                                                                                            <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Phone Number: @text </span>
+                                                                                                                        }
+                                                                                                                        else
+                                                                                                                        {
+                                                                                                                            <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Phone Number: NA </span>
+                                                                                                                        }
                                                                                                                     </p>
                                                                                                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Session Id: @Model.Token.AuthenticationSession.Id</span>

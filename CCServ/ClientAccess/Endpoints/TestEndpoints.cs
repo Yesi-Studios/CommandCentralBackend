@@ -23,7 +23,7 @@ namespace CCServ.ClientAccess.Endpoints
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void TestException(MessageToken token)
         {
             throw new Exception("TEST TEST TEST");
