@@ -95,9 +95,7 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.Remarks).Length(0, 1000);
 
                 RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
-                
             }
         }
-
     }
 }
