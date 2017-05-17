@@ -716,7 +716,7 @@ namespace CCServ.Entities
                             DoDId = Utilities.GenerateDoDId(),
                             IsClaimed = true,
                             Username = "user" + x.ToString(),
-                            PasswordHash = ClientAccess.PasswordHash.CreateHash("asdfasdfasdf"),
+                            PasswordHash = ClientAccess.PasswordHash.CreateHash("a"),
                             Sex = Sexes.AllSexes.ElementAt(Utilities.GetRandomNumber(0, Sexes.AllSexes.Count - 1)),
                             EmailAddresses = new List<EmailAddress>()
                             {
