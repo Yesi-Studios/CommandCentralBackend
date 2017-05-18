@@ -106,12 +106,13 @@ namespace CCServ.ClientAccess.Endpoints
                     var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
                         .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
 
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
-                }
-                else
+            //You have permission?
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
+                throw new CommandCentralException("You don't have permission to edit reference lists.", ErrorTypes.Authorization);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
                 {
                     var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
                         .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
