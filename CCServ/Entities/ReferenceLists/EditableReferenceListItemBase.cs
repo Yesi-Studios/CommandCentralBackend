@@ -8,9 +8,11 @@ using FluentValidation.Results;
 
 namespace CCServ.Entities.ReferenceLists
 {
+    /// <summary>
+    /// This abstract class provides methods for interacting with reference lists that can be edited.
+    /// </summary>
     public abstract class EditableReferenceListItemBase : ReferenceListItemBase
     {
-
         #region Helper Methods
 
         /// <summary>
@@ -18,10 +20,6 @@ namespace CCServ.Entities.ReferenceLists
         /// </summary>
         /// <returns></returns>
         public abstract ValidationResult Validate();
-
-        public abstract void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token);
-
-        public abstract void Delete(Guid id, bool forceDelete, MessageToken token);
 
         #endregion
     }

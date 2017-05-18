@@ -163,6 +163,7 @@
     <Compile Include="ClientAccess\DTOs\PersonEndpoints\UpdatePerson.cs" />
     <Compile Include="ClientAccess\DTOs\ProfileLockEndpoints\TakeProfileLock.cs" />
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\CreateReferenceListItem.cs" />
+    <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\DeleteReferenceListItem.cs" />
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\LoadReferenceLists.cs" />
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\UpdateReferenceListItem.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />

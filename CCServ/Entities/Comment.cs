@@ -57,5 +57,21 @@ namespace CCServ.Entities
                 Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
             }
         }
+
+        /// <summary>
+        /// Validates the parent object.
+        /// </summary>
+        public class Validator : AbstractValidator<Comment>
+        {
+            /// <summary>
+            /// Validates the parent object.
+            /// </summary>
+            public Validator()
+            {
+                RuleFor(x => x.Creator).NotEmpty();
+                RuleFor(x => x.Text).NotEmpty().Length(1, 1000);
+                RuleFor(x => x.Time).NotEmpty();
+            }
+        }
     }
 }
