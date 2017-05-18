@@ -17,18 +17,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Creates multiple watch inputs.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void AnswerInputRequirement(MessageToken token)
+        private static void AnswerInputRequirement(MessageToken token, DTOs.Watchbill.WatchInputRequirementEndpoints.AnswerInputRequirement dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbillid", "personid");
-
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
-
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -37,10 +31,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(dto.WatchbillId) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
-                        var personFromDB = session.Get<Entities.Person>(personId) ??
+                        var personFromDB = session.Get<Entities.Person>(dto.PersonId) ??
                             throw new CommandCentralException("Your person id was not valid.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.

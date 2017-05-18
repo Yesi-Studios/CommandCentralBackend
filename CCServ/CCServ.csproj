@@ -180,6 +180,7 @@
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\DeleteWatchInput.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\LoadWatchInput.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\LoadWatchInputs.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputRequirementEndpoints\AnswerInputRequirement.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
