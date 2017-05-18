@@ -22,15 +22,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads a watch input.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchInput(MessageToken token)
+        private static void LoadWatchInput(MessageToken token, DTOs.Watchbill.WatchInputEndpoints.LoadWatchInput dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchInputId))
-                throw new CommandCentralException("Your watch input id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -38,7 +35,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchInputFromDB = session.Get<WatchInput>(watchInputId) ??
+                        var watchInputFromDB = session.Get<WatchInput>(dto.Id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
                         token.SetResult(watchInputFromDB);
@@ -60,15 +57,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads all watch inputs for a given watchbill.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchInputs(MessageToken token)
+        private static void LoadWatchInputs(MessageToken token, DTOs.Watchbill.WatchInputEndpoints.LoadWatchInputs dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbillid");
-
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchnill's id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -76,7 +70,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(dto.WatchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation))
                             .WatchShifts.SelectMany(x => x.WatchInputs)
                             .Distinct()
@@ -122,50 +116,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Creates multiple watch inputs.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreateWatchInputs(MessageToken token)
+        private static void CreateWatchInputs(MessageToken token, DTOs.Watchbill.WatchInputEndpoints.CreateWatchInputs dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchinputs");
-
-            var inputsToken = token.Args["watchinputs"].CastJToken();
-
-            if (inputsToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
-                throw new CommandCentralException("Your inputs were in the wrong format.", ErrorTypes.Validation);
-
-            var inputsFromClient = inputsToken.Select(input =>
-            {
-                if (!Guid.TryParse(input["InputReason"]?.Value<string>("Id"), out Guid inputReasonId))
-                    throw new CommandCentralException("Your input reason id was in the wrong format.", ErrorTypes.Validation);
-
-                if (!Guid.TryParse(input["person"]?.Value<string>("Id"), out Guid personId))
-                    throw new CommandCentralException("Your person id was in the wrong format.", ErrorTypes.Validation);
-
-                var watchShiftIds = new List<Guid>();
-
-                foreach (var shift in input["WatchShifts"])
-                {
-                    watchShiftIds.Add(Guid.Parse(shift.Value<string>("Id")));
-                }
-
-                var newInput = new
-                {
-                    InputReasonId = inputReasonId,
-                    PersonId = personId,
-                    WatchShiftIds = watchShiftIds
-                };
-
-                return newInput;
-            });
-
+            
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
-                        foreach (var input in inputsFromClient)
+                        foreach (var input in dto.WatchInputs)
                         {
 
                             
@@ -245,15 +209,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Updates a watch input.  This is how clients can confirm inputs, for example.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void ConfirmWatchInput(MessageToken token)
+        private static void ConfirmWatchInput(MessageToken token, DTOs.Watchbill.WatchInputEndpoints.ConfirmWatchInput dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
-                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -261,7 +222,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchInputFromDB = session.Get<WatchInput>(id) ??
+                        var watchInputFromDB = session.Get<WatchInput>(dto.Id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
                         var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
@@ -309,15 +270,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Deletes a watch shift.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void DeleteWatchInput(MessageToken token)
+        private static void DeleteWatchInput(MessageToken token, DTOs.Watchbill.WatchInputEndpoints.DeleteWatchInput dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
-                throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -325,13 +283,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchInputFromDB = session.Get<WatchInput>(id) ??
+                        var watchInputFromDB = session.Get<WatchInput>(dto.Id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
                         var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now we also need the permissions to determine if this client can edit this input.

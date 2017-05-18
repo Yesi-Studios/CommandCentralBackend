@@ -175,6 +175,11 @@
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchbillEndpoints\LoadWatchbill.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchbillEndpoints\UpdateWatchbillState.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchEligibilityGroupEndpoints\EditWatchEligibilityGroupMembership.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\ConfirmWatchInput.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\CreateWatchInputs.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\DeleteWatchInput.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\LoadWatchInput.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchInputEndpoints\LoadWatchInputs.cs" />
     <Compile Include="ClientAccess\Endpoints\AuthorizationEndpoints.cs" />
     <Compile Include="Authorization\AuthorizationExtensions.cs" />
     <Compile Include="Authorization\AuthorizationToken.cs" />
