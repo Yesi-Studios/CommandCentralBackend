@@ -41,29 +41,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         }
 
         #endregion
-
-        /// <summary>
-        /// Loads all object or a single object if given an Id.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<WatchEligibilityGroup>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<WatchEligibilityGroup>(id) }.ToList();
-                }
-            }
-        }
-
+        
         /// <summary>
         /// Maps this object to the database.
         /// </summary>

@@ -115,28 +115,6 @@ namespace CCServ.Entities.ReferenceLists
         }
 
         /// <summary>
-        /// Load
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<ReligiousPreference>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<ReligiousPreference>(id) }.ToList();
-                }
-            }
-        }
-
-        /// <summary>
         /// Validates this religious preference.  
         /// </summary>
         /// <returns></returns>

@@ -74,29 +74,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         {
             throw new CommandCentralException("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", ErrorTypes.Validation);
         }
-
-        /// <summary>
-        /// Load
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<WatchInputReason>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<WatchInputReason>(id) }.ToList();
-                }
-            }
-        }
-
+        
         /// <summary>
         /// We do not implement a validator
         /// </summary>
