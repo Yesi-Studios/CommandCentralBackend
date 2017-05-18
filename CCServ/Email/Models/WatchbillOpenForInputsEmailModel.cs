@@ -19,7 +19,7 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The collection of those people who are not qualified for any watches on this watchbill.
         /// </summary>
-        public List<Entities.Person> NotQualledPerson
+        public List<Entities.Person> NotQualledPersons
         {
             get
             {
