@@ -19,63 +19,6 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
     public class WatchInputReason : EditableReferenceListItemBase
     {
         /// <summary>
-        /// Update or insert.
-        /// </summary>
-        /// <param name="item"></param>
-        /// <param name="token"></param>
-        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-                    var reason = item.CastJToken<WatchInputReason>();
-
-                    //Validate it.
-                    var result = reason.Validate();
-                    if (!result.IsValid)
-                        throw new AggregateException(result.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
-
-                    //Here, we're going to see if the value already exists.  
-                    //This is in response to a bug in which duplicate value entries will cause a bug.
-                    if (session.QueryOver<WatchInputReason>().Where(x => x.Value.IsInsensitiveLike(reason.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(reason.Value), ErrorTypes.Validation);
-
-                    var reasonFromDB = session.Get<WatchInputReason>(reason.Id);
-
-                    if (reasonFromDB == null)
-                    {
-                        reason.Id = Guid.NewGuid();
-                        session.Save(reason);
-                    }
-                    else
-                    {
-                        session.Merge(reason);
-                    }
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Delete
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="forceDelete"></param>
-        /// <param name="token"></param>
-        public override void Delete(Guid id, bool forceDelete, MessageToken token)
-        {
-            throw new CommandCentralException("Watch input reasons are not able to be deleted.  If you need it deleted, please contact the developers and remember to bring cookies as tribute.", ErrorTypes.Validation);
-        }
-        
-        /// <summary>
         /// We do not implement a validator
         /// </summary>
         /// <returns></returns>
@@ -119,6 +62,5 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                     .WithMessage("The value must not be null.");
             }
         }
-
     }
 }

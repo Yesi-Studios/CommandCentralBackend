@@ -9,6 +9,7 @@ using AtwoodUtils;
 using NHibernate.Metadata;
 using CCServ.Entities.ReferenceLists;
 using NHibernate.Criterion;
+using System.Reflection;
 
 namespace CCServ.ClientAccess.Endpoints
 {
@@ -107,6 +108,10 @@ namespace CCServ.ClientAccess.Endpoints
         {
             token.AssertLoggedIn();
 
+            //You have permission?
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
+                throw new CommandCentralException("You don't have permission to edit reference lists.", ErrorTypes.Authorization);
+
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
@@ -159,6 +164,10 @@ namespace CCServ.ClientAccess.Endpoints
         {
             token.AssertLoggedIn();
 
+            //You have permission?
+            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
+                throw new CommandCentralException("You don't have permission to edit reference lists.", ErrorTypes.Authorization);
+
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
@@ -210,37 +219,58 @@ namespace CCServ.ClientAccess.Endpoints
         /// Update or insert reference lists.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void DeleteReferenceList(MessageToken token)
+        private static void DeleteReferenceList(MessageToken token, DTOs.ReferenceListEndpoints.DeleteReferenceListItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("entityname", "id");
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
+                throw new CommandCentralException("You don't have permission to edit reference lists.", ErrorTypes.Authorization);
 
-            string entityName = token.Args["entityname"] as string;
-
-            //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
-            var metadata = DataAccess.NHibernateHelper.GetEntityMetadata(entityName);
-
-            //Ok, now let's see if it's a reference list.
-            if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
-                throw new CommandCentralException("Your id parameter was in the wrong format.", ErrorTypes.Validation);
-
-            bool forceDelete = false;
-            if (token.Args.ContainsKey("forcedelete"))
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                forceDelete = (bool)token.Args["forcedelete"];
-            }
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
 
-            (Activator.CreateInstance(metadata.GetMappedClass(NHibernate.EntityMode.Poco)) as EditableReferenceListItemBase)
-                .Delete(id, forceDelete, token);
+                        var item = session.Get<EditableReferenceListItemBase>(dto.Id) ??
+                            throw new CommandCentralException("That id did not point to a valid, editable reference list.", ErrorTypes.Validation);
+
+                        //Let's find all types that could reference this item.
+
+                        if (!dto.ForceDelete)
+                        {
+                            var typesThatContainedItemType = Assembly.GetExecutingAssembly().GetTypes()
+                                .Where(x => x.GetProperties().Count(y => y.PropertyType != null && y.PropertyType == item.GetType()) > 0);
+
+                            var multiCriteria = session.CreateMultiCriteria();
+
+                            foreach (var type in typesThatContainedItemType)
+                            {
+                                foreach (var info in type.GetProperties().Where(x => x.PropertyType == item.GetType()))
+                                {
+                                    multiCriteria.Add(session.CreateCriteria(type).Add(Restrictions.Eq(info.Name, item)));
+                                }
+                            }
+
+                            var results = multiCriteria.List();
+                        }
+
+                        session.Delete(item);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }
