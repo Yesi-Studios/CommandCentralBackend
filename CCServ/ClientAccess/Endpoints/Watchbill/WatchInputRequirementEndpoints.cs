@@ -40,37 +40,37 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         var highestLevelForWatchbill = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
 
-                        IEnumerable<Entities.Watchbill.WatchInputRequirement> persons;
+                        IEnumerable<Entities.Watchbill.WatchInputRequirement> inputRequirements;
 
                         switch (highestLevelForWatchbill)
                         {
                             case ChainOfCommandLevels.Command:
                                 {
-                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameCommandAs(token.AuthenticationSession.Person));
+                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameCommandAs(token.AuthenticationSession.Person));
 
                                     break;
                                 }
                             case ChainOfCommandLevels.Department:
                                 {
-                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(token.AuthenticationSession.Person));
+                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(token.AuthenticationSession.Person));
 
                                     break;
                                 }
                             case ChainOfCommandLevels.Division:
                                 {
-                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(token.AuthenticationSession.Person));
+                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(token.AuthenticationSession.Person));
 
                                     break;
                                 }
                             case ChainOfCommandLevels.Self:
                                 {
-                                    persons = watchbill.InputRequirements.Where(x => x.Person.Id == token.AuthenticationSession.Person.Id);
+                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.Id == token.AuthenticationSession.Person.Id);
 
                                     break;
                                 }
                             case ChainOfCommandLevels.None:
                                 {
-                                    persons = new List<Entities.Watchbill.WatchInputRequirement>();
+                                    inputRequirements = new List<Entities.Watchbill.WatchInputRequirement>();
 
                                     break;
                                 }
@@ -80,7 +80,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 }
                         }
 
-                        token.SetResult(new { Persons = persons });
+                        token.SetResult(new { InputRequirements = inputRequirements });
 
                         transaction.Commit();
                     }
