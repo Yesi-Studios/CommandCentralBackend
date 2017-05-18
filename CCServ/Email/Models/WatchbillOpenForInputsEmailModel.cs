@@ -14,6 +14,24 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The name or title of the watchbill referenced in the email.
         /// </summary>
-        public string Watchbill { get; set; }
+        public Entities.Watchbill.Watchbill Watchbill { get; set; }
+
+        /// <summary>
+        /// The collection of those people who are not qualified for any watches on this watchbill.
+        /// </summary>
+        public List<Entities.Person> NotQualledPerson
+        {
+            get
+            {
+                //We're also going to go see who is in the eligibility group and has no watch qualifications that pertain to this watchbill.
+                //First we need to know all the possible needed watch qualifications.
+                var watchQualifications = this.Watchbill.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications);
+
+                var personsWithoutAtLeastOneQualification = this.Watchbill.EligibilityGroup.EligiblePersons
+                    .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
+
+                return personsWithoutAtLeastOneQualification.ToList();
+            }
+        }
     }
 }

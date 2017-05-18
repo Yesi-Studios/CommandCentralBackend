@@ -195,7 +195,7 @@ namespace CCServ.Entities.Watchbill
                         var collateralEmailAddresses = persons.Select(x => 
                                     x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
 
-                        var model = new Email.Models.WatchbillOpenForInputsEmailModel { Watchbill = this.Title };
+                        var model = new Email.Models.WatchbillOpenForInputsEmailModel { Watchbill = this };
 
                         foreach (var addressGroup in collateralEmailAddresses)
                         {
