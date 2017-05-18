@@ -20,15 +20,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads a watch shift.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchShift(MessageToken token)
+        private static void LoadWatchShift(MessageToken token, DTOs.Watchbill.WatchShiftEndpoints.LoadWatchShift dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchShiftId))
-                throw new CommandCentralException("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -36,7 +33,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchShiftFromDB = session.Get<WatchShift>(watchShiftId) ??
+                        var watchShiftFromDB = session.Get<WatchShift>(dto.Id) ??
                             throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation);
 
                         token.SetResult(watchShiftFromDB);
