@@ -90,21 +90,23 @@ namespace CCServ.ClientAccess.Endpoints
                         }
                     }
 
-                        token.SetResult(result);
-                        return;
-                    }
+                    token.SetResult(result);
+                    return;
                 }
             }
+        }
 
-            var metadataWithEntityNames = new Dictionary<string, IClassMetadata>();
-
-            if (exclude)
-            {
-                //Here the client wants all reference list types that aren't the given ones.
-                if (editableOnly)
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Updates a reference list item.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="dto"></param>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        static void UpdateReferenceListItem(MessageToken token, DTOs.ReferenceListEndpoints.UpdateReferenceListItem dto)
+        {
+            token.AssertLoggedIn();
 
             //You have permission?
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
@@ -114,65 +116,40 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 using (var transaction = session.BeginTransaction())
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
+                    try
                     {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
+
+                        var item = session.Get<EditableReferenceListItemBase>(dto.Item.Id) ??
+                            throw new CommandCentralException("Your item's id was not a valid, editable reference list.", ErrorTypes.Validation);
+
+                        //Now let's look for duplicates that aren't the item we're talking about.
+                        int count = session.QueryOver<EditableReferenceListItemBase>(DataAccess.NHibernateHelper.GetEntityMetadata(item.GetType().Name).EntityName)
+                            .Where(x => x.Value.IsInsensitiveLike(item.Value) && x.Id != item.Id).RowCount();
+
+                        if (count != 0)
+                            throw new CommandCentralException("A list item already has that value.", ErrorTypes.Validation);
+
+                        //Now we just need assign the values and then do validation.
+                        item.Value = dto.Item.Value;
+                        item.Description = dto.Item.Description;
+
+                        var results = item.Validate();
+
+                        if (!results.IsValid)
+                            throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+
+                        //Ok so we passed validation.  Let's go ahead and conduct the update.
+                        session.Update(item);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
                     }
                 }
             }
-            else
-            {
-                if (editableOnly)
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
-                }
-                else
-                {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
-                        .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
-
-                    foreach (var metadata in metadatas)
-                    {
-                        metadataWithEntityNames.Add(metadata.Key, metadata.Value);
-                    }
-                }
-            }
-
-            //Now let's get the Id of the item the client wants.  This can be null, in which case, set the Guid to default and we'll go get multiple lists.
-            //If this isn't default afterwards, then the client may only request a single list.
-            Guid id = default(Guid);
-            if (token.Args.ContainsKey("id"))
-            {
-                if (!Guid.TryParse(token.Args["id"] as string, out id))
-                {
-                    throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
-                }
-            }
-
-            if (id != default(Guid) && entityNames.Count != 1)
-                throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation);
-
-            Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
-            //Cool we have a real item and an Id.  Now let's call its loader.
-            foreach (var metadata in metadataWithEntityNames)
-            {
-                var lists = (Activator.CreateInstance(metadata.Value.GetMappedClass(NHibernate.EntityMode.Poco)) as ReferenceListItemBase).Load(id, token);
-
-                lists.ForEach(x => NHibernate.NHibernateUtil.Initialize(x));
-
-                results.Add(metadata.Key, lists);
-            }
-
-            token.SetResult(results);
         }
 
         /// <summary>

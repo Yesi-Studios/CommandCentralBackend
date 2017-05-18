@@ -24,15 +24,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads a watch assignment.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchAssignment(MessageToken token)
+        private static void LoadWatchAssignment(MessageToken token, DTOs.Watchbill.WatchAssignmentEndpoints.LoadWatchAssignment dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchAssignmentId))
-                throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -40,7 +37,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchAssignmentFromDB = session.Get<WatchAssignment>(watchAssignmentId) ??
+                        var watchAssignmentFromDB = session.Get<WatchAssignment>(dto.Id) ??
                             throw new CommandCentralException("Your watch assignemnt's id was not valid.  Please consider creating it first.", ErrorTypes.Validation);
 
                         token.SetResult(watchAssignmentFromDB);
@@ -62,24 +59,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads all watch assignments by certain criteria.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void SearchWatchAssignments(MessageToken token)
+        private static void SearchWatchAssignments(MessageToken token, DTOs.Watchbill.WatchAssignmentEndpoints.SearchWatchAssignments dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("filters");
 
-            //Get the filters!
-            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
-
-            //Make sure all the keys are real
-            foreach (var key in filters.Keys)
-            {
-                if (!typeof(WatchAssignment).GetProperties().Select(x => x.Name).Contains(key, StringComparer.CurrentCultureIgnoreCase))
-                    throw new CommandCentralException("One or more properties you tried to search were not real.", ErrorTypes.Validation);
-            }
-
-            var convertedFilters = filters.ToDictionary(
+            var convertedFilters = dto.Filters.ToDictionary(
                     x => (MemberInfo)PropertySelector.SelectPropertyFrom<WatchAssignment>(x.Key),
                     x => x.Value);
 
@@ -136,21 +123,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Swaps a number of watch assignments.  Watch assignments may only be swapped if there are two.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void SwapWatchAssignments(MessageToken token)
+        private static void SwapWatchAssignments(MessageToken token, DTOs.Watchbill.WatchAssignmentEndpoints.SwapWatchAssignments dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id1", "id2");
-
-            if (!Guid.TryParse(token.Args["id1"] as string, out Guid id1) ||
-                !Guid.TryParse(token.Args["id2"] as string, out Guid id2))
-            {
-                throw new CommandCentralException("One or more of your ids were in the wrong format.", ErrorTypes.Validation);
-            }
-
-            if (id1 == id2)
-                throw new CommandCentralException("Both ids may not be equal.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -158,10 +136,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var ass1 = session.Get<WatchAssignment>(id1) ??
+                        var ass1 = session.Get<WatchAssignment>(dto.Id1) ??
                             throw new CommandCentralException("Your first watch assignment id was not valid.", ErrorTypes.Validation);
 
-                        var ass2 = session.Get<WatchAssignment>(id2) ??
+                        var ass2 = session.Get<WatchAssignment>(dto.Id2) ??
                             throw new CommandCentralException("Your second watch assignment id was not valid.", ErrorTypes.Validation);
 
                         if (ass1.WatchShift.WatchAssignment == null || ass1.WatchShift.WatchAssignment == null)

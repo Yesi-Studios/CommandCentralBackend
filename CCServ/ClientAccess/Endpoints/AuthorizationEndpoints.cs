@@ -31,19 +31,16 @@ namespace CCServ.ClientAccess.Endpoints
         /// Returns all permission group definitions to the client for the specific client.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadPermissionGroupsByPerson(MessageToken token)
+        private static void LoadPermissionGroupsByPerson(MessageToken token, DTOs.AuthorizationEndpoints.LoadPermissionGroupsByPerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid");
-
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("The person id you send was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var person = session.Get<Person>(personId) ??
+                var person = session.Get<Person>(dto.PersonId) ??
                     throw new CommandCentralException("The person id you sent was not correct.", ErrorTypes.Validation);
 
                 //Get the person's permissions and then add the defaults.
@@ -70,29 +67,13 @@ namespace CCServ.ClientAccess.Endpoints
         /// Edits the permission groups a person is a part of.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdatePermissionGroupsByPerson(MessageToken token)
+        private static void UpdatePermissionGroupsByPerson(MessageToken token, DTOs.AuthorizationEndpoints.UpdatePermissionGroupsByPerson dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("personid", "permissiongroups");
 
-            //Get the person's Id.
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
-                throw new CommandCentralException("Your person Id parameter was in the wrong format.", ErrorTypes.Validation);
-
-            List<string> desiredPermissionGroups = null;
-
-            //Get the list of permission group names.
-            try
-            {
-                desiredPermissionGroups = token.Args["permissiongroups"].CastJToken<List<string>>();
-            }
-            catch
-            {
-                //If that cast failed.
-                throw new CommandCentralException("Your 'permissiongroups' parameter was in the wrong format.", ErrorTypes.Validation);
-            }
 
             //Now we load the person and begin the permissions edit.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -101,7 +82,7 @@ namespace CCServ.ClientAccess.Endpoints
                 try
                 {
                     //Get the person and check if the id was legit.
-                    var person = session.Get<Person>(personId) ??
+                    var person = session.Get<Person>(dto.PersonId) ??
                         throw new CommandCentralException("Your person Id parameter was wrong. lol.", ErrorTypes.Validation);
 
                     //Get the current permission groups the person is a part of.
@@ -111,7 +92,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
 
                     //Now determine what permissions the client wants to change.
-                    var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First()).ToList();
+                    var changes = currentGroups.Concat(dto.PermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First()).ToList();
 
                     //Now go through all the requested changes and make sure the client can make them.
                     List<string> failures = new List<string>();
@@ -125,7 +106,7 @@ namespace CCServ.ClientAccess.Endpoints
                         else
                         {
                             //Here we get the group the client is trying to edit.  We know the client is allowed to edit its membership at this point.
-                            var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.SafeEquals(groupName));
+                            var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.InsensitiveEquals(groupName));
 
                             var highestPermissionLevelInGroups = resolvedPermissions.HighestLevels
                                 .Where(x => group.ChainsOfCommandMemberOf.Select(y => y.ToString()).Contains(x.Key, StringComparer.CurrentCultureIgnoreCase))
@@ -229,7 +210,7 @@ namespace CCServ.ClientAccess.Endpoints
                         throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization);
 
                     //Now make sure we don't try to save the default permissions.
-                    person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
+                    person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => dto.PermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();
 
                     //We also need to add the changes to the person.
                     person.Changes.Add(new Change
