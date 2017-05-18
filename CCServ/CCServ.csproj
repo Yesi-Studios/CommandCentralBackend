@@ -412,7 +412,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Email\Templates\UpcomingWatch_HTML.html" />
+    <EmbeddedResource Include="Email\Templates\UpcomingWatch_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\WatchInputRequirements_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
