@@ -10,6 +10,88 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
     static class WatchInputRequirementEndpoints
     {
 
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Loads all those input requirements for which the client is responsible.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadInputRequirementsResponsibleFor(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchbillid");
+
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
+
+                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
+
+                        var highestLevelForWatchbill = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+
+                        IEnumerable<Entities.Watchbill.WatchInputRequirement> persons;
+
+                        switch (highestLevelForWatchbill)
+                        {
+                            case ChainOfCommandLevels.Command:
+                                {
+                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameCommandAs(token.AuthenticationSession.Person));
+
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Department:
+                                {
+                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(token.AuthenticationSession.Person));
+
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Division:
+                                {
+                                    persons = watchbill.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(token.AuthenticationSession.Person));
+
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Self:
+                                {
+                                    persons = watchbill.InputRequirements.Where(x => x.Person.Id == token.AuthenticationSession.Person.Id);
+
+                                    break;
+                                }
+                            case ChainOfCommandLevels.None:
+                                {
+                                    persons = new List<Entities.Watchbill.WatchInputRequirement>();
+
+                                    break;
+                                }
+                            default:
+                                {
+                                    throw new NotImplementedException("Fell to the default case in the chain of command switch of the LoadInputRequirementsResponsibleFor endpoint.");
+                                }
+                        }
+
+                        token.SetResult(new { Persons = persons });
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
