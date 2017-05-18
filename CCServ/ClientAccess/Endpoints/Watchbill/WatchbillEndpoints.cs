@@ -20,33 +20,20 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Loads a watchbill.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchbill(MessageToken token)
+        private static void LoadWatchbill(MessageToken token, DTOs.Watchbill.WatchbillEndpoints.LoadWatchbill dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
-
-            bool doPopulation = false;
-            if (token.Args.ContainsKey("dopopulation"))
-            {
-                bool? test = token.Args["dopopulation"] as bool?;
-                if (test.HasValue)
-                    doPopulation = test.Value;
-                else
-                    throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation);
-            }
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(dto.Id) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
-                if (doPopulation)
+                if (dto.DoPopulation)
                 {
                     //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
                     //but we may as well restrict it because the population method is very expensive.
@@ -128,23 +115,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Creates a watchbill.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreateWatchbill(MessageToken token)
+        private static void CreateWatchbill(MessageToken token, DTOs.Watchbill.WatchbillEndpoints.CreateWatchbill dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("title", "eligibilitygroupid", "range");
-
-            var title = token.Args["title"] as string;
-
-            if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
-                throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
-
-            var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
-                .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
-                throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
-
-            var range = token.Args["range"].CastJToken<TimeRange>();
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
@@ -155,9 +131,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 Id = Guid.NewGuid(),
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
-                Title = title,
-                EligibilityGroup = elGroup,
-                Range = range
+                Title = dto.Title,
+                EligibilityGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.First(x => x.Id == dto.EligibilityGroupId),
+                Range = dto.Range
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
