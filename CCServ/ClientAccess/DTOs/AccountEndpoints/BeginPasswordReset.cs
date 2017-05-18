@@ -38,7 +38,7 @@ namespace CCServ.ClientAccess.DTOs.AccountEndpoints
         /// <param name="obj"></param>
         public BeginPasswordReset(JObject obj) : base(obj)
         {
-            //testfghrty
+            
         }
 
         class Validator : AbstractValidator<BeginPasswordReset>
