@@ -20,28 +20,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// The method responsible for editing the membership of an eligibility group.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void EditWatchEligibilityGroupMembership(MessageToken token)
+        private static void EditWatchEligibilityGroupMembership(MessageToken token, DTOs.Watchbill.WatchEligibilityGroupEndpoints.EditWatchEligibilityGroupMembership dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id", "personids");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid elGroupId))
-                throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
-
-            var idsToken = token.Args["personids"].CastJToken();
-
-            if (idsToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
-                throw new CommandCentralException("Your ids were not in an array.", ErrorTypes.Validation);
-
-            var ids = idsToken.Select(rawId =>
-            {
-                if (!Guid.TryParse(rawId.ToString(), out Guid personId))
-                    throw new CommandCentralException("One or more of your person ids were in the wrong format.", ErrorTypes.Validation);
-
-                return personId;
-            }).ToList();
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -49,16 +33,16 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var groupFromDB = session.Get<WatchEligibilityGroup>(elGroupId) ??
+                        var groupFromDB = session.Get<WatchEligibilityGroup>(dto.Id) ??
                             throw new CommandCentralException("Your eligibility group's id was not valid.", ErrorTypes.Validation);
 
                         //Let's make sure that all of them are real people.
                         var persons = session.QueryOver<Entities.Person>()
                             .WhereRestrictionOn(x => x.Id)
-                            .IsIn(ids.ToArray())
+                            .IsIn(dto.PersonIds.ToArray())
                             .List();
 
-                        if (persons.Count != ids.Count)
+                        if (persons.Count != dto.PersonIds.Count)
                             throw new CommandCentralException("One or more of the persons in your eligibility group were not valid.", ErrorTypes.Validation);
 
                         //Now we just need to make sure the client is in the command level of the group's chain of command.
