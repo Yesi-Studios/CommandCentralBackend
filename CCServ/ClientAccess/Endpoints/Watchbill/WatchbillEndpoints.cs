@@ -82,10 +82,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             ShiftType = shift.ShiftType,
                             Title = shift.Title,
                             WatchAssignment = shift.WatchAssignment,
-                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id },
-                            WatchInputs = shift.WatchInputs
+                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id }
                         };
-                    })
+                    }),
+                    watchbillFromDB.WatchInputs
                 });
             }
         }

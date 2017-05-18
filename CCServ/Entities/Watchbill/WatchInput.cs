@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
+using AtwoodUtils;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -21,11 +22,6 @@ namespace CCServ.Entities.Watchbill
         /// The unique Id of this watch input.
         /// </summary>
         public virtual Guid Id { get; set; }
-
-        /// <summary>
-        /// These are the watch shifts for which this watch input will apply.
-        /// </summary>
-        public virtual IList<WatchShift> WatchShifts { get; set; }
 
         /// <summary>
         /// This is the reason for which the person says they can not stand the watch.
@@ -67,6 +63,11 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public virtual bool IsConfirmed { get; set; }
 
+        /// <summary>
+        /// The range of time for which the person is not eligible to stand watch.
+        /// </summary>
+        public virtual TimeRange Range { get; set; }
+
         #endregion
 
         /// <summary>
@@ -91,7 +92,11 @@ namespace CCServ.Entities.Watchbill
                     .KeyColumn("EntityOwner_id")
                     .ForeignKeyConstraintName("none");
 
-                HasManyToMany(x => x.WatchShifts).Inverse();
+                Component(x => x.Range, x =>
+                {
+                    x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
+                    x.Map(y => y.End).Not.Nullable().CustomType<UtcDateTimeType>();
+                });
 
                 Map(x => x.DateConfirmed).CustomType<UtcDateTimeType>();
                 Map(x => x.DateSubmitted).Not.Nullable().CustomType<UtcDateTimeType>();
@@ -114,16 +119,8 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.SubmittedBy).NotEmpty();
                 RuleFor(x => x.DateSubmitted).NotEmpty();
 
-                RuleFor(x => x.WatchShifts).NotEmpty();
+                RuleFor(x => x.Range).Must(x => x.Start <= x.End).WithMessage("The start date of your range must be before your end date.");
                 RuleFor(x => x.Comments).SetCollectionValidator(new Comment.CommentValidator());
-
-                /*When(x => x.ConfirmedBy != null || x.DateConfirmed.HasValue || x.DateConfirmed.Value != default(DateTime) || x.IsConfirmed, () =>
-                {
-                    RuleFor(x => x.DateConfirmed).NotEmpty();
-                    RuleFor(x => x.DateConfirmed).Must(x => x.Value != default(DateTime));
-                    RuleFor(x => x.IsConfirmed).Must(x => x == true);
-                    RuleFor(x => x.ConfirmedBy).NotEmpty();
-                });*/
             }
         }
     }

@@ -301,6 +301,67 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Sets teh given watch assignment as acknowledged by the client.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void AcknowledgeWatchAssignment(MessageToken token)
+        {
+            token.AssertLoggedIn();
+
+            token.Args.AssertContainsKeys("id");
+
+            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+                throw new CommandCentralException("Your assignment id was not in the right format.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var assignment = session.Get<WatchAssignment>(id) ??
+                            throw new CommandCentralException("Your assignment id was not valid.", ErrorTypes.Validation);
+
+                        var watchbill = assignment.WatchShift.Watchbill;
+
+                        if (watchbill.CurrentState != WatchbillStatuses.Published)
+                            throw new CommandCentralException("You may not acknowledge a watch assignment until the watchbill has been published.", ErrorTypes.Validation);
+
+                        //Now let's confirm that our client is allowed to submit inputs for this person.
+                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
+                            .Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
+
+                        if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
+                            throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
+                                "If this is your own input and you need to change the date range, " +
+                                "please delete the input and then re-create it for the proper range.",
+                                ErrorTypes.Authorization);
+
+                        if (assignment.IsAcknowledged)
+                            return;
+
+                        assignment.IsAcknowledged = true;
+                        assignment.AcknowledgedBy = token.AuthenticationSession.Person;
+                        assignment.DateAcknowledged = token.CallTime;
+
+                        session.Update(assignment);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Inserts a number of watch assignments.
         /// </summary>
         /// <param name="token"></param>

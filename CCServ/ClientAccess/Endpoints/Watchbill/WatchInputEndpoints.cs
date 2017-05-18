@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities.ReferenceLists.Watchbill;
+using NHibernate.Criterion;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -57,68 +58,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Loads all watch inputs for a given watchbill.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadWatchInputs(MessageToken token)
-        {
-            token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbillid");
-
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchnill's id parameter's format was invalid.", ErrorTypes.Validation);
-
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                using (var transaction = session.BeginTransaction())
-                {
-                    try
-                    {
-                        var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation))
-                            .WatchShifts.SelectMany(x => x.WatchInputs)
-                            .Distinct()
-                            .Select(watchInput => new
-                            {
-                                watchInput.Comments,
-                                watchInput.ConfirmedBy,
-                                watchInput.DateConfirmed,
-                                watchInput.DateSubmitted,
-                                watchInput.Id,
-                                watchInput.InputReason,
-                                watchInput.IsConfirmed,
-                                watchInput.Person,
-                                watchInput.SubmittedBy,
-                                WatchShifts = watchInput.WatchShifts.Select(watchShift => new
-                                {
-                                    watchShift.Comments,
-                                    watchShift.Id,
-                                    watchShift.Points,
-                                    watchShift.Range,
-                                    watchShift.ShiftType,
-                                    watchShift.Title
-                                })
-                            });
-
-
-                        token.SetResult(watchinputs);
-
-                        transaction.Commit();
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
-        /// <para />
         /// Creates multiple watch inputs.
         /// </summary>
         /// <param name="token"></param>
@@ -127,7 +66,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchInputs(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchinputs");
+            token.Args.AssertContainsKeys("watchinputs", "watchbillid");
+
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchbill id was not in the right format.", ErrorTypes.Validation);
 
             var inputsToken = token.Args["watchinputs"].CastJToken();
 
@@ -142,18 +84,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 if (!Guid.TryParse(input["person"]?.Value<string>("Id"), out Guid personId))
                     throw new CommandCentralException("Your person id was in the wrong format.", ErrorTypes.Validation);
 
-                var watchShiftIds = new List<Guid>();
-
-                foreach (var shift in input["WatchShifts"])
-                {
-                    watchShiftIds.Add(Guid.Parse(shift.Value<string>("Id")));
-                }
+                var range = input["Range"].CastJToken<TimeRange>();
 
                 var newInput = new
                 {
                     InputReasonId = inputReasonId,
                     PersonId = personId,
-                    WatchShiftIds = watchShiftIds
+                    Range = range
                 };
 
                 return newInput;
@@ -167,9 +104,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     {
                         foreach (var input in inputsFromClient)
                         {
-
-                            
-
                             //First, let's get the person the client is talking about.
                             var personFromDB = session.Get<Entities.Person>(input.PersonId) ??
                                 throw new CommandCentralException("The person Id given by an input was not valid.", ErrorTypes.Validation);
@@ -181,19 +115,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                                 .Resolve(token.AuthenticationSession.Person, personFromDB);
 
-                            //Now we just have to be certain that the watch shifts are all real and from the same watchbill.
-                            var watchShiftsFromDB = session.QueryOver<WatchShift>()
-                                .WhereRestrictionOn(x => x.Id)
-                                .IsIn(input.WatchShiftIds.Cast<object>().ToArray())
-                                .List();
-
-                            if (watchShiftsFromDB.Count != input.WatchShiftIds.Count)
-                                throw new CommandCentralException("One or more of your watch shifts' Ids were invalid.", ErrorTypes.Validation);
-
                             //Now we just need to walk the watchbill references.
-                            var watchbill = watchShiftsFromDB.First().Watchbill;
-                            if (watchShiftsFromDB.Any(x => x.Watchbill.Id != watchbill.Id))
-                                throw new CommandCentralException("Your requested watch inputs were not all for the same watchbill.", ErrorTypes.Validation);
+                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                                throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
                             if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
                                 && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
@@ -210,7 +134,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 InputReason = reasonFromDB,
                                 Person = personFromDB,
                                 SubmittedBy = token.AuthenticationSession.Person,
-                                WatchShifts = watchShiftsFromDB
+                                Range = input.Range
                             };
 
                             //We also need to find the input requirement for this person and update that.
@@ -220,10 +144,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             if (!inputRequirement.IsAnswered)
                                 inputRequirement.IsAnswered = true;
 
-                            foreach (var shift in watchShiftsFromDB)
-                            {
-                                shift.WatchInputs.Add(inputToInsert);
-                            }
+                            watchbill.WatchInputs.Add(inputToInsert);
 
                             session.Update(watchbill);
                         }
@@ -264,11 +185,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
+                        var watchbill = session.QueryOver<Entities.Watchbill.Watchbill>()
+                            .Where(x => x.WatchInputs.Any(y => y.Id == id))
+                            .SingleOrDefault() ??
+                            throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Ok let's swap the properties now.
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
@@ -328,7 +252,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
+                        var watchbill = session.QueryOver<Entities.Watchbill.Watchbill>()
+                            .Where(x => x.WatchInputs.Any(y => y.Id == id))
+                            .SingleOrDefault() ??
+                            throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
@@ -346,11 +273,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 "please delete the input and then re-create it for the proper range.",
                                 ErrorTypes.Authorization);
 
-                        foreach (var shift in watchInputFromDB.WatchShifts)
-                        {
-                            shift.WatchInputs.Remove(watchInputFromDB);
-                            session.Update(shift);
-                        }
+                        watchbill.WatchInputs.Remove(watchInputFromDB);
+
+                        session.Update(watchbill);
 
                         transaction.Commit();
                     }

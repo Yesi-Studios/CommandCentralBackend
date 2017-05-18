@@ -58,6 +58,11 @@ namespace CCServ.Entities.Watchbill
         public virtual IList<WatchShift> WatchShifts { get; set; } = new List<WatchShift>();
 
         /// <summary>
+        /// The list of all watch inputs on this watchbill.
+        /// </summary>
+        public virtual IList<WatchInput> WatchInputs { get; set; } = new List<WatchInput>();
+
+        /// <summary>
         /// The min and max dates of the watchbill.
         /// </summary>
         public virtual TimeRange Range { get; set; }
@@ -119,6 +124,7 @@ namespace CCServ.Entities.Watchbill
             if (desiredState == WatchbillStatuses.Initial)
             {
                 this.InputRequirements.Clear();
+                this.WatchInputs.Clear();
 
                 foreach (var shift in this.WatchShifts)
                 {
@@ -127,8 +133,6 @@ namespace CCServ.Entities.Watchbill
                         session.Delete(shift.WatchAssignment);
                         shift.WatchAssignment = null;
                     }
-
-                    shift.WatchInputs.Clear();
                 }
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
@@ -495,7 +499,10 @@ namespace CCServ.Entities.Watchbill
                         //Determine who is about to stand this watch.
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
-                            if (shiftsForThisGroup[x].WatchInputs.Any() && shiftsForThisGroup[x].WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
+                            if (this.WatchInputs.Any(input => input.IsConfirmed && 
+                            input.Person.Id == person.Id && 
+                            new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
+                                .OverlapsWith(new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End, true))))
                                 return false;
 
                             if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
@@ -533,8 +540,10 @@ namespace CCServ.Entities.Watchbill
                 {
                     if (!assignablePersonsByDepartment.Any() || !assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
                     {
-
-                        if (shift.WatchInputs.Any() && shift.WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
+                        if (this.WatchInputs.Any(input => input.IsConfirmed &&
+                            input.Person.Id == person.Id &&
+                            new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
+                                .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
                             return false;
 
                         if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
@@ -687,6 +696,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.EligibilityGroup).Not.Nullable();
 
                 HasMany(x => x.WatchShifts).Cascade.AllDeleteOrphan();
+                HasMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
 
                 Map(x => x.Title).Not.Nullable();
@@ -729,6 +739,7 @@ namespace CCServ.Entities.Watchbill
 
                     List<string> errorElements = new List<string>();
 
+                    //Make sure that none of the shifts overlap.
                     foreach (var group in shiftsByType)
                     {
                         var shifts = group.ToList();
@@ -744,6 +755,15 @@ namespace CCServ.Entities.Watchbill
                                 }
                             }
                         }
+                    }
+
+                    var watchbillTimeRange = new Itenso.TimePeriod.TimeRange(watchbill.Range.Start, watchbill.Range.End, true);
+
+                    //Now we're going to make sure that all the inputs are within the watchbill range.  It's ok if they overlap though.
+                    foreach (var input in watchbill.WatchInputs)
+                    {
+                        if (!watchbillTimeRange.HasInside(new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)))
+                            errorElements.Add("One or more inputs are outside the range of the watchbill.");
                     }
 
                     if (errorElements.Any())
