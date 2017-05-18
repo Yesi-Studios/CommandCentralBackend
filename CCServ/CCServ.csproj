@@ -466,7 +466,9 @@
   <ItemGroup>
     <Content Include="Email\Templates\UpcomingWatch_HTML.html" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
