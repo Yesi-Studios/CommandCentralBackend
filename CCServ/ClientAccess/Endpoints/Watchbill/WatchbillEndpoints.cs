@@ -60,6 +60,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                 }
 
+                //We're also going to go see who is in the eligibility group and has no watch qualifications that pertain to this watchbill.
+                //First we need to know all the possible needed watch qualifications.
+                var watchQualifications = watchbillFromDB.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications);
+
+                var personsWithoutAtLeastOneQualification = watchbillFromDB.EligibilityGroup.EligiblePersons
+                    .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
+
                 token.SetResult(new
                 {
                     watchbillFromDB.CreatedBy,
@@ -82,10 +89,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             ShiftType = shift.ShiftType,
                             Title = shift.Title,
                             WatchAssignment = shift.WatchAssignment,
-                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id },
-                            WatchInputs = shift.WatchInputs
+                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id }
                         };
-                    })
+                    }),
+                    watchbillFromDB.WatchInputs,
+                    NotQualledPersons = personsWithoutAtLeastOneQualification
                 });
             }
         }

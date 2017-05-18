@@ -44,11 +44,6 @@ namespace CCServ.Entities.Watchbill
         public virtual TimeRange Range { get; set; } = new TimeRange();
 
         /// <summary>
-        /// The watch inputs that have been given for this shift.  This is all the persons that have said they can not stand this shift and their given reasons.
-        /// </summary>
-        public virtual IList<WatchInput> WatchInputs { get; set; } = new List<WatchInput>();
-
-        /// <summary>
         /// The list of all the assignments for this shift.  Only one assignment should be considered the current assignment while the rest should be only historical.
         /// <para />
         /// An empty collection here indicates this shift has not yet been assigned.
@@ -107,8 +102,6 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.WatchAssignment).Cascade.All();
                 References(x => x.Watchbill);
 
-                HasManyToMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
-
                 Map(x => x.Title).Not.Nullable();
                 Map(x => x.Points).Not.Nullable();
                 Component(x => x.Range, x =>
@@ -132,7 +125,6 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.Points).GreaterThanOrEqualTo(0);
                 RuleFor(x => x.ShiftType).NotEmpty();
                 RuleFor(x => x.Title).NotEmpty().Length(1, 50);
-                RuleFor(x => x.WatchInputs).SetCollectionValidator(new WatchInput.WatchInputValidator());
 
                 Custom(watchShift =>
                 {

@@ -186,7 +186,32 @@
 
                             <div style="Margin-right: 10px; Margin-left: 10px;">
                                 <div style="line-height: 10px; font-size: 1px">&nbsp;</div>
-                                <div style="font-size:12px;line-height:14px;color:#555555;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;"><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Hello,</span></p><p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">You are receiving this email because you are a watchbill coordinator on the watchbill, @Model.Watchbill. &nbsp;That watchbill is now accepting inputs from all personnel who are eligible to stand watch on it. &nbsp;Those people have also been sent an email in accordance with their contact preferences on Command Central informing them of this requirement.</span></p><p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Sincerely,</span></p><p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">The Command Central Team</span></p></div>
+                                <div style="font-size:12px;line-height:14px;color:#555555;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;">
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Hello,</span></p>
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p>
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">
+                                            You are receiving this email because you are a watchbill coordinator on the watchbill, @Model.Watchbill.Title. &nbsp;That watchbill is now accepting inputs from all personnel who are eligible to stand watch on it. &nbsp;Those people have also been sent an email in accordance with their contact preferences on Command Central informing them of this requirement.
+                                        </span>
+                                    </p>
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">
+                                            Additionally, the following personnel are eligible to stand watch on this watchbill; however, they do not have any qualifications listed in their profiles.  It is important that their profiles either be updated with the correct information, they be removed from the eligibility group, or they complete their required qualifications.
+                                        </span>
+                                    </p>
+                                    <center><p style="margin: 20px 5px 20px 5px;font-size: 20px;line-height: 14px">Personnel Without Qualifications</p></center>
+                                    @{
+                                        foreach (var person in Model.NotQualledPersons)
+                                        {
+                                            text = person.ToString();
+                                            <center><p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p></center>
+                                        }
+                                    }
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p>
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                        <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Sincerely,</span></p>
+                                    <p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p><p style="margin: 0;font-size: 12px;line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">The Command Central Team</span></p></div>
                                 <div style="line-height: 10px; font-size: 1px">&nbsp;</div>
                             </div>
 
