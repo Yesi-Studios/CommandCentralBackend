@@ -17,21 +17,18 @@ namespace CCServ.ClientAccess.DTOs.AccountEndpoints
         /// <summary>
         /// The .mil email address of the client.
         /// </summary>
-        [Required]
         [Description("The .mil email address of the client.")]
         public string Email { get; set; }
 
         /// <summary>
         /// The SSN of the client.  This is expected to not have any characters except numbers.
         /// </summary>
-        [Required]
         [Description("The SSN of the client.  This is expected to not have any characters except numbers.")]
         public string SSN { get; set; }
 
         /// <summary>
         /// The link to put in the email which the client will click on to continue the password reset process.
         /// </summary>
-        [Required]
         [Description("The link to put in the email which the client will click on to continue the password reset process.")]
         public string ContinueLink { get; set; }
 

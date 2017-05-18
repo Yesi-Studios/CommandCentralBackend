@@ -18,14 +18,12 @@ namespace CCServ.ClientAccess.DTOs.AccountEndpoints
         /// <summary>
         /// This is the user's password.
         /// </summary>
-        [Required]
         [Description("The user's password.")]
         public string Password { get; set; }
 
         /// <summary>
         /// The user's username.
         /// </summary>
-        [Required]
         [Description("The user's username.")]
         public string Username { get; set; }
 

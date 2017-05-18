@@ -13,30 +13,6 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
     /// </summary>
     public class WatchbillStatus : ReferenceListItemBase
     {
-
-        /// <summary>
-        /// Loads all objects or a single object if given an Id.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
-        {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
-            {
-                if (id == default(Guid))
-                {
-                    return session.QueryOver<WatchbillStatus>()
-                        .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
-                        .List<ReferenceListItemBase>().ToList();
-                }
-                else
-                {
-                    return new[] { (ReferenceListItemBase)session.Get<WatchbillStatus>(id) }.ToList();
-                }
-            }
-        }
-
         /// <summary>
         /// Maps this object to the database.
         /// </summary>

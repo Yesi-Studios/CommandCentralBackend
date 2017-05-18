@@ -8,6 +8,7 @@ using CCServ.Authorization;
 using AtwoodUtils;
 using NHibernate.Metadata;
 using CCServ.Entities.ReferenceLists;
+using NHibernate.Criterion;
 
 namespace CCServ.ClientAccess.Endpoints
 {
@@ -97,33 +98,110 @@ namespace CCServ.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// Update or insert reference lists.
+        /// Updates a reference list item.
         /// </summary>
         /// <param name="token"></param>
-        /// <returns></returns>
+        /// <param name="dto"></param>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateOrInsertReferenceList(MessageToken token)
+        static void UpdateReferenceListItem(MessageToken token, DTOs.ReferenceListEndpoints.UpdateReferenceListItem dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("entityname", "item");
 
-            //You have permission?
-            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
-                throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
-            
-            string entityName = token.Args["entityname"] as string;
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
 
-            //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
-            var metadata = DataAccess.NHibernateHelper.GetEntityMetadata(entityName);
+                        var item = session.Get<EditableReferenceListItemBase>(dto.Item.Id) ??
+                            throw new CommandCentralException("Your item's id was not a valid, editable reference list.", ErrorTypes.Validation);
 
-            //Ok, now let's see if it's a reference list.
-            if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
-                throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
-            
-            var item = token.Args["item"].CastJToken();
+                        //Now let's look for duplicates that aren't the item we're talking about.
+                        int count = session.QueryOver<EditableReferenceListItemBase>(DataAccess.NHibernateHelper.GetEntityMetadata(item.GetType().Name).EntityName)
+                            .Where(x => x.Value.IsInsensitiveLike(item.Value) && x.Id != item.Id).RowCount();
 
-            (Activator.CreateInstance(metadata.GetMappedClass(NHibernate.EntityMode.Poco)) as EditableReferenceListItemBase)
-                .UpdateOrInsert(item, token);
+                        if (count != 0)
+                            throw new CommandCentralException("A list item already has that value.", ErrorTypes.Validation);
+
+                        //Now we just need assign the values and then do validation.
+                        item.Value = dto.Item.Value;
+                        item.Description = dto.Item.Description;
+
+                        var results = item.Validate();
+
+                        if (!results.IsValid)
+                            throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+
+                        //Ok so we passed validation.  Let's go ahead and conduct the update.
+                        session.Update(item);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Creates a reference list item.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="dto"></param>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        static void CreateReferenceListItem(MessageToken token, DTOs.ReferenceListEndpoints.CreateReferenceListItem dto)
+        {
+            token.AssertLoggedIn();
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+
+                        var metadata = DataAccess.NHibernateHelper.GetEntityMetadata(dto.EntityName);
+
+                        //Ok, now let's see if it's a reference list.
+                        if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
+                            throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
+
+                        //Now let's look for duplicates that aren't the item we're talking about.
+                        int count = session.QueryOver<EditableReferenceListItemBase>(metadata.EntityName)
+                            .Where(x => x.Value.IsInsensitiveLike(dto.Value)).RowCount();
+
+                        if (count != 0)
+                            throw new CommandCentralException("A list item already has that value.", ErrorTypes.Validation);
+
+                        var item = (EditableReferenceListItemBase)Activator.CreateInstance(metadata.GetMappedClass(NHibernate.EntityMode.Poco));
+
+                        item.Id = Guid.NewGuid();
+                        item.Value = dto.Value;
+                        item.Description = dto.Description;
+
+                        var results = item.Validate();
+
+                        if (!results.IsValid)
+                            throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+
+                        //Ok so we passed validation.  Let's go ahead and conduct the update.
+                        session.Save(item);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
 
         /// <summary>
