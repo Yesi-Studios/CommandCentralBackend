@@ -52,14 +52,19 @@ namespace CCServ.Entities.Watchbill
         public virtual Person LastStateChangedBy { get; set; }
 
         /// <summary>
-        /// The collection of all the watch days that make up this watchbill.  Together, they should make en entire watchbill but not necessarily an entire month.
+        /// The list of all watch shifts that exist on this watchbill.
         /// </summary>
-        public virtual IList<WatchDay> WatchDays { get; set; }
+        public virtual IList<WatchShift> WatchShifts { get; set; } = new List<WatchShift>();
+
+        /// <summary>
+        /// The min and max dates of the watchbill.
+        /// </summary>
+        public virtual TimeRange Range { get; set; }
 
         /// <summary>
         /// The collection of requirements.  This is how we know who needs to provide inputs and who is available to be on this watchbill.
         /// </summary>
-        public virtual IList<WatchInputRequirement> InputRequirements { get; set; }
+        public virtual IList<WatchInputRequirement> InputRequirements { get; set; } = new List<WatchInputRequirement>();
 
         /// <summary>
         /// The command at which this watchbill was created.
@@ -82,8 +87,6 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         public Watchbill()
         {
-            WatchDays = new List<WatchDay>();
-            InputRequirements = new List<WatchInputRequirement>();
         }
 
         #endregion
@@ -116,18 +119,15 @@ namespace CCServ.Entities.Watchbill
             {
                 this.InputRequirements.Clear();
 
-                foreach (var watchDay in this.WatchDays)
+                foreach (var shift in this.WatchShifts)
                 {
-                    foreach (var shift in watchDay.WatchShifts)
+                    if (shift.WatchAssignment != null)
                     {
-                        if (shift.WatchAssignment != null)
-                        {
-                            session.Delete(shift.WatchAssignment);
-                            shift.WatchAssignment = null;
-                        }
-
-                        shift.WatchInputs.Clear();
+                        session.Delete(shift.WatchAssignment);
+                        shift.WatchAssignment = null;
                     }
+
+                    shift.WatchInputs.Clear();
                 }
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
@@ -277,7 +277,7 @@ namespace CCServ.Entities.Watchbill
                 if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.ClosedForInputs)
                     throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
 
-                if (!this.WatchDays.All(x => x.WatchShifts.All(y => y.WatchAssignment != null)))
+                if (!this.WatchShifts.All(y => y.WatchAssignment != null))
                 {
                     throw new Exception("A watchbill may not move into the 'Under Review' state unless the all watch shifts have been assigned.");
                 }
@@ -342,8 +342,7 @@ namespace CCServ.Entities.Watchbill
                     throw new Exception("You may not move to the published state from anything other than the under review state.");
 
                 //Let's send an email to each person who is on watch, informing them of their watches.
-                var assignmentsByPerson = this.WatchDays
-                    .SelectMany(x => x.WatchShifts.Select(y => y.WatchAssignment))
+                var assignmentsByPerson = this.WatchShifts.Select(x => x.WatchAssignment)
                     .GroupBy(x => x.PersonAssigned);
 
                 foreach (var assignments in assignmentsByPerson)
@@ -446,9 +445,7 @@ namespace CCServ.Entities.Watchbill
 
             //First we need to know how many shifts of each type are in this watchbill.
             //And we need to know how many eligible people in each department there are.
-            var shuffledShiftsByType = this.WatchDays.SelectMany(x => x.WatchShifts).Distinct().Shuffle().GroupBy(x => x.ShiftType);
-
-            var minWatchDay = this.WatchDays.Min(x => x.Date);
+            var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
 
             foreach (var shiftGroup in shuffledShiftsByType)
             {
@@ -470,11 +467,9 @@ namespace CCServ.Entities.Watchbill
                     {
                         double points = person.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z =>
                         {
-                            int totalMonths = (int)Math.Round(z.WatchShift.WatchDays
-                            .Select(watchDay => DateTime.UtcNow.Subtract(watchDay.Date).TotalDays / (365.2425 / 12)).Max());
+                            int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
                             return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
-
                         });
 
                         return points;
@@ -502,13 +497,13 @@ namespace CCServ.Entities.Watchbill
                             if (shiftsForThisGroup[x].WatchInputs.Any() && shiftsForThisGroup[x].WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
                                 return false;
 
-                            if (person.DateOfArrival.HasValue && minWatchDay < person.DateOfArrival.Value.AddMonths(1))
+                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
                                 return false;
 
-                            if (person.EAOS.HasValue && minWatchDay < person.EAOS.Value.AddMonths(-1))
+                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
                                 return false;
 
-                            if (person.DateOfBirth.HasValue && shiftsForThisGroup[x].WatchDays.Any(day => day.Date == person.DateOfBirth.Value.Date))
+                            if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End).HasInside(person.DateOfBirth.Value.Date))
                                 return false;
 
                             return true;
@@ -541,13 +536,13 @@ namespace CCServ.Entities.Watchbill
                         if (shift.WatchInputs.Any() && shift.WatchInputs.Any(input => !input.IsConfirmed && input.Person.Id == person.Id))
                             return false;
 
-                        if (person.DateOfArrival.HasValue && minWatchDay < person.DateOfArrival.Value.AddMonths(1))
+                        if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
                             return false;
 
-                        if (person.EAOS.HasValue && minWatchDay < person.EAOS.Value.AddMonths(-1))
+                        if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
                             return false;
 
-                        if (person.DateOfBirth.HasValue && shift.WatchDays.Any(day => day.Date == person.DateOfBirth.Value.Date))
+                        if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
                             return false;
 
                         return true;
@@ -690,7 +685,7 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.LastStateChangedBy).Not.Nullable();
                 References(x => x.EligibilityGroup).Not.Nullable();
 
-                HasMany(x => x.WatchDays).Cascade.AllDeleteOrphan().Inverse();
+                HasMany(x => x.WatchShifts).Cascade.AllDeleteOrphan();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
 
                 Map(x => x.Title).Not.Nullable();
@@ -717,12 +712,12 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.LastStateChangedBy).NotEmpty();
                 RuleFor(x => x.EligibilityGroup).NotEmpty();
 
-                RuleFor(x => x.WatchDays).SetCollectionValidator(new WatchDay.WatchDayValidator());
+                RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
 
                 Custom(watchbill =>
                 {
-                    var shiftsByType = watchbill.WatchDays.SelectMany(x => x.WatchShifts).Distinct().GroupBy(x => x.ShiftType);
+                    var shiftsByType = watchbill.WatchShifts.GroupBy(x => x.ShiftType);
 
                     List<string> errorElements = new List<string>();
 
@@ -747,7 +742,7 @@ namespace CCServ.Entities.Watchbill
                     {
                         string str = "One or more shifts with the same type overlap:  {0}"
                             .FormatS(String.Join(" | ", errorElements));
-                        return new FluentValidation.Results.ValidationFailure(PropertySelector.SelectPropertyFrom<WatchDay>(x => x.WatchShifts).Name, str);
+                        return new FluentValidation.Results.ValidationFailure(nameof(watchbill.WatchShifts), str);
                     }
 
                     return null;

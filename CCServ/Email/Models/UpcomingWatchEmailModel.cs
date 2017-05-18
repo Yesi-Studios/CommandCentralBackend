@@ -29,7 +29,7 @@ namespace CCServ.Email.Models
         {
             get
             {
-                return WatchAssignment.WatchShift.WatchDays.First().Watchbill.Title;
+                return WatchAssignment.WatchShift.Watchbill.Title;
             }
         }
 

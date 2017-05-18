@@ -70,36 +70,21 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     watchbillFromDB.LastStateChange,
                     watchbillFromDB.LastStateChangedBy,
                     watchbillFromDB.Title,
-                    WatchDays = watchbillFromDB.WatchDays.OrderBy(x => x.Date).Select(watchDay =>
+                    WatchShifts = watchbillFromDB.WatchShifts.Select(shift =>
                     {
-                        return new WatchDay
+                        return new WatchShift
                         {
-                            Date = watchDay.Date,
-                            Id = watchDay.Id,
-                            Remarks = watchDay.Remarks,
-                            Watchbill = new Entities.Watchbill.Watchbill { Id = watchDay.Watchbill.Id },
-                            WatchShifts = watchDay.WatchShifts.Select(watchShift =>
-                            {
-                                return new WatchShift
-                                {
-                                    Id = watchShift.Id,
-                                    Points = watchShift.Points,
-                                    Range = watchShift.Range,
-                                    ShiftType = watchShift.ShiftType,
-                                    Title = watchShift.Title,
-                                    WatchAssignment = watchShift.WatchAssignment,
-                                    WatchDays = watchShift.WatchDays.Select(shiftWatchDay =>
-                                    {
-                                        return new WatchDay
-                                        {
-                                            Id = shiftWatchDay.Id
-                                        };
-                                    }).ToList(),
-                                    WatchInputs = watchShift.WatchInputs
-                                };
-                            }).ToList()
+                            Comments = shift.Comments,
+                            Id = shift.Id,
+                            Points = shift.Points,
+                            Range = shift.Range,
+                            ShiftType = shift.ShiftType,
+                            Title = shift.Title,
+                            WatchAssignment = shift.WatchAssignment,
+                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id },
+                            WatchInputs = shift.WatchInputs
                         };
-                    }).ToList()
+                    })
                 });
             }
         }

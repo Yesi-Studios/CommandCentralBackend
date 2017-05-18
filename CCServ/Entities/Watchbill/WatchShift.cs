@@ -29,9 +29,9 @@ namespace CCServ.Entities.Watchbill
         public virtual IList<Comment> Comments { get; set; } = new List<Comment>();
 
         /// <summary>
-        /// The watch day that owns this watch shift.
+        /// The watchbill of this shift.
         /// </summary>
-        public virtual IList<WatchDay> WatchDays { get; set; } = new List<WatchDay>();
+        public virtual Watchbill Watchbill { get; set; }
 
         /// <summary>
         /// A free text field allowing for this shift to be given a title.
@@ -105,9 +105,9 @@ namespace CCServ.Entities.Watchbill
 
                 References(x => x.ShiftType).Not.Nullable();
                 References(x => x.WatchAssignment).Cascade.All();
+                References(x => x.Watchbill);
 
                 HasManyToMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
-                HasManyToMany(x => x.WatchDays).Inverse();
 
                 Map(x => x.Title).Not.Nullable();
                 Map(x => x.Points).Not.Nullable();

@@ -84,7 +84,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 Range = x.Range,
                 ShiftType = x.ShiftType,
                 Title = x.Title,
-                WatchDays = new List<WatchDay>(),
                 Points = x.Points
             }).ToList();
 
@@ -120,17 +119,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End);
 
-                            foreach (var day in watchbill.WatchDays)
-                            {
-                                if (shiftRange.IntersectsWith(new Itenso.TimePeriod.TimeRange(day.Date, day.Date.AddHours(24))))
-                                {
-                                    shift.WatchDays.Add(day);
-                                    day.WatchShifts.Add(shift);
-                                }
-                            }
-
-                            if (!shift.WatchDays.Any())
-                                throw new CommandCentralException("Your shift falls outside the range of the watchbill's days.  Please consider creating a day first that encompasses the shift's duration.", ErrorTypes.Validation);
+                            //We also need to set the watchbill of the watch shift and vice versa.
+                            shift.Watchbill = watchbill;
+                            watchbill.WatchShifts.Add(shift);
                         }
 
                         var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
@@ -189,15 +180,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchShiftFromDB = session.Get<WatchShift>(watchShiftFromClient.Id) ??
                             throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation);
 
-                        var watchbill = watchShiftFromDB.WatchDays.First().Watchbill;
-
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Ok let's swap the properties now.
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial 
+                        if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial 
                             && (watchShiftFromClient.ShiftType != watchShiftFromDB.ShiftType || watchShiftFromClient.Range != watchShiftFromDB.Range))
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
                                 "Please consider changing its state first.", ErrorTypes.Validation);
@@ -207,7 +196,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         watchShiftFromDB.ShiftType = watchShiftFromClient.ShiftType;
 
                         //Let's also make sure that the updates to this watchbill didn't result in a validation failure.
-                        var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
+                        var watchbillValidationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchShiftFromDB.Watchbill);
 
                         if (!watchbillValidationResult.IsValid)
                             throw new AggregateException(watchbillValidationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
@@ -253,21 +242,19 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your watch shift's id was not valid.  " +
                             "Please consider creating the watch shift first.", ErrorTypes.Validation);
 
-                        var watchbill = watchShiftFromDB.WatchDays.First().Watchbill;
-
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                        if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
                                 "Please consider changing its state first.", ErrorTypes.Validation);
 
-                        foreach (var day in watchShiftFromDB.WatchDays)
-                            day.WatchShifts.Remove(watchShiftFromDB);
 
-                        session.Update(watchbill);
+                        watchShiftFromDB.Watchbill.WatchShifts.Remove(watchShiftFromDB);
+
+                        session.Update(watchShiftFromDB);
 
                         transaction.Commit();
                     }

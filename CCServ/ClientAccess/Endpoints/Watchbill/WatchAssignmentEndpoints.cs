@@ -171,7 +171,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             || ass2.CurrentState == WatchAssignmentStates.Completed || ass2.CurrentState == WatchAssignmentStates.Excused || ass2.CurrentState == WatchAssignmentStates.Missed)
                             throw new CommandCentralException("You may not swap assignments if one of the assignments has been completed, excused, or missed.", ErrorTypes.Validation);
 
-                        if (ass1.WatchShift.WatchDays.First().Watchbill.Id != ass2.WatchShift.WatchDays.First().Watchbill.Id)
+                        if (ass1.WatchShift.Watchbill.Id != ass2.WatchShift.Watchbill.Id)
                             throw new CommandCentralException("You may not swap assignments if those assignments are from different watchbills.", ErrorTypes.Validation);
 
                         if (ass1.PersonAssigned.Id == ass2.PersonAssigned.Id)
@@ -181,8 +181,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var ass1ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass1.PersonAssigned);
                         var ass2ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass2.PersonAssigned);
 
-                        var ass1HighestLevel = ass1ResolvedPermissions.HighestLevels[ass1.WatchShift.WatchDays.First().Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
-                        var ass2HighestLevel = ass2ResolvedPermissions.HighestLevels[ass2.WatchShift.WatchDays.First().Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                        var ass1HighestLevel = ass1ResolvedPermissions.HighestLevels[ass1.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                        var ass2HighestLevel = ass2ResolvedPermissions.HighestLevels[ass2.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
 
                         switch (ass1HighestLevel)
                         {
