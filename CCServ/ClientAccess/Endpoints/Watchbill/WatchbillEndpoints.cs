@@ -70,6 +70,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     watchbillFromDB.LastStateChange,
                     watchbillFromDB.LastStateChangedBy,
                     watchbillFromDB.Title,
+                    watchbillFromDB.Range,
                     WatchShifts = watchbillFromDB.WatchShifts.Select(shift =>
                     {
                         return new WatchShift
