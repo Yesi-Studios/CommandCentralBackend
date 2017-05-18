@@ -166,6 +166,7 @@
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\DeleteReferenceListItem.cs" />
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\LoadReferenceLists.cs" />
     <Compile Include="ClientAccess\DTOs\ReferenceListEndpoints\UpdateReferenceListItem.cs" />
+    <Compile Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\CreateWatchAssignments.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\LoadWatchAssignment.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\SearchWatchAssignments.cs" />
     <Compile Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\SwapWatchAssignments.cs" />
@@ -457,9 +458,7 @@
   <ItemGroup>
     <Content Include="Email\Templates\UpcomingWatch_HTML.html" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ClientAccess\DTOs\Watchbill\WatchAssignmentEndpoints\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -282,39 +282,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Inserts a number of watch assignments.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void CreateWatchAssignments(MessageToken token)
+        private static void CreateWatchAssignments(MessageToken token, DTOs.Watchbill.WatchAssignmentEndpoints.CreateWatchAssignments dto)
         {
             token.AssertLoggedIn();
-
-            token.Args.AssertContainsKeys("watchassignments", "watchbillid");
-
-            var watchAssToken = token.Args["watchassignments"].CastJToken();
-
-            if (watchAssToken.Type != Newtonsoft.Json.Linq.JTokenType.Array)
-                throw new CommandCentralException("Your watch assignments parameter must be an array.", ErrorTypes.Validation);
-
-            var watchAssignmentsFromClient = watchAssToken.Select(x =>
-            {
-
-                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.PersonAssigned)), out Guid personAssignedId))
-                    throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
-
-                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.WatchShift)), out Guid watchShitId))
-                    throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
-
-                var watchAss = new
-                {
-                    PersonAssignedId = personAssignedId,
-                    WatchShiftId = watchShitId
-                };
-
-                return watchAss;
-            });
-
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -323,7 +296,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         //Let's make sure all the watch assignments are from the same watchbill, and there shifts and people are real.
-                        Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(dto.WatchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
                         bool isCommandCoordinator = token.AuthenticationSession.Person.PermissionGroups
@@ -338,7 +311,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             watchbill.CurrentState != WatchbillStatuses.UnderReview)
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
 
-                        foreach (var assignment in watchAssignmentsFromClient)
+                        foreach (var assignment in dto.WatchAssignments)
                         {
 
                             var personAssigned = session.Get<Person>(assignment.PersonAssignedId) ??
