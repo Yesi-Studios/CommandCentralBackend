@@ -714,6 +714,7 @@ namespace CCServ.Entities.Watchbill
 
                 RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
+                RuleFor(x => x.Range).Must(x => x.Start <= x.End);
 
                 Custom(watchbill =>
                 {

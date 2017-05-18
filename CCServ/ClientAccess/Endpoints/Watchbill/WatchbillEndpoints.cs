@@ -145,8 +145,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
             var range = token.Args["range"].CastJToken<TimeRange>();
 
-
-
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
             {
