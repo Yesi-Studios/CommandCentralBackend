@@ -18,14 +18,12 @@ namespace CCServ.ClientAccess.DTOs.AccountEndpoints
         /// <summary>
         /// This is the link to put in the email for the user to continue the registration process.
         /// </summary>
-        [Required]
         [Description("This is the link to put in the email for the user to continue the registration process.")]
         public string ContinueLink { get; set; }
 
         /// <summary>
         /// The SSN of the user who wants to begin registration of their account.
         /// </summary>
-        [Required]
         [Description("The SSN of the user who wants to begin registration of their account.")]
         public string SSN { get; set; }
 
