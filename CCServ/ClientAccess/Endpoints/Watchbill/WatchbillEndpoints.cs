@@ -176,19 +176,13 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Updates a watchbill.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void UpdateWatchbillState(MessageToken token)
+        private static void UpdateWatchbillState(MessageToken token, DTOs.Watchbill.WatchbillEndpoints.UpdateWatchbillState dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id", "stateid");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id was not in the right format", ErrorTypes.Validation);
-
-            if (!Guid.TryParse(token.Args["stateid"] as string, out Guid stateId))
-                throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
-
+            
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
@@ -196,7 +190,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(dto.Id) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
@@ -204,7 +198,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
-                        var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(stateId) ??
+                        var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(dto.StateId) ??
                             throw new CommandCentralException("Your state id did not reference a real state.", ErrorTypes.Validation);
 
                         //If the state is different, we need to move the state as well.  There's a method for that.
@@ -241,15 +235,12 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// Deletes a watchbill.
         /// </summary>
         /// <param name="token"></param>
+        /// <param name="dto"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void DeleteWatchbill(MessageToken token)
+        private static void DeleteWatchbill(MessageToken token, DTOs.Watchbill.WatchbillEndpoints.DeleteWatchbill dto)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("id");
-
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
             
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -258,7 +249,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(dto.Id) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
