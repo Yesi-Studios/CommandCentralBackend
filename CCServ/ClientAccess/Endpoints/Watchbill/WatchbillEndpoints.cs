@@ -54,8 +54,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                     //And make sure we're at a state where population can occur.
-                    /*if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
-                        throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);*/
+                    if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
+                        throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
 
                     watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                 }
