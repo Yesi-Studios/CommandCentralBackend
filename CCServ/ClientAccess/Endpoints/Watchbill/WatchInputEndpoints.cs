@@ -78,7 +78,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     {
                         var watchinputs = (session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation))
-                            .WatchDays.SelectMany(x => x.WatchShifts.SelectMany(y => y.WatchInputs))
+                            .WatchShifts.SelectMany(x => x.WatchInputs)
                             .Distinct()
                             .Select(watchInput => new
                             {
@@ -191,8 +191,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 throw new CommandCentralException("One or more of your watch shifts' Ids were invalid.", ErrorTypes.Validation);
 
                             //Now we just need to walk the watchbill references.
-                            var watchbill = watchShiftsFromDB.First().WatchDays.First().Watchbill;
-                            if (watchShiftsFromDB.Any(x => x.WatchDays.First().Watchbill.Id != watchbill.Id))
+                            var watchbill = watchShiftsFromDB.First().Watchbill;
+                            if (watchShiftsFromDB.Any(x => x.Watchbill.Id != watchbill.Id))
                                 throw new CommandCentralException("Your requested watch inputs were not all for the same watchbill.", ErrorTypes.Validation);
 
                             if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
@@ -264,7 +264,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;
+                        var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
 
                         //Ok let's swap the properties now.
                         //Check the state.
@@ -328,7 +328,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = watchInputFromDB.WatchShifts.First().WatchDays.First().Watchbill;
+                        var watchbill = watchInputFromDB.WatchShifts.First().Watchbill;
 
                         //Check the state.
                         if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)

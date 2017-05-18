@@ -54,8 +54,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                     //And make sure we're at a state where population can occur.
-                    /*if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
-                        throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);*/
+                    if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
+                        throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
 
                     watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
                 }
@@ -70,36 +70,22 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     watchbillFromDB.LastStateChange,
                     watchbillFromDB.LastStateChangedBy,
                     watchbillFromDB.Title,
-                    WatchDays = watchbillFromDB.WatchDays.OrderBy(x => x.Date).Select(watchDay =>
+                    watchbillFromDB.Range,
+                    WatchShifts = watchbillFromDB.WatchShifts.Select(shift =>
                     {
-                        return new WatchDay
+                        return new WatchShift
                         {
-                            Date = watchDay.Date,
-                            Id = watchDay.Id,
-                            Remarks = watchDay.Remarks,
-                            Watchbill = new Entities.Watchbill.Watchbill { Id = watchDay.Watchbill.Id },
-                            WatchShifts = watchDay.WatchShifts.Select(watchShift =>
-                            {
-                                return new WatchShift
-                                {
-                                    Id = watchShift.Id,
-                                    Points = watchShift.Points,
-                                    Range = watchShift.Range,
-                                    ShiftType = watchShift.ShiftType,
-                                    Title = watchShift.Title,
-                                    WatchAssignment = watchShift.WatchAssignment,
-                                    WatchDays = watchShift.WatchDays.Select(shiftWatchDay =>
-                                    {
-                                        return new WatchDay
-                                        {
-                                            Id = shiftWatchDay.Id
-                                        };
-                                    }).ToList(),
-                                    WatchInputs = watchShift.WatchInputs
-                                };
-                            }).ToList()
+                            Comments = shift.Comments,
+                            Id = shift.Id,
+                            Points = shift.Points,
+                            Range = shift.Range,
+                            ShiftType = shift.ShiftType,
+                            Title = shift.Title,
+                            WatchAssignment = shift.WatchAssignment,
+                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id },
+                            WatchInputs = shift.WatchInputs
                         };
-                    }).ToList()
+                    })
                 });
             }
         }
@@ -147,7 +133,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("title", "eligibilitygroupid");
+            token.Args.AssertContainsKeys("title", "eligibilitygroupid", "range");
 
             var title = token.Args["title"] as string;
 
@@ -157,6 +143,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
                 .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
                 throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
+
+            var range = token.Args["range"].CastJToken<TimeRange>();
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
@@ -168,7 +156,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
                 Title = title,
-                EligibilityGroup = elGroup
+                EligibilityGroup = elGroup,
+                Range = range
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
