@@ -267,5 +267,59 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             }
 
         }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Deletes watch shifts.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void DeleteWatchShifts(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("ids");
+
+            var ids = token.Args["ids"].CastJToken<List<Guid>>();
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var id in ids)
+                        {
+                            var watchShiftFromDB = session.Get<WatchShift>(id) ??
+                            throw new CommandCentralException("Your watch shift's id was not valid.  " +
+                            "Please consider creating the watch shift first.", ErrorTypes.Validation);
+
+                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                                throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
+                                    "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+
+                            //Check the state.
+                            if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                                throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial state.  " +
+                                    "Please consider changing its state first.", ErrorTypes.Validation);
+
+
+                            watchShiftFromDB.Watchbill.WatchShifts.Remove(watchShiftFromDB);
+
+                            session.Update(watchShiftFromDB);
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+
+        }
     }
 }
