@@ -132,7 +132,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         private static void CreateWatchbill(MessageToken token)
         {
             token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("title", "eligibilitygroupid");
+            token.Args.AssertContainsKeys("title", "eligibilitygroupid", "range");
 
             var title = token.Args["title"] as string;
 
@@ -142,6 +142,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
                 .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
                 throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
+
+            var range = token.Args["range"].CastJToken<TimeRange>();
+
+
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
@@ -153,7 +157,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
                 Title = title,
-                EligibilityGroup = elGroup
+                EligibilityGroup = elGroup,
+                Range = range
             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
