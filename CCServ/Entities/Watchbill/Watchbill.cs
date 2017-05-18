@@ -10,6 +10,7 @@ using CCServ.ClientAccess;
 using System.Globalization;
 using AtwoodUtils;
 using NHibernate;
+using NHibernate.Type;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -690,6 +691,12 @@ namespace CCServ.Entities.Watchbill
 
                 Map(x => x.Title).Not.Nullable();
                 Map(x => x.LastStateChange).Not.Nullable();
+
+                Component(x => x.Range, x =>
+                {
+                    x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
+                    x.Map(y => y.End).Not.Nullable().CustomType<UtcDateTimeType>();
+                });
             }
         }
 
