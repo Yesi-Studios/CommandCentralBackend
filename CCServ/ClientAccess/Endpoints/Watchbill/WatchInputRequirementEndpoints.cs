@@ -18,25 +18,39 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadInputRequirementsResponsibleFor(MessageToken token)
+        private static void LoadOpenInputRequirements(MessageToken token)
         {
-            token.AssertLoggedIn();
-            token.Args.AssertContainsKeys("watchbillid");
-
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
-
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
+                        var watchbills = session.QueryOver<Entities.Watchbill.Watchbill>()
+                            .Where(x => x.CurrentState.Id == Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs.Id)
+                            .List();
 
-                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
+                        var final = watchbills.Select(watchbill =>
+                        {
+                            return new
+                            {
+                                Watchbill = new
+                                {
+                                    watchbill.Title,
+                                    watchbill.CurrentState,
+                                    EligibilityGroup = new
+                                    {
+                                        watchbill.EligibilityGroup.Id,
+                                        watchbill.EligibilityGroup.OwningChainOfCommand,
+                                        watchbill.EligibilityGroup.Value,
+                                        watchbill.EligibilityGroup.Description
+                                    }
+                                },
+                                InputRequirements = watchbill.GetInputRequirementsPersonIsResponsibleFor(token.AuthenticationSession.Person)
+                            };
+                        });
 
-                        token.SetResult(new { InputRequirements = watchbill.GetInputRequirementsPersonIsResponsibleFor(token.AuthenticationSession.Person) });
+                        token.SetResult(final);
 
                         transaction.Commit();
                     }
