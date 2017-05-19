@@ -218,7 +218,7 @@ namespace CCServ.Entities.Watchbill
                 }
 
                 //We now need to register the job that will send emails every day to alert people to the inputs they are responsible for.
-                //FluentScheduler.JobManager.AddJob(SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id) )
+                //FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
@@ -277,6 +277,8 @@ namespace CCServ.Entities.Watchbill
                         throw;
                     }
                 }
+
+                //FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
             }
             //Make sure there are assignments for each shift.  
             //Inform the chain of command that the watchbill is open for review.

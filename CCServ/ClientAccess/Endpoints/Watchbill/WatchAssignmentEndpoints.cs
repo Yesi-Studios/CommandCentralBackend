@@ -91,7 +91,30 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             return resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
                         });
 
-                        token.SetResult(assignments);
+                        token.SetResult(assignments.Select(assignment =>
+                        {
+                            return new WatchAssignment
+                            {
+                                AcknowledgedBy = assignment.AcknowledgedBy,
+                                AssignedBy = assignment.AssignedBy,
+                                CurrentState = assignment.CurrentState,
+                                DateAcknowledged = assignment.DateAcknowledged,
+                                DateAssigned = assignment.DateAssigned,
+                                Id = assignment.Id,
+                                IsAcknowledged = assignment.IsAcknowledged,
+                                NumberOfAlertsSent = assignment.NumberOfAlertsSent,
+                                PersonAssigned = assignment.PersonAssigned,
+                                WatchShift = new WatchShift
+                                {
+                                    Comments = assignment.WatchShift.Comments,
+                                    Id = assignment.WatchShift.Id,
+                                    Points = assignment.WatchShift.Points,
+                                    Range = assignment.WatchShift.Range,
+                                    ShiftType = assignment.WatchShift.ShiftType,
+                                    Title = assignment.WatchShift.Title
+                                }
+                            };
+                        }));
 
                         transaction.Commit();
                     }
@@ -393,6 +416,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         assignment.IsAcknowledged = true;
                         assignment.AcknowledgedBy = token.AuthenticationSession.Person;
                         assignment.DateAcknowledged = token.CallTime;
+                        assignment.CurrentState = WatchAssignmentStates.Acknowledged;
 
                         session.Update(assignment);
 
