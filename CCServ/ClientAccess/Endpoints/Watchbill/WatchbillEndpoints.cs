@@ -304,6 +304,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         session.Delete(watchbillFromDB);
 
+                        if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == watchbillFromDB.Id.ToString()))
+                            FluentScheduler.JobManager.RemoveJob(watchbillFromDB.Id.ToString());
+
                         transaction.Commit();
                     }
                     catch

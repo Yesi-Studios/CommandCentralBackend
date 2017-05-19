@@ -30,7 +30,7 @@ namespace CCServ
                         var allUsers = session.QueryOver<Person>().List().ToList();
 
                         var group = session.Get<WatchEligibilityGroup>(WatchEligibilityGroups.Quarterdeck.Id);
-                        foreach (var person in allUsers)
+                        foreach (var person in allUsers.Where(x => x.DutyStatus != Entities.ReferenceLists.DutyStatuses.Loss))
                         {
                             group.EligiblePersons.Add(person);
                         }

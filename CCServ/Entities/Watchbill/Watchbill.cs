@@ -135,6 +135,10 @@ namespace CCServ.Entities.Watchbill
                         shift.WatchAssignment = null;
                     }
                 }
+
+                //We also need to remove the job.
+                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == this.Id.ToString()))
+                    FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
             else if (desiredState == WatchbillStatuses.OpenForInputs)
@@ -218,7 +222,7 @@ namespace CCServ.Entities.Watchbill
                 }
 
                 //We now need to register the job that will send emails every day to alert people to the inputs they are responsible for.
-                //FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
+                FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
@@ -278,7 +282,8 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
 
-                //FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
+                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == this.Id.ToString()))
+                    FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
             }
             //Make sure there are assignments for each shift.  
             //Inform the chain of command that the watchbill is open for review.
@@ -586,8 +591,15 @@ namespace CCServ.Entities.Watchbill
         /// <returns></returns>
         public virtual IEnumerable<WatchInputRequirement> GetInputRequirementsPersonIsResponsibleFor(Person person)
         {
-            var resolvedPermissions = person.PermissionGroups.Resolve(person, null);
-            var highestLevelForWatchbill = resolvedPermissions.HighestLevels[this.EligibilityGroup.OwningChainOfCommand.ToString()];
+            if (!person.PermissionGroupNames.Any())
+                return new List<WatchInputRequirement>();
+
+            var resolvedPermissions = Authorization.Groups.PermissionGroup.AllPermissionGroups
+                .Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase))
+                .Resolve(person, null);
+
+            if (!resolvedPermissions.HighestLevels.TryGetValue(this.EligibilityGroup.OwningChainOfCommand.ToString(), out ChainOfCommandLevels highestLevelForWatchbill))
+                return new List<WatchInputRequirement>();
 
             switch (highestLevelForWatchbill)
             {
@@ -635,22 +647,25 @@ namespace CCServ.Entities.Watchbill
                 {
                     var requirementsResponsibleFor = watchbill.GetInputRequirementsPersonIsResponsibleFor(person);
 
-                    var model = new Email.Models.WatchInputRequirementsEmailModel
+                    if (requirementsResponsibleFor.Any())
                     {
-                        Person = person,
-                        Watchbill = watchbill,
-                        PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
-                    };
+                        var model = new Email.Models.WatchInputRequirementsEmailModel
+                        {
+                            Person = person,
+                            Watchbill = watchbill,
+                            PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
+                        };
 
-                    var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
+                        var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
 
-                    Email.EmailInterface.CCEmailMessage
-                        .CreateDefault()
-                        .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
-                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
-                        .Subject("Watch Input Requirements")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
-                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                        Email.EmailInterface.CCEmailMessage
+                            .CreateDefault()
+                            .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                            .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                            .Subject("Watch Input Requirements")
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
+                            .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                    }
                 }
             }
         }
@@ -664,9 +679,21 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         /// <param name="launchOptions"></param>
         [ServiceManagement.StartMethod(Priority = 1)]
-        private static void SetupWatchAlerts(CLI.Options.LaunchOptions launchOptions)
+        private static void SetupAlerts(CLI.Options.LaunchOptions launchOptions)
         {
             FluentScheduler.JobManager.AddJob(() => SendWatchAlerts(), s => s.ToRunEvery(1).Hours().At(0));
+
+            //Here, we're also going to set up any watch input requirements alerts we need for each watchbill that is in the open for inputs state.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == WatchbillStatuses.OpenForInputs.Id).List();
+
+                foreach (var watchbill in watchbills)
+                {
+                    //We now need to register the job that will send emails every day to alert people to the inputs they are responsible for.
+                    FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(watchbill.Id), s => s.WithName(watchbill.Id.ToString()).ToRunEvery(1).Days().At(4, 0));
+                }
+            }
         }
 
         /// <summary>
