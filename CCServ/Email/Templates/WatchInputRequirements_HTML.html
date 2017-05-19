@@ -203,7 +203,7 @@ a[x-apple-data-detectors=true] {
                                 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;"><![endif]-->
                                 <div style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
                                     <div style="font-size: 12px; line-height: 14px; color: #555555; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; text-align: left;">
-                                        <p style="margin: 0; font-size: 12px; line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Hello, @Model.FriendlyName,</span></p>
+                                        <p style="margin: 0; font-size: 12px; line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Hello, @Model.Person.ToString(),</span></p>
                                         <p style="margin: 0; font-size: 12px; line-height: 14px">&nbsp;<br>
                                         </p>
                                         <p style="margin: 0; font-size: 12px; line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">(We recommend viewing this email in HTML. &nbsp;Simply click above where it says this email was changed to plain text then click view as HTML.)</span></p>
@@ -223,7 +223,7 @@ a[x-apple-data-detectors=true] {
                                         </p>
                                         <center><p style="margin: 20px 5px 20px 5px;font-size: 20px;line-height: 14px">Personnel Without Inputs</p></center>
                                         @{
-                                            foreach (var person in Model.Persons)
+                                            foreach (var person in Model.PersonsWithoutInputs)
                                             {
                                                 var text = person.ToString();
                                                 <center><p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p></center>

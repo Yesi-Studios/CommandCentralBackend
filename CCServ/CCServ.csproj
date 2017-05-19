@@ -208,6 +208,7 @@
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\PasswordChangedEmailModel.cs" />
     <Compile Include="Email\Models\UpcomingWatchEmailModel.cs" />
+    <Compile Include="Email\Models\WatchInputRequirementsEmailModel.cs" />
     <Compile Include="Email\Models\WatchReassignedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
     <Compile Include="Email\Models\WatchAssignedEmailModel.cs" />

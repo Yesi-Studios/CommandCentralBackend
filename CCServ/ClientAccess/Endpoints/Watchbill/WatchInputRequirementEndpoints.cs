@@ -36,51 +36,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-
-                        var highestLevelForWatchbill = resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
-
-                        IEnumerable<Entities.Watchbill.WatchInputRequirement> inputRequirements;
-
-                        switch (highestLevelForWatchbill)
-                        {
-                            case ChainOfCommandLevels.Command:
-                                {
-                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameCommandAs(token.AuthenticationSession.Person));
-
-                                    break;
-                                }
-                            case ChainOfCommandLevels.Department:
-                                {
-                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(token.AuthenticationSession.Person));
-
-                                    break;
-                                }
-                            case ChainOfCommandLevels.Division:
-                                {
-                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(token.AuthenticationSession.Person));
-
-                                    break;
-                                }
-                            case ChainOfCommandLevels.Self:
-                                {
-                                    inputRequirements = watchbill.InputRequirements.Where(x => x.Person.Id == token.AuthenticationSession.Person.Id);
-
-                                    break;
-                                }
-                            case ChainOfCommandLevels.None:
-                                {
-                                    inputRequirements = new List<Entities.Watchbill.WatchInputRequirement>();
-
-                                    break;
-                                }
-                            default:
-                                {
-                                    throw new NotImplementedException("Fell to the default case in the chain of command switch of the LoadInputRequirementsResponsibleFor endpoint.");
-                                }
-                        }
-
-                        token.SetResult(new { InputRequirements = inputRequirements });
+                        token.SetResult(new { InputRequirements = watchbill.GetInputRequirementsPersonIsResponsibleFor(token.AuthenticationSession.Person) });
 
                         transaction.Commit();
                     }

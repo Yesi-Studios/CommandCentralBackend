@@ -11,6 +11,7 @@ using System.Globalization;
 using AtwoodUtils;
 using NHibernate;
 using NHibernate.Type;
+using CCServ.Authorization;
 
 namespace CCServ.Entities.Watchbill
 {
@@ -571,6 +572,76 @@ namespace CCServ.Entities.Watchbill
 
                     finalAssignments.Remove(finalAssignments.First());
                 }
+            }
+        }
+
+        /// <summary>
+        /// Returns all those input requirements a person is respnsible for.  Meaning those requirements that are in a person's chain of command.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        public IEnumerable<WatchInputRequirement> GetInputRequirementsPersonIsResponsibleFor(Person person)
+        {
+            var resolvedPermissions = person.PermissionGroups.Resolve(person, null);
+            var highestLevelForWatchbill = resolvedPermissions.HighestLevels[this.EligibilityGroup.OwningChainOfCommand.ToString()];
+
+            switch (highestLevelForWatchbill)
+            {
+                case ChainOfCommandLevels.Command:
+                    {
+                        return this.InputRequirements.Where(x => x.Person.IsInSameCommandAs(person));
+                    }
+                case ChainOfCommandLevels.Department:
+                    {
+                        return this.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(person));
+                    }
+                case ChainOfCommandLevels.Division:
+                    {
+                        return this.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(person));
+                    }
+                case ChainOfCommandLevels.Self:
+                    {
+                        return this.InputRequirements.Where(x => x.Person.Id == person.Id);
+                    }
+                case ChainOfCommandLevels.None:
+                    {
+                        return new List<WatchInputRequirement>();
+                    }
+                default:
+                    {
+                        throw new NotImplementedException("Fell to the default case in the chain of command switch of the LoadInputRequirementsResponsibleFor endpoint.");
+                    }
+            }
+        }
+
+        /// <summary>
+        /// Sends an email to each person in the el group who is also a member of this watchbill's chain of command.
+        /// <para/>
+        /// The email contains a list of all those personnel who the given person is responsible for in terms of watch inputs.
+        /// </summary>
+        public void SendWatchInputRequirementsAlertEmail()
+        {
+            //We need to find each person who is in this watchbill's chain of command, and then iterate over each one, sending emails to each with the peopel they are responsible for.
+            foreach (var person in this.EligibilityGroup.EligiblePersons)
+            {
+                var requirementsResponsibleFor = GetInputRequirementsPersonIsResponsibleFor(person);
+
+                var model = new Email.Models.WatchInputRequirementsEmailModel
+                {
+                    Person = person,
+                    Watchbill = this,
+                    PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
+                };
+
+                var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
+
+                Email.EmailInterface.CCEmailMessage
+                    .CreateDefault()
+                    .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                    .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                    .Subject("Watch Input Requirements")
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
+                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
             }
         }
 
