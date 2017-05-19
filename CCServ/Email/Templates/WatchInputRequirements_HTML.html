@@ -221,12 +221,12 @@ a[x-apple-data-detectors=true] {
                                         <p style="margin: 0; font-size: 12px; line-height: 14px"><span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Link to watchbill:&nbsp;@Model.Watchbill.Id</span></p>
                                         <p style="margin: 0; font-size: 12px; line-height: 14px">&nbsp;<br>
                                         </p>
-                                        <center><p style="margin: 20px 5px 20px 5px;font-size: 20px;line-height: 14px">Personnel Without Inputs</p></center>
+                                        <center><p style="margin: 20px 5px 20px 5px;font-size: 20px;line-height: 14px"><span style="color: rgb(139, 0, 0); font-size: 24px; line-height: 14px;">Personnel Without Inputs</span></p></center>
                                         @{
                                             foreach (var person in Model.PersonsWithoutInputs)
                                             {
                                                 var text = person.ToString();
-                                                <center><p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p></center>
+                                                <center><p style="margin: 5px;font-size: 14px;line-height: 14px"><span style="color: rgb(220, 220, 220); font-size: 12px; line-height: 14px;"> @text </span></p></center>
                                             }
                                         }
                                         <p style="margin: 0; font-size: 12px; line-height: 14px">&nbsp;<br>
