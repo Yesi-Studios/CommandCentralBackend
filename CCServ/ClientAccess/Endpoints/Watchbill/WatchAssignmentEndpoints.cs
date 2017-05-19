@@ -64,7 +64,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <param name="token"></param>
         /// <returns></returns>
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
-        private static void LoadAcknowledgableWatchAssignment(MessageToken token)
+        private static void LoadAcknowledgableWatchAssignments(MessageToken token)
         {
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchbillid");
