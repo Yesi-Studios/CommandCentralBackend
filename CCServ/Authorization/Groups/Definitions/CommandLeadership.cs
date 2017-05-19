@@ -26,7 +26,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(ChainOfCommandLevels.Command);
 
-            CanAccessModule("Main")
+            CanAccessModule(ChainsOfCommand.Main.ToString())
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.DateOfBirth,
                     x => x.Ethnicity,
@@ -94,7 +94,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DoDId))
                     .IfInChainOfCommand();
 
-            CanAccessModule("Muster");
+            CanAccessModule(ChainsOfCommand.Muster.ToString());
+            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
         }
     }
 }

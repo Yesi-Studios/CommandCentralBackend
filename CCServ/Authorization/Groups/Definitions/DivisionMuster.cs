@@ -23,7 +23,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             InChainsOfCommand(ChainsOfCommand.Muster);
 
-            CanAccessModule("Muster");
+            CanAccessModule(ChainsOfCommand.Muster.ToString());
         }
     }
 }

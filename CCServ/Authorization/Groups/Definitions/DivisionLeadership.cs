@@ -89,7 +89,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.DoDId))
                     .IfInChainOfCommand();
 
-            CanAccessModule("Muster");
+            CanAccessModule(ChainsOfCommand.Muster.ToString());
+            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
         }
     }
 }
