@@ -60,7 +60,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.HasCompletedAWARE,
                     x => x.ADAMSTrainingDate,
                     x => x.DoDId,
-                    x => x.BilletAssignment))
+                    x => x.BilletAssignment,
+                    x => x.WatchAssignments))
                 .And.CanEdit(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.LastName,
                     x => x.FirstName,
