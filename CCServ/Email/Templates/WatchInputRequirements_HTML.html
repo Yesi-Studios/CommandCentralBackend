@@ -225,7 +225,7 @@ a[x-apple-data-detectors=true] {
                                         @{
                                             foreach (var person in Model.Persons)
                                             {
-                                                text = person.ToString();
+                                                var text = person.ToString();
                                                 <center><p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p></center>
                                             }
                                         }
