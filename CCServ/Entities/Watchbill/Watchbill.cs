@@ -217,6 +217,8 @@ namespace CCServ.Entities.Watchbill
                     }
                 }
 
+                //We now need to register the job that will send emails every day to alert people to the inputs they are responsible for.
+                //FluentScheduler.JobManager.AddJob(SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id) )
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
@@ -580,7 +582,7 @@ namespace CCServ.Entities.Watchbill
         /// </summary>
         /// <param name="person"></param>
         /// <returns></returns>
-        public IEnumerable<WatchInputRequirement> GetInputRequirementsPersonIsResponsibleFor(Person person)
+        public virtual IEnumerable<WatchInputRequirement> GetInputRequirementsPersonIsResponsibleFor(Person person)
         {
             var resolvedPermissions = person.PermissionGroups.Resolve(person, null);
             var highestLevelForWatchbill = resolvedPermissions.HighestLevels[this.EligibilityGroup.OwningChainOfCommand.ToString()];
@@ -619,29 +621,35 @@ namespace CCServ.Entities.Watchbill
         /// <para/>
         /// The email contains a list of all those personnel who the given person is responsible for in terms of watch inputs.
         /// </summary>
-        public void SendWatchInputRequirementsAlertEmail()
+        public static void SendWatchInputRequirementsAlertEmail(Guid watchbillId)
         {
-            //We need to find each person who is in this watchbill's chain of command, and then iterate over each one, sending emails to each with the peopel they are responsible for.
-            foreach (var person in this.EligibilityGroup.EligiblePersons)
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var requirementsResponsibleFor = GetInputRequirementsPersonIsResponsibleFor(person);
+                var watchbill = session.Get<Watchbill>(watchbillId) ??
+                    throw new Exception("A watchbill was loaded that no longer exists.");
 
-                var model = new Email.Models.WatchInputRequirementsEmailModel
+                //We need to find each person who is in this watchbill's chain of command, and then iterate over each one, sending emails to each with the peopel they are responsible for.
+                foreach (var person in watchbill.EligibilityGroup.EligiblePersons)
                 {
-                    Person = person,
-                    Watchbill = this,
-                    PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
-                };
+                    var requirementsResponsibleFor = watchbill.GetInputRequirementsPersonIsResponsibleFor(person);
 
-                var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
+                    var model = new Email.Models.WatchInputRequirementsEmailModel
+                    {
+                        Person = person,
+                        Watchbill = watchbill,
+                        PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
+                    };
 
-                Email.EmailInterface.CCEmailMessage
-                    .CreateDefault()
-                    .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
-                    .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
-                    .Subject("Watch Input Requirements")
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
-                    .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                    var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
+
+                    Email.EmailInterface.CCEmailMessage
+                        .CreateDefault()
+                        .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
+                        .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
+                        .Subject("Watch Input Requirements")
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
+                        .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
+                }
             }
         }
 
