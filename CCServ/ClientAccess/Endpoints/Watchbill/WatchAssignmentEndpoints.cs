@@ -93,7 +93,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         token.SetResult(assignments.Select(assignment =>
                         {
-                            return new WatchAssignment
+                            return new
                             {
                                 AcknowledgedBy = assignment.AcknowledgedBy,
                                 AssignedBy = assignment.AssignedBy,
@@ -104,7 +104,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 IsAcknowledged = assignment.IsAcknowledged,
                                 NumberOfAlertsSent = assignment.NumberOfAlertsSent,
                                 PersonAssigned = assignment.PersonAssigned,
-                                WatchShift = new WatchShift
+                                WatchShift = new
                                 {
                                     Comments = assignment.WatchShift.Comments,
                                     Id = assignment.WatchShift.Id,
