@@ -8,6 +8,7 @@ using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities.ReferenceLists.Watchbill;
 using NHibernate.Criterion;
+using NHibernate.Linq;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -185,7 +186,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = session.QueryOver<Entities.Watchbill.Watchbill>()
+                        var watchbill = session.Query<Entities.Watchbill.Watchbill>()
                             .Where(x => x.WatchInputs.Any(y => y.Id == id))
                             .SingleOrDefault() ??
                             throw new Exception("A watch input was not owned by any watchbill.");
@@ -252,7 +253,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchInputFromDB = session.Get<WatchInput>(id) ??
                             throw new CommandCentralException("Your watch input's id was not valid.  Please consider creating the watch input first.", ErrorTypes.Validation);
 
-                        var watchbill = session.QueryOver<Entities.Watchbill.Watchbill>()
+                        var watchbill = session.Query<Entities.Watchbill.Watchbill>()
                             .Where(x => x.WatchInputs.Any(y => y.Id == id))
                             .SingleOrDefault() ??
                             throw new Exception("A watch input was not owned by any watchbill.");
