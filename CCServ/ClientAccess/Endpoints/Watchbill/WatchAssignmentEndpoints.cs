@@ -59,6 +59,54 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
+        /// Loads aall watch assignments the client can acknowledge.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void LoadAcknowledgableWatchAssignment(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchbillid");
+
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                using (var transaction = session.BeginTransaction())
+                {
+                    try
+                    {
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("The watchbill id you provided was not valid.", ErrorTypes.Validation);
+
+                        var assignments = watchbill.WatchShifts.Select(x => x.WatchAssignment).Where(assignment =>
+                        {
+                            if (assignment.CurrentState != WatchAssignmentStates.Assigned)
+                                return false;
+
+                            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
+
+                            return resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                        });
+
+                        token.SetResult(assignments);
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
         /// Loads all watch assignments by certain criteria.
         /// </summary>
         /// <param name="token"></param>
