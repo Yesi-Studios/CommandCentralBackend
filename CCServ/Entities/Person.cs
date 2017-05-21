@@ -385,7 +385,7 @@ namespace CCServ.Entities
         /// The list of those events to which this person is subscribed.
         /// </summary>
         [ConditionalJsonIgnore]
-        public virtual IList<ChangeEventSubscription> SubscribedEvents { get; set; }
+        public virtual IDictionary<Guid, ChainOfCommandLevels> SubscribedEvents { get; set; }
 
         #endregion
 
@@ -852,7 +852,6 @@ namespace CCServ.Entities
                 HasMany(x => x.EmailAddresses).Cascade.All();
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
-                HasMany(x => x.SubscribedEvents).Cascade.All();
                 HasMany(x => x.WatchAssignments).Cascade.All();
 
                 HasManyToMany(x => x.WatchQualifications).Cascade.All();
@@ -860,6 +859,12 @@ namespace CCServ.Entities
                 HasMany(x => x.PermissionGroupNames)
                     .KeyColumn("PersonId")
                     .Element("PermissionGroupName");
+
+                HasMany(x => x.SubscribedEvents)
+                    .AsMap<string>(index =>
+                        index.Column("ChangeEventId").Type<Guid>(), element =>
+                        element.Column("Level").Type<ChainOfCommandLevels>())
+                    .Cascade.All();
 
                 HasMany(x => x.UserPreferences)
                     .AsMap<string>(index =>
@@ -1048,15 +1053,15 @@ namespace CCServ.Entities
                 RuleForEach(x => x.SubscribedEvents).Must((person, subEvent) =>
                 {
 
-                    if (person.SubscribedEvents.Count(x => x.ChangeEventId == subEvent.ChangeEventId) != 1)
+                    if (person.SubscribedEvents.Count(x => x.Key == subEvent.Key) != 1)
                         return false;
 
-                    var changeEvent = ChangeEventSystem.ChangeEventHelper.AllChangeEvents.FirstOrDefault(x => x.Id == subEvent.ChangeEventId);
+                    var changeEvent = ChangeEventSystem.ChangeEventHelper.AllChangeEvents.FirstOrDefault(x => x.Id == subEvent.Key);
 
                     if (changeEvent == null)
                         return false;
 
-                    if (!changeEvent.ValidLevels.Contains(subEvent.ChainOfCommandLevel))
+                    if (!changeEvent.ValidLevels.Contains(subEvent.Value))
                         return false;
 
                     return true;

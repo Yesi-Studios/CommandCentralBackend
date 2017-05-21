@@ -216,7 +216,6 @@
     <Compile Include="Email\Models\WatchbillInputRequiredEmailModel.cs" />
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
-    <Compile Include="Entities\ChangeEventSubscription.cs" />
     <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="ICommentable.cs" />

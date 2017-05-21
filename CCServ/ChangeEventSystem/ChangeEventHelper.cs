@@ -30,7 +30,7 @@ namespace CCServ.ChangeEventSystem
                 _allChangeEvents = Assembly
                     .GetExecutingAssembly()
                     .GetTypes()
-                    .Where(x => x.IsAssignableFrom(typeof(IChangeEvent)) && x != typeof(IChangeEvent))
+                    .Where(x => typeof(IChangeEvent).IsAssignableFrom(x) && x != typeof(IChangeEvent))
                     .Select(type =>
                     {
                         return (IChangeEvent)Activator.CreateInstance(type);
@@ -55,7 +55,7 @@ namespace CCServ.ChangeEventSystem
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //First, let's build the basic query for a person with this event in their subscriptions.
-                var query = session.Query<Person>().Where(x => x.SubscribedEvents.Any(y => y.Id == changeEvent.Id));
+                var query = session.Query<Person>().Where(x => x.SubscribedEvents.Any(y => y.Key == changeEvent.Id));
 
                 //If this event requires a CoC check, then let's use get chain of command to get all those persons' ids who are in this person's chain of command.
                 if (changeEvent.RestrictToChainOfCommand)
@@ -77,22 +77,22 @@ namespace CCServ.ChangeEventSystem
                     subscribers = subscribers.Where(subscriber =>
                     {
                         //Here we're going to get the first event whose name matches this event and of those, the highest level.
-                        var subscriptionEvent = subscriber.SubscribedEvents.FirstOrDefault(y => y.Id == changeEvent.Id &&
-                            (y.ChainOfCommandLevel == ChainOfCommandLevels.Command ||
-                             y.ChainOfCommandLevel == ChainOfCommandLevels.Department ||
-                             y.ChainOfCommandLevel == ChainOfCommandLevels.Division));
+                        var subscriptionEvent = subscriber.SubscribedEvents.FirstOrDefault(y => y.Key == changeEvent.Id &&
+                            (y.Value == ChainOfCommandLevels.Command ||
+                             y.Value == ChainOfCommandLevels.Department ||
+                             y.Value == ChainOfCommandLevels.Division));
 
                         //Ok now that we have that, we're going to ask about the levels and about the subscriber's level.
-                        if (subscriptionEvent.ChainOfCommandLevel == ChainOfCommandLevels.Command)
+                        if (subscriptionEvent.Value == ChainOfCommandLevels.Command)
                             return subscriber.IsInSameCommandAs(person);
 
-                        if (subscriptionEvent.ChainOfCommandLevel == ChainOfCommandLevels.Department)
+                        if (subscriptionEvent.Value == ChainOfCommandLevels.Department)
                             return subscriber.IsInSameDepartmentAs(person);
 
-                        if (subscriptionEvent.ChainOfCommandLevel == ChainOfCommandLevels.Division)
+                        if (subscriptionEvent.Value == ChainOfCommandLevels.Division)
                             return subscriber.IsInSameDivisionAs(person);
 
-                        throw new Exception("While processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(changeEvent.Id, subscriptionEvent.ChainOfCommandLevel));
+                        throw new Exception("While processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(changeEvent.Id, subscriptionEvent.Value));
                     }).ToList();
                 }
 
