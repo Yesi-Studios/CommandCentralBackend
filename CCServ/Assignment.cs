@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CCServ.Entities.ReferenceLists;
+using AtwoodUtils;
 
 namespace CCServ
 {
@@ -12,6 +13,9 @@ namespace CCServ
     /// </summary>
     public class Assignment
     {
+
+        #region Properties
+
         /// <summary>
         /// The division.
         /// </summary>
@@ -26,6 +30,10 @@ namespace CCServ
         /// The command.
         /// </summary>
         public Command Command { get; private set; }
+
+        #endregion
+
+        #region ctors
 
         /// <summary>
         /// Builds a new assignment from arbitrary div/dep/command.
@@ -50,6 +58,21 @@ namespace CCServ
             this.Department = div?.Department;
             this.Command = this.Department?.Command;
         }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Returns Div - Dept - Command
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return "{0} - {1} - {2}".FormatS(Division, Department, Command);
+        }
+
+        #endregion
 
     }
 }
