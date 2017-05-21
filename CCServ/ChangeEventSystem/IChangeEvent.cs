@@ -38,15 +38,13 @@ namespace CCServ.ChangeEventSystem
         /// </summary>
         bool RestrictToChainOfCommand { get; }
 
-        /// <summary>
-        /// The person/client who raised this event.  If this is null, then the system should be assumed to have raised the event.
-        /// </summary>
-        Person EventRaisedBy { get; }
-
         #endregion
 
         #region Methods
 
+        /// <summary>
+        /// Sends the event's email.
+        /// </summary>
         void SendEmail();
 
         #endregion

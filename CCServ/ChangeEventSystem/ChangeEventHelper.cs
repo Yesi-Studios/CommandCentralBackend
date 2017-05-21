@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CCServ.Entities;
 using NHibernate.Linq;
 using AtwoodUtils;
+using System.Reflection;
 
 namespace CCServ.ChangeEventSystem
 {
@@ -14,7 +15,31 @@ namespace CCServ.ChangeEventSystem
     /// </summary>
     public static class ChangeEventHelper
     {
-        public static List<IChangeEvent> AllChangeEvents = new List<IChangeEvent>();
+        private static List<IChangeEvent> _allChangeEvents;
+
+        /// <summary>
+        /// Returns all the changed events that inherit from IChangeEvent and caches the results for the next call.
+        /// </summary>
+        public static List<IChangeEvent> AllChangeEvents
+        {
+            get
+            {
+                if (_allChangeEvents != null)
+                    return _allChangeEvents;
+
+                _allChangeEvents = Assembly
+                    .GetExecutingAssembly()
+                    .GetTypes()
+                    .Where(x => x.IsAssignableFrom(typeof(IChangeEvent)) && x != typeof(IChangeEvent))
+                    .Select(type =>
+                    {
+                        return (IChangeEvent)Activator.CreateInstance(type);
+                    })
+                    .ToList();
+
+                return _allChangeEvents;
+            }
+        }
 
         /// <summary>
         /// Given a person, determines all those people who can listen to this event.

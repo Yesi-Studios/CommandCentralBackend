@@ -37,7 +37,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         public bool RestrictToChainOfCommand { get; } = false;
 
         /// <summary>
-        /// The person who raised this event.  If this is null, then the system is assumed to have raised this event.
+        /// The person who raised this event.
         /// </summary>
         public Person EventRaisedBy { get; private set; }
 
@@ -59,6 +59,13 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         #endregion
 
         #region ctors
+
+        /// <summary>
+        /// Creates a blank change event with the default values.
+        /// </summary>
+        public AssignmentChangedEvent()
+        {
+        }
 
         /// <summary>
         /// Creates a new assignment changed event.
