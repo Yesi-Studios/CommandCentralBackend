@@ -56,6 +56,11 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// </summary>
         public Assignment NewAssignment { get; private set; }
 
+        /// <summary>
+        /// The valid levels for this change event.
+        /// </summary>
+        public List<ChainOfCommandLevels> ValidLevels { get; } = new List<ChainOfCommandLevels> { ChainOfCommandLevels.Command, ChainOfCommandLevels.Department, ChainOfCommandLevels.Division };
+
         #endregion
 
         #region ctors

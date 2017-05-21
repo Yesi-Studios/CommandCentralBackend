@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
+using AtwoodUtils;
 
 namespace CCServ.Entities
 {
@@ -12,6 +13,9 @@ namespace CCServ.Entities
     /// </summary>
     public class ChangeEventSubscription
     {
+
+        #region Properties
+
         /// <summary>
         /// The Id.
         /// </summary>
@@ -31,6 +35,25 @@ namespace CCServ.Entities
         /// The level at which the subscriber would like to be alerted when this event fires on a profile.
         /// </summary>
         public virtual ChainOfCommandLevels ChainOfCommandLevel { get; set; }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// Returns the name of this 
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            var changeEvent = ChangeEventSystem.ChangeEventHelper.AllChangeEvents.FirstOrDefault(x => x.Id == ChangeEventId);
+
+            var eventName = changeEvent == null ? "UNKNOWN EVENT" : changeEvent.EventName;
+
+            return "{0} at {1} level".FormatS(eventName, this.ChainOfCommandLevel);
+        }
+
+        #endregion
 
         /// <summary>
         /// Maps this subscription to the database.

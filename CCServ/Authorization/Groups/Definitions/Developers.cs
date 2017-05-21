@@ -105,7 +105,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.HasCompletedAWARE,
                     x => x.ADAMSTrainingDate,
                     x => x.DoDId,
-                    x => x.BilletAssignment));
+                    x => x.BilletAssignment,
+                    x => x.SubscribedEvents));
 
             CanAccessModule("Muster");
         }

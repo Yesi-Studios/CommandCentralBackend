@@ -86,7 +86,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.HasCompletedAWARE,
                     x => x.ADAMSTrainingDate,
                     x => x.BilletAssignment,
-                    x => x.DoDId))
+                    x => x.DoDId,
+                    x => x.SubscribedEvents))
                     .IfInChainOfCommand();
 
             CanAccessModule(ChainsOfCommand.Muster.ToString());

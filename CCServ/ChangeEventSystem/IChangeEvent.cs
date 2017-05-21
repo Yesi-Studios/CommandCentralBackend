@@ -38,6 +38,11 @@ namespace CCServ.ChangeEventSystem
         /// </summary>
         bool RestrictToChainOfCommand { get; }
 
+        /// <summary>
+        /// The valid levels for this event.
+        /// </summary>
+        List<ChainOfCommandLevels> ValidLevels { get; }
+
         #endregion
 
         #region Methods
