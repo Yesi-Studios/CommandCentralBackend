@@ -1045,6 +1045,24 @@ namespace CCServ.Entities
                     }).WithMessage("You must have at least one mail.mil address.");
                 });
 
+                RuleForEach(x => x.SubscribedEvents).Must((person, subEvent) =>
+                {
+
+                    if (person.SubscribedEvents.Count(x => x.ChangeEventId == subEvent.ChangeEventId) != 1)
+                        return false;
+
+                    var changeEvent = ChangeEventSystem.ChangeEventHelper.AllChangeEvents.FirstOrDefault(x => x.Id == subEvent.ChangeEventId);
+
+                    if (changeEvent == null)
+                        return false;
+
+                    if (!changeEvent.ValidLevels.Contains(subEvent.ChainOfCommandLevel))
+                        return false;
+
+                    return true;
+                })
+                .WithMessage("One or more of your subscription events were not valid.");
+
                 //Set validations
                 RuleFor(x => x.EmailAddresses)
                     .SetCollectionValidator(new EmailAddress.EmailAddressValidator());
