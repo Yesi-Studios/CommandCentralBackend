@@ -20,7 +20,7 @@ namespace CCServ.Entities
         /// <summary>
         /// The name of a change event.  Change events are declared in code.
         /// </summary>
-        public virtual string ChangeEventName { get; set; }
+        public virtual Guid ChangeEventId { get; set; }
 
         /// <summary>
         /// The person who subscribed to the event.
@@ -44,12 +44,11 @@ namespace CCServ.Entities
             {
                 Id(x => x.Id).GeneratedBy.Guid();
 
-                Map(x => x.ChangeEventName).Not.Nullable();
+                Map(x => x.ChangeEventId).Not.Nullable();
                 Map(x => x.ChainOfCommandLevel).Not.Nullable();
 
                 References(x => x.Subscriber).Not.Nullable();
             }
         }
-
     }
 }

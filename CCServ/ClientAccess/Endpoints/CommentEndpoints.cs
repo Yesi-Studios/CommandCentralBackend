@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities;
-using Humanizer;
 using NHibernate.Criterion;
 
 namespace CCServ.ClientAccess.Endpoints

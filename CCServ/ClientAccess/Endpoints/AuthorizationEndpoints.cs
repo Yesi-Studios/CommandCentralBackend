@@ -7,7 +7,6 @@ using CCServ.ClientAccess;
 using CCServ.Entities;
 using AtwoodUtils;
 using CCServ.Authorization;
-using Humanizer;
 
 namespace CCServ.ClientAccess.Endpoints
 {
@@ -240,8 +239,8 @@ namespace CCServ.ClientAccess.Endpoints
                         Editee = person,
                         Editor = token.AuthenticationSession.Person,
                         Id = Guid.NewGuid(),
-                        NewValue = String.Join(", ", person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).Select(x => x.Humanize(LetterCasing.Title))),
-                        OldValue = String.Join(", ", currentGroups.Select(x => x.Humanize(LetterCasing.Title))),
+                        NewValue = String.Join(", ", person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName))),
+                        OldValue = String.Join(", ", currentGroups),
                         PropertyName = PropertySelector.SelectPropertyFrom<Person>(x => x.PermissionGroups).Name,
                         Time = token.CallTime
                     });

@@ -718,15 +718,6 @@ namespace CCServ.Entities
                             Username = "user" + x.ToString(),
                             PasswordHash = ClientAccess.PasswordHash.CreateHash("a"),
                             Sex = Sexes.AllSexes.ElementAt(Utilities.GetRandomNumber(0, Sexes.AllSexes.Count - 1)),
-                            EmailAddresses = new List<EmailAddress>()
-                            {
-                                new EmailAddress
-                                {
-                                    Address = "{0}@{1}.com".FormatS(Utilities.RandomString(6), Utilities.RandomString(6)),
-                                    IsContactable = true,
-                                    IsPreferred = true
-                                }
-                            },
                             DateOfBirth = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
                             DateOfArrival = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
                             EAOS = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
@@ -736,6 +727,14 @@ namespace CCServ.Entities
                             PermissionGroupNames = permissionGroupNames,
                             WatchQualifications = ReferenceLists.WatchQualifications.AllWatchQualifications.Shuffle().Take(Utilities.GetRandomNumber(1, ReferenceLists.WatchQualifications.AllWatchQualifications.Count)).ToList()
                         };
+
+                        person.EmailAddresses = new List<EmailAddress> { new EmailAddress
+                        {
+                            Address = "{0}.{1}.{2}.mil@mail.mil".FormatS(person.FirstName, person.MiddleName[0], person.LastName),
+                            Id = Guid.NewGuid(),
+                            IsContactable = true,
+                            IsPreferred = true
+                        } };
 
                         person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
 

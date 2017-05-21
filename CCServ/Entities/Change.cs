@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Linq;
 using CCServ.ClientAccess;
-using Humanizer;
 using AtwoodUtils;
 using NHibernate.Type;
 
@@ -68,7 +67,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "The property '{0}' changed from '{1}' to '{2}'.".FormatWith(PropertyName.Humanize(LetterCasing.Title), OldValue, NewValue);
+            return "The property '{0}' changed from '{1}' to '{2}'.".FormatS(PropertyName, OldValue, NewValue);
         }
 
         /// <summary>

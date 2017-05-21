@@ -6,7 +6,6 @@ using FluentValidation;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
-using Humanizer;
 
 namespace CCServ.Entities.ReferenceLists
 {
@@ -37,7 +36,7 @@ namespace CCServ.Entities.ReferenceLists
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<UIC>().Where(x => x.Value.IsInsensitiveLike(uic.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(uic.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(uic.Value), ErrorTypes.Validation);
 
                     var uicFromDB = session.Get<UIC>(uic.Id);
 

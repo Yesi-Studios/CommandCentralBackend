@@ -3,7 +3,6 @@ using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using CCServ.Entities.ReferenceLists;
 using NHibernate.Type;
-using Humanizer;
 
 namespace CCServ.Entities
 {
@@ -42,7 +41,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} @ {1}".FormatWith(this.AccountHistoryEventType, this.EventTime);
+            return "{0} @ {1}".FormatS(this.AccountHistoryEventType, this.EventTime);
         }
 
         /// <summary>

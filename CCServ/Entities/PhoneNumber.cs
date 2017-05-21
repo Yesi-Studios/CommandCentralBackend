@@ -3,7 +3,6 @@ using CCServ.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using System.Linq;
-using Humanizer;
 using AtwoodUtils;
 using System.Collections.Generic;
 
@@ -73,7 +72,7 @@ namespace CCServ.Entities
             else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Work.Id)
                 phoneType = "W";
 
-            return "{0} ({1}) {2}".FormatWith(Number, phoneType, final);
+            return "{0} ({1}) {2}".FormatS(Number, phoneType, final);
         }
 
         /// <summary>
@@ -95,7 +94,7 @@ namespace CCServ.Entities
         }
 
         /// <summary>
-        /// hashey codey
+        /// Get the hash code...
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities;
-using Humanizer;
 using NHibernate.Criterion;
 
 namespace CCServ.ClientAccess.Endpoints
@@ -113,7 +112,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatS(e.Message), ErrorTypes.Validation);
             }
 
             //Ok now we know we have the FAQ.  Now let's see if it's valid.
@@ -193,7 +192,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatWith(e.Message), ErrorTypes.Validation);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatS(e.Message), ErrorTypes.Validation);
             }
 
             //We can head right into the session since we're going to delete this FAQ.

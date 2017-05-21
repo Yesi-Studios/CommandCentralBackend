@@ -4,7 +4,6 @@ using System.Net;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
 using FluentValidation;
-using Humanizer;
 using CCServ.DataAccess;
 
 namespace CCServ.Entities
@@ -72,7 +71,7 @@ namespace CCServ.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0}{1}, {2}, {3} {4}".FormatWith(IsHomeAddress ? "(Home) " : "", Address, City, State, ZipCode);
+            return "{0}{1}, {2}, {3} {4}".FormatS(IsHomeAddress ? "(Home) " : "", Address, City, State, ZipCode);
         }
 
         /// <summary>

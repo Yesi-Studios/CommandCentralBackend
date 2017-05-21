@@ -8,7 +8,6 @@ using CCServ.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using FluentValidation.Results;
-using Humanizer;
 using NHibernate.Criterion;
 
 namespace CCServ.Entities.ReferenceLists.Watchbill
@@ -40,7 +39,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<WatchInputReason>().Where(x => x.Value.IsInsensitiveLike(reason.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatWith(reason.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(reason.Value), ErrorTypes.Validation);
 
                     var reasonFromDB = session.Get<WatchInputReason>(reason.Id);
 

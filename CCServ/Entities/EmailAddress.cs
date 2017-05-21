@@ -3,7 +3,6 @@ using AtwoodUtils;
 using System.Linq;
 using FluentNHibernate.Mapping;
 using FluentValidation;
-using Humanizer;
 using System.Collections.Generic;
 
 namespace CCServ.Entities
@@ -105,7 +104,7 @@ namespace CCServ.Entities
             
             string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
 
-            return "{0} {1}".FormatWith(Address, final);
+            return "{0} {1}".FormatS(Address, final);
         }
 
         #endregion

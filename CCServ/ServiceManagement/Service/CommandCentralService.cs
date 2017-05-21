@@ -17,7 +17,6 @@ using System.Linq.Expressions;
 using CCServ.ClientAccess;
 using CCServ.Logging;
 using Polly;
-using Humanizer;
 using System.Net;
 
 namespace CCServ.ServiceManagement.Service
@@ -181,7 +180,7 @@ namespace CCServ.ServiceManagement.Service
                                 .WaitAndRetry(2, count => TimeSpan.FromSeconds(1), (e, waitDuration, retryCount, context) =>
                                 {
                                     failedAtLeastOnce = true;
-                                    Log.Warning("A session transaction failed to commit.  Retry count: {0}".FormatWith(retryCount), token);
+                                    Log.Warning("A session transaction failed to commit.  Retry count: {0}".FormatS(retryCount), token);
                                 })
                                 .ExecuteAndCapture(() =>
                                 {
