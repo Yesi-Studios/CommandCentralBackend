@@ -59,6 +59,34 @@ namespace AtwoodUtils
             return iThree.ToString() + delimiter + iTwo.ToString() + delimiter + iFour.ToString();
         }
 
+        public static bool ScrambledEquals<T>(IEnumerable<T> list1, IEnumerable<T> list2)
+        {
+            var cnt = new Dictionary<T, int>();
+            foreach (T s in list1)
+            {
+                if (cnt.ContainsKey(s))
+                {
+                    cnt[s]++;
+                }
+                else
+                {
+                    cnt.Add(s, 1);
+                }
+            }
+            foreach (T s in list2)
+            {
+                if (cnt.ContainsKey(s))
+                {
+                    cnt[s]--;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return cnt.Values.All(c => c == 0);
+        }
+
         public static string GenerateDoDId()
         {
             string result = "";

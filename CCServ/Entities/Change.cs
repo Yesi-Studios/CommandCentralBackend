@@ -52,11 +52,6 @@ namespace CCServ.Entities
         /// </summary>
         public virtual DateTime Time { get; set; }
 
-        /// <summary>
-        /// A free text field describing this change.
-        /// </summary>
-        public virtual string Remarks { get; set; }
-
         #endregion
 
         #region Overrides
@@ -87,7 +82,6 @@ namespace CCServ.Entities
                    Object.Equals(other.NewValue, this.NewValue) &&
                    Object.Equals(other.OldValue, this.OldValue) &&
                    Object.Equals(other.PropertyName, this.PropertyName) &&
-                   Object.Equals(other.Remarks, this.Remarks) &&
                    Object.Equals(other.Time, this.Time);
         }
 
@@ -108,7 +102,6 @@ namespace CCServ.Entities
                 hash = hash * 23 + Utilities.GetSafeHashCode(OldValue);
                 hash = hash * 23 + Utilities.GetSafeHashCode(NewValue);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Time);
-                hash = hash * 23 + Utilities.GetSafeHashCode(Remarks);
 
                 return hash;
             }
@@ -132,7 +125,6 @@ namespace CCServ.Entities
                 References(x => x.Editee).Not.Nullable();
 
                 Map(x => x.Time).Not.Nullable().CustomType<UtcDateTimeType>();
-                Map(x => x.Remarks).Nullable().Length(150);
                 Map(x => x.PropertyName).Not.Nullable();
                 Map(x => x.OldValue);
                 Map(x => x.NewValue);

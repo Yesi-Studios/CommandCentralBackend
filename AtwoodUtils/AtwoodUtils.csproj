@@ -69,7 +69,6 @@
     <Compile Include="SerializationSettings.cs" />
     <Compile Include="TimeRange.cs" />
     <Compile Include="Utilities.cs" />
-    <Compile Include="Variance.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

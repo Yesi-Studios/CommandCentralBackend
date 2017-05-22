@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using System.Collections;
 using CCServ.Entities;
+using System.Linq;
+using NHibernate.Collection;
+using NHibernate.Type;
 
 namespace CCServ.DataAccess
 {
@@ -27,96 +30,50 @@ namespace CCServ.DataAccess
         /// <param name="session"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public static IEnumerable<Change> GetVariantProperties<T>(this ISession session, T entity) where T : class, new()
+        public static IEnumerable<Change> GetChangesFromDirtyProperties<T>(this ISession session, T entity) where T : class, new()
         {
-            //This is all the information about the session and its implementation from the underlying NHibernate set up.
-            ISessionImplementor sessionImpl = session.GetSessionImplementation();
-            IPersistenceContext persistenceContext = sessionImpl.PersistenceContext;
-            EntityEntry oldEntry = persistenceContext.GetEntry(entity);
-            String className = NHibernateHelper.GetEntityMetadata("Person").EntityName;
-            IEntityPersister persister = sessionImpl.Factory.GetEntityPersister(className);
+            string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
+                throw new Exception("We attempted to find the entity name for a non-entity: {0}".FormatS(typeof(T)));
 
-            //If the old entry is null, then that means we're creating something, so just set the old to the new.
-            if ((oldEntry == null) && (entity is INHibernateProxy))
+            var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);
+            var key = new EntityKey(persister.GetIdentifier(entity, EntityMode.Poco), persister, EntityMode.Poco);
+            var entityEntry = session.GetSessionImplementation().PersistenceContext.GetEntry(session.GetSessionImplementation().PersistenceContext.GetEntity(key));
+
+            object[] currentState = persister.GetPropertyValues(entity, EntityMode.Poco);
+
+            //Find dirty will give us all the properties that are dirty, but because of some grade A NHibernate level bullshit, it won't look at collection for us.
+            var indices = persister.FindDirty(currentState.ToArray(), entityEntry.LoadedState, entity, session.GetSessionImplementation());
+
+            if (indices != null)
             {
-                INHibernateProxy proxy = entity as INHibernateProxy;
-                Object obj = sessionImpl.PersistenceContext.Unproxy(proxy);
-                oldEntry = sessionImpl.PersistenceContext.GetEntry(obj);
+                foreach (var index in indices)
+                {
+                    yield return new Change
+                    {
+                        NewValue = currentState[index]?.ToString(),
+                        OldValue = entityEntry.LoadedState[index]?.ToString(),
+                        PropertyName = persister.PropertyNames[index],
+                        Id = Guid.NewGuid()
+                    };
+                }
             }
 
-            Object[] previousState = oldEntry.LoadedState;
-
-            Object[] currentState = persister.GetPropertyValues(entity, sessionImpl.EntityMode);
-
-            //First, we need to know which properties changed.  We can't rely on NHibernate to tell us this because we need to go deeper than it will go.
-            for (int x = 0; x < currentState.Length; x++)
+            //Here we walk through the collections ourselves in order to determine what has changed.
+            for (int x = 0; x < persister.PropertyTypes.Length; x++)
             {
-                var propertyName = persister.PropertyNames[x];
-
-                if (persister.PropertyTypes[x].IsCollectionType)
+                if (typeof(CollectionType).IsAssignableFrom(persister.PropertyTypes[x].GetType()))
                 {
-                    var currentCollection = ((IEnumerable)currentState[x]).Cast<object>().ToList();
-                    var previousCollection = ((IEnumerable)previousState[x]).Cast<object>().ToList();
-
-                    var notInCurrent = new List<object>();
-                    var notInPrevious = new List<object>();
-
-                    //T1 is the current value, T2 is the previous value.  This is determined by how we pass it into the get set differences method.
-                    var changes = new List<Tuple<object, object>>();
-
-                    if (!Utilities.GetSetDifferences(currentCollection, previousCollection, out notInCurrent, out notInPrevious, out changes))
-                    {
-                        foreach (var obj in notInCurrent)
-                        {
-                            yield return new Change
-                            {
-                                Remarks = "The item was removed.",
-                                Id = Guid.NewGuid(),
-                                NewValue = null,
-                                OldValue = obj.ToString(),
-                                PropertyName = propertyName
-                            };
-                        }
-
-                        foreach (var obj in notInPrevious)
-                        {
-                            yield return new Change
-                            {
-                                Remarks = "The item was added.",
-                                Id = Guid.NewGuid(),
-                                NewValue = obj.ToString(),
-                                OldValue = null,
-                                PropertyName = propertyName
-                            };
-                        }
-
-                        foreach (var pair in changes)
-                        {
-                            yield return new Change
-                            {
-                                Id = Guid.NewGuid(),
-                                NewValue = pair.Item1.ToString(),
-                                OldValue = pair.Item2.ToString(),
-                                PropertyName = propertyName
-                            };
-                        }
-                    }
-                }
-                else
-                {
-                    var previousValue = previousState[x];
-                    var currentValue = currentState[x];
-
-                    if (!Object.Equals(previousValue, currentValue))
+                    if (!Utilities.ScrambledEquals((dynamic)currentState[x], (dynamic)entityEntry.LoadedState[x]))
                     {
                         yield return new Change
                         {
                             Id = Guid.NewGuid(),
-                            NewValue = currentValue?.ToString(),
-                            OldValue = previousValue?.ToString(),
-                            PropertyName = propertyName
+                            NewValue = String.Join(", ", (dynamic)currentState[x]),
+                            OldValue = String.Join(", ", (dynamic)entityEntry.LoadedState[x]),
+                            PropertyName = persister.PropertyNames[x]
                         };
                     }
+                    
                 }
             }
         }
