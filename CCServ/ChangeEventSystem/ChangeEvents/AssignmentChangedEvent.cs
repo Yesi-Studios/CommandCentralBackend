@@ -19,22 +19,22 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// <summary>
         /// The Id of this event.
         /// </summary>
-        public Guid Id { get; } = Guid.Parse("{64DC5965-B301-46E9-93DA-923F7EB93862}");
+        public Guid Id => Guid.Parse("{64DC5965-B301-46E9-93DA-923F7EB93862}");
 
         /// <summary>
         /// The name of this event.
         /// </summary>
-        public string EventName { get; } = "Assignment Changed";
+        public string EventName => "Assignment Changed";
 
         /// <summary>
         /// The description of this event.
         /// </summary>
-        public string Description { get; } = "When a person's division, department or command changes.";
+        public string Description => "When a person's division, department or command changes.";
 
         /// <summary>
         /// Instructs the system to restrict sending emails about this event to members outside a user's chain of command.
         /// </summary>
-        public bool RestrictToChainOfCommand { get; } = false;
+        public bool RestrictToChainOfCommand => false;
 
         /// <summary>
         /// The person who raised this event.
@@ -59,7 +59,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
         /// <summary>
         /// The valid levels for this change event.
         /// </summary>
-        public List<ChainOfCommandLevels> ValidLevels { get; } = new List<ChainOfCommandLevels> { ChainOfCommandLevels.Command, ChainOfCommandLevels.Department, ChainOfCommandLevels.Division };
+        public List<ChainOfCommandLevels> ValidLevels => new List<ChainOfCommandLevels> { ChainOfCommandLevels.Command, ChainOfCommandLevels.Department, ChainOfCommandLevels.Division };
 
         #endregion
 

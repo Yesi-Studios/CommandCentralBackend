@@ -55,7 +55,7 @@ namespace CCServ.ChangeEventSystem
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
                 //First, let's build the basic query for a person with this event in their subscriptions.
-                var query = session.Query<Person>().Where(x => x.SubscribedEvents.Any(y => y.Key == changeEvent.Id));
+                var query = session.Query<Person>().Where(x => x.SubscribedEvents.ContainsKey(changeEvent.Id));
 
                 //If this event requires a CoC check, then let's use get chain of command to get all those persons' ids who are in this person's chain of command.
                 if (changeEvent.RestrictToChainOfCommand)
@@ -67,7 +67,7 @@ namespace CCServ.ChangeEventSystem
                 }
 
                 //Execute that query.
-                var subscribers = query.Fetch(x => x.SubscribedEvents).Fetch(x => x.EmailAddresses).ToList();
+                var subscribers = query.Fetch(x => x.EmailAddresses).ToList();
 
                 //Make sure the person isn't null before we ask questions about chain of command.
                 if (person != null)

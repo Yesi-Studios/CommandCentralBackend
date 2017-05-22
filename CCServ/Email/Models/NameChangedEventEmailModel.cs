@@ -12,18 +12,8 @@ namespace CCServ.Email.Models
     public class NameChangedEventEmailModel
     {
         /// <summary>
-        /// The name of the person prior to the event.
+        /// The change event referenced by the email.
         /// </summary>
-        public string OldName { get; set; }
-
-        /// <summary>
-        /// The name of the person after the event.
-        /// </summary>
-        public string NewName { get; set; }
-
-        /// <summary>
-        /// The id of the person whose name changed.
-        /// </summary>
-        public string PersonId { get; set; }
+        public ChangeEventSystem.ChangeEvents.NameChangedEvent ChangeEvent { get; set; }
     }
 }

@@ -13,6 +13,7 @@ using CCServ.Entities;
 using System.Linq;
 using NHibernate.Collection;
 using NHibernate.Type;
+using System.Linq.Expressions;
 
 namespace CCServ.DataAccess
 {
@@ -77,5 +78,30 @@ namespace CCServ.DataAccess
                 }
             }
         }
+
+        /// <summary>
+        /// Returns the loaded value for a given property name of a given entity.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TProperty"></typeparam>
+        /// <param name="session"></param>
+        /// <param name="entity"></param>
+        /// <param name="selector"></param>
+        /// <returns></returns>
+        public static TProperty GetLoadedPropertyValue<T, TProperty>(this ISession session, T entity, Expression<Func<T, TProperty>> selector) where T: class
+        {
+
+            string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
+                throw new Exception("We attempted to find the entity name for a non-entity: {0}".FormatS(typeof(T)));
+
+            var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);
+            var key = new EntityKey(persister.GetIdentifier(entity, EntityMode.Poco), persister, EntityMode.Poco);
+            var entityEntry = session.GetSessionImplementation().PersistenceContext.GetEntry(session.GetSessionImplementation().PersistenceContext.GetEntity(key));
+
+            return (TProperty)entityEntry.GetLoadedValue((selector.Body as MemberExpression)?.Member?.Name);
+
+        }
+
+
     }
 }

@@ -119,6 +119,7 @@
     <Compile Include="Authorization\Groups\Definitions\CommandQuarterdeckWatchbill.cs" />
     <Compile Include="Authorization\Groups\Definitions\DepartmentQuarterdeckWatchbill.cs" />
     <Compile Include="Authorization\Groups\Definitions\DivisionQuarterdeckWatchbill.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
     <Compile Include="ChangeEventSystem\IChangeEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />

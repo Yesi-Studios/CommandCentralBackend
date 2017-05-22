@@ -715,9 +715,6 @@ namespace CCServ.ClientAccess.Endpoints
                     var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
                     var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
 
-                    //Create all the change events here.  We'll throw away the ones we don't need.
-                    var assignmentChangedEvent = new ChangeEventSystem.ChangeEvents.AssignmentChangedEvent(token.AuthenticationSession.Person, personFromDB, new Assignment(personFromDB.Division), null);
-
                     //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
                     foreach (var field in returnableFields.Intersect(editableFields, StringComparer.CurrentCultureIgnoreCase))
                     {
@@ -754,8 +751,32 @@ namespace CCServ.ClientAccess.Endpoints
 
                     if (changes.Any(change => PropertySelector.SelectPropertiesFrom<Person>(x => x.Division, x => x.Department, x => x.Command).Select(x => x.Name).Contains(change.PropertyName)))
                     {
-                        var test = session.GetSessionImplementation().PersistenceContext;
+                        var changeAssignmentEvent = new ChangeEventSystem.ChangeEvents.AssignmentChangedEvent(
+                            token.AuthenticationSession.Person,
+                            personFromDB,
+                            new Assignment(session.GetLoadedPropertyValue(personFromDB, x => x.Division), session.GetLoadedPropertyValue(personFromDB, x => x.Department), session.GetLoadedPropertyValue(personFromDB, x => x.Command)),
+                            new Assignment(personFromDB.Division, personFromDB.Department, personFromDB.Command));
+
+                        changeAssignmentEvent.SendEmail();
                     }
+
+                    if (changes.Any(change => PropertySelector.SelectPropertiesFrom<Person>(x => x.FirstName, x => x.LastName, x => x.MiddleName).Select(x => x.Name).Contains(change.PropertyName)))
+                    {
+                        var nameChangedEvent = new ChangeEventSystem.ChangeEvents.NameChangedEvent(
+                            token.AuthenticationSession.Person,
+                            personFromDB,
+                            new Person
+                            {
+                                FirstName = session.GetLoadedPropertyValue(personFromDB, x => x.FirstName),
+                                MiddleName = session.GetLoadedPropertyValue(personFromDB, x => x.MiddleName),
+                                LastName = session.GetLoadedPropertyValue(personFromDB, x => x.LastName)
+                            }.ToString(),
+                            personFromDB.ToString());
+
+                        nameChangedEvent.SendEmail();
+                    }
+
+
 
                     //Ok, so the client is authorized to edit all the fields that changed.  Let's submit the update to the database.
                     session.Merge(personFromDB);
