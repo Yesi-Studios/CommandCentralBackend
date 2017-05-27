@@ -46,7 +46,7 @@ namespace CCServ.ClientAccess.Endpoints
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.CreatePerson.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 throw new CommandCentralException("You don't have permission to do that.", ErrorTypes.Authorization);
 
-            //Ok, since the client has permission to create a person, we'll assume they have permission to udpate all of the required fields.
+            //Ok, since the client has permission to create a person, we'll assume they have permission to update all of the required fields.
             if (!token.Args.ContainsKey("person"))
                 throw new CommandCentralException("You failed to send a 'person' parameter.", ErrorTypes.Validation);
 
@@ -58,7 +58,7 @@ namespace CCServ.ClientAccess.Endpoints
             }
             catch
             {
-                throw new CommandCentralException("An error occured while processing your person object.", ErrorTypes.Validation);
+                throw new CommandCentralException("An error occurred while processing your person object.", ErrorTypes.Validation);
             }
 
 
@@ -119,6 +119,8 @@ namespace CCServ.ClientAccess.Endpoints
 
                     //And now return the person.
                     token.SetResult(newPerson.Id);
+
+                    new ChangeEventSystem.ChangeEvents.NewPersonChangeEvent(token.AuthenticationSession.Person, newPerson).SendEmail();
 
                     transaction.Commit();
                 }

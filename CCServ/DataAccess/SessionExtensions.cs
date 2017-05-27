@@ -74,7 +74,6 @@ namespace CCServ.DataAccess
                             PropertyName = persister.PropertyNames[x]
                         };
                     }
-                    
                 }
             }
         }
@@ -99,9 +98,6 @@ namespace CCServ.DataAccess
             var entityEntry = session.GetSessionImplementation().PersistenceContext.GetEntry(session.GetSessionImplementation().PersistenceContext.GetEntity(key));
 
             return (TProperty)entityEntry.GetLoadedValue((selector.Body as MemberExpression)?.Member?.Name);
-
         }
-
-
     }
 }

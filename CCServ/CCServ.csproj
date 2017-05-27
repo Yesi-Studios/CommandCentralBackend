@@ -120,6 +120,7 @@
     <Compile Include="Authorization\Groups\Definitions\DepartmentQuarterdeckWatchbill.cs" />
     <Compile Include="Authorization\Groups\Definitions\DivisionQuarterdeckWatchbill.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\NameChangedEvent.cs" />
+    <Compile Include="ChangeEventSystem\ChangeEvents\NewPersonChangeEvent.cs" />
     <Compile Include="ChangeEventSystem\IChangeEvent.cs" />
     <Compile Include="ChangeEventSystem\ChangeEventHelper.cs" />
     <Compile Include="ChangeEventSystem\ChangeEvents\AssignmentChangedEvent.cs" />
@@ -191,6 +192,7 @@
     <Compile Include="DataAccess\SearchDataTypesEnum.cs" />
     <Compile Include="DataAccess\SessionExtensions.cs" />
     <Compile Include="Email\Models\AccountConfirmationEmailModel.cs" />
+    <Compile Include="Email\Models\NewPersonChangeEventEmailModel.cs" />
     <Compile Include="Email\Models\AssignmentChangedEventEmailModel.cs" />
     <Compile Include="Email\Models\BeginPasswordResetEmailModel.cs" />
     <Compile Include="Email\Models\BeginRegistrationErrorEmailModel.cs" />
@@ -422,6 +424,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Email\Templates\AssignmentChangedEvent_HTML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\NewPersonChangeEvent_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
