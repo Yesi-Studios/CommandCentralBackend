@@ -202,10 +202,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         //I include a check to see if the client is the person with the watch input to allow it to pass.
                         if (watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id && !resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
-                            throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
-                                "If this is your own input and you need to change the date range, " +
-                                "please delete the input and then re-create it for the proper range.",
-                                ErrorTypes.Authorization);
+                            throw new CommandCentralException("You are not authorized to edit inputs for this person.", ErrorTypes.Authorization);
 
                         if (watchInputFromDB.IsConfirmed)
                             return;
