@@ -1090,7 +1090,15 @@ namespace CCServ.Entities
             public PersonQueryProvider()
             {
                 ForProperties(
-                    x => x.Id,
+                    x => x.Id)
+                .AsType(SearchDataTypes.String)
+                .CanBeUsedIn(QueryTypes.Advanced)
+                .UsingStrategy(token =>
+                {
+                    return CommonQueryStrategies.IdQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
+                });
+
+                ForProperties(
                     x => x.SSN,
                     x => x.Suffix,
                     x => x.Remarks,
