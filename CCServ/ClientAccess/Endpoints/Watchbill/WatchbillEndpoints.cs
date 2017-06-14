@@ -117,7 +117,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
-                        token.SetResult(session.QueryOver<Entities.Watchbill.Watchbill>().List());
+                        token.SetResult(session.QueryOver<Entities.Watchbill.Watchbill>().List().Select(watchbill => new
+                        {
+                            watchbill.Id,
+                            watchbill.CreatedBy,
+                            watchbill.CurrentState,
+                            watchbill.LastStateChange,
+                            watchbill.LastStateChangedBy,
+                            watchbill.Range,
+                            watchbill.Title,
+                            watchbill.EligibilityGroup
+                        }));
 
                         transaction.Commit();
                     }
