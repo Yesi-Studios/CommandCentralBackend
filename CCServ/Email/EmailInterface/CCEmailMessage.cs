@@ -50,8 +50,6 @@ namespace CCServ.Email.EmailInterface
         /// </summary>
         private List<SmtpClient> _clients;
 
-        private Task _renderingTask;
-
         #endregion
 
         #region Helper Methods
@@ -366,18 +364,15 @@ namespace CCServ.Email.EmailInterface
         /// <returns></returns>
         public CCEmailMessage HTMLAlternateViewUsingTemplateFromEmbedded(string resourcePath, object model, Assembly assembly = null)
         {
-            _renderingTask = new Task(() =>
-            {
-                assembly = typeof(CCEmailMessage).Assembly;
+            assembly = typeof(CCEmailMessage).Assembly;
 
-                ContentType mimeType = new ContentType("text/html");
+            ContentType mimeType = new ContentType("text/html");
 
-                var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
+            var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
 
-                AlternateView view = AlternateView.CreateAlternateViewFromString(content, mimeType);
+            AlternateView view = AlternateView.CreateAlternateViewFromString(content, mimeType);
 
-                Message.AlternateViews.Add(view);
-            });
+            Message.AlternateViews.Add(view);
 
             return this;
         }
@@ -421,8 +416,6 @@ namespace CCServ.Email.EmailInterface
             if (_clients.Any())
             {
                 SmtpClient attemptClient = _clients.First();
-
-                _renderingTask.RunSynchronously();
 
                 Task.Run(() =>
                 {
