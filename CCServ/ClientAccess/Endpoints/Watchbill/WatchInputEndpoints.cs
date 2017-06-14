@@ -120,7 +120,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                                 throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                            if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
+                            if (resolvedPermissions.ChainOfCommandByModule.TryGetValue(watchbill.EligibilityGroup.OwningChainOfCommand.ToString(), out bool inChain) && !inChain
                                 && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
                                 throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
 
