@@ -191,7 +191,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             .SingleOrDefault() ??
                             throw new Exception("A watch input was not owned by any watchbill.");
 
-                        //Ok let's swap the properties now.
                         //Check the state.
                         if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
