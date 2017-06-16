@@ -99,9 +99,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                             .Resolve(token.AuthenticationSession.Person, personFromDB);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()]
-                                && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
-                            throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
+                        if (personFromDB.Id == token.AuthenticationSession.Person.Id &&
+                            (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Self ||
+                             resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.None))
+                            throw new CommandCentralException("You are not authorized to confirm your own watch inputs.  Only watchbill coordinators can do that.", ErrorTypes.Authorization);
+
+                        //I include a check to see if the client is the person with the watch input to allow it to pass.
+                        if (personFromDB.Id != token.AuthenticationSession.Person.Id && !resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()])
+                            throw new CommandCentralException("You are not authorized to confirm inputs for this person.", ErrorTypes.Authorization);
 
                         var inputRequirement = watchbillFromDB.InputRequirements.FirstOrDefault(x => x.Person.Id == personFromDB.Id) ??
                             throw new CommandCentralException("You may not submit inputs for the person because there is no valid input requirement for that person.", ErrorTypes.Validation);
