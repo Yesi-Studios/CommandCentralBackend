@@ -200,9 +200,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                             .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
 
+                        if (watchInputFromDB.Person.Id == token.AuthenticationSession.Person.Id &&
+                            (resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Self ||
+                             resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.None))
+                            throw new CommandCentralException("You are not authorized to confirm your own watch inputs.  Only watchbill coordinators can do that.", ErrorTypes.Authorization);
+
                         //I include a check to see if the client is the person with the watch input to allow it to pass.
                         if (watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id && !resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
-                            throw new CommandCentralException("You are not authorized to edit inputs for this person.", ErrorTypes.Authorization);
+                            throw new CommandCentralException("You are not authorized to confirm inputs for this person.", ErrorTypes.Authorization);
 
                         if (watchInputFromDB.IsConfirmed)
                             return;

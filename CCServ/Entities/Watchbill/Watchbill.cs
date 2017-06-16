@@ -653,7 +653,7 @@ namespace CCServ.Entities.Watchbill
                         {
                             Person = person,
                             Watchbill = watchbill,
-                            PersonsWithoutInputs = requirementsResponsibleFor.Select(x => x.Person)
+                            PersonsWithoutInputs = requirementsResponsibleFor.Where(x => !x.IsAnswered).Select(x => x.Person)
                         };
 
                         var emailAddresses = person.EmailAddresses.Where(x => x.IsDodEmailAddress);
