@@ -138,13 +138,11 @@ namespace CCServ.Entities
         /// <summary>
         /// The person's paygrade (e5, O1, O5, CWO2, GS1,  etc.)
         /// </summary>
-        [ConditionalJsonIgnore]
         public virtual Paygrade Paygrade { get; set; }
 
         /// <summary>
         /// The person's Designation (CTI2, CTR1, 1114, Job title)
         /// </summary>
-        [ConditionalJsonIgnore]
         public virtual Designation Designation { get; set; }
 
         /// <summary>
