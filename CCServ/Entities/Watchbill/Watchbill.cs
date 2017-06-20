@@ -850,6 +850,7 @@ namespace CCServ.Entities.Watchbill
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
                 RuleFor(x => x.Range).Must(x => x.Start <= x.End);
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 Custom(watchbill =>
                 {
                     var shiftsByType = watchbill.WatchShifts.GroupBy(x => x.ShiftType);
@@ -879,8 +880,8 @@ namespace CCServ.Entities.Watchbill
                     //Now we're going to make sure that all the inputs are within the watchbill range.  It's ok if they overlap though.
                     foreach (var input in watchbill.WatchInputs)
                     {
-                        if (!watchbillTimeRange.HasInside(new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)))
-                            errorElements.Add("One or more inputs are outside the range of the watchbill.");
+                        if (!watchbillTimeRange.OverlapsWith(new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)))
+                            errorElements.Add("One or more inputs do not overlap with the watchbill.");
                     }
 
                     if (errorElements.Any())
@@ -892,6 +893,7 @@ namespace CCServ.Entities.Watchbill
 
                     return null;
                 });
+#pragma warning restore CS0618 // Type or member is obsolete
             }
         }
 

@@ -723,7 +723,7 @@ namespace CCServ.Entities
                             Paygrade = Paygrades.AllPaygrades.ElementAt(Utilities.GetRandomNumber(0, Paygrades.AllPaygrades.Count - 1)),
                             DutyStatus = DutyStatuses.AllDutyStatuses.ElementAt(Utilities.GetRandomNumber(0, DutyStatuses.AllDutyStatuses.Count - 1)),
                             PermissionGroupNames = permissionGroupNames,
-                            WatchQualifications = ReferenceLists.WatchQualifications.AllWatchQualifications.Shuffle().Take(Utilities.GetRandomNumber(1, ReferenceLists.WatchQualifications.AllWatchQualifications.Count)).ToList()
+                            WatchQualifications = ReferenceLists.WatchQualifications.AllWatchQualifications.Shuffle().Take(1).ToList()
                         };
 
                         person.EmailAddresses = new List<EmailAddress> { new EmailAddress

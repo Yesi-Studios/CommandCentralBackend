@@ -59,13 +59,36 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         };
 
         /// <summary>
-        /// This is the super watch shift.
+        /// This is the super watch shift for the JOOD.
         /// </summary>
-        public static WatchShiftType Super = new WatchShiftType
+        public static WatchShiftType JOODSuper = new WatchShiftType
         {
             Id = Guid.Parse("{1095A185-7CC4-4AE5-94F8-BB0503CDE008}"),
-            Value = "Super",
-            Description = "This is the super watch shift."
+            Value = "JOOD Super",
+            Description = "This is the super watch shift for the JOOD.",
+            RequiredWatchQualifications = new[] { WatchQualifications.JOOD }
+        };
+
+        /// <summary>
+        /// This is the super watch shift for the OOD.
+        /// </summary>
+        public static WatchShiftType OODSuper = new WatchShiftType
+        {
+            Id = Guid.Parse("{600F60D4-E23D-449A-8DEF-E8811482C3F0}"),
+            Value = "OOD Super",
+            Description = "This is the super watch shift for the OOD.",
+            RequiredWatchQualifications = new[] { WatchQualifications.OOD }
+        };
+
+        /// <summary>
+        /// This is the super watch shift for the CDO.
+        /// </summary>
+        public static WatchShiftType CDOSuper = new WatchShiftType
+        {
+            Id = Guid.Parse("{C20CF70A-F282-47BE-A9FE-9974546838E1}"),
+            Value = "CDO Super",
+            Description = "This is the super watch shift for the CDO.",
+            RequiredWatchQualifications = new[] { WatchQualifications.CDO }
         };
 
         /// <summary>

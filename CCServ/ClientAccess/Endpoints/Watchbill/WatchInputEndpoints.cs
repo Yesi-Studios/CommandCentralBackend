@@ -103,6 +103,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     try
                     {
+                        //Now we just need to walk the watchbill references.
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                            throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
+
                         foreach (var input in inputsFromClient)
                         {
                             //First, let's get the person the client is talking about.
@@ -115,10 +119,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             //Now let's confirm that our client is allowed to submit inputs for this person.
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
                                 .Resolve(token.AuthenticationSession.Person, personFromDB);
-
-                            //Now we just need to walk the watchbill references.
-                            var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                                throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
                             if (resolvedPermissions.ChainOfCommandByModule.TryGetValue(watchbill.EligibilityGroup.OwningChainOfCommand.ToString(), out bool inChain) && !inChain
                                 && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
@@ -149,6 +149,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             session.Update(watchbill);
                         }
+
+                        var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbill);
+                        if (!validationResult.IsValid)
+                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
                         transaction.Commit();
                     }
