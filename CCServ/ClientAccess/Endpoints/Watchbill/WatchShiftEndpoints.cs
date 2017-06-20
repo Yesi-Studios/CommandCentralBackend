@@ -101,8 +101,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Validation);
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial || 
-                            watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (!watchbill.CanEditStructure())
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial or open for inputs states.  " +
                                 "Please consider changing its state first.", ErrorTypes.Validation);
 
@@ -186,8 +185,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
-                        if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial ||
-                            watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (!watchShiftFromDB.Watchbill.CanEditStructure())
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial or open for inputs states.  " +
                                 "Please consider changing its state first.", ErrorTypes.Validation);
 
@@ -247,8 +245,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
-                        if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial ||
-                            watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (!watchShiftFromDB.Watchbill.CanEditStructure())
                             throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial or open for inputs states.  " +
                                 "Please consider changing its state first.", ErrorTypes.Validation);
 
@@ -301,8 +298,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                     "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                             //Check the state.
-                            if (watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial ||
-                            watchShiftFromDB.Watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                            if (!watchShiftFromDB.Watchbill.CanEditStructure())
                                 throw new CommandCentralException("You may not edit the structure of a watchbill that is not in the initial or open for inputs states.  " +
                                     "Please consider changing its state first.", ErrorTypes.Validation);
 

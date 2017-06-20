@@ -631,6 +631,15 @@ namespace CCServ.Entities.Watchbill
         }
 
         /// <summary>
+        /// Returns true if the watchbill is in a state that allows editing of the structure of the watchbill.
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool CanEditStructure()
+        {
+            return CurrentState == WatchbillStatuses.Initial || CurrentState == WatchbillStatuses.OpenForInputs;
+        }
+
+        /// <summary>
         /// Sends an email to each person in the el group who is also a member of this watchbill's chain of command.
         /// <para/>
         /// The email contains a list of all those personnel who the given person is responsible for in terms of watch inputs.
