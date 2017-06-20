@@ -282,7 +282,19 @@ namespace CCServ.ClientAccess.Endpoints
                     var person = session.Get<Person>(personId) ??
                         throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
-                    token.SetResult(person.GetChainOfCommand());
+                    var chainOfCommand = person.GetChainOfCommand();
+                    foreach (var chainOfCommandType in chainOfCommand)
+                    {
+                        foreach (var level in chainOfCommandType.Value)
+                        {
+                            for (int x = 0; x < level.Value.Count; x++)
+                            {
+                                level.Value[x] = session.Merge(level.Value[x]);
+                            }
+                        }
+                    }
+
+                    token.SetResult(chainOfCommand);
 
                     transaction.Commit();
                 }
