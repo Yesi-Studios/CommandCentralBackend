@@ -327,7 +327,7 @@ namespace CCServ.Entities.Watchbill
                         var collateralEmailAddresses = persons.Select(x =>
                                     x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
 
-                        var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
+                        var model = new Email.Models.WatchbillUnderReviewEmailModel { Watchbill = this.Title };
 
                         foreach (var addressGroup in collateralEmailAddresses)
                         {
@@ -879,13 +879,6 @@ namespace CCServ.Entities.Watchbill
                     }
 
                     var watchbillTimeRange = new Itenso.TimePeriod.TimeRange(watchbill.Range.Start, watchbill.Range.End, true);
-
-                    //Now we're going to make sure that all the inputs are within the watchbill range.  It's ok if they overlap though.
-                    foreach (var input in watchbill.WatchInputs)
-                    {
-                        if (!watchbillTimeRange.OverlapsWith(new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)))
-                            errorElements.Add("One or more inputs do not overlap with the watchbill.");
-                    }
 
                     if (errorElements.Any())
                     {

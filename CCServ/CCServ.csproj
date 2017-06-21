@@ -396,7 +396,7 @@
     <EmbeddedResource Include="Email\Templates\WatchbillClosedForInputs_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\WatchbillOpenForReview_HTML.html">
+    <EmbeddedResource Include="Email\Templates\WatchbillUnderReview_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\WatchbillPublished_HTML.html">
