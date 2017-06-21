@@ -548,38 +548,41 @@ namespace CCServ.Entities.Watchbill
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
                 {
-                    if (!assignablePersonsByDepartment.Any() || !assignablePersonsByDepartment[finalAssignments.First().Key].TryNext(person =>
+                    for (int x = 0; x < finalAssignments.Count; x++)
                     {
-                        if (this.WatchInputs.Any(input => input.IsConfirmed &&
-                            input.Person.Id == person.Id &&
-                            new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
-                                .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
-                            return false;
+                        if (assignablePersonsByDepartment.Any() && assignablePersonsByDepartment[finalAssignments[x].Key].TryNext(person =>
+                        {
+                            if (this.WatchInputs.Any(input => input.IsConfirmed &&
+                                input.Person.Id == person.Id &&
+                                new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
+                                    .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
+                                return false;
 
-                        if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
-                            return false;
+                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
+                                return false;
 
-                        if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
-                            return false;
+                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
+                                return false;
 
-                        if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
-                            return false;
+                            if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
+                                return false;
 
-                        return true;
-                    }, out Person personToAssign))
-                        throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shift), ErrorTypes.Validation);
+                            return true;
+                        }, out Person personToAssign))
+                        {
+                            shift.WatchAssignment = new WatchAssignment
+                            {
+                                AssignedBy = client,
+                                CurrentState = WatchAssignmentStates.Assigned,
+                                DateAssigned = dateTime,
+                                Id = Guid.NewGuid(),
+                                PersonAssigned = personToAssign,
+                                WatchShift = shift
+                            };
 
-                    shift.WatchAssignment = new WatchAssignment
-                    {
-                        AssignedBy = client,
-                        CurrentState = WatchAssignmentStates.Assigned,
-                        DateAssigned = dateTime,
-                        Id = Guid.NewGuid(),
-                        PersonAssigned = personToAssign,
-                        WatchShift = shift
-                    };
-
-                    finalAssignments.Remove(finalAssignments.First());
+                            finalAssignments.RemoveAt(x);
+                        }
+                    }
                 }
             }
         }

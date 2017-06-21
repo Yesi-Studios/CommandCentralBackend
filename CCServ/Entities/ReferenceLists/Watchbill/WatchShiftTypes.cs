@@ -63,7 +63,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// </summary>
         public static WatchShiftType JOODSuper = new WatchShiftType
         {
-            Id = Guid.Parse("{1095A185-7CC4-4AE5-94F8-BB0503CDE008}"),
+            Id = Guid.Parse("{1095a185-7cc4-4ae5-94f8-bb0503cde008}"),
             Value = "JOOD Super",
             Description = "This is the super watch shift for the JOOD.",
             RequiredWatchQualifications = new[] { WatchQualifications.JOOD }
@@ -74,7 +74,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// </summary>
         public static WatchShiftType OODSuper = new WatchShiftType
         {
-            Id = Guid.Parse("{600F60D4-E23D-449A-8DEF-E8811482C3F0}"),
+            Id = Guid.Parse("{1ce27ff9-bb5f-4a9a-99c9-2c75efd69186}"),
             Value = "OOD Super",
             Description = "This is the super watch shift for the OOD.",
             RequiredWatchQualifications = new[] { WatchQualifications.OOD }
@@ -85,7 +85,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
         /// </summary>
         public static WatchShiftType CDOSuper = new WatchShiftType
         {
-            Id = Guid.Parse("{C20CF70A-F282-47BE-A9FE-9974546838E1}"),
+            Id = Guid.Parse("{c3456c3b-e274-47a4-8512-3282eecc0b44}"),
             Value = "CDO Super",
             Description = "This is the super watch shift for the CDO.",
             RequiredWatchQualifications = new[] { WatchQualifications.CDO }

@@ -61,7 +61,7 @@ namespace CCServ.Entities.ReferenceLists.Watchbill
                 Map(x => x.Value).Not.Nullable().Unique();
                 Map(x => x.Description);
 
-                HasMany(x => x.RequiredWatchQualifications);
+                HasManyToMany(x => x.RequiredWatchQualifications);
 
                 Cache.ReadWrite();
             }
