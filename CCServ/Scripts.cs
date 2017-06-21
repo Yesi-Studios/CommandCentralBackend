@@ -15,6 +15,38 @@ namespace CCServ
 {
     static class Scripts
     {
+
+        [ServiceManagement.StartMethod(Priority = 1)]
+        private static void WatchbillStats(CLI.Options.LaunchOptions launchOptions)
+        {
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            {
+                var watchbill = session.QueryOver<Watchbill>().List().First();
+
+                var data = watchbill.WatchShifts.Select(x => x.WatchAssignment).GroupBy(x => x.PersonAssigned.Department);
+
+                string text = "";
+                foreach (var group in data)
+                {
+
+                    int totalDep = session.QueryOver<Person>().Where(x => x.Department.Id == group.Key.Id).RowCount();
+                    int total = session.QueryOver<Person>().RowCount();
+
+                    text += "{0} : {1}% ({2}/{3}) vs {4}% ({5}/{6})"
+                        .FormatS(group.Key, 
+                        Math.Round(((double)group.ToList().Count / (double)watchbill.WatchShifts.Select(x => x.WatchAssignment).Count()) * 100, 2),
+                        group.ToList().Count,
+                        watchbill.WatchShifts.Select(x => x.WatchAssignment).Count(),
+                        Math.Round(((double)totalDep / (double)total) * 100, 2),
+                        totalDep,
+                        total);
+                    text += Environment.NewLine;
+                }
+
+                //File.WriteAllText(@"C:\Users\dkatwoo\Source\Repos\CommandCentralBackend4\CCServ\data.txt", text);
+            }
+        }
+
         [ServiceManagement.StartMethod(Priority = 1)]
         private static void TestWatchbill(CLI.Options.LaunchOptions launchOptions)
         {

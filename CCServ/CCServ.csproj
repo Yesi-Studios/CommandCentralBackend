@@ -244,6 +244,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Content Include="data.txt" />
     <Compile Include="Scripts.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
     <Compile Include="Entities\MusterRecord.cs" />
