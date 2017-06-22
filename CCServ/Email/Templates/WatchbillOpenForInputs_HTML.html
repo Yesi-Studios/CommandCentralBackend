@@ -192,7 +192,7 @@
                                     <p style="margin: 0;font-size: 12px;line-height: 14px">&nbsp;<br></p>
                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
                                         <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">
-                                            You are receiving this email because you are a watchbill coordinator on the watchbill, @Model.Watchbill.Title. &nbsp;That watchbill is now accepting inputs from all personnel who are eligible to stand watch on it. &nbsp;Those people have also been sent an email in accordance with their contact preferences on Command Central informing them of this requirement.
+                                            You are receiving this email because you are a watchbill coordinator on the watchbill, @Model.WatchbillTitle. &nbsp;That watchbill is now accepting inputs from all personnel who are eligible to stand watch on it. &nbsp;Those people have also been sent an email in accordance with their contact preferences on Command Central informing them of this requirement.
                                         </span>
                                     </p>
                                     <p style="margin: 0;font-size: 12px;line-height: 14px">
@@ -202,9 +202,9 @@
                                     </p>
                                     <center><p style="margin: 20px 5px 20px 5px;font-size: 20px;line-height: 14px">Personnel Without Qualifications</p></center>
                                     @{
-                                        foreach (var person in Model.NotQualledPersons)
+                                        foreach (var personName in Model.NotQualledPersonsFriendlyNames)
                                         {
-                                            var text = person.ToString();
+                                            var text = personName;
                                             <center><p style="margin: 5px;font-size: 14px;line-height: 14px"> @text </p></center>
                                         }
                                     }

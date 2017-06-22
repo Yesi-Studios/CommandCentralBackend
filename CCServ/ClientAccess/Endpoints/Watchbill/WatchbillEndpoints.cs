@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Authorization;
 using CCServ.Entities.Watchbill;
+using CCServ.Entities.ReferenceLists;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -67,6 +68,91 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 var personsWithoutAtLeastOneQualification = watchbillFromDB.EligibilityGroup.EligiblePersons
                     .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
 
+                //We're also going to build some analytics for the client about this watchbill.
+                Dictionary<string, object> analytics = new Dictionary<string, object>();
+                if (watchbillFromDB.WatchShifts.Any())
+                {
+                    var assignments = watchbillFromDB.WatchShifts.Where(x => x.WatchAssignment != null).Select(x => x.WatchAssignment).ToList();
+
+                    if (assignments.Any())
+                    {
+                        var statsByDepartment = assignments.GroupBy(x => x.PersonAssigned.Department).Select(group =>
+                        {
+                            var assignmentsInGroup = group.ToList();
+
+                            var totalInWatchbill = assignments.Count;
+                            var totalInDepartment = assignmentsInGroup.Count;
+                            var percentageOfTotal = Math.Round(((double)totalInDepartment / (double)totalInWatchbill) * 100, 2);
+                            var totalElligibleInCommand = watchbillFromDB.EligibilityGroup.EligiblePersons.Count;
+                            var totalElligibleInDepartment = watchbillFromDB.EligibilityGroup.EligiblePersons.Where(x => x.Department == group.Key).Count();
+                            var totalElligiblePercentage = Math.Round(((double)totalElligibleInDepartment / (double)totalElligibleInCommand) * 100, 2);
+                            var percentageDiscrepancy = totalElligiblePercentage - percentageOfTotal;
+
+                            return new KeyValuePair<Department, object>(group.Key, new
+                            {
+                                TotalInWatchbill = totalInWatchbill,
+                                TotalInDepartment = totalInDepartment,
+                                PercentageOfTotal = percentageOfTotal,
+                                TotalElligibleInDepartment = totalElligibleInDepartment,
+                                TotalElligibleInCommand = totalElligibleInCommand,
+                                TotalElligiblePercentage = totalElligiblePercentage,
+                                PercentageDiscrepancy = percentageDiscrepancy
+                            });
+                        });
+
+                        analytics["StatisticsByDepartment"] = statsByDepartment;
+
+                        var multipleAssignments = assignments.GroupBy(x => x.PersonAssigned).Where(x => x.Count() != 1).Select(x => new { Person = x.Key, Assignments = x.ToList() }).ToList();
+                        analytics["MultipleAssignments"] = multipleAssignments;
+                    }
+                }
+
+                //We also need to build some additional information into the watch assignments regarding chain of command for the client and the assigned person.
+                List<object> watchShifts = new List<object>();
+
+                if (watchbillFromDB.WatchShifts.Any())
+                {
+                    foreach (var shift in watchbillFromDB.WatchShifts)
+                    {
+                        bool isClientResponsibleFor = false;
+
+                        if (shift.WatchAssignment != null)
+                        {
+                            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, shift.WatchAssignment.PersonAssigned);
+                            isClientResponsibleFor = resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] ||
+                                (shift.WatchAssignment.PersonAssigned.Id == token.AuthenticationSession.Person.Id &&
+                                    (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Command ||
+                                    resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Division ||
+                                    resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Department));
+                        }
+
+                        watchShifts.Add(new
+                        {
+                            shift.Id,
+                            shift.Comments,
+                            shift.Points,
+                            shift.Range,
+                            shift.ShiftType,
+                            shift.Title,
+                            Watchbill = new { shift.Watchbill.Id },
+                            WatchAssignment = shift.WatchAssignment == null ? null : new
+                            {
+                                shift.WatchAssignment.AcknowledgedBy,
+                                shift.WatchAssignment.AssignedBy,
+                                shift.WatchAssignment.CurrentState,
+                                shift.WatchAssignment.DateAcknowledged,
+                                shift.WatchAssignment.DateAssigned,
+                                shift.WatchAssignment.Id,
+                                shift.WatchAssignment.IsAcknowledged,
+                                shift.WatchAssignment.NumberOfAlertsSent,
+                                shift.WatchAssignment.PersonAssigned,
+                                WatchShift = new { shift.WatchAssignment.WatchShift.Id },
+                                IsClientResponsibleFor = isClientResponsibleFor
+                            }
+                        });
+                    }
+                }
+
                 token.SetResult(new
                 {
                     watchbillFromDB.CreatedBy,
@@ -78,22 +164,10 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                     watchbillFromDB.LastStateChangedBy,
                     watchbillFromDB.Title,
                     watchbillFromDB.Range,
-                    WatchShifts = watchbillFromDB.WatchShifts.Select(shift =>
-                    {
-                        return new WatchShift
-                        {
-                            Comments = shift.Comments,
-                            Id = shift.Id,
-                            Points = shift.Points,
-                            Range = shift.Range,
-                            ShiftType = shift.ShiftType,
-                            Title = shift.Title,
-                            WatchAssignment = shift.WatchAssignment,
-                            Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id }
-                        };
-                    }),
+                    WatchShifts = watchShifts,
                     watchbillFromDB.WatchInputs,
-                    NotQualledPersons = personsWithoutAtLeastOneQualification
+                    NotQualledPersons = personsWithoutAtLeastOneQualification,
+                    Analytics = analytics
                 });
             }
         }

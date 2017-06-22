@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CCServ.Entities.Watchbill;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,24 +15,11 @@ namespace CCServ.Email.Models
         /// <summary>
         /// The name or title of the watchbill referenced in the email.
         /// </summary>
-        public Entities.Watchbill.Watchbill Watchbill { get; set; }
+        public string WatchbillTitle { get; set; }
 
         /// <summary>
         /// The collection of those people who are not qualified for any watches on this watchbill.
         /// </summary>
-        public List<Entities.Person> NotQualledPersons
-        {
-            get
-            {
-                //We're also going to go see who is in the eligibility group and has no watch qualifications that pertain to this watchbill.
-                //First we need to know all the possible needed watch qualifications.
-                var watchQualifications = this.Watchbill.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications);
-
-                var personsWithoutAtLeastOneQualification = this.Watchbill.EligibilityGroup.EligiblePersons
-                    .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
-
-                return personsWithoutAtLeastOneQualification.ToList();
-            }
-        }
+        public List<string> NotQualledPersonsFriendlyNames { get; set; }
     }
 }

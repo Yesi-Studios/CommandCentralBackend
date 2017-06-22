@@ -148,13 +148,11 @@ namespace CCServ.Entities
         /// <summary>
         /// The person's division
         /// </summary>
-        [ConditionalJsonIgnore]
         public virtual Division Division { get; set; }
 
         /// <summary>
         /// The person's department
         /// </summary>
-        [ConditionalJsonIgnore]
         public virtual Department Department { get; set; }
 
         /// <summary>
