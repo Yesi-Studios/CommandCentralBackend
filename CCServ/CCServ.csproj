@@ -158,6 +158,7 @@
     <Compile Include="ClientAccess\Endpoints\CommentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\FAQEndpoints.cs" />
+    <Compile Include="ClientAccess\Endpoints\StatusPeriodEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Feedback.cs" />
     <Compile Include="ClientAccess\Endpoints\NewsItemEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
