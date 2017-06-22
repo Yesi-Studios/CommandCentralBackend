@@ -85,7 +85,6 @@ namespace CCServ.ClientAccess.Endpoints
                 IsClaimed = false,
                 PRD = personFromClient.PRD
             };
-            newPerson.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(newPerson, token.CallTime);
 
             //We're also going to add on the default permission groups.
             newPerson.PermissionGroups = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();

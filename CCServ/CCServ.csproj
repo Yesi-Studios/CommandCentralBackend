@@ -159,7 +159,6 @@
     <Compile Include="ClientAccess\Endpoints\EndpointManagement.cs" />
     <Compile Include="ClientAccess\Endpoints\FAQEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Feedback.cs" />
-    <Compile Include="ClientAccess\Endpoints\MusterEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\NewsItemEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\PersonEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\ProfileLockEndpoints.cs" />
@@ -167,7 +166,6 @@
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchAssignmentEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchbillEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchEligibilityGroupEndpoints.cs" />
-    <Compile Include="ClientAccess\Endpoints\Watchbill\WatchInputEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchInputRequirementEndpoints.cs" />
     <Compile Include="ClientAccess\Endpoints\Watchbill\WatchShiftEndpoints.cs" />
     <Compile Include="ClientAccess\ErrorTypes.cs" />
@@ -203,7 +201,6 @@
     <Compile Include="Email\Models\FatalErrorEmailModel.cs" />
     <Compile Include="Email\Models\FinishPasswordResetEmailModel.cs" />
     <Compile Include="Email\Models\ForgotPasswordModel.cs" />
-    <Compile Include="Email\Models\MusterReportEmailModel.cs" />
     <Compile Include="Email\EmailInterface\CCEmailMessage.cs" />
     <Compile Include="Email\EmailInterface\TemplateHelper.cs" />
     <Compile Include="Email\Models\NameChangedEventEmailModel.cs" />
@@ -220,9 +217,11 @@
     <Compile Include="Entities\AccountHistoryEvent.cs" />
     <Compile Include="Entities\Change.cs" />
     <Compile Include="Entities\Comment.cs" />
+    <Compile Include="Entities\ReferenceLists\StatusPeriodTypes.cs" />
+    <Compile Include="Entities\ReferenceLists\StatusPeriodType.cs" />
+    <Compile Include="Entities\StatusPeriod.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="ICommentable.cs" />
-    <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignments.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
@@ -233,10 +232,8 @@
     <Compile Include="Entities\Watchbill\Watchbill.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatus.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchbillStatuses.cs" />
-    <Compile Include="Entities\ReferenceLists\Watchbill\WatchInputReason.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftType.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchShiftTypes.cs" />
-    <Compile Include="Entities\Watchbill\WatchInput.cs" />
     <Compile Include="Entities\Watchbill\WatchInputRequirement.cs" />
     <Compile Include="Entities\Watchbill\WatchShift.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -247,7 +244,6 @@
     <Content Include="data.txt" />
     <Compile Include="Scripts.cs" />
     <Compile Include="Entities\EmailAddress.cs" />
-    <Compile Include="Entities\MusterRecord.cs" />
     <Compile Include="Entities\NewsItem.cs" />
     <Compile Include="Entities\PendingAccountConfirmation.cs" />
     <Compile Include="Entities\PendingPasswordReset.cs" />
@@ -265,8 +261,6 @@
     <Compile Include="Entities\ReferenceLists\DutyStatuses.cs" />
     <Compile Include="Entities\ReferenceLists\EditableReferenceListItemBase.cs" />
     <Compile Include="Entities\ReferenceLists\Ethnicity.cs" />
-    <Compile Include="Entities\ReferenceLists\MusterStatus.cs" />
-    <Compile Include="Entities\ReferenceLists\MusterStatuses.cs" />
     <Compile Include="Entities\ReferenceLists\NEC.cs" />
     <Compile Include="Entities\ReferenceLists\Paygrade.cs" />
     <Compile Include="Entities\ReferenceLists\Paygrades.cs" />

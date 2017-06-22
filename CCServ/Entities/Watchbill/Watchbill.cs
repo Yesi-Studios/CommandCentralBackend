@@ -59,11 +59,6 @@ namespace CCServ.Entities.Watchbill
         public virtual IList<WatchShift> WatchShifts { get; set; } = new List<WatchShift>();
 
         /// <summary>
-        /// The list of all watch inputs on this watchbill.
-        /// </summary>
-        public virtual IList<WatchInput> WatchInputs { get; set; } = new List<WatchInput>();
-
-        /// <summary>
         /// The min and max dates of the watchbill.
         /// </summary>
         public virtual TimeRange Range { get; set; }
@@ -125,7 +120,6 @@ namespace CCServ.Entities.Watchbill
             if (desiredState == WatchbillStatuses.Initial)
             {
                 this.InputRequirements.Clear();
-                this.WatchInputs.Clear();
 
                 foreach (var shift in this.WatchShifts)
                 {
@@ -458,129 +452,137 @@ namespace CCServ.Entities.Watchbill
             if (client == null)
                 throw new ArgumentNullException("client");
 
-            //First we need to know how many shifts of each type are in this watchbill.
-            //And we need to know how many eligible people in each department there are.
-            var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
-
-            foreach (var shiftGroup in shuffledShiftsByType)
+            //Let's collect all the status periods that relate to this watchbill.
+            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {
-                var remainingShifts = new List<WatchShift>(shiftGroup.OrderByDescending(x => x.Points));
+                var statusPeriods = session.QueryOver<StatusPeriod>()
+                    .Where(x => x.Range.End.InclusiveBetween(this.Range.Start, this.Range.End) || x.Range.Start.InclusiveBetween(this.Range.Start, this.Range.End))
+                    .Where(x => x.ConfirmedBy != null)
+                    .List();
 
-                //Get all persons from the el group who have all the required watch qualifications for the current watch type.
-                var personsByDepartment = this.EligibilityGroup.EligiblePersons
-                    .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
-                    .Shuffle()
-                    .GroupBy(person => person.Department);
+                //First we need to know how many shifts of each type are in this watchbill.
+                //And we need to know how many eligible people in each department there are.
+                var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
 
-                var totalPersonsWithQuals = personsByDepartment.Select(x => x.Count()).Sum(x => x);
-
-                var assignedShiftsByDepartment = new Dictionary<ReferenceLists.Department, double>();
-
-                var assignablePersonsByDepartment = personsByDepartment.Select(x =>
+                foreach (var shiftGroup in shuffledShiftsByType)
                 {
-                    return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
+                    var remainingShifts = new List<WatchShift>(shiftGroup.OrderByDescending(x => x.Points));
+
+                    //Get all persons from the el group who have all the required watch qualifications for the current watch type.
+                    var personsByDepartment = this.EligibilityGroup.EligiblePersons
+                        .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
+                        .Shuffle()
+                        .GroupBy(person => person.Department);
+
+                    var totalPersonsWithQuals = personsByDepartment.Select(x => x.Count()).Sum(x => x);
+
+                    var assignedShiftsByDepartment = new Dictionary<ReferenceLists.Department, double>();
+
+                    var assignablePersonsByDepartment = personsByDepartment.Select(x =>
                     {
-                        double points = person.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z =>
+                        return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                         {
-                            int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
+                            double points = person.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z =>
+                            {
+                                int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
-                            return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
-                        });
+                                return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
+                            });
 
-                        return points;
-                    })));
-                }).ToDictionary(x => x.Key, x => x.Value);
+                            return points;
+                        })));
+                    }).ToDictionary(x => x.Key, x => x.Value);
 
-                foreach (var personsGroup in personsByDepartment)
-                {
-                    //It's important to point out here that the assigned shifts will most likely not fall out as a perfect integer.
-                    //We'll handle remaining shifts later.  For now, we just need to assign the whole number value of shifts.
-                    var assignedShifts = (double)shiftGroup.Count() * ((double)personsGroup.Count() / (double)totalPersonsWithQuals);
-                    assignedShiftsByDepartment.Add(personsGroup.Key, assignedShifts);
-
-                    //From our list of shifts, take as many as we're supposed to assign.
-                    var shiftsForThisGroup = remainingShifts.Take((int)assignedShifts).ToList();
-
-                    for (int x = 0; x < shiftsForThisGroup.Count; x++)
+                    foreach (var personsGroup in personsByDepartment)
                     {
-                        //Ok, since we're going to assign it, we can go ahead and remove it.
-                        remainingShifts.Remove(shiftsForThisGroup[x]);
+                        //It's important to point out here that the assigned shifts will most likely not fall out as a perfect integer.
+                        //We'll handle remaining shifts later.  For now, we just need to assign the whole number value of shifts.
+                        var assignedShifts = (double)shiftGroup.Count() * ((double)personsGroup.Count() / (double)totalPersonsWithQuals);
+                        assignedShiftsByDepartment.Add(personsGroup.Key, assignedShifts);
 
-                        //Determine who is about to stand this watch.
-                        if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
+                        //From our list of shifts, take as many as we're supposed to assign.
+                        var shiftsForThisGroup = remainingShifts.Take((int)assignedShifts).ToList();
+
+                        for (int x = 0; x < shiftsForThisGroup.Count; x++)
                         {
-                            if (this.WatchInputs.Any(input => input.IsConfirmed && 
-                            input.Person.Id == person.Id && 
-                            new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
-                                .OverlapsWith(new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End, true))))
-                                return false;
+                            //Ok, since we're going to assign it, we can go ahead and remove it.
+                            remainingShifts.Remove(shiftsForThisGroup[x]);
 
-                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
-                                return false;
+                            //Determine who is about to stand this watch.
+                            if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
+                            {
+                                if (statusPeriods.Any(period => period.ExemptsFromWatch && period.Person.Id == person.Id &&
+                                    new Itenso.TimePeriod.TimeRange(period.Range.Start, period.Range.End, true)
+                                        .OverlapsWith(new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End, true))))
+                                    return false;
 
-                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
-                                return false;
+                                if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
+                                    return false;
 
-                            if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End).HasInside(person.DateOfBirth.Value.Date))
-                                return false;
+                                if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
+                                    return false;
 
-                            return true;
+                                if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End).HasInside(person.DateOfBirth.Value.Date))
+                                    return false;
 
-                        }, out Person personToAssign))
-                            throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shiftsForThisGroup[x]), ErrorTypes.Validation);
+                                return true;
 
-                        //Create the watch assignment.
-                        shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
-                        {
-                            AssignedBy = client,
-                            CurrentState = WatchAssignmentStates.Assigned,
-                            DateAssigned = dateTime,
-                            Id = Guid.NewGuid(),
-                            PersonAssigned = personToAssign,
-                            WatchShift = shiftsForThisGroup[x]
-                        };
-                    }
-                }
+                            }, out Person personToAssign))
+                                throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shiftsForThisGroup[x]), ErrorTypes.Validation);
 
-                //At this step, we run into a bit of a problem.  Because the assigned shifts don't come out as perfect integers, we'll have some shifts left over.
-                //I chose to use the Hamilton assignment method with the Hare quota here in order to distrubte the rest of the shifts.
-                //https://en.wikipedia.org/wiki/Largest_remainder_method
-                var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
-                foreach (var shift in remainingShifts)
-                {
-                    for (int x = 0; x < finalAssignments.Count; x++)
-                    {
-                        if (assignablePersonsByDepartment.Any() && assignablePersonsByDepartment[finalAssignments[x].Key].TryNext(person =>
-                        {
-                            if (this.WatchInputs.Any(input => input.IsConfirmed &&
-                                input.Person.Id == person.Id &&
-                                new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
-                                    .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
-                                return false;
-
-                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
-                                return false;
-
-                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
-                                return false;
-
-                            if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
-                                return false;
-
-                            return true;
-                        }, out Person personToAssign))
-                        {
-                            shift.WatchAssignment = new WatchAssignment
+                            //Create the watch assignment.
+                            shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
                             {
                                 AssignedBy = client,
                                 CurrentState = WatchAssignmentStates.Assigned,
                                 DateAssigned = dateTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personToAssign,
-                                WatchShift = shift
+                                WatchShift = shiftsForThisGroup[x]
                             };
+                        }
+                    }
 
-                            finalAssignments.RemoveAt(x);
+                    //At this step, we run into a bit of a problem.  Because the assigned shifts don't come out as perfect integers, we'll have some shifts left over.
+                    //I chose to use the Hamilton assignment method with the Hare quota here in order to distrubte the rest of the shifts.
+                    //https://en.wikipedia.org/wiki/Largest_remainder_method
+                    var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
+                    foreach (var shift in remainingShifts)
+                    {
+                        for (int x = 0; x < finalAssignments.Count; x++)
+                        {
+                            if (assignablePersonsByDepartment.Any() && assignablePersonsByDepartment[finalAssignments[x].Key].TryNext(person =>
+                            {
+
+                                if (statusPeriods.Any(period => period.ExemptsFromWatch && period.Person.Id == person.Id &&
+                                    new Itenso.TimePeriod.TimeRange(period.Range.Start, period.Range.End, true)
+                                        .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
+                                    return false;
+
+                                if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
+                                    return false;
+
+                                if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
+                                    return false;
+
+                                if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
+                                    return false;
+
+                                return true;
+                            }, out Person personToAssign))
+                            {
+                                shift.WatchAssignment = new WatchAssignment
+                                {
+                                    AssignedBy = client,
+                                    CurrentState = WatchAssignmentStates.Assigned,
+                                    DateAssigned = dateTime,
+                                    Id = Guid.NewGuid(),
+                                    PersonAssigned = personToAssign,
+                                    WatchShift = shift
+                                };
+
+                                finalAssignments.RemoveAt(x);
+                            }
                         }
                     }
                 }
@@ -816,7 +818,6 @@ namespace CCServ.Entities.Watchbill
                 References(x => x.EligibilityGroup).Not.Nullable();
 
                 HasMany(x => x.WatchShifts).Cascade.AllDeleteOrphan();
-                HasMany(x => x.WatchInputs).Cascade.AllDeleteOrphan();
                 HasMany(x => x.InputRequirements).Cascade.AllDeleteOrphan();
 
                 Map(x => x.Title).Not.Nullable();

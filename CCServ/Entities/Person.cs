@@ -282,12 +282,6 @@ namespace CCServ.Entities
         public virtual DateTime? DateOfDeparture { get; set; }
 
         /// <summary>
-        /// Represents this person's current muster status for the current muster day.  This property is intended to be updated only by the muster endpoints, not generic updates.
-        /// </summary>
-        [ConditionalJsonIgnore]
-        public virtual MusterRecord CurrentMusterRecord { get; set; }
-
-        /// <summary>
         /// The person's watch qualification.
         /// </summary>
         [ConditionalJsonIgnore]
@@ -384,6 +378,12 @@ namespace CCServ.Entities
         /// </summary>
         [ConditionalJsonIgnore]
         public virtual IDictionary<Guid, ChainOfCommandLevels> SubscribedEvents { get; set; }
+
+        /// <summary>
+        /// The list of all status periods which represent where the person is.
+        /// </summary>
+        [ConditionalJsonIgnore]
+        public virtual IList<StatusPeriod> StatusPeriods { get; set; }
 
         #endregion
 
@@ -734,8 +734,6 @@ namespace CCServ.Entities
                             IsPreferred = true
                         } };
 
-                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
-
                         person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                         {
                             AccountHistoryEventType = AccountHistoryTypes.Creation,
@@ -810,7 +808,6 @@ namespace CCServ.Entities
                 References(x => x.Command).Nullable();
                 References(x => x.UIC).Nullable();
                 References(x => x.Paygrade).Not.Nullable();
-                References(x => x.CurrentMusterRecord).Cascade.All().Nullable();
                 References(x => x.DutyStatus).Not.Nullable();
                 References(x => x.Sex).Not.Nullable();
                 References(x => x.BilletAssignment);
@@ -851,6 +848,7 @@ namespace CCServ.Entities
                 HasMany(x => x.PhoneNumbers).Cascade.All();
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
                 HasMany(x => x.WatchAssignments).Cascade.All();
+                HasMany(x => x.StatusPeriods).Cascade.All();
 
                 HasManyToMany(x => x.WatchQualifications).Cascade.All();
 
@@ -1255,17 +1253,6 @@ namespace CCServ.Entities
                     return disjunction;
                 });
                 
-
-                ForProperties(
-                    x => x.CurrentMusterRecord)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-
-                    throw new CommandCentralException("Uh oh!  It looks like you found some construction.  Muster records are not currently queryable from this page.", ErrorTypes.Validation);
-                });
-
                 ForProperties(
                     x => x.EmailAddresses)
                 .AsType(SearchDataTypes.String)

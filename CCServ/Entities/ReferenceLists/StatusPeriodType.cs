@@ -8,7 +8,10 @@ using FluentNHibernate.Mapping;
 
 namespace CCServ.Entities.ReferenceLists
 {
-    public class MusterStatus : ReferenceListItemBase
+    /// <summary>
+    /// A status period such as Leave, SIQ, etc.
+    /// </summary>
+    public class StatusPeriodType : ReferenceListItemBase
     {
         /// <summary>
         /// Loads all object or a single object if given an Id.
@@ -21,20 +24,20 @@ namespace CCServ.Entities.ReferenceLists
             {
                 if (id == default(Guid))
                 {
-                    return session.QueryOver<MusterStatus>()
+                    return session.QueryOver<StatusPeriodType>()
                         .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
                         .List<ReferenceListItemBase>().ToList();
                 }
                 else
                 {
-                    return new[] { (ReferenceListItemBase)session.Get<MusterStatus>(id) }.ToList();
+                    return new[] { (ReferenceListItemBase)session.Get<StatusPeriodType>(id) }.ToList();
                 }
             }
         }
 
-        public class MusterStatusMapping : ClassMap<MusterStatus>
+        public class StatusPeriodTypeMapping : ClassMap<StatusPeriodType>
         {
-            public MusterStatusMapping()
+            public StatusPeriodTypeMapping()
             {
                 Id(x => x.Id).GeneratedBy.Assigned();
 

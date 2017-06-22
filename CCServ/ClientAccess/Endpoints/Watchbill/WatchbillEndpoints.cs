@@ -92,7 +92,6 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             Watchbill = new Entities.Watchbill.Watchbill { Id = shift.Watchbill.Id }
                         };
                     }),
-                    watchbillFromDB.WatchInputs,
                     NotQualledPersons = personsWithoutAtLeastOneQualification
                 });
             }
