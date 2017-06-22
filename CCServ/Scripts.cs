@@ -17,7 +17,7 @@ namespace CCServ
     static class Scripts
     {
 
-        [ServiceManagement.StartMethod(Priority = 1)]
+        //[ServiceManagement.StartMethod(Priority = 1)]
         private static void AssignWatchQuals(CLI.Options.LaunchOptions launchOptions)
         {
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
