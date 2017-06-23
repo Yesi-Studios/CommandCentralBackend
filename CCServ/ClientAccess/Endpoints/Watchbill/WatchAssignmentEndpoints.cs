@@ -493,6 +493,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             watchbill.CurrentState != WatchbillStatuses.UnderReview)
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
 
+                        Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
+
                         foreach (var assignment in watchAssignmentsFromClient)
                         {
 
@@ -556,9 +558,19 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             assignmentToInsert.WatchShift.WatchAssignment = assignmentToInsert;
                             assignmentToInsert.WatchShift.Comments.Add(comment);
 
+                            //Since we've gotten this far, let's ask if the watch assignment is in violation of a watch input.  We'll allow it, but we'll give a warning.
+                            var shiftTimePeriod = new Itenso.TimePeriod.TimeRange(assignmentToInsert.WatchShift.Range.Start, assignmentToInsert.WatchShift.Range.End, true);
+                            var violatedInputs = watchbill.WatchInputs.Where(x => x.Person.Id == assignmentToInsert.PersonAssigned.Id && x.IsConfirmed && shiftTimePeriod.OverlapsWith(new Itenso.TimePeriod.TimeRange(x.Range.Start, x.Range.End, true))).ToList();
+
+                            if (violatedInputs.Any())
+                            {
+                                assignmentWarnings[assignmentToInsert] = violatedInputs;
+                            }
                         }
 
                         session.Update(watchbill);
+
+                        token.SetResult(new { HasWarnings = assignmentWarnings.Any(), AssignmentWarnings = assignmentWarnings});
 
                         transaction.Commit();
                     }
