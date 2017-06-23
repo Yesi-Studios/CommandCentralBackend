@@ -119,7 +119,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         if (shift.WatchAssignment != null)
                         {
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, shift.WatchAssignment.PersonAssigned);
-                            isClientResponsibleFor = resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] ||
+                            isClientResponsibleFor = resolvedPermissions.ChainOfCommandByModule.ContainsKey(watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()) &&
+                                resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] ||
                                 (shift.WatchAssignment.PersonAssigned.Id == token.AuthenticationSession.Person.Id &&
                                     (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Command ||
                                     resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Division ||
