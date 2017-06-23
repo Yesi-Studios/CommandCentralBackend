@@ -344,7 +344,7 @@ namespace CCServ.Entities.Watchbill
 
                         //Now with these people who are the duty holders.
                         var collateralEmailAddresses = persons.Select(x =>
-                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())).ToList()).ToList();
 
                         Task.Run(() =>
                         {
@@ -388,12 +388,10 @@ namespace CCServ.Entities.Watchbill
                 {
                     var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = this.Title };
 
+                    var emailAddresses = assignments.Key.EmailAddresses.Where(x => x.IsPreferred).Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString())).ToList();
+
                     Task.Run(() =>
                     {
-                        var emailAddresses = assignments.Key.EmailAddresses
-                            .Where(x => x.IsPreferred)
-                            .Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString()));
-
                         Email.EmailInterface.CCEmailMessage
                             .CreateDefault()
                             .To(emailAddresses)
@@ -433,7 +431,7 @@ namespace CCServ.Entities.Watchbill
 
                         //Now with these people who are the duty holders, get their preferred email addresses.
                         var collateralEmailAddresses = persons.Select(x =>
-                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())));
+                                    x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())).ToList()).ToList();
 
                         Task.Run(() =>
                         {
