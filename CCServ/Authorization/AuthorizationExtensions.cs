@@ -39,10 +39,12 @@ namespace CCServ.Authorization
             if (client == null)
                 throw new ArgumentException("The client may not be null");
 
-            var resolvedPermissions = new ResolvedPermissions();
-            resolvedPermissions.TimeResolved = DateTime.UtcNow;
-            resolvedPermissions.ClientId = client.Id.ToString();
-            resolvedPermissions.PersonId = person == null ? null : person.Id.ToString();
+            var resolvedPermissions = new ResolvedPermissions()
+            {
+                TimeResolved = DateTime.UtcNow,
+                ClientId = client.Id.ToString(),
+                PersonId = person?.Id.ToString()
+            };
 
             //Now we need to start iterating.
             foreach (var group in groups)
@@ -158,10 +160,10 @@ namespace CCServ.Authorization
                 }
             }
 
-            //Now let's do the chain of command determination.  If we're talking about the same person, then the answer is no.
+            //Now let's do the chain of command determination.
             foreach (var highestLevel in resolvedPermissions.HighestLevels)
             {
-                if (person == null || client.Id == person.Id)
+                if (person == null)
                 {
                     resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
                 }

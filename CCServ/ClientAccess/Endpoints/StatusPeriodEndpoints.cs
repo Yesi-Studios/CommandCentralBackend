@@ -77,16 +77,25 @@ namespace CCServ.ClientAccess.Endpoints
                         var person = session.Get<Person>(periodFromClient.Person.Id) ??
                             throw new CommandCentralException("Your person was not valid.", ErrorTypes.Validation);
 
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
-
-                        if (resolvedPermissions.ch)
-
                         var periodToInsert = new StatusPeriod
                         {
                             Id = Guid.NewGuid(),
                             Person = person, 
+                            DateSubmitted = token.CallTime,
+                            ExemptsFromWatch = periodFromClient.ExemptsFromWatch,
+                            Location = periodFromClient.Location,
+                            Range = periodFromClient.Range,
+                            StatusPeriodType = statusType,
+                            SubmittedBy = token.AuthenticationSession.Person
 
                         };
+                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+
+                        if (resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.Main.ToString()] || resolvedPermissions.ChainOfCommandByModule[ChainsOfCommand.Muster.ToString()])
+                        {
+                            
+                        }
+
                     
 
                         transaction.Commit();
