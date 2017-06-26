@@ -10,17 +10,17 @@ using System.Reflection;
 namespace CCServ.Authorization.Groups
 {
     /// <summary>
-    /// Builds a module permission.
+    /// Builds a chain of command permission.
     /// </summary>
-    public class ModulePart
+    public class ChainOfCommandPart
     {
         /// <summary>
-        /// The name of the module.
+        /// The name of the chain of command.
         /// </summary>
-        public string ModuleName { get; set; }
+        public ChainsOfCommand ChainOfCommand { get; set; }
 
         /// <summary>
-        /// The list of property groups in this module.
+        /// The list of property groups in this chain of command.
         /// </summary>
         public List<PropertyGroupPart> PropertyGroups { get; set; }
 
@@ -30,12 +30,12 @@ namespace CCServ.Authorization.Groups
         public PermissionGroup ParentPermissionGroup { get; set; }
 
         /// <summary>
-        /// Creates a new module with the given name.
+        /// Creates a new chain of command permission.
         /// </summary>
-        /// <param name="moduleName"></param>
-        public ModulePart(string moduleName)
+        /// <param name="chainOfCommand"></param>
+        public ChainOfCommandPart(ChainsOfCommand chainOfCommand)
         {
-            ModuleName = moduleName;
+            ChainOfCommand = chainOfCommand;
             PropertyGroups = new List<PropertyGroupPart>();
         }
         

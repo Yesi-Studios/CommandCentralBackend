@@ -32,12 +32,12 @@ namespace CCServ.Authorization.Groups
         /// <summary>
         /// The module this property gruop belongs to.
         /// </summary>
-        public ModulePart ParentModule { get; set; }
+        public ChainOfCommandPart ParentModule { get; set; }
 
         /// <summary>
         /// Creates a new property group.
         /// </summary>
-        public PropertyGroupPart(ModulePart module)
+        public PropertyGroupPart(ChainOfCommandPart module)
         {
             ParentModule = module;
             Properties = new List<MemberInfo>();
@@ -68,7 +68,7 @@ namespace CCServ.Authorization.Groups
         /// Steps the build back up to the module.
         /// </summary>
         /// <returns></returns>
-        public ModulePart And
+        public ChainOfCommandPart And
         {
             get
             {

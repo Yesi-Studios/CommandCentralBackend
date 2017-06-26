@@ -88,7 +88,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                             var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
 
-                            return resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                            resolvedPermissions.ChainOfCommandByModule.TryGetValue(watchbill.EligibilityGroup.OwningChainOfCommand.ToString(), out bool result);
+
+                            return result;
                         });
 
                         token.SetResult(assignments.Select(assignment =>

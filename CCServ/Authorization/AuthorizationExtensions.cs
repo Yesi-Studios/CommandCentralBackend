@@ -31,21 +31,22 @@ namespace CCServ.Authorization
         /// </summary>
         /// <param name="person"></param>
         /// <param name="client"></param>
-        /// <param name="groups"></param>
         /// <returns></returns>
-        public static ResolvedPermissions Resolve(this IEnumerable<Groups.PermissionGroup> groups, Entities.Person client, Entities.Person person)
+        public static ResolvedPermissions ResolvePermissions(this Entities.Person client, Entities.Person person)
         {
             //Ensure that the client isn't null.
             if (client == null)
                 throw new ArgumentException("The client may not be null");
 
-            var resolvedPermissions = new ResolvedPermissions();
-            resolvedPermissions.TimeResolved = DateTime.UtcNow;
-            resolvedPermissions.ClientId = client.Id.ToString();
-            resolvedPermissions.PersonId = person == null ? null : person.Id.ToString();
+            var resolvedPermissions = new ResolvedPermissions()
+            {
+                TimeResolved = DateTime.UtcNow,
+                ClientId = client.Id.ToString(),
+                PersonId = person?.Id.ToString()
+            };
 
             //Now we need to start iterating.
-            foreach (var group in groups)
+            foreach (var group in client.PermissionGroups)
             {
                 //Add the names to the permission group names so the client knows who permission groups we used.
                 resolvedPermissions.PermissionGroupNames.Add(group.GroupName);
@@ -60,29 +61,14 @@ namespace CCServ.Authorization
                     if (!resolvedPermissions.AccessibleSubmodules.Contains(accessibleSubmodule))
                         resolvedPermissions.AccessibleSubmodules.Add(accessibleSubmodule);
 
-                foreach (var module in group.Modules)
+                foreach (var coc in group.ChainsOfCommand)
                 {
-                    //First the highest level.
-                    if (!resolvedPermissions.HighestLevels.ContainsKey(module.ModuleName))
-                        resolvedPermissions.HighestLevels.Add(module.ModuleName, group.AccessLevel);
-                    else
-                        if (resolvedPermissions.HighestLevels[module.ModuleName] < group.AccessLevel)
-                            resolvedPermissions.HighestLevels[module.ModuleName] = group.AccessLevel;
-
-                    //And now for editable fields.  First get or add them.
-                    Dictionary<string, List<string>> editableFieldsByType;
-                    if (resolvedPermissions.EditableFields.ContainsKey(module.ModuleName))
-                    {
-                        editableFieldsByType = resolvedPermissions.EditableFields[module.ModuleName];
-                    }
-                    else
-                    {
-                        editableFieldsByType = new Dictionary<string, List<string>>();
-                        resolvedPermissions.EditableFields.Add(module.ModuleName, editableFieldsByType);
-                    }
+                    //First the highest levels.
+                    if (resolvedPermissions.HighestLevels[coc.ChainOfCommand] < group.AccessLevel)
+                        resolvedPermissions.HighestLevels[coc.ChainOfCommand] = group.AccessLevel;
 
                     //Now let's go through this module and the types and see who passes the tests.  Editable first.
-                    module.PropertyGroups
+                    coc.PropertyGroups
                         .Where(x => x.AccessCategory == Groups.AccessCategories.Edit &&
                                x.Disjunctions
                                     .All(y => y.Rules
@@ -91,6 +77,15 @@ namespace CCServ.Authorization
                         .ToList()
                         .ForEach(x =>
                         {
+                            if (resolvedPermissions.EditableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                            {
+                                fields.Add(x.Name);
+                            }
+                            else
+                            {
+                                resolvedPermissions.EditableFields[]
+                            }
+
                             if (!editableFieldsByType.ContainsKey(x.DeclaringType.Name))
                                 editableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
                             else
@@ -161,7 +156,7 @@ namespace CCServ.Authorization
             //Now let's do the chain of command determination.  If we're talking about the same person, then the answer is no.
             foreach (var highestLevel in resolvedPermissions.HighestLevels)
             {
-                if (person == null || client.Id == person.Id)
+                if (person == null)
                 {
                     resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
                 }
