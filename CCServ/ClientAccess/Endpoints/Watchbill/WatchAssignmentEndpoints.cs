@@ -570,7 +570,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         session.Update(watchbill);
 
-                        token.SetResult(new { HasWarnings = assignmentWarnings.Any(), AssignmentWarnings = assignmentWarnings});
+                        token.SetResult(new { HasWarnings = assignmentWarnings.Any(), AssignmentWarnings = assignmentWarnings.ToList()});
 
                         transaction.Commit();
                     }
