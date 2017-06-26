@@ -96,16 +96,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your person id was not valid.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
-                            .Resolve(token.AuthenticationSession.Person, personFromDB);
+                        var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
-                        if (personFromDB.Id == token.AuthenticationSession.Person.Id &&
-                            (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Self ||
-                             resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.None))
+                        if (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.Self ||
+                             resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.None)
                             throw new CommandCentralException("You are not authorized to confirm your own watch inputs.  Only watchbill coordinators can do that.", ErrorTypes.Authorization);
 
                         //I include a check to see if the client is the person with the watch input to allow it to pass.
-                        if (personFromDB.Id != token.AuthenticationSession.Person.Id && !resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()])
+                        if (!resolvedPermissions.IsInChainOfCommand[watchbillFromDB.EligibilityGroup.OwningChainOfCommand])
                             throw new CommandCentralException("You are not authorized to confirm inputs for this person.", ErrorTypes.Authorization);
 
                         var inputRequirement = watchbillFromDB.InputRequirements.FirstOrDefault(x => x.Person.Id == personFromDB.Id) ??

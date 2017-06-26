@@ -22,11 +22,9 @@ namespace CCServ.Authorization.Groups.Definitions
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin), typeof(CommandLeadership),
                 typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster));
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
-
             HasAccessLevel(ChainOfCommandLevels.Command);
 
-            CanAccessModule(ChainsOfCommand.Main.ToString())
+            HasChainOfCommand(Authorization.ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.DateOfBirth,
                     x => x.Ethnicity,
@@ -95,8 +93,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.SubscribedEvents))
                     .IfInChainOfCommand();
 
-            CanAccessModule(ChainsOfCommand.Muster.ToString());
-            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
+            HasChainOfCommand(ChainsOfCommand.Muster);
+            HasChainOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
         }
     }
 }

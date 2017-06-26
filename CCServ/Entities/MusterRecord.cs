@@ -242,36 +242,9 @@ namespace CCServ.Entities
         /// <returns></returns>
         public static bool CanClientMusterPerson(Person client, Person person)
         {
-            var resolvedPermissions = client.PermissionGroups.Resolve(client, person);
-            var highestLevelInMuster = resolvedPermissions.HighestLevels["Muster"];
+            var resolvedPermissions = client.ResolvePermissions(person);
 
-            switch (highestLevelInMuster)
-            {
-                case ChainOfCommandLevels.Command:
-                    {
-                        return client.IsInSameCommandAs(person);
-                    }
-                case ChainOfCommandLevels.Department:
-                    {
-                        return client.IsInSameDepartmentAs(person);
-                    }
-                case ChainOfCommandLevels.Division:
-                    {
-                        return client.IsInSameDivisionAs(person);
-                    }
-                case ChainOfCommandLevels.Self:
-                    {
-                        return client.Id == person.Id;
-                    }
-                case ChainOfCommandLevels.None:
-                    {
-                        return false;
-                    }
-                default:
-                    {
-                        throw new NotImplementedException("Fell to the default case in the CanClientMusterPerson switch.");
-                    }
-            }
+            return resolvedPermissions.IsInChainOfCommand[ChainsOfCommand.Muster];
         }
 
         /// <summary>

@@ -622,11 +622,11 @@ namespace CCServ.Entities.Watchbill
             if (!person.PermissionGroupNames.Any())
                 return new List<WatchInputRequirement>();
 
-            var resolvedPermissions = Authorization.Groups.PermissionGroup.AllPermissionGroups
-                .Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase))
-                .Resolve(person, null);
+            var resolvedPermissions = person.ResolvePermissions(null);
 
-            if (!resolvedPermissions.HighestLevels.TryGetValue(this.EligibilityGroup.OwningChainOfCommand.ToString(), out ChainOfCommandLevels highestLevelForWatchbill))
+            var highestLevelForWatchbill = resolvedPermissions.HighestLevels[this.EligibilityGroup.OwningChainOfCommand];
+
+            if (highestLevelForWatchbill == ChainOfCommandLevels.None)
                 return new List<WatchInputRequirement>();
 
             switch (highestLevelForWatchbill)

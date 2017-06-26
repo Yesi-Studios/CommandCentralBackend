@@ -45,6 +45,14 @@ namespace CCServ.Authorization
                 PersonId = person?.Id.ToString()
             };
 
+            //Let's do some work here to get either the permission groups or the permission group names and turn them into groups.
+            List<Groups.PermissionGroup> groups = person.PermissionGroups;
+
+            if ((groups == null || !groups.Any()) && person.PermissionGroupNames.Any())
+            {
+                groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)).ToList();
+            }
+
             //Now we need to start iterating.
             foreach (var group in client.PermissionGroups)
             {
@@ -61,13 +69,13 @@ namespace CCServ.Authorization
                     if (!resolvedPermissions.AccessibleSubmodules.Contains(accessibleSubmodule))
                         resolvedPermissions.AccessibleSubmodules.Add(accessibleSubmodule);
 
-                foreach (var coc in group.ChainsOfCommand)
+                foreach (var coc in group.ChainsOfCommandParts)
                 {
                     //First the highest levels.
                     if (resolvedPermissions.HighestLevels[coc.ChainOfCommand] < group.AccessLevel)
                         resolvedPermissions.HighestLevels[coc.ChainOfCommand] = group.AccessLevel;
 
-                    //Now let's go through this module and the types and see who passes the tests.  Editable first.
+                    //Now let's go through this coc and the types and see who passes the tests.  Editable first.
                     coc.PropertyGroups
                         .Where(x => x.AccessCategory == Groups.AccessCategories.Edit &&
                                x.Disjunctions
@@ -83,30 +91,12 @@ namespace CCServ.Authorization
                             }
                             else
                             {
-                                resolvedPermissions.EditableFields[]
+                                resolvedPermissions.EditableFields[x.DeclaringType.Name] = new List<string> { x.Name };
                             }
-
-                            if (!editableFieldsByType.ContainsKey(x.DeclaringType.Name))
-                                editableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
-                            else
-                                if (!editableFieldsByType[x.DeclaringType.Name].Contains(x.Name))
-                                    editableFieldsByType[x.DeclaringType.Name].Add(x.Name);
                         });
 
-                    //And now the returnable fields.
-                    Dictionary<string, List<string>> returnableFieldsByType;
-                    if (resolvedPermissions.ReturnableFields.ContainsKey(module.ModuleName))
-                    {
-                        returnableFieldsByType = resolvedPermissions.ReturnableFields[module.ModuleName];
-                    }
-                    else
-                    {
-                        returnableFieldsByType = new Dictionary<string, List<string>>();
-                        resolvedPermissions.ReturnableFields.Add(module.ModuleName, returnableFieldsByType);
-                    }
-
-                    //Now let's go through this module and the types and see who passes the tests.  Now returnable!
-                    module.PropertyGroups
+                    //Now let's go through this coc and the types and see who passes the tests.  Now returnable!
+                    coc.PropertyGroups
                         .Where(x => x.AccessCategory == Groups.AccessCategories.Return &&
                                x.Disjunctions
                                     .All(y => y.Rules
@@ -115,41 +105,64 @@ namespace CCServ.Authorization
                         .ToList()
                         .ForEach(x =>
                         {
-                            if (!returnableFieldsByType.ContainsKey(x.DeclaringType.Name))
-                                returnableFieldsByType.Add(x.DeclaringType.Name, new List<string>() { x.Name });
+                            if (resolvedPermissions.ReturnableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                            {
+                                fields.Add(x.Name);
+                            }
                             else
-                                if (!returnableFieldsByType[x.DeclaringType.Name].Contains(x.Name))
-                                returnableFieldsByType[x.DeclaringType.Name].Add(x.Name);
+                            {
+                                resolvedPermissions.ReturnableFields[x.DeclaringType.Name] = new List<string> { x.Name };
+                            }
                         });
 
-                    //And those fields we can return with stipulations at each of the levels.
-                    //If the priv return fields doesn't have the module, then set it all up including empty lists for all of the access levels.
-                    if (!resolvedPermissions.PrivelegedReturnableFields.ContainsKey(module.ModuleName))
-                    {
-                        resolvedPermissions.PrivelegedReturnableFields.Add(module.ModuleName, 
-                            Enum.GetNames(typeof(ChainOfCommandLevels))
-                            .Select(x => new KeyValuePair<string, List<string>>(x, new List<string>()))
-                            .ToDictionary(x => x.Key, x => x.Value));
-                    }
-
-                    //Ok cool now we have this module and a list of all the access levels.  weeeeee.
-                    //Now go through all the property groups in this module.  if the property group is return and either has no rules or its rules are all if in chain of command rules, then add it.
-                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][module.ParentPermissionGroup.AccessLevel.ToString()] = module.PropertyGroups
+                    coc.PropertyGroups
                         .Where(x => x.AccessCategory == Groups.AccessCategories.Return && (!x.Disjunctions.Any() || x.Disjunctions.All(y => y.Rules.All(z => z is Rules.IfInChainOfCommandRule))))
-                        .SelectMany(x => x.Properties.Select(y => y.Name))
-                        .ToList();
+                        .SelectMany(x => x.Properties)
+                        .ToList()
+                        .ForEach(x =>
+                        {
+                            if (resolvedPermissions.PrivelegedReturnableFields.TryGetValue(group.AccessLevel, out Dictionary<string, List<string>> fieldsByType))
+                            {
+                                if (fieldsByType.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                                {
+                                    fields.Add(x.Name);
+                                }
+                                else
+                                {
+                                    fieldsByType[x.DeclaringType.Name] = new List<string> { x.Name };
+                                }
+                            }
+                            else
+                            {
+                                resolvedPermissions.PrivelegedReturnableFields[group.AccessLevel] = new Dictionary<string, List<string>> { { x.DeclaringType.Name, new List<string> { x.Name } } };
+                            }
+                        });
+                }
+            }
 
-                    //Now we need to copy the fields to the level beneath them because of this assumption:
-                    //Any field I can return at the command level, I can return at the division level.
-                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()] =
-                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()]
-                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Command.ToString()])
-                        .Distinct().ToList();
+            //Now we need to copy the fields to the level beneath them because of this assumption:
+            //Any field I can return at the command level, I can return at the division level.
+            foreach (var pair in resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command])
+            {
+                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(pair.Key, out List<string> fields))
+                {
+                    fields = fields.Concat(pair.Value).Distinct().ToList();
+                }
+                else
+                {
+                    resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department] = new Dictionary<string, List<string>> { { pair.Key, pair.Value } };
+                }
+            }
 
-                    resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Division.ToString()] =
-                        resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Division.ToString()]
-                        .Concat(resolvedPermissions.PrivelegedReturnableFields[module.ModuleName][ChainOfCommandLevels.Department.ToString()])
-                        .Distinct().ToList();
+            foreach (var pair in resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department])
+            {
+                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(pair.Key, out List<string> fields))
+                {
+                    fields = fields.Concat(pair.Value).Distinct().ToList();
+                }
+                else
+                {
+                    resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division] = new Dictionary<string, List<string>> { { pair.Key, pair.Value } };
                 }
             }
 
@@ -158,7 +171,7 @@ namespace CCServ.Authorization
             {
                 if (person == null)
                 {
-                    resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
+                    resolvedPermissions.IsInChainOfCommand[highestLevel.Key] = false;
                 }
                 else
                 {
@@ -166,23 +179,23 @@ namespace CCServ.Authorization
                     {
                         case ChainOfCommandLevels.Command:
                             {
-                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameCommandAs(person);
+                                resolvedPermissions.IsInChainOfCommand[highestLevel.Key] = client.IsInSameCommandAs(person);
                                 break;
                             }
                         case ChainOfCommandLevels.Department:
                             {
-                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDepartmentAs(person);
+                                resolvedPermissions.IsInChainOfCommand[highestLevel.Key] = client.IsInSameDepartmentAs(person);
                                 break;
                             }
                         case ChainOfCommandLevels.Division:
                             {
-                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = client.IsInSameDivisionAs(person);
+                                resolvedPermissions.IsInChainOfCommand[highestLevel.Key] = client.IsInSameDivisionAs(person);
                                 break;
                             }
                         case ChainOfCommandLevels.Self:
                         case ChainOfCommandLevels.None:
                             {
-                                resolvedPermissions.ChainOfCommandByModule[highestLevel.Key] = false;
+                                resolvedPermissions.IsInChainOfCommand[highestLevel.Key] = false;
                                 break;
                             }
                         default:

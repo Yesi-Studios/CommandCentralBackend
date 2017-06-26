@@ -86,11 +86,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             if (assignment.CurrentState != WatchAssignmentStates.Assigned)
                                 return false;
 
-                            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
+                            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(assignment.PersonAssigned);
 
-                            resolvedPermissions.ChainOfCommandByModule.TryGetValue(watchbill.EligibilityGroup.OwningChainOfCommand.ToString(), out bool result);
-
-                            return result;
+                            return resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand];
                         });
 
                         token.SetResult(assignments.Select(assignment =>
@@ -251,11 +249,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not swap shifts if both are assigned to the same person.", ErrorTypes.Validation);
 
                         //Now we're going to do some permissions checking to ensure that the client is in the chains of command of both persons.
-                        var ass1ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass1.PersonAssigned);
-                        var ass2ResolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, ass2.PersonAssigned);
+                        var ass1ResolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(ass1.PersonAssigned);
+                        var ass2ResolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(ass2.PersonAssigned);
 
-                        var ass1HighestLevel = ass1ResolvedPermissions.HighestLevels[ass1.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
-                        var ass2HighestLevel = ass2ResolvedPermissions.HighestLevels[ass2.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand.ToString()];
+                        var ass1HighestLevel = ass1ResolvedPermissions.HighestLevels[ass1.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand];
+                        var ass2HighestLevel = ass2ResolvedPermissions.HighestLevels[ass2.WatchShift.Watchbill.EligibilityGroup.OwningChainOfCommand];
 
                         switch (ass1HighestLevel)
                         {
@@ -403,10 +401,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not acknowledge a watch assignment until the watchbill has been published.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
-                            .Resolve(token.AuthenticationSession.Person, assignment.PersonAssigned);
+                        var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(assignment.PersonAssigned);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
+                        if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand])
                             throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
                                 "If this is your own input and you need to change the date range, " +
                                 "please delete the input and then re-create it for the proper range.",
@@ -483,9 +480,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        bool isCommandCoordinator = token.AuthenticationSession.Person.PermissionGroups
-                                .Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand)
-                                    && x.AccessLevel == ChainOfCommandLevels.Command);
+                        bool isCommandCoordinator = token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.Command;
 
                         if (!isCommandCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);

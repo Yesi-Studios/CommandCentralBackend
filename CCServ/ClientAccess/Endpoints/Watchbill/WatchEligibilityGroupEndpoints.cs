@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using CCServ.Entities.ReferenceLists.Watchbill;
+using CCServ.Authorization;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -62,9 +63,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("One or more of the persons in your eligibility group were not valid.", ErrorTypes.Validation);
 
                         //Now we just need to make sure the client is in the command level of the group's chain of command.
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(groupFromDB.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                            throw new CommandCentralException("You are not allowed to edit the membership of this group.  " +
-                                "You must be in the same chain of command as the group and be at the command level.", ErrorTypes.Authorization);
+                        if(token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[groupFromDB.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                            throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Now we need to add or remove all the people.
                         //This method will cause a pretty big batch update to occur on the database but that's ok.

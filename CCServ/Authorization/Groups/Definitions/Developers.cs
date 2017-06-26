@@ -27,11 +27,9 @@ namespace CCServ.Authorization.Groups.Definitions
                 typeof(Admin), typeof(Developers), typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster), 
                 typeof(CommandQuarterdeckWatchbill), typeof(DepartmentQuarterdeckWatchbill), typeof(DivisionQuarterdeckWatchbill));
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
+            HasChainOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
 
-            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
-
-            CanAccessModule("Main")
+            HasChainOfCommand(ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.SSN,
                     x => x.DateOfBirth,
@@ -108,7 +106,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.BilletAssignment,
                     x => x.SubscribedEvents));
 
-            CanAccessModule("Muster");
+            HasChainOfCommand(ChainsOfCommand.Muster);
         }
     }
 }

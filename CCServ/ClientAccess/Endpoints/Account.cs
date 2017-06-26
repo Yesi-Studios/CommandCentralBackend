@@ -112,7 +112,7 @@ namespace CCServ.ClientAccess.Endpoints
                             });
 
                             //We need to get the client's permission groups, add the defaults, and then tell the client their permissions.
-                            token.SetResult(new { PersonId = person.Id, ResolvedPermissions = AuthorizationUtilities.GetPermissionGroupsFromNames(person.PermissionGroupNames, true).Resolve(person, null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
+                            token.SetResult(new { PersonId = person.Id, ResolvedPermissions = person.ResolvePermissions(null), AuthenticationToken = ses.Id, FriendlyName = person.ToString() });
                         }
 
                         transaction.Commit();

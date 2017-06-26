@@ -173,9 +173,8 @@ namespace CCServ.ClientAccess.Endpoints
             //Where we're going to keep all the persons the client can muster.
             List<Person> musterablePersons = new List<Person>();
 
-            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
-            if (!resolvedPermissions.HighestLevels.TryGetValue("Muster", out ChainOfCommandLevels highestLevelInMuster))
-                highestLevelInMuster = ChainOfCommandLevels.None;
+            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(null);
+            var highestLevelInMuster = resolvedPermissions.HighestLevels[ChainsOfCommand.Muster];
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
             {

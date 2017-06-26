@@ -44,7 +44,7 @@ namespace CCServ.Authorization
         /// <summary>
         /// The list of fields that the client can return, with stipulations.
         /// </summary>
-        public Dictionary<string, List<string>> PrivelegedReturnableFields { get; set; } = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<ChainOfCommandLevels, Dictionary<string, List<string>>> PrivelegedReturnableFields { get; set; } = ((ChainOfCommandLevels[])Enum.GetValues(typeof(ChainOfCommandLevels))).ToDictionary(x => x, x => new Dictionary<string, List<string>>());
 
         /// <summary>
         /// The highest levels in each of the chains of command that this client has.  The key is case insensitive.
@@ -56,7 +56,7 @@ namespace CCServ.Authorization
         /// <para/>
         /// Guarenteed to contain all chains of command.
         /// </summary>
-        public Dictionary<ChainsOfCommand, bool> ChainOfCommandByModule { get; set; } = ((ChainsOfCommand[])Enum.GetValues(typeof(ChainsOfCommand))).ToDictionary(x => x, x => false);
+        public Dictionary<ChainsOfCommand, bool> IsInChainOfCommand { get; set; } = ((ChainsOfCommand[])Enum.GetValues(typeof(ChainsOfCommand))).ToDictionary(x => x, x => false);
 
         /// <summary>
         /// The list of those permission groups' names that this client can edit the membership of.

@@ -24,11 +24,9 @@ namespace CCServ.Authorization.Groups.Definitions
             CanEditMembershipOf(typeof(Users), typeof(DivisionLeadership), typeof(DepartmentLeadership), typeof(Admin),
                 typeof(DivisionMuster), typeof(DepartmentMuster), typeof(CommandMuster), typeof(CommandLeadership));
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster);
-
             HasAccessLevel(ChainOfCommandLevels.Command);
 
-            CanAccessModule("Main")
+            HasChainOfCommand(ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.SSN,
                     x => x.DoDId,
@@ -101,7 +99,7 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.SubscribedEvents))
                     .IfInChainOfCommand();
 
-            CanAccessModule("Muster");
+            HasChainOfCommand(ChainsOfCommand.Muster);
         }
     }
 }
