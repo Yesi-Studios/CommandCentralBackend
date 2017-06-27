@@ -53,6 +53,8 @@ namespace CCServ.Authorization
                 groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => client.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)).ToList();
             }
 
+            groups = groups.Concat(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault)).ToList();
+
             //Now we need to start iterating.
             foreach (var group in groups)
             {
@@ -87,7 +89,8 @@ namespace CCServ.Authorization
                         {
                             if (resolvedPermissions.EditableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
                             {
-                                fields.Add(x.Name);
+                                if (!fields.Contains(x.Name))
+                                    fields.Add(x.Name);
                             }
                             else
                             {
@@ -107,7 +110,8 @@ namespace CCServ.Authorization
                         {
                             if (resolvedPermissions.ReturnableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
                             {
-                                fields.Add(x.Name);
+                                if (!fields.Contains(x.Name))
+                                    fields.Add(x.Name);
                             }
                             else
                             {
@@ -125,7 +129,8 @@ namespace CCServ.Authorization
                             {
                                 if (fieldsByType.TryGetValue(x.DeclaringType.Name, out List<string> fields))
                                 {
-                                    fields.Add(x.Name);
+                                    if (!fields.Contains(x.Name))
+                                        fields.Add(x.Name);
                                 }
                                 else
                                 {
