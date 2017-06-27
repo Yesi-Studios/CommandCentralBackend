@@ -46,15 +46,15 @@ namespace CCServ.Authorization
             };
 
             //Let's do some work here to get either the permission groups or the permission group names and turn them into groups.
-            List<Groups.PermissionGroup> groups = person.PermissionGroups;
+            List<Groups.PermissionGroup> groups = client.PermissionGroups;
 
-            if ((groups == null || !groups.Any()) && person.PermissionGroupNames.Any())
+            if ((groups == null || !groups.Any()) && client.PermissionGroupNames.Any())
             {
-                groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => person.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)).ToList();
+                groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => client.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)).ToList();
             }
 
             //Now we need to start iterating.
-            foreach (var group in client.PermissionGroups)
+            foreach (var group in groups)
             {
                 //Add the names to the permission group names so the client knows who permission groups we used.
                 resolvedPermissions.PermissionGroupNames.Add(group.GroupName);
