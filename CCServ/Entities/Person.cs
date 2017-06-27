@@ -701,7 +701,7 @@ namespace CCServ.Entities
                         var person = new Person()
                         {
                             Id = Guid.NewGuid(),
-                            LastName = Utilities.RandomString(8),
+                            LastName = "user" + x.ToString(),
                             FirstName = Utilities.RandomString(8),
                             MiddleName = Utilities.RandomString(8),
                             Command = command,
