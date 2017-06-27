@@ -53,7 +53,10 @@ namespace CCServ.Authorization
                 groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => client.PermissionGroupNames.Contains(x.GroupName, StringComparer.CurrentCultureIgnoreCase)).ToList();
             }
 
-            groups = groups.Concat(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault)).ToList();
+            if (groups == null)
+                groups = Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).ToList();
+            else
+                groups.AddRange(Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault));
 
             //Now we need to start iterating.
             foreach (var group in groups)

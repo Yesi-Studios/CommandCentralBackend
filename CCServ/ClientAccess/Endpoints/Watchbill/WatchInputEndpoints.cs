@@ -119,7 +119,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             //Now let's confirm that our client is allowed to submit inputs for this person.
                             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
-                            if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand])
+                            if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand] && personFromDB.Id != token.AuthenticationSession.Person.Id)
                                 throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
                             
                             //Let's also check the watchbill's state.
@@ -272,7 +272,17 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         watchbill.WatchInputs.Remove(watchInputFromDB);
 
+                        //Also, if this watch input is the last watch input for this person, then we need to set the watch input requirement back to not answered.
+                        if (!watchbill.WatchInputs.Any(x => x.Person.Id == watchInputFromDB.Person.Id))
+                        {
+                            var requirement = watchbill.InputRequirements.FirstOrDefault(x => x.Person.Id == watchInputFromDB.Person.Id) ??
+                                throw new Exception("How are we trying to deleting a watch input for a person without a requirement? Atwood... what did you do?");
+
+                            requirement.IsAnswered = false;
+                        }
+
                         session.Update(watchbill);
+                        
 
                         transaction.Commit();
                     }

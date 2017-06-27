@@ -247,8 +247,9 @@ namespace CCServ.ClientAccess.Endpoints
                     throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
-                bool canView = token.AuthenticationSession.Person.ResolvePermissions(person)
-                    .ReturnableFields[nameof(Person)].Contains(PropertySelector.SelectPropertyFrom<Person>(x => x.AccountHistory).Name);
+                var permissions = token.AuthenticationSession.Person.ResolvePermissions(person);
+
+                bool canView = permissions.ReturnableFields[nameof(Person)].Contains(PropertySelector.SelectPropertyFrom<Person>(x => x.AccountHistory).Name);
 
                 if (!canView)
                     throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", ErrorTypes.Authorization);
@@ -435,8 +436,12 @@ namespace CCServ.ClientAccess.Endpoints
                             if (filters.ContainsKey("Division"))
                                 filters.Remove("Division");
 
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(nameof(Person), out List<string> fields);
+                            if (fields == null)
+                                fields = new List<string>();
+
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
+                            var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -451,9 +456,12 @@ namespace CCServ.ClientAccess.Endpoints
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
                                 filters.Remove("Department");
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(nameof(Person), out List<string> fields);
+                            if (fields == null)
+                                fields = new List<string>();
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
+                            var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -470,8 +478,12 @@ namespace CCServ.ClientAccess.Endpoints
                             if (filters.ContainsKey("Command"))
                                 filters.Remove("Command");
 
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command].TryGetValue(nameof(Person), out List<string> fields);
+                            if (fields == null)
+                                fields = new List<string>();
+
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
+                            var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);

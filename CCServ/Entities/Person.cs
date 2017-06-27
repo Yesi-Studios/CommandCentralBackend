@@ -688,7 +688,7 @@ namespace CCServ.Entities
                         {
                             permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
                                     .OrderBy(y => Utilities.GetRandomNumber(0, 100))
-                                    .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count))
+                                    .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count / 2))
                                     .Select(y => y.GroupName)
                                     .ToList();
                         }

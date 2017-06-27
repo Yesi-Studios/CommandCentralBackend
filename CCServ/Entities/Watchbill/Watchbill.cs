@@ -535,8 +535,8 @@ namespace CCServ.Entities.Watchbill
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
                             if (this.WatchInputs.Any(input => input.IsConfirmed && 
-                            input.Person.Id == person.Id && 
-                            new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
+                                input.Person.Id == person.Id && 
+                                new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
                                 .OverlapsWith(new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End, true))))
                                 return false;
 
@@ -552,7 +552,7 @@ namespace CCServ.Entities.Watchbill
                             return true;
 
                         }, out Person personToAssign))
-                            throw new CommandCentralException("A shift has no person that can stand it!  Shift: {0}".FormatS(shiftsForThisGroup[x]), ErrorTypes.Validation);
+                            throw new CommandCentralException("Department {0} had no person that could stand shift {1}.".FormatS(personsGroup.Key, shiftsForThisGroup[x]), ErrorTypes.Validation);
 
                         //Create the watch assignment.
                         shiftsForThisGroup[x].WatchAssignment = new WatchAssignment

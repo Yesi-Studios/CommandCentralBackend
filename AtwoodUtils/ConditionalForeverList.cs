@@ -11,7 +11,7 @@ namespace AtwoodUtils
     /// <para />
     /// If elements do not pass the given predicate during selection, they will be returned to the top of the stack for consideration during the next selection process.
     /// <para />
-    /// Thanks in no small part to McLean for the idea of this algorithm.
+    /// Thanks in no small part to McLean for the implementation of this algorithm... and spell checking my comments.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class ConditionalForeverList<T>
@@ -19,6 +19,8 @@ namespace AtwoodUtils
 
         private Stack<T> _remaining;
         private Stack<T> _original;
+
+        List<T> visitedItems = new List<T>();
 
         /// <summary>
         /// Creates a new forever list from the given source.
@@ -43,6 +45,7 @@ namespace AtwoodUtils
         {
             int attempts = 0;
             Stack<T> failures = new Stack<T>();
+            visitedItems = new List<T>();
 
             while (attempts < _original.Count)
             {
@@ -52,6 +55,7 @@ namespace AtwoodUtils
                 }
 
                 item = _remaining.Pop();
+                visitedItems.Add(item);
 
                 if (predicate(item))
                 {
@@ -65,8 +69,11 @@ namespace AtwoodUtils
                 }
                 else
                 {
-                    failures.Push(item);
-                    attempts++;
+                    if (!failures.Contains(item))
+                    {
+                        failures.Push(item);
+                        attempts++;
+                    }
                 }
             }
 
