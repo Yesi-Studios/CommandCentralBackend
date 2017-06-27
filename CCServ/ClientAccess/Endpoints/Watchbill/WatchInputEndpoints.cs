@@ -117,13 +117,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                                 throw new CommandCentralException("The reason Id was not valid.", ErrorTypes.Validation);
 
                             //Now let's confirm that our client is allowed to submit inputs for this person.
-                            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
-                                .Resolve(token.AuthenticationSession.Person, personFromDB);
+                            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
-                            if (resolvedPermissions.ChainOfCommandByModule.TryGetValue(watchbill.EligibilityGroup.OwningChainOfCommand.ToString(), out bool inChain) && !inChain
-                                && resolvedPermissions.PersonId != resolvedPermissions.ClientId)
+                            if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand])
                                 throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
-
+                            
                             //Let's also check the watchbill's state.
                             if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
                                 throw new CommandCentralException("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
@@ -200,16 +198,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
-                            .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
+                        var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(watchInputFromDB.Person);
 
-                        if (watchInputFromDB.Person.Id == token.AuthenticationSession.Person.Id &&
-                            (resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Self ||
-                             resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.None))
+                        if (resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.Self ||
+                             resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.None)
                             throw new CommandCentralException("You are not authorized to confirm your own watch inputs.  Only watchbill coordinators can do that.", ErrorTypes.Authorization);
 
                         //I include a check to see if the client is the person with the watch input to allow it to pass.
-                        if (watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id && !resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()])
+                        if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand])
                             throw new CommandCentralException("You are not authorized to confirm inputs for this person.", ErrorTypes.Authorization);
 
                         if (watchInputFromDB.IsConfirmed)
@@ -265,20 +261,14 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs)
+                        if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now we also need the permissions to determine if this client can edit this input.
-                        var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups
-                            .Resolve(token.AuthenticationSession.Person, watchInputFromDB.Person);
+                        var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(watchInputFromDB.Person);
 
-                        if (!resolvedPermissions.ChainOfCommandByModule[watchbill.EligibilityGroup.OwningChainOfCommand.ToString()]
-                            && watchInputFromDB.Person.Id != token.AuthenticationSession.Person.Id
-                            && watchInputFromDB.SubmittedBy.Id != token.AuthenticationSession.Person.Id)
-                            throw new CommandCentralException("You are not authorized to edit inputs for this person.  " +
-                                "If this is your own input and you need to change the date range, " +
-                                "please delete the input and then re-create it for the proper range.",
-                                ErrorTypes.Authorization);
+                        if (!resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand])
+                            throw new CommandCentralException("You are not authorized to edit inputs for this person.", ErrorTypes.Authorization);
 
                         watchbill.WatchInputs.Remove(watchInputFromDB);
 

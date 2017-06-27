@@ -30,16 +30,16 @@ namespace CCServ.Authorization.Groups
         public List<Rules.RuleDisjunction> Disjunctions { get; set; }
 
         /// <summary>
-        /// The module this property gruop belongs to.
+        /// The coc this property group belongs to.
         /// </summary>
-        public ModulePart ParentModule { get; set; }
+        public ChainOfCommandPart ParentCoC { get; set; }
 
         /// <summary>
         /// Creates a new property group.
         /// </summary>
-        public PropertyGroupPart(ModulePart module)
+        public PropertyGroupPart(ChainOfCommandPart coc)
         {
-            ParentModule = module;
+            ParentCoC = coc;
             Properties = new List<MemberInfo>();
             Disjunctions = new List<Rules.RuleDisjunction>();
         }
@@ -68,11 +68,11 @@ namespace CCServ.Authorization.Groups
         /// Steps the build back up to the module.
         /// </summary>
         /// <returns></returns>
-        public ModulePart And
+        public ChainOfCommandPart And
         {
             get
             {
-                return this.ParentModule;
+                return this.ParentCoC;
             }
         }
 

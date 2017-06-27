@@ -162,13 +162,13 @@ namespace CCServ.ClientAccess.Endpoints
                     throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now that we have the person back, let's resolve the permissions for this person.
-                var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+                var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(person);
 
                 Dictionary<string, object> returnData = new Dictionary<string, object>();
 
-                List<string> returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
+                List<string> returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
 
-                var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
+                var personMetadata = NHibernateHelper.GetEntityMetadata(nameof(Person));
 
                 //Now just set the fields the client is allowed to see.
                 foreach (var propertyName in returnableFields)
@@ -247,8 +247,8 @@ namespace CCServ.ClientAccess.Endpoints
                     throw new CommandCentralException("The Id you sent appears to be invalid.", ErrorTypes.Validation);
 
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
-                bool canView = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
-                    .ReturnableFields["Main"]["Person"].Contains(PropertySelector.SelectPropertiesFrom<Person>(x => x.AccountHistory).First().Name);
+                bool canView = token.AuthenticationSession.Person.ResolvePermissions(person)
+                    .ReturnableFields[nameof(Person)].Contains(PropertySelector.SelectPropertyFrom<Person>(x => x.AccountHistory).Name);
 
                 if (!canView)
                     throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", ErrorTypes.Authorization);
@@ -356,7 +356,7 @@ namespace CCServ.ClientAccess.Endpoints
                 {
 
                     //Do our permissions check here for each person.
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person).ReturnableFields["Main"]["Person"];
+                    var returnableFields = token.AuthenticationSession.Person.ResolvePermissions(person).ReturnableFields[nameof(Person)];
 
                     Dictionary<string, string> result = new Dictionary<string, string>
                     {
@@ -420,7 +420,7 @@ namespace CCServ.ClientAccess.Endpoints
             //This is determined, in part by the existence of the searchlevel parameter.
             //If we don't find the level limit, then continue as normal.  However, if we do find a level limit, then we need to check the client's permissions.
             //We also need to throw out any property they gave us for the relevant level and insert our own.
-            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, null);
+            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(null);
             if (token.Args.ContainsKey("searchlevel"))
             {
                 //Ok there's a search level.  We need to do something different based on division, department or command.
@@ -436,7 +436,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 filters.Remove("Division");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Division"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -453,7 +453,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 filters.Remove("Department");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Department"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -471,7 +471,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 filters.Remove("Command");
 
                             //Now ask if the client is allowed to search in all these fields.
-                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields["Main"]["Command"].Concat(resolvedPermissions.ReturnableFields["Main"]["Person"]).Contains(x));
+                            var failures = filters.Keys.Where(x => !resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command][nameof(Person)].Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
                                 throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -489,7 +489,7 @@ namespace CCServ.ClientAccess.Endpoints
             {
                 //We weren't told to limit the search at all, meaning the searchable fields are the client's normal returnable fields.
                 //So let's just test the fields against that.
-                var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields["Main"]["Person"].Contains(x));
+                var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields[nameof(Person)].Contains(x));
 
                 if (failures.Any())
                     throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
@@ -635,7 +635,7 @@ namespace CCServ.ClientAccess.Endpoints
                     }
 
                     //We need to know the fields the client is allowed to return for this client.
-                    var returnableFields = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person).ReturnableFields["Main"]["Person"];
+                    var returnableFields = token.AuthenticationSession.Person.ResolvePermissions(person).ReturnableFields[nameof(Person)];
 
                     var returnData = new Dictionary<string, string>();
 
@@ -723,11 +723,11 @@ namespace CCServ.ClientAccess.Endpoints
                     Person personFromDB = session.Get<Person>(personFromClient.Id) ??
                         throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation);
 
-                    var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, personFromDB);
+                    var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                    var editableFields = resolvedPermissions.EditableFields["Main"]["Person"];
-                    var returnableFields = resolvedPermissions.ReturnableFields["Main"]["Person"];
+                    var editableFields = resolvedPermissions.EditableFields[nameof(Person)];
+                    var returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
 
                     //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
                     foreach (var field in returnableFields.Intersect(editableFields, StringComparer.CurrentCultureIgnoreCase))

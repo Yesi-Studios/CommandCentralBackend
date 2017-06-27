@@ -18,9 +18,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(ChainOfCommandLevels.Division);
 
-            InChainsOfCommand(ChainsOfCommand.Main, ChainsOfCommand.Muster, ChainsOfCommand.QuarterdeckWatchbill);
-
-            CanAccessModule("Main")
+            HasChainOfCommand(ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.DateOfBirth,
                     x => x.Ethnicity,
@@ -90,8 +88,8 @@ namespace CCServ.Authorization.Groups.Definitions
                     x => x.SubscribedEvents))
                     .IfInChainOfCommand();
 
-            CanAccessModule(ChainsOfCommand.Muster.ToString());
-            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
+            HasChainOfCommand(ChainsOfCommand.Muster);
+            HasChainOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
         }
     }
 }

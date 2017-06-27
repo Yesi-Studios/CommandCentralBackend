@@ -50,8 +50,7 @@ namespace CCServ.ClientAccess.Endpoints
                     .Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault));
 
                 //The editable permissions are all those they can edit.
-                var editableGroups = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person)
-                    .EditablePermissionGroups;
+                var editableGroups = token.AuthenticationSession.Person.ResolvePermissions(person).EditablePermissionGroups;
 
                 token.SetResult(new
                 {
@@ -107,7 +106,7 @@ namespace CCServ.ClientAccess.Endpoints
                     var currentGroups = person.PermissionGroupNames.Concat(Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => x.IsDefault).Select(x => x.GroupName)).ToList();
 
                     //Now get the resolved permissions of our client.
-                    var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, person);
+                    var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(person);
 
                     //Now determine what permissions the client wants to change.
                     var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First()).ToList();
@@ -128,7 +127,7 @@ namespace CCServ.ClientAccess.Endpoints
                              
                             ChainOfCommandLevels highestPermissionLevelInGroups = ChainOfCommandLevels.None;
                             var selection = resolvedPermissions.HighestLevels
-                                .Where(x => group.ChainsOfCommandMemberOf.Select(y => y.ToString()).Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
+                                .Where(x => group.ChainsOfCommandParts.Select(y => y.ChainOfCommand).Contains(x.Key));
 
                             if (selection.Any())
                                 highestPermissionLevelInGroups = selection.Max(x => x.Value);

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using Itenso.TimePeriod;
+using CCServ.Authorization;
 
 namespace CCServ.ClientAccess.Endpoints.Watchbill
 {
@@ -96,9 +97,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        {
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
-                                "You must have command level permissions in the related chain of command.", ErrorTypes.Validation);
+                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                        }
 
                         //Check the state.
                         if (!watchbill.CanEditStructure())
@@ -180,9 +183,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                         var watchShiftFromDB = session.Get<WatchShift>(watchShiftFromClient.Id) ??
                             throw new CommandCentralException("Your watch shift's id was not valid.  Please consider creating the watch shift first.", ErrorTypes.Validation);
 
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        {
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                        }
 
                         //Check the state.
                         if (!watchShiftFromDB.Watchbill.CanEditStructure())
@@ -240,9 +245,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your watch shift's id was not valid.  " +
                             "Please consider creating the watch shift first.", ErrorTypes.Validation);
 
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        {
                             throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                        }
 
                         //Check the state.
                         if (!watchShiftFromDB.Watchbill.CanEditStructure())
@@ -293,9 +300,11 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your watch shift's id was not valid.  " +
                             "Please consider creating the watch shift first.", ErrorTypes.Validation);
 
-                            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                            if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchShiftFromDB.Watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                            {
                                 throw new CommandCentralException("You are not allowed to edit the structure of a watchbill tied to that eligibility group.  " +
                                     "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                            }
 
                             //Check the state.
                             if (!watchShiftFromDB.Watchbill.CanEditStructure())

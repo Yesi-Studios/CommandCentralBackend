@@ -21,9 +21,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(ChainOfCommandLevels.Division);
 
-            InChainsOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
-
-            CanAccessModule(ChainsOfCommand.QuarterdeckWatchbill.ToString());
+            HasChainOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
         }
     }
 }

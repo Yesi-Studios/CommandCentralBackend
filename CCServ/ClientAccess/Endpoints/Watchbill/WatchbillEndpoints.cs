@@ -51,8 +51,9 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                 {
                     //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
                     //but we may as well restrict it because the population method is very expensive.
-                    if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                        throw new CommandCentralException("You are not allowed to edit this watchbill.  You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                    if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
+                            "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                     //And make sure we're at a state where population can occur.
                     if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
@@ -118,13 +119,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
 
                         if (shift.WatchAssignment != null)
                         {
-                            var resolvedPermissions = token.AuthenticationSession.Person.PermissionGroups.Resolve(token.AuthenticationSession.Person, shift.WatchAssignment.PersonAssigned);
-                            isClientResponsibleFor = resolvedPermissions.ChainOfCommandByModule.ContainsKey(watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()) &&
-                                resolvedPermissions.ChainOfCommandByModule[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] ||
-                                (shift.WatchAssignment.PersonAssigned.Id == token.AuthenticationSession.Person.Id &&
-                                    (resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Command ||
-                                    resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Division ||
-                                    resolvedPermissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand.ToString()] == ChainOfCommandLevels.Department));
+                            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(shift.WatchAssignment.PersonAssigned);
+                            isClientResponsibleFor = resolvedPermissions.IsInChainOfCommand[watchbillFromDB.EligibilityGroup.OwningChainOfCommand];
                         }
 
                         watchShifts.Add(new
@@ -262,8 +258,8 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
             var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id)) ??
                 throw new CommandCentralException("You failed to provide a proper eligibilty group.", ErrorTypes.Validation);
 
-            if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(ellGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
-                throw new CommandCentralException("You are not allowed to create a watchbill tied to that eligibility group.  " +
+            if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[ellGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                     "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
             using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
@@ -317,7 +313,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
@@ -379,7 +375,7 @@ namespace CCServ.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.ChainsOfCommandMemberOf.Contains(watchbillFromDB.EligibilityGroup.OwningChainOfCommand) && x.AccessLevel == ChainOfCommandLevels.Command))
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 

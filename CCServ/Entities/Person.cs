@@ -567,7 +567,7 @@ namespace CCServ.Entities
                         {
                             if (group.GetType() != typeof(Authorization.Groups.Definitions.Developers) && group.GetType() != typeof(Authorization.Groups.Definitions.Admin))
                             {
-                                foreach (var chainOfCommand in group.ChainsOfCommandMemberOf)
+                                foreach (var chainOfCommand in group.ChainsOfCommandParts)
                                 {
                                     //This is just a check to make sure we're doing this right.
                                     if (group.AccessLevel != groupLevel)
@@ -575,7 +575,7 @@ namespace CCServ.Entities
 
                                     //Now here we need to ask "Is the person in the same access level as the person in question?"
                                     //Meaning, if the access level is division, are they in the same division?
-                                    highestLevels[chainOfCommand] = group.AccessLevel;
+                                    highestLevels[chainOfCommand.ChainOfCommand] = group.AccessLevel;
                                 }
                             }
 

@@ -21,9 +21,7 @@ namespace CCServ.Authorization.Groups.Definitions
 
             HasAccessLevel(ChainOfCommandLevels.Division);
 
-            InChainsOfCommand(ChainsOfCommand.Muster);
-
-            CanAccessModule(ChainsOfCommand.Muster.ToString());
+            HasChainOfCommand(ChainsOfCommand.Muster);
         }
     }
 }

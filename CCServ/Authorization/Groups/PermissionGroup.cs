@@ -35,9 +35,9 @@ namespace CCServ.Authorization.Groups
         public ChainOfCommandLevels AccessLevel { get; set; }
 
         /// <summary>
-        /// The modules included in this group.
+        /// The chains of command included in this group.
         /// </summary>
-        public List<ModulePart> Modules { get; set; }
+        public List<ChainOfCommandPart> ChainsOfCommandParts { get; set; }
 
         /// <summary>
         /// Sets this to default, meaning all users should have it.
@@ -45,7 +45,7 @@ namespace CCServ.Authorization.Groups
         public bool IsDefault { get; set; }
 
         /// <summary>
-        /// The list of sub modules this permission gruop entitles a user to access.
+        /// The list of sub modules this permission group entitles a user to access.
         /// </summary>
         public List<string> AccessibleSubModules { get; set; }
 
@@ -53,8 +53,6 @@ namespace CCServ.Authorization.Groups
         /// A list of those permission groups this permission group can edit the membership of.
         /// </summary>
         public List<string> GroupsCanEditMembershipOf { get; set; }
-
-        public List<ChainsOfCommand> ChainsOfCommandMemberOf { get; set; }
         
         #endregion
 
@@ -66,10 +64,9 @@ namespace CCServ.Authorization.Groups
         public PermissionGroup()
         {
             GroupName = this.GetType().Name;
-            Modules = new List<ModulePart>();
+            ChainsOfCommandParts = new List<ChainOfCommandPart>();
             AccessibleSubModules = new List<string>();
             GroupsCanEditMembershipOf = new List<string>();
-            ChainsOfCommandMemberOf = new List<ChainsOfCommand>();
         }
 
         #endregion
@@ -104,17 +101,17 @@ namespace CCServ.Authorization.Groups
         }
 
         /// <summary>
-        /// Creates a new module permission and sets its name.
+        /// Creates a new chain of command permission.
         /// </summary>
-        /// <param name="moduleName"></param>
+        /// <param name="chainOfCommand"></param>
         /// <returns></returns>
-        public ModulePart CanAccessModule(string moduleName)
+        public ChainOfCommandPart HasChainOfCommand(ChainsOfCommand chainOfCommand)
         {
-            if (Modules.Any(x => x.ModuleName.SafeEquals(moduleName)))
-                throw new Exception("You may not declare access to a module more than once for the same permission group.");
+            if (ChainsOfCommandParts.Any(x => x.ChainOfCommand == chainOfCommand))
+                throw new Exception("You may not declare access to a chain of command more than once for the same permission group.");
 
-            Modules.Add(new ModulePart(moduleName) { ParentPermissionGroup = this });
-            return Modules.Last();
+            ChainsOfCommandParts.Add(new ChainOfCommandPart(chainOfCommand) { ParentPermissionGroup = this });
+            return ChainsOfCommandParts.Last();
         }
 
         /// <summary>
@@ -145,11 +142,6 @@ namespace CCServ.Authorization.Groups
         public void CanEditMembershipOf(params Type[] permissionGroups)
         {
             GroupsCanEditMembershipOf.AddRange(permissionGroups.Select(x => x.Name));
-        }
-
-        public void InChainsOfCommand(params ChainsOfCommand[] chainsOfCommand)
-        {
-            ChainsOfCommandMemberOf.AddRange(chainsOfCommand.ToList());
         }
 
         #endregion
