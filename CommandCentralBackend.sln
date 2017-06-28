@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtwoodUtils", "AtwoodUtils\AtwoodUtils.csproj", "{689992A9-0C1F-4B2C-92AB-0241F7C82A42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandCentral", "CCServ\CommandCentral.csproj", "{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandCentral", "CommandCentral\CommandCentral.csproj", "{6C7B94AC-EE0F-4EF4-9F70-AFA408C9DB14}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandCentral.Test", "CommandCentral.Test\CommandCentral.Test.csproj", "{50F3E279-A396-4A2D-BB55-13F137A9AF21}"
 EndProject
