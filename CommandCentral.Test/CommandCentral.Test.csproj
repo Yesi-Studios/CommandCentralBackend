@@ -72,7 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Playlists\MainTest.orderedtest">
+    <None Include="Playlists\playlist_main_in_memory.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />

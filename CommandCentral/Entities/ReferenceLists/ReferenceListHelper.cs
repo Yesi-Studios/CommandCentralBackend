@@ -110,5 +110,23 @@ namespace CommandCentral.Entities.ReferenceLists
                 return session.Get<T>(id);
             }
         }
+
+        /// <summary>
+        /// Returns a random selection of elements from this reference list.
+        /// </summary>
+        /// <param name="count">The number of elements to return.  If the count is greater than the total number of lists, the total number will be returned instead.</param>
+        /// <returns></returns>
+        public static IEnumerable<T> Random(int count)
+        {
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
+            {
+                var list = session.QueryOver<T>().List();
+
+                if (count > list.Count)
+                    count = list.Count;
+
+                return list.Shuffle().Take(count);
+            }
+        }
     }
 }

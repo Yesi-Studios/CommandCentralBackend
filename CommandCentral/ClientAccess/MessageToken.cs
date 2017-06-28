@@ -91,7 +91,7 @@ namespace CommandCentral.ClientAccess
         #region ctor
 
         /// <summary>
-        /// Creates a new message token and creates a new Id for it and sets the call time to DateTime.Now while setting the error messages to a blank message.
+        /// Creates a new message token and creates a new Id for it and sets the call time to DateTime.UtcNow while setting the error messages to a blank message.
         /// </summary>
         public MessageToken()
         {
