@@ -21,7 +21,7 @@ namespace CommandCentral.Entities.ReferenceLists.Watchbill
         /// <returns></returns>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

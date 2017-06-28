@@ -454,24 +454,6 @@ namespace CommandCentral.Entities
         }
 
         /// <summary>
-        /// Determines if this person is an officer.
-        /// </summary>
-        /// <returns></returns>
-        public virtual bool IsOfficer()
-        {
-            return this.Paygrade != Paygrades.CON && this.Paygrade.ToString().Contains("O");
-        }
-
-        /// <summary>
-        /// Determines if this person is enlisted.
-        /// </summary>
-        /// <returns></returns>
-        public virtual bool IsEnlisted()
-        {
-            return this.Paygrade.ToString().Contains("E") && !IsOfficer();
-        }
-
-        /// <summary>
         /// Gets this person's chain of command.
         /// </summary>
         /// <returns></returns>
@@ -500,12 +482,12 @@ namespace CommandCentral.Entities
                                         .Where(x => x.AccessLevel == groupLevel)
                                         .ToList();
 
-                using (var session = NHibernateHelper.CreateStatefulSession())
+                using (var session = DataProvider.CreateStatefulSession())
                 {
                     var queryString = "from Person as person where (";
                     for (var x = 0; x < permissionGroups.Count(); x++)
                     {
-                        queryString += " '{0}' in elements(person.{1}) ".FormatS(permissionGroups[x].GroupName, permissionGroupNamesProperty.Name);
+                        queryString += " '{0}' in elements(person.{1}) ".With(permissionGroups[x].GroupName, permissionGroupNamesProperty.Name);
                         if (x + 1 != permissionGroups.Count)
                             queryString += " or ";
                     }
@@ -591,199 +573,6 @@ namespace CommandCentral.Entities
             }
 
             return result;
-        }
-
-        #endregion
-
-        #region Startup Methods
-
-        /// <summary>
-        /// Fills the database with random, garbage data.
-        /// </summary>
-        [StartMethod(Priority = 3)]
-        private static void GIGO(CLI.Options.LaunchOptions launchOptions)
-        {
-            if (launchOptions.GIGO <= 0)
-            {
-                Log.Info("Skipping GIGO...");
-                return;
-            }
-
-            Log.Info("Beginning GIGO.  We will now create {0} record(s).".FormatS(launchOptions.GIGO));
-
-            using (var session = NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-
-                    List<UIC> uics = new List<UIC>();
-                    for(int i = 0; i < Utilities.GetRandomNumber(5, 10); i++)
-                    {
-                        uics.Add(new UIC
-                        {
-                            Value = Utilities.RandomString(5),
-                            Description = Utilities.RandomString(8),
-                            Id = Guid.NewGuid()
-                        });
-
-                        session.Save(uics.Last());
-                        session.Flush();
-                    }
-
-                    List<Command> commands = new List<Command>();
-                    for (int x = 0; x < Utilities.GetRandomNumber(1, 1); x++)
-                    {
-                        commands.Add(new Command
-                        {
-                            Departments = new List<Department>(),
-                            Description = Utilities.RandomString(8),
-                            Value = Utilities.RandomString(8),
-                            Id = Guid.NewGuid()
-                        });
-
-                        session.Save(commands.Last());
-                        session.Flush();
-
-                        for (int y = 0; y < Utilities.GetRandomNumber(8, 10); y++)
-                        {
-                            commands.Last().Departments.Add(new Department
-                            {
-                                Command = commands.Last(),
-                                Description = Utilities.RandomString(8),
-                                Divisions = new List<Division>(),
-                                Id = Guid.NewGuid(),
-                                Value = Utilities.RandomString(8)
-                            });
-
-                            session.Save(commands.Last().Departments.Last());
-                            session.Flush();
-
-                            for (int z = 0; z < Utilities.GetRandomNumber(2, 5); z ++)
-                            {
-                                commands.Last().Departments.Last().Divisions.Add(new Division
-                                {
-                                     Department = commands.Last().Departments.Last(),
-                                     Description = Utilities.RandomString(8),
-                                     Id = Guid.NewGuid(),
-                                     Value = Utilities.RandomString(8)
-                                });
-
-                                session.Save(commands.Last().Departments.Last().Divisions.Last());
-                                session.Flush();
-                            }
-                        }
-                    }
-
-                    int current = 0;
-                    for (int x = 0; x < launchOptions.GIGO; x++)
-                    {
-                        List<string> permissionGroupNames;
-                        
-                        if (x == 0)
-                        {
-                            permissionGroupNames = new List<string> { new Authorization.Groups.Definitions.Developers().GroupName };
-                        }
-                        else
-                        {
-                            permissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups
-                                    .OrderBy(y => Utilities.GetRandomNumber(0, 100))
-                                    .Take(Utilities.GetRandomNumber(0, Authorization.Groups.PermissionGroup.AllPermissionGroups.Count / 2))
-                                    .Select(y => y.GroupName)
-                                    .ToList();
-                        }
-
-                        Command command = commands.ElementAt(Utilities.GetRandomNumber(0, commands.Count - 1));
-                        Department department = command.Departments.ElementAt(Utilities.GetRandomNumber(0, command.Departments.Count - 1));
-                        Division division = department.Divisions.ElementAt(Utilities.GetRandomNumber(0, department.Divisions.Count - 1));
-                        UIC uic = uics.ElementAt(Utilities.GetRandomNumber(0, uics.Count - 1));
-
-                        var person = new Person()
-                        {
-                            Id = Guid.NewGuid(),
-                            LastName = "user" + x.ToString(),
-                            FirstName = Utilities.RandomString(8),
-                            MiddleName = Utilities.RandomString(8),
-                            Command = command,
-                            Department = department,
-                            Division = division,
-                            UIC = uic,
-                            SSN = Utilities.GenerateSSN(),
-                            DoDId = Utilities.GenerateDoDId(),
-                            IsClaimed = true,
-                            Username = "user" + x.ToString(),
-                            PasswordHash = ClientAccess.PasswordHash.CreateHash("a"),
-                            Sex = Sexes.AllSexes.ElementAt(Utilities.GetRandomNumber(0, Sexes.AllSexes.Count - 1)),
-                            DateOfBirth = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
-                            DateOfArrival = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
-                            EAOS = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
-                            PRD = new DateTime(Utilities.GetRandomNumber(1970, 2000), Utilities.GetRandomNumber(1, 12), Utilities.GetRandomNumber(1, 28)),
-                            Paygrade = Paygrades.AllPaygrades.ElementAt(Utilities.GetRandomNumber(0, Paygrades.AllPaygrades.Count - 1)),
-                            DutyStatus = DutyStatuses.AllDutyStatuses.ElementAt(Utilities.GetRandomNumber(0, DutyStatuses.AllDutyStatuses.Count - 1)),
-                            PermissionGroupNames = permissionGroupNames,
-                            WatchQualifications = ReferenceLists.WatchQualifications.AllWatchQualifications.Shuffle().Take(1).ToList()
-                        };
-
-                        person.EmailAddresses = new List<EmailAddress> { new EmailAddress
-                        {
-                            Address = "{0}.{1}.{2}.mil@mail.mil".FormatS(person.FirstName, person.MiddleName[0], person.LastName),
-                            Id = Guid.NewGuid(),
-                            IsContactable = true,
-                            IsPreferred = true
-                        } };
-
-                        person.CurrentMusterRecord = MusterRecord.CreateDefaultMusterRecordForPerson(person, DateTime.UtcNow);
-
-                        person.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
-                        {
-                            AccountHistoryEventType = AccountHistoryTypes.Creation,
-                            EventTime = DateTime.UtcNow
-                        } };
-
-                        current++;
-
-                        if (current % 100 == 0)
-                        {
-                            Log.Info("Completed {0}% of the garbage...".FormatS(Math.Round(((double)current / (double)launchOptions.GIGO) * 100, 2)));
-                        }
-                        session.Save(person);
-                    }
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    return;
-                }
-            }
-            
-        }
-
-        /// <summary>
-        /// Loads all persons from the database, thus initializing most of the 2nd level cache, and tells the host how many persons we have in the database.
-        /// <para />
-        /// Also, this method will assert that Atwood exists in the database.
-        /// </summary>
-        [StartMethod(Priority = 7)]
-        private static void ReadPersons(CLI.Options.LaunchOptions launchOptions)
-        {
-            using (var session = NHibernateHelper.CreateStatefulSession())
-            using (var transaction = session.BeginTransaction())
-            {
-                try
-                {
-                    //Give the listener the current row count.
-                    Log.Info("Found {0} person(s).".FormatS(session.QueryOver<Person>().RowCount()));
-
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
         }
 
         #endregion
@@ -909,7 +698,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Ethnicity ethnicity = NHibernateHelper.CreateStatefulSession().Get<Ethnicity>(x.Id);
+                        Ethnicity ethnicity = DataProvider.CreateStatefulSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
                             return false;
@@ -922,7 +711,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        ReligiousPreference pref = NHibernateHelper.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
+                        ReligiousPreference pref = DataProvider.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
                             return false;
@@ -935,7 +724,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Designation designation = NHibernateHelper.CreateStatefulSession().Get<Designation>(x.Id);
+                        Designation designation = DataProvider.CreateStatefulSession().Get<Designation>(x.Id);
 
                         if (designation == null)
                             return false;
@@ -948,7 +737,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Division division = NHibernateHelper.CreateStatefulSession().Get<Division>(x.Id);
+                        Division division = DataProvider.CreateStatefulSession().Get<Division>(x.Id);
 
                         if (division == null)
                             return false;
@@ -961,7 +750,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Department department = NHibernateHelper.CreateStatefulSession().Get<Department>(x.Id);
+                        Department department = DataProvider.CreateStatefulSession().Get<Department>(x.Id);
 
                         if (department == null)
                             return false;
@@ -974,7 +763,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Command command = NHibernateHelper.CreateStatefulSession().Get<Command>(x.Id);
+                        Command command = DataProvider.CreateStatefulSession().Get<Command>(x.Id);
 
                         if (command == null)
                             return false;
@@ -987,7 +776,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        NEC nec = NHibernateHelper.CreateStatefulSession().Get<NEC>(x.Id);
+                        NEC nec = DataProvider.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
@@ -1017,7 +806,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        UIC uic = NHibernateHelper.CreateStatefulSession().Get<UIC>(x.Id);
+                        UIC uic = DataProvider.CreateStatefulSession().Get<UIC>(x.Id);
 
                         if (uic == null)
                             return false;
@@ -1312,7 +1101,7 @@ namespace CommandCentral.Entities
 
                     var query = new PhysicalAddress.PhysicalAddressQueryProvider().CreateQuery(QueryTypes.Simple, token.SearchParameter.Value);
 
-                    using (var session = NHibernateHelper.CreateStatefulSession())
+                    using (var session = DataProvider.CreateStatefulSession())
                     {
                         var ids = query.GetExecutableQueryOver(session).Select(x => x.Id).List<Guid>();
 

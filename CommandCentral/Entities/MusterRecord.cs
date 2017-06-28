@@ -261,7 +261,7 @@ namespace CommandCentral.Entities
                 throw new Exception("You can't finalize the muster.  It's already been finalized.  A rollover must first occur.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -279,7 +279,7 @@ namespace CommandCentral.Entities
                     foreach (Person person in persons)
                     {
                         if (person.CurrentMusterRecord == null)
-                            throw new Exception("{0}'s current muster status was null.".FormatS(person.ToString()));
+                            throw new Exception("{0}'s current muster status was null.".With(person.ToString()));
 
                         person.CurrentMusterRecord.Command = person.Command == null ? "" : person.Command.ToString();
                         person.CurrentMusterRecord.Department = person.Department == null ? "" : person.Department.ToString();
@@ -287,7 +287,7 @@ namespace CommandCentral.Entities
                         person.CurrentMusterRecord.DutyStatus = person.DutyStatus.ToString();
                         if (!person.CurrentMusterRecord.HasBeenSubmitted)
                         {
-                            person.CurrentMusterRecord.MusterStatus = ReferenceLists.MusterStatuses.UA.ToString();
+                            person.CurrentMusterRecord.MusterStatus = ReferenceLists.ReferenceListHelper<ReferenceLists.MusterStatus>.Find("UA").ToString();
                             person.CurrentMusterRecord.SubmitTime = DateTime.UtcNow;
                         }
                         person.CurrentMusterRecord.HasBeenSubmitted = true;
@@ -335,7 +335,7 @@ namespace CommandCentral.Entities
                 throw new Exception("You can't rollover the muster until it has been finalized.  Consider passing the finalizeIfNeeded flag set to true.");
 
             //First up, we need everyone and their muster records.  Actually we need a session first.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -373,7 +373,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public static NHibernate.IQueryOver<Person, Person> GetMusterablePersonsQuery(NHibernate.ISession session)
         {
-            return session.QueryOver<Person>().Where(x => x.DutyStatus != ReferenceLists.DutyStatuses.Loss);
+            return session.QueryOver<Person>().Where(x => x.DutyStatus != ReferenceLists.ReferenceListHelper<ReferenceLists.DutyStatus>.Find("Loss"));
         }
 
         #endregion
@@ -387,12 +387,11 @@ namespace CommandCentral.Entities
         /// <para />
         /// For example, if the person's current muster record is not from today, then advance their muster record.
         /// </summary>
-        [ServiceManagement.StartMethod(Priority = 1)]
-        private static void SetupMuster(CLI.Options.LaunchOptions launchOptions)
+        public static void SetupMuster()
         {
             Log.Info("Detecting current muster state...");
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -405,7 +404,7 @@ namespace CommandCentral.Entities
 
                     if (personsWithIncorrectRecords.Any())
                     {
-                        Log.Info("Correcting {0} persons with incorrect muster records...".FormatS(personsWithIncorrectRecords.Count));
+                        Log.Info("Correcting {0} persons with incorrect muster records...".With(personsWithIncorrectRecords.Count));
 
                         int current = 0;
                         //Ok so each of these people's current muster records are for the wrong day.
@@ -452,14 +451,14 @@ namespace CommandCentral.Entities
                                 else
                                 {
                                     //Who the fuck knows what happened if we got here.
-                                    throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".FormatS(person.CurrentMusterRecord.MusterDate, person.ToString()));
+                                    throw new Exception("A serious issue exists with the muster records from date '{0}' for person '{1}'.  Please resolve these issues.".With(person.CurrentMusterRecord.MusterDate, person.ToString()));
                                 }
                             }
 
                             current++;
                             if (current % 2 == 0)
                             {
-                                Log.Info("Fixed {0}% of muster records...".FormatS(Math.Round(((double)current / (double)personsWithIncorrectRecords.Count) * 100, 2)));
+                                Log.Info("Fixed {0}% of muster records...".With(Math.Round(((double)current / (double)personsWithIncorrectRecords.Count) * 100, 2)));
                             }
 
                             session.Save(person);
@@ -469,12 +468,12 @@ namespace CommandCentral.Entities
                     }
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
-                    Log.Info("{0}/{1} person(s) have been mustered so far.".FormatS(persons.Count(x => x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
-                    Log.Info("Muster finalization status : {0}".FormatS(MusterRecord.IsMusterFinalized ? "Finalized" : "Not Finalized"));
-                    Log.Info("Rollover time : {0}".FormatS(MusterRecord.RolloverTime));
-                    Log.Info("Current muster date is: {0}".FormatS(GetMusterDate(DateTime.UtcNow).ToString("D")));
+                    Log.Info("{0}/{1} person(s) have been mustered so far.".With(persons.Count(x => x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
+                    Log.Info("Muster finalization status : {0}".With(MusterRecord.IsMusterFinalized ? "Finalized" : "Not Finalized"));
+                    Log.Info("Rollover time : {0}".With(MusterRecord.RolloverTime));
+                    Log.Info("Current muster date is: {0}".With(GetMusterDate(DateTime.UtcNow).ToString("D")));
 
-                    Log.Info("Registering muster roll over to occur every day at '{0}'".FormatS(MusterRecord.RolloverTime));
+                    Log.Info("Registering muster roll over to occur every day at '{0}'".With(MusterRecord.RolloverTime));
                     FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(MusterRecord.RolloverTime.Hours, MusterRecord.RolloverTime.Minutes));
 
                     transaction.Commit();

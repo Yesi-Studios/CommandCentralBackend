@@ -62,17 +62,11 @@ namespace CommandCentral.Entities
             if (IsPreferred)
                 preferences.Add("P");
             
-            string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
+            string final = preferences.Any() ? "({0})".With(String.Join("|", preferences)) : "";
 
-            string phoneType = "";
-            if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Home.Id)
-                phoneType = "H";
-            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Mobile.Id)
-                phoneType = "M";
-            else if (PhoneType.Id == ReferenceLists.PhoneNumberTypes.Work.Id)
-                phoneType = "W";
+            char phoneType = PhoneType.Value.First();
 
-            return "{0} ({1}) {2}".FormatS(Number, phoneType, final);
+            return "{0} ({1}) {2}".With(Number, phoneType, final);
         }
 
         /// <summary>

@@ -34,7 +34,7 @@ namespace CommandCentral.DataAccess
         public static IEnumerable<Change> GetChangesFromDirtyProperties<T>(this ISession session, T entity) where T : class, new()
         {
             string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
-                throw new Exception("We attempted to find the entity name for a non-entity: {0}".FormatS(typeof(T)));
+                throw new Exception("We attempted to find the entity name for a non-entity: {0}".With(typeof(T)));
 
             var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);
             var key = new EntityKey(persister.GetIdentifier(entity, EntityMode.Poco), persister, EntityMode.Poco);
@@ -91,7 +91,7 @@ namespace CommandCentral.DataAccess
         {
 
             string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
-                throw new Exception("We attempted to find the entity name for a non-entity: {0}".FormatS(typeof(T)));
+                throw new Exception("We attempted to find the entity name for a non-entity: {0}".With(typeof(T)));
 
             var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);
             var key = new EntityKey(persister.GetIdentifier(entity, EntityMode.Poco), persister, EntityMode.Poco);

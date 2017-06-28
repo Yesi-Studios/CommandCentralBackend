@@ -81,7 +81,7 @@ namespace CommandCentral.Entities.Watchbill
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} ({1})".FormatS(Title, Range);
+            return "{0} ({1})".With(Title, Range);
         }
 
         #endregion

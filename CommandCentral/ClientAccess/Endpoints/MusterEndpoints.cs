@@ -43,7 +43,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 musterDate = ((DateTime)token.Args["musterdate"]).Date;
             }
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 //Get all records where the day of the year is the given day's muster day and the year the same.
                 var records = session.QueryOver<MusterRecord>().Where(x => x.MusterDate == musterDate.Date).List();
@@ -86,7 +86,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
             if (MusterRecord.IsMusterFinalized)
             {
-                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".FormatS(MusterRecord.RolloverTime), ErrorTypes.Validation);
+                throw new CommandCentralException("The current muster is closed.  The muster will reopen at {0}.".With(MusterRecord.RolloverTime), ErrorTypes.Validation);
             }
 
             Dictionary<Guid, JToken> musterSubmissions = null;
@@ -100,18 +100,18 @@ namespace CommandCentral.ClientAccess.Endpoints
             catch (Exception e)
             {
                 throw new CommandCentralException("There was an error while trying to format your 'mustersubmissions' argument.  " +
-                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
+                    "It should be sent in a JSON dictionary.  Parsing error details: {0}".With(e.Message), ErrorTypes.Validation);
             }
 
             //Validate the muster statuses
-            if (musterSubmissions.Values.Any(x => !MusterStatuses.AllMusterStatuses.Any(y => y.Value.SafeEquals(x.Value<string>("status")))))
+            if (!ReferenceListHelper<MusterStatus>.AllExist(musterSubmissions.Select(x => x.Value.Value<string>("status"))))
             {
                 throw new CommandCentralException("One or more requested muster statuses were not valid.", ErrorTypes.Validation);
             }
 
             //This is the session in which we're going to do our muster updates.  We do it separately in case something terrible happens to the currently logged in user.
             //This means that if the currently logged in person updates their own muster then for the rest of this request, their muster will be invalid.  That's ok cause we shouldn't need it.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 //Submit the query to load all the persons.  How fucking easy can this be.  Fuck off NHibernate.  
@@ -127,22 +127,22 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
                     if (persons[x].CurrentMusterRecord == null)
                     {
-                        if (persons[x].DutyStatus == DutyStatuses.Loss)
+                        if (persons[x].DutyStatus == ReferenceListHelper<DutyStatus>.Find("Loss"))
                         {
-                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".FormatS(persons[x].ToString()), ErrorTypes.Validation);
+                            throw new CommandCentralException("You may not muster {0} because his/her duty status is set to Loss.".With(persons[x].ToString()), ErrorTypes.Validation);
                         }
                         else
                         {
                             //If the person's duty status is NOT Loss, then somehow this person never got a muster record.  This isn't good.
                             if (persons[x].CurrentMusterRecord == null)
-                                throw new Exception("{0}'s current muster status was null.  This is unexpected.".FormatS(persons[x].ToString()));
+                                throw new Exception("{0}'s current muster status was null.  This is unexpected.".With(persons[x].ToString()));
                         }
                     }
 
                     persons[x].CurrentMusterRecord.HasBeenSubmitted = true;
                     persons[x].CurrentMusterRecord.MusterDate = MusterRecord.GetMusterDate(token.CallTime);
                     persons[x].CurrentMusterRecord.Musterer = token.AuthenticationSession.Person;
-                    persons[x].CurrentMusterRecord.MusterStatus = MusterStatuses.AllMusterStatuses.First(y => y.Value.SafeEquals(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status"))).Value;
+                    persons[x].CurrentMusterRecord.MusterStatus = ReferenceListHelper<MusterStatus>.Find(musterSubmissions.First(k => k.Key == persons[x].Id).Value.Value<string>("status")).Value;
                     persons[x].CurrentMusterRecord.SubmitTime = token.CallTime;
                     persons[x].CurrentMusterRecord.Remarks = musterSubmissions.ElementAt(x).Value.Value<string>("remarks");
 
@@ -176,7 +176,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(null);
             var highestLevelInMuster = resolvedPermissions.HighestLevels[ChainsOfCommand.Muster];
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 //Hold off on submitting the query for now because we need to know who we're looking for. People in the person's command, department or division.
                 var queryOver = MusterRecord.GetMusterablePersonsQuery(session)
@@ -216,7 +216,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                         }
                     default:
                         {
-                            throw new Exception("The default case in the highest level switch in the LoadMusterablePersonForToday endpoint was reached with the following case: '{0}'!".FormatS(highestLevelInMuster));
+                            throw new Exception("The default case in the highest level switch in the LoadMusterablePersonForToday endpoint was reached with the following case: '{0}'!".With(highestLevelInMuster));
                         }
                 }
 
@@ -228,7 +228,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 {
                     //If the person's current muster status is null, throw an error.  This is not expected.
                     if (x.CurrentMusterRecord == null)
-                        throw new Exception("{0}'s current muster status is null!".FormatS(x.ToString()));
+                        throw new Exception("{0}'s current muster status is null!".With(x.ToString()));
 
                     return new
                     {

@@ -39,12 +39,6 @@ namespace CommandCentral.CLI.Options
         }
 
         /// <summary>
-        /// Instructs NHibernate to print all SQL queries to the standard out stream.
-        /// </summary>
-        [Option("printsql", HelpText = "Instructs the data providers to print the SQL they generate to the output stream.", DefaultValue = false)]
-        public bool PrintSQL { get; set; }
-
-        /// <summary>
         /// THe username to use to connect to the database.
         /// </summary>
         [Option('u', "username", HelpText = "The username to use to connect to the database.", Required = true)]
@@ -91,12 +85,6 @@ namespace CommandCentral.CLI.Options
         /// </summary>
         [Option("rebuild", HelpText = "Instructs the service to attempt to drop the targeted schema before running and rebuilding the schema.", DefaultValue = false)]
         public bool Rebuild { get; set; }
-
-        /// <summary>
-        /// Instructs the service to fill the database with x records filled with random data.
-        /// </summary>
-        [Option("gigo", HelpText = "Instructs the service to fill the database with x records filled with random data.", DefaultValue = 0)]
-        public int GIGO { get; set; }
 
         /// <summary>
         /// Suppresses emails so they can never be sent.

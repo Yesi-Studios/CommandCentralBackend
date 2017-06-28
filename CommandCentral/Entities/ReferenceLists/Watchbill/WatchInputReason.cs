@@ -24,7 +24,7 @@ namespace CommandCentral.Entities.ReferenceLists.Watchbill
         /// <param name="token"></param>
         public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -39,7 +39,7 @@ namespace CommandCentral.Entities.ReferenceLists.Watchbill
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<WatchInputReason>().Where(x => x.Value.IsInsensitiveLike(reason.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(reason.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".With(reason.Value), ErrorTypes.Validation);
 
                     var reasonFromDB = session.Get<WatchInputReason>(reason.Id);
 
@@ -81,7 +81,7 @@ namespace CommandCentral.Entities.ReferenceLists.Watchbill
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

@@ -71,7 +71,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0}{1}, {2}, {3} {4}".FormatS(IsHomeAddress ? "(Home) " : "", Address, City, State, ZipCode);
+            return "{0}{1}, {2}, {3} {4}".With(IsHomeAddress ? "(Home) " : "", Address, City, State, ZipCode);
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ using CommandCentral.Entities.ReferenceLists.Watchbill;
 using System.Reflection;
 using NHibernate.Transform;
 using CommandCentral.Entities;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
@@ -34,7 +35,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchAssignmentId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -72,7 +73,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -83,7 +84,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         var assignments = watchbill.WatchShifts.Select(x => x.WatchAssignment).Where(assignment =>
                         {
-                            if (assignment.CurrentState != WatchAssignmentStates.Assigned)
+                            if (assignment.CurrentState != ReferenceListHelper<WatchAssignmentState>.Find("Assigned"))
                                 return false;
 
                             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(assignment.PersonAssigned);
@@ -155,7 +156,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     x => x.Value);
 
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -223,7 +224,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (id1 == id2)
                 throw new CommandCentralException("Both ids may not be equal.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -238,8 +239,12 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         if (ass1.WatchShift.WatchAssignment == null || ass1.WatchShift.WatchAssignment == null)
                             throw new CommandCentralException("Both given watch assignments must have shifts which have already been assigned a watch assignment.", ErrorTypes.Validation);
 
-                        if (ass1.CurrentState == WatchAssignmentStates.Completed || ass1.CurrentState == WatchAssignmentStates.Excused || ass1.CurrentState == WatchAssignmentStates.Missed
-                            || ass2.CurrentState == WatchAssignmentStates.Completed || ass2.CurrentState == WatchAssignmentStates.Excused || ass2.CurrentState == WatchAssignmentStates.Missed)
+                        if (ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
+                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
+                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed") ||
+                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
+                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
+                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed"))
                             throw new CommandCentralException("You may not swap assignments if one of the assignments has been completed, excused, or missed.", ErrorTypes.Validation);
 
                         if (ass1.WatchShift.Watchbill.Id != ass2.WatchShift.Watchbill.Id)
@@ -345,14 +350,14 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         {
                             Creator = null,
                             Id = Guid.NewGuid(),
-                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(ass2.PersonAssigned, token.AuthenticationSession.Person, ass1.PersonAssigned)
+                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".With(ass2.PersonAssigned, token.AuthenticationSession.Person, ass1.PersonAssigned)
                         });
 
                         ass2.WatchShift.Comments.Add(new Comment
                         {
                             Creator = null,
                             Id = Guid.NewGuid(),
-                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".FormatS(ass1.PersonAssigned, token.AuthenticationSession.Person, ass2.PersonAssigned)
+                            Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift.".With(ass1.PersonAssigned, token.AuthenticationSession.Person, ass2.PersonAssigned)
                         });
 
                         session.Update(ass1.WatchShift);
@@ -386,7 +391,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
                 throw new CommandCentralException("Your assignment id was not in the right format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -397,7 +402,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         var watchbill = assignment.WatchShift.Watchbill;
 
-                        if (watchbill.CurrentState != WatchbillStatuses.Published)
+                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Published"))
                             throw new CommandCentralException("You may not acknowledge a watch assignment until the watchbill has been published.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
@@ -415,7 +420,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         assignment.IsAcknowledged = true;
                         assignment.AcknowledgedBy = token.AuthenticationSession.Person;
                         assignment.DateAcknowledged = token.CallTime;
-                        assignment.CurrentState = WatchAssignmentStates.Acknowledged;
+                        assignment.CurrentState = ReferenceListHelper<WatchAssignmentState>.Find("Acknowledged");
 
                         session.Update(assignment);
 
@@ -470,7 +475,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -485,9 +490,9 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         if (!isCommandCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);
 
-                        if (watchbill.CurrentState != WatchbillStatuses.ClosedForInputs &&
-                            watchbill.CurrentState != WatchbillStatuses.Published &&
-                            watchbill.CurrentState != WatchbillStatuses.UnderReview)
+                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs") &&
+                            watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Published") &&
+                            watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
 
                         Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
@@ -504,7 +509,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             var assignmentToInsert = new WatchAssignment
                             {
                                 AssignedBy = token.AuthenticationSession.Person,
-                                CurrentState = WatchAssignmentStates.Assigned,
+                                CurrentState = Entities.ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = token.CallTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personAssigned,
@@ -529,7 +534,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 {
                                     Creator = null,
                                     Id = Guid.NewGuid(),
-                                    Text = "{0} was assigned to this shift by {1}.".FormatS(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person),
+                                    Text = "{0} was assigned to this shift by {1}.".With(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person),
                                     Time = token.CallTime
                                 };
                             }
@@ -541,7 +546,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                     Creator = null,
                                     Id = Guid.NewGuid(),
                                     Text = "{0} was assigned to this shift by {1}.  Previously, {2} was assigned to this shift."
-                                        .FormatS(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person, assignmentToInsert.WatchShift.WatchAssignment.PersonAssigned),
+                                        .With(assignmentToInsert.PersonAssigned, token.AuthenticationSession.Person, assignmentToInsert.WatchShift.WatchAssignment.PersonAssigned),
                                     Time = token.CallTime
                                 };
                             }

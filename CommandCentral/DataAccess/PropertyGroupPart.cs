@@ -61,7 +61,7 @@ namespace CommandCentral.DataAccess
             {
                 if (!this.Expressions.Add(exp))
                 {
-                    throw new ArgumentException("You may not duplicate values!  Value duplicated: {0}".FormatS(exp.GetPropertyName()));
+                    throw new ArgumentException("You may not duplicate values!  Value duplicated: {0}".With(exp.GetPropertyName()));
                 }
             }
 

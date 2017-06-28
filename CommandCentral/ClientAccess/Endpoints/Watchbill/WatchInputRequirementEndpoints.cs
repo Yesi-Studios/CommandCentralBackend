@@ -20,14 +20,14 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
         private static void LoadOpenInputRequirements(MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
                         var watchbills = session.QueryOver<Entities.Watchbill.Watchbill>()
-                            .Where(x => x.CurrentState.Id == Entities.ReferenceLists.Watchbill.WatchbillStatuses.OpenForInputs.Id)
+                            .Where(x => x.CurrentState.Id == Entities.ReferenceLists.ReferenceListHelper<Entities.ReferenceLists.Watchbill.WatchbillStatus>.Find("OpenForInputs").Id)
                             .List();
 
                         var final = watchbills.Select(watchbill =>
@@ -83,7 +83,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {

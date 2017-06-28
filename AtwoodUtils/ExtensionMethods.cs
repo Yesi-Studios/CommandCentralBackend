@@ -101,7 +101,7 @@ namespace AtwoodUtils
             Console.WriteLine(str, args);
         }
 
-        public static string FormatS(this string str, params object[] args)
+        public static string With(this string str, params object[] args)
         {
             return string.Format(str, args);
         }

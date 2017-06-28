@@ -41,8 +41,7 @@ namespace CommandCentral.ClientAccess
         /// Scans the entire executing assembly for any service endpoint methods and reads them into a dictionary.
         /// </summary>
         /// <returns></returns>
-        [ServiceManagement.StartMethod(Priority = 4)]
-        private static void ScanEndpoints(CLI.Options.LaunchOptions launchOptions)
+        public static void ScanEndpoints()
         {
             Log.Info("Scanning for endpoint methods.");
 
@@ -52,7 +51,7 @@ namespace CommandCentral.ClientAccess
                     .Select(x =>
                     {
                         if (x.ReturnType != typeof(void) || x.GetParameters().Length != 1 || x.GetParameters()[0].ParameterType != typeof(MessageToken))
-                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of an endpoint method!".FormatS(x.Name, x.DeclaringType.Name));
+                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of an endpoint method!".With(x.Name, x.DeclaringType.Name));
 
                         var parameters = x.GetParameters()
                            .Select(p => Expression.Parameter(p.ParameterType, p.Name))
@@ -64,11 +63,11 @@ namespace CommandCentral.ClientAccess
                         if (string.IsNullOrWhiteSpace(endpointMethodAttribute.EndpointName))
                             endpointMethodAttribute.EndpointName = x.Name;
 
-                        Log.Info("Found endpoint : {0}".FormatS(endpointMethodAttribute.EndpointName));
+                        Log.Info("Found endpoint : {0}".With(endpointMethodAttribute.EndpointName));
 
                         return new ServiceEndpoint
                         {
-                            EndpointMethod = endpointMethod,// lambda.Compile(),
+                            EndpointMethod = endpointMethod,
                             EndpointMethodAttribute = endpointMethodAttribute,
                             IsActive = true
                         };
@@ -78,12 +77,12 @@ namespace CommandCentral.ClientAccess
 
             if (groupings.Any(x => x.Count() != 1))
             {
-                throw new Exception("Two endpoints may not be named the same thing.  Endpoints with multiple entries: {0}.".FormatS(String.Join(", ", groupings.Where(x => x.Count() != 1).Select(x => x.Key))));
+                throw new Exception("Two endpoints may not be named the same thing.  Endpoints with multiple entries: {0}.".With(String.Join(", ", groupings.Where(x => x.Count() != 1).Select(x => x.Key))));
             }
             
             var finalEndpoints = endpoints.ToDictionary(x => x.EndpointMethodAttribute.EndpointName, StringComparer.OrdinalIgnoreCase);
 
-            Log.Info("Found {0} endpoint methods.".FormatS(finalEndpoints.Count));
+            Log.Info("Found {0} endpoint methods.".With(finalEndpoints.Count));
 
             ServiceManagement.ServiceManager.EndpointDescriptions = new ConcurrentDictionary<string, ServiceEndpoint>(finalEndpoints, StringComparer.OrdinalIgnoreCase);
         }

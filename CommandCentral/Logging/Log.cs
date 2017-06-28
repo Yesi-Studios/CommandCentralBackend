@@ -46,7 +46,7 @@ namespace CommandCentral.Logging
 
                 _loggers.Add(logger);
 
-                Log.Info("Hello {0}, you were registered successfully!".FormatS(logger.Name), null);
+                Log.Info("Hello {0}, you were registered successfully!".With(logger.Name), null);
 
             }
             catch
@@ -181,9 +181,7 @@ namespace CommandCentral.Logging
         /// <summary>
         /// Scans and registers all implementations of ILogger.
         /// </summary>
-        /// <param name="options"></param>
-        [ServiceManagement.StartMethod(Priority = 100)]
-        private static void RegisterLoggers(CLI.Options.LaunchOptions options)
+        public static void RegisterLoggers()
         {
             var loggers = Assembly.GetExecutingAssembly().GetTypes().Where(x => x != typeof(ILogger) && typeof(ILogger).IsAssignableFrom(x))
                 .Select(x => Activator.CreateInstance(x) as ILogger);
@@ -193,7 +191,7 @@ namespace CommandCentral.Logging
                 RegisterLogger(logger);
             }
 
-            Info("{0} logger(s) have been registered : {1}".FormatS(_loggers.Count, String.Join(", ", _loggers.Select(x => x.Name))), null);
+            Info("{0} logger(s) have been registered : {1}".With(_loggers.Count, String.Join(", ", _loggers.Select(x => x.Name))), null);
         }
 
     }

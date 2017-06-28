@@ -99,11 +99,11 @@ namespace CommandCentral.ClientAccess.Endpoints
             //Cool, since everything is good to go, let's also add the account history.
             newPerson.AccountHistory = new List<AccountHistoryEvent> { new AccountHistoryEvent
                 {
-                    AccountHistoryEventType = AccountHistoryTypes.Creation,
+                    AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Creation"),
                     EventTime = token.CallTime
                 }};
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -155,7 +155,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
                 var person = session.Get<Person>(personId) ??
@@ -168,7 +168,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                 List<string> returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
 
-                var personMetadata = NHibernateHelper.GetEntityMetadata(nameof(Person));
+                var personMetadata = DataProvider.GetEntityMetadata(nameof(Person));
 
                 //Now just set the fields the client is allowed to see.
                 foreach (var propertyName in returnableFields)
@@ -188,7 +188,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             case "department":
                             case "division":
                                 {
-                                    returnData.Add(propertyName, NHibernateHelper.GetIdentifier(personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco)));
+                                    returnData.Add(propertyName, DataProvider.GetIdentifier(personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco)));
 
                                     wasSet = true;
                                     break;
@@ -240,7 +240,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             //Let's load the person we were given.  We need the object for the permissions check.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             {
                 //Now let's load the person and then set any fields the client isn't allowed to see to null.
                 var person = session.Get<Person>(personId) ??
@@ -274,7 +274,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -337,7 +337,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 showHidden = Convert.ToBoolean(token.Args["showhidden"]);
             }
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             {
                 var queryProvider = new Person.PersonQueryProvider();
 
@@ -349,7 +349,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 //If we weren't told to show hidden, then hide hidden members.
                 if (!showHidden)
                 {
-                    query = query.Where(x => x.DutyStatus != DutyStatuses.Loss);
+                    query = query.Where(x => x.DutyStatus != ReferenceListHelper<DutyStatus>.Find("Loss"));
                 }
 
                 //And finally, return the results.  We need to project them into only what we want to send to the client so as to remove them from the proxy shit that NHibernate has sullied them with.
@@ -444,7 +444,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".With(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                         }
@@ -464,7 +464,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".With(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                             
@@ -486,7 +486,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             var failures = filters.Keys.Where(x => !fields.Concat(resolvedPermissions.ReturnableFields[nameof(Person)]).Contains(x));
 
                             if (failures.Any())
-                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
+                                throw new CommandCentralException("You were not allowed to search in these fields: {0}".With(String.Join(", ", failures)), ErrorTypes.Validation);
 
                             break;
                         }
@@ -504,7 +504,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 var failures = filters.Keys.Where(x => !resolvedPermissions.ReturnableFields[nameof(Person)].Contains(x));
 
                 if (failures.Any())
-                    throw new CommandCentralException("You were not allowed to search in these fields: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Validation);
+                    throw new CommandCentralException("You were not allowed to search in these fields: {0}".With(String.Join(", ", failures)), ErrorTypes.Validation);
             }
 
             //Now let's determine if we're doing a geo query.
@@ -536,9 +536,9 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //We're going to need the person object's metadata for the rest of this.
-            var personMetadata = NHibernateHelper.GetEntityMetadata("Person");
+            var personMetadata = DataProvider.GetEntityMetadata("Person");
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             {
                 var convertedFilters = filters.ToDictionary(
                     x => PropertySelector.SelectExpressionFrom<Person>(x.Key),
@@ -582,7 +582,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 //The client is telling us to show hidden profiles or not.
                 if (!showHidden)
                 {
-                    query.Where(x => x.DutyStatus != DutyStatuses.Loss);
+                    query.Where(x => x.DutyStatus != ReferenceListHelper<DutyStatus>.Find("Loss"));
                 }
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
@@ -655,7 +655,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     foreach (var propertyName in returnFields)
                     {
                         var propertyInfo = PropertySelector.SelectPropertyFrom<Person>(propertyName) ??
-                            throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".FormatS(propertyName), ErrorTypes.Validation);
+                            throw new CommandCentralException("The field, '{0}', does not exist on the person object; therefore, you can not request that it be returned.".With(propertyName), ErrorTypes.Validation);
 
                         //if the client isn't allowed to return this field, replace its value with "redacted"
                         if (returnableFields.Any(x => String.Equals(propertyName, x, StringComparison.CurrentCultureIgnoreCase)))
@@ -712,7 +712,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Ok, so since we're ready to do ze WORK we're going to do it on a separate session.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -729,7 +729,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     //Ok, well there is a lock on the person, now let's make sure the client owns that lock.
                     if (profileLock.Owner.Id != token.AuthenticationSession.Person.Id)
-                        throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".FormatS(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned);
+                        throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".With(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned);
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
                     Person personFromDB = session.Get<Person>(personFromClient.Id) ??
@@ -770,7 +770,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Ok so the client only changed what they are allowed to see.  Now are those edits authorized.
                     var unauthorizedEdits = changes.Where(x => !editableFields.Contains(x.PropertyName));
                     if (unauthorizedEdits.Any())
-                        throw new AggregateException(unauthorizedEdits.Select(x => new CommandCentralException("You lacked permission to edit the field '{0}'.".FormatS(x.PropertyName), ErrorTypes.Validation)));
+                        throw new AggregateException(unauthorizedEdits.Select(x => new CommandCentralException("You lacked permission to edit the field '{0}'.".With(x.PropertyName), ErrorTypes.Validation)));
 
                     //Since this was all good, just add the changes to the person's profile.
                     changes.ForEach(x => personFromDB.Changes.Add(x));

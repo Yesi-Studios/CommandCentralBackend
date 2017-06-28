@@ -32,7 +32,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 //Ok, well it's a GUID.   Do we have it in the database?...
                 var newsItem = session.Get<NewsItem>(newsItemId);
@@ -72,7 +72,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var query = session.QueryOver<NewsItem>();
 
@@ -133,7 +133,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             catch (Exception e)
             {
                 throw new CommandCentralException("There was an error while attempting to cast your parahraphs.  " +
-                    "It must be a JSON array of strings.  Error details: {0}".FormatS(e.Message), ErrorTypes.Validation);
+                    "It must be a JSON array of strings.  Error details: {0}".With(e.Message), ErrorTypes.Validation);
             }
 
             //Now build the whole news item.
@@ -152,7 +152,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!results.IsValid)
                 throw new AggregateException(results.Errors.Select(x => new CommandCentralException(x.ToString(), ErrorTypes.Validation)));
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -209,7 +209,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 paragraphs = token.Args["paragraphs"].CastJToken<List<string>>();
 
             //Now we can go load the news item.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -270,7 +270,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
                 throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

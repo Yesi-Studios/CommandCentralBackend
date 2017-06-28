@@ -62,7 +62,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "The property '{0}' changed from '{1}' to '{2}'.".FormatS(PropertyName, OldValue, NewValue);
+            return "The property '{0}' changed from '{1}' to '{2}'.".With(PropertyName, OldValue, NewValue);
         }
 
         /// <summary>

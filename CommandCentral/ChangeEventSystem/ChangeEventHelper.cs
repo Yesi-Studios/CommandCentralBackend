@@ -52,7 +52,7 @@ namespace CommandCentral.ChangeEventSystem
             if (changeEvent.RestrictToChainOfCommand && person == null)
                 throw new Exception("If a change event requires a chain of command check, then the person argument can't be null.");
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 //First, let's build the basic query for a person with this event in their subscriptions.
                 var query = session.Query<Person>().Where(x => x.SubscribedEvents.ContainsKey(changeEvent.Id));
@@ -92,7 +92,7 @@ namespace CommandCentral.ChangeEventSystem
                         if (subscriptionEvent.Value == ChainOfCommandLevels.Division)
                             return subscriber.IsInSameDivisionAs(person);
 
-                        throw new Exception("While processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".FormatS(changeEvent.Id, subscriptionEvent.Value));
+                        throw new Exception("While processing the change event, '{0}', we found a subscription to that event with an invalid level: '{1}'.".With(changeEvent.Id, subscriptionEvent.Value));
                     }).ToList();
                 }
 

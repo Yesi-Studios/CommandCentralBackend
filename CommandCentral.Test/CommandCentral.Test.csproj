@@ -44,15 +44,35 @@
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\MSTest.TestFramework.1.1.11\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="NHibernate, Version=4.1.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="APIKeyTests.cs" />
+    <Compile Include="CommandDepartmentDivisionTests.cs" />
+    <Compile Include="DatabaseTests.cs" />
+    <Compile Include="PermissionsTests.cs" />
+    <Compile Include="PersonTests.cs" />
+    <Compile Include="UICTests.cs" />
+    <Compile Include="WatchbillTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="OrderedTest1.orderedtest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AtwoodUtils\AtwoodUtils.csproj">
+      <Project>{689992a9-0c1f-4b2c-92ab-0241f7c82a42}</Project>
+      <Name>AtwoodUtils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CommandCentral\CommandCentral.csproj">
+      <Project>{6c7b94ac-ee0f-4ef4-9f70-afa408c9db14}</Project>
+      <Name>CommandCentral</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

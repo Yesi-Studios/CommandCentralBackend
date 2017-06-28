@@ -40,7 +40,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
                 throw new CommandCentralException("The person id you send was in the wrong format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var person = session.Get<Person>(personId) ??
                     throw new CommandCentralException("The person id you sent was not correct.", ErrorTypes.Validation);
@@ -93,7 +93,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Now we load the person and begin the permissions edit.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -227,7 +227,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     }
 
                     if (failures.Any())
-                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".FormatS(String.Join(", ", failures)), ErrorTypes.Authorization);
+                        throw new CommandCentralException("You were not allowed to edit the membership of the following permission groups: {0}".With(String.Join(", ", failures)), ErrorTypes.Authorization);
 
                     //Now make sure we don't try to save the default permissions.
                     person.PermissionGroupNames = Authorization.Groups.PermissionGroup.AllPermissionGroups.Where(x => desiredPermissionGroups.Contains(x.GroupName) && !x.IsDefault).Select(x => x.GroupName).ToList();

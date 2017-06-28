@@ -37,7 +37,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The 'personid' parameter was not valid", ErrorTypes.Validation);
 
             //Do our work in a new session
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -74,7 +74,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             if (profileLock.IsValid())
                             {
                                 //If we're here then there is a lock, it is owned by someone else, and the lock has not aged off.
-                                throw new CommandCentralException("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".FormatS(profileLock.Owner.ToString()), ErrorTypes.LockOwned);
+                                throw new CommandCentralException("A lock on this profile is owned by '{0}'; therefore, you will not be able to edit this profile.".With(profileLock.Owner.ToString()), ErrorTypes.LockOwned);
                             }
                             else
                             {
@@ -165,7 +165,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Do our work in a new session
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

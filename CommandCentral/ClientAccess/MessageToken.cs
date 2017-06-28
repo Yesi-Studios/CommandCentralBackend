@@ -77,7 +77,7 @@ namespace CommandCentral.ClientAccess
         public override string ToString()
         {
             return "{0} | {1} | \n\t\tCall Time: {2}\n\t\tProcessing Time: {3}\n\t\tHost: {4}\n\t\tApp Name: {5}\n\t\tSession ID: {6}"
-                .FormatS(Id,
+                .With(Id,
                 CalledEndpoint,
                 CallTime.ToString(CultureInfo.InvariantCulture),
                 DateTime.UtcNow.Subtract(CallTime).ToString(),
@@ -175,7 +175,7 @@ namespace CommandCentral.ClientAccess
             foreach (var key in keys)
             {
                 if (!dict.ContainsKey(key))
-                    throw new CommandCentralException("You must send all of the following parameters: {0}".FormatS(String.Join(", ", keys)), ErrorTypes.Validation);
+                    throw new CommandCentralException("You must send all of the following parameters: {0}".With(String.Join(", ", keys)), ErrorTypes.Validation);
             }
         }
 

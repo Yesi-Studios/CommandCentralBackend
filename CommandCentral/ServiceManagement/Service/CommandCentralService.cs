@@ -81,7 +81,7 @@ namespace CommandCentral.ServiceManagement.Service
 
             try
             {
-                using (var session = NHibernateHelper.CreateStatefulSession())
+                using (var session = DataProvider.CreateStatefulSession())
                 {
                     //First up, we're going to save the token in its own transaction.  
                     //We just want to get it recorded in the database that we received a request before moving on with anything else.
@@ -115,7 +115,7 @@ namespace CommandCentral.ServiceManagement.Service
                             //Get the endpoint
                             if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out ServiceEndpoint description))
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
-                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".FormatS(Email.EmailInterface.CCEmailMessage.DeveloperAddress.Address),
+                                    "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".With(Email.EmailInterface.CCEmailMessage.DeveloperAddress.Address),
                                     ErrorTypes.Validation);
 
                             //If the endpoint was retrieved successfully, then assign it here.
@@ -180,7 +180,7 @@ namespace CommandCentral.ServiceManagement.Service
                                 .WaitAndRetry(2, count => TimeSpan.FromSeconds(1), (e, waitDuration, retryCount, context) =>
                                 {
                                     failedAtLeastOnce = true;
-                                    Log.Warning("A session transaction failed to commit.  Retry count: {0}".FormatS(retryCount), token);
+                                    Log.Warning("A session transaction failed to commit.  Retry count: {0}".With(retryCount), token);
                                 })
                                 .ExecuteAndCapture(() =>
                                 {

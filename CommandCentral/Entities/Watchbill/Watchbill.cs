@@ -118,7 +118,7 @@ namespace CommandCentral.Entities.Watchbill
 
             //If we set a watchbill's state to initial, then remove all the assignments from it, 
             //leaving a watchbill with only its days and shifts.
-            if (desiredState == WatchbillStatuses.Initial)
+            if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial"))
             {
                 this.InputRequirements.Clear();
                 this.WatchInputs.Clear();
@@ -137,9 +137,9 @@ namespace CommandCentral.Entities.Watchbill
                     FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
-            else if (desiredState == WatchbillStatuses.OpenForInputs)
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
             {
-                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.Initial)
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial"))
                     throw new Exception("You may not move to the open for inputs state from anything other than the initial state.");
 
                 foreach (var elPerson in this.EligibilityGroup.EligiblePersons)
@@ -180,7 +180,7 @@ namespace CommandCentral.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var internalSession = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = internalSession.BeginTransaction())
                 {
 
@@ -189,7 +189,7 @@ namespace CommandCentral.Entities.Watchbill
                         var queryString = "from Person as person where (";
                         for (var x = 0; x < groups.Count; x++)
                         {
-                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x], 
+                            queryString += " '{0}' in elements(person.{1}) ".With(groups[x], 
                                 PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
                             if (x + 1 != groups.Count)
                                 queryString += " or ";
@@ -239,9 +239,9 @@ namespace CommandCentral.Entities.Watchbill
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
-            else if (desiredState == WatchbillStatuses.ClosedForInputs)
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs"))
             {
-                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.OpenForInputs)
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
                     throw new Exception("You may not move to the closed for inputs state from anything other than the open for inputs state.");
 
                 //We now also need to load all persons in the watchbill's chain of command.
@@ -251,7 +251,7 @@ namespace CommandCentral.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var internalSession = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = internalSession.BeginTransaction())
                 {
 
@@ -260,7 +260,7 @@ namespace CommandCentral.Entities.Watchbill
                         var queryString = "from Person as person where (";
                         for (var x = 0; x < groups.Count; x++)
                         {
-                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                            queryString += " '{0}' in elements(person.{1}) ".With(groups[x],
                                 PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
                             if (x + 1 != groups.Count)
                                 queryString += " or ";
@@ -306,9 +306,9 @@ namespace CommandCentral.Entities.Watchbill
             }
             //Make sure there are assignments for each shift.  
             //Inform the chain of command that the watchbill is open for review.
-            else if (desiredState == WatchbillStatuses.UnderReview)
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
             {
-                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.ClosedForInputs)
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs"))
                     throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
 
                 if (!this.WatchShifts.All(y => y.WatchAssignment != null))
@@ -323,7 +323,7 @@ namespace CommandCentral.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var internalSession = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = internalSession.BeginTransaction())
                 {
 
@@ -332,7 +332,7 @@ namespace CommandCentral.Entities.Watchbill
                         var queryString = "from Person as person where (";
                         for (var x = 0; x < groups.Count; x++)
                         {
-                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                            queryString += " '{0}' in elements(person.{1}) ".With(groups[x],
                                 PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
                             if (x + 1 != groups.Count)
                                 queryString += " or ";
@@ -375,9 +375,9 @@ namespace CommandCentral.Entities.Watchbill
             }
             //Move the watchbill into its published state, tell everyone who has watch which watches they have.
             //Tell the chain of command the watchbill is published.
-            else if (desiredState == WatchbillStatuses.Published)
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Published"))
             {
-                if (this.CurrentState == null || this.CurrentState != WatchbillStatuses.UnderReview)
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
                     throw new Exception("You may not move to the published state from anything other than the under review state.");
 
                 //Let's send an email to each person who is on watch, informing them of their watches.
@@ -410,7 +410,7 @@ namespace CommandCentral.Entities.Watchbill
                     .Select(x => x.GroupName)
                     .ToList();
 
-                using (var internalSession = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var internalSession = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = internalSession.BeginTransaction())
                 {
 
@@ -419,7 +419,7 @@ namespace CommandCentral.Entities.Watchbill
                         var queryString = "from Person as person where (";
                         for (var x = 0; x < groups.Count; x++)
                         {
-                            queryString += " '{0}' in elements(person.{1}) ".FormatS(groups[x],
+                            queryString += " '{0}' in elements(person.{1}) ".With(groups[x],
                                 PropertySelector.SelectPropertyFrom<Person>(y => y.PermissionGroupNames).Name);
                             if (x + 1 != groups.Count)
                                 queryString += " or ";
@@ -505,7 +505,7 @@ namespace CommandCentral.Entities.Watchbill
                 {
                     return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
-                        double points = person.WatchAssignments.Where(z => z.CurrentState == WatchAssignmentStates.Completed).Sum(z =>
+                        double points = person.WatchAssignments.Where(z => z.CurrentState == ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Completed")).Sum(z =>
                         {
                             int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
@@ -552,13 +552,13 @@ namespace CommandCentral.Entities.Watchbill
                             return true;
 
                         }, out Person personToAssign))
-                            throw new CommandCentralException("Department {0} had no person that could stand shift {1}.".FormatS(personsGroup.Key, shiftsForThisGroup[x]), ErrorTypes.Validation);
+                            throw new CommandCentralException("Department {0} had no person that could stand shift {1}.".With(personsGroup.Key, shiftsForThisGroup[x]), ErrorTypes.Validation);
 
                         //Create the watch assignment.
                         shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
                         {
                             AssignedBy = client,
-                            CurrentState = WatchAssignmentStates.Assigned,
+                            CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                             DateAssigned = dateTime,
                             Id = Guid.NewGuid(),
                             PersonAssigned = personToAssign,
@@ -568,7 +568,7 @@ namespace CommandCentral.Entities.Watchbill
                 }
 
                 //At this step, we run into a bit of a problem.  Because the assigned shifts don't come out as perfect integers, we'll have some shifts left over.
-                //I chose to use the Hamilton assignment method with the Hare quota here in order to distrubte the rest of the shifts.
+                //I chose to use the Hamilton assignment method with the Hare quota here in order to distribute the rest of the shifts.
                 //https://en.wikipedia.org/wiki/Largest_remainder_method
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
@@ -598,7 +598,7 @@ namespace CommandCentral.Entities.Watchbill
                             shift.WatchAssignment = new WatchAssignment
                             {
                                 AssignedBy = client,
-                                CurrentState = WatchAssignmentStates.Assigned,
+                                CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = dateTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personToAssign,
@@ -613,7 +613,7 @@ namespace CommandCentral.Entities.Watchbill
         }
 
         /// <summary>
-        /// Returns all those input requirements a person is respnsible for.  Meaning those requirements that are in a person's chain of command.
+        /// Returns all those input requirements a person is responsible for.  Meaning those requirements that are in a person's chain of command.
         /// </summary>
         /// <param name="person"></param>
         /// <returns></returns>
@@ -664,7 +664,7 @@ namespace CommandCentral.Entities.Watchbill
         /// <returns></returns>
         public virtual bool CanEditStructure()
         {
-            return CurrentState == WatchbillStatuses.Initial || CurrentState == WatchbillStatuses.OpenForInputs;
+            return CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial") || CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs");
         }
 
         /// <summary>
@@ -674,7 +674,7 @@ namespace CommandCentral.Entities.Watchbill
         /// </summary>
         public static void SendWatchInputRequirementsAlertEmail(Guid watchbillId)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var watchbill = session.Get<Watchbill>(watchbillId) ??
                     throw new Exception("A watchbill was loaded that no longer exists.");
@@ -714,16 +714,14 @@ namespace CommandCentral.Entities.Watchbill
         /// <summary>
         /// Sets up the watch alerts.  This is basically just a recurring cron method that looks to see if someone has watch coming up and if they do, sends them a notification.
         /// </summary>
-        /// <param name="launchOptions"></param>
-        [ServiceManagement.StartMethod(Priority = 1)]
-        private static void SetupAlerts(CLI.Options.LaunchOptions launchOptions)
+        public static void SetupAlerts()
         {
             FluentScheduler.JobManager.AddJob(() => SendWatchAlerts(), s => s.ToRunEvery(1).Hours().At(0));
 
             //Here, we're also going to set up any watch input requirements alerts we need for each watchbill that is in the open for inputs state.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
-                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == WatchbillStatuses.OpenForInputs.Id).List();
+                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs").Id).List();
 
                 foreach (var watchbill in watchbills)
                 {
@@ -738,7 +736,7 @@ namespace CommandCentral.Entities.Watchbill
         /// </summary>
         private static void SendWatchAlerts()
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -897,7 +895,7 @@ namespace CommandCentral.Entities.Watchbill
                                 var otherShiftRange = new Itenso.TimePeriod.TimeRange(otherShift.Range.Start, otherShift.Range.End, false);
                                 if (shiftRange.OverlapsWith(otherShiftRange))
                                 {
-                                    errorElements.Add("{0} shifts: {1}".FormatS(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
+                                    errorElements.Add("{0} shifts: {1}".With(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
                                 }
                             }
                         }
@@ -908,7 +906,7 @@ namespace CommandCentral.Entities.Watchbill
                     if (errorElements.Any())
                     {
                         string str = "One or more shifts with the same type overlap:  {0}"
-                            .FormatS(String.Join(" | ", errorElements));
+                            .With(String.Join(" | ", errorElements));
                         return new FluentValidation.Results.ValidationFailure(nameof(watchbill.WatchShifts), str);
                     }
 

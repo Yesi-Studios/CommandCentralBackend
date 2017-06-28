@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NHibernate.Criterion;
 using AtwoodUtils;
 using System.Globalization;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral
 {
@@ -56,13 +57,13 @@ namespace CommandCentral
                 model.Creator = token.AuthenticationSession.Person;
 
             //Now we need to go get the records.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
                 {
                     model.Records = session.QueryOver<Entities.Person>()
-                        .Where(x => x.DutyStatus.Id != Entities.ReferenceLists.DutyStatuses.Loss.Id)
+                        .Where(x => x.DutyStatus.Id != ReferenceListHelper<DutyStatus>.Find("Loss").Id)
                         .Select(x => x.CurrentMusterRecord)
                         .List<Entities.MusterRecord>()
                         .ToList();

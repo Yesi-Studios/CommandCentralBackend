@@ -69,7 +69,7 @@ namespace CommandCentral
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} - {1} - {2}".FormatS(Division, Department, Command);
+            return "{0} - {1} - {2}".With(Division, Department, Command);
         }
 
         #endregion
