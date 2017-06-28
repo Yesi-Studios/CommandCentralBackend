@@ -431,6 +431,30 @@
   <ItemGroup>
     <EmbeddedResource Include="PreDefs\Def_Sexes.cc" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_PhoneTypes.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_Paygrades.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_MusterStatuses.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_DutyStatuses.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_AccountHistoryTypes.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_WatchShiftTypes.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_WatchEligibilityGroups.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreDefs\Def_WatchAssignmentStates.cc" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
