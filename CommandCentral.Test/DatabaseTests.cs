@@ -10,7 +10,6 @@ namespace CommandCentral.Test
     [TestClass]
     public class DatabaseTests
     {
-
         [TestMethod]
         public void SetupDatabase()
         {
@@ -29,6 +28,5 @@ namespace CommandCentral.Test
 
             Assert.IsTrue(DataAccess.DataProvider.IsReady);
         }
-
     }
 }
