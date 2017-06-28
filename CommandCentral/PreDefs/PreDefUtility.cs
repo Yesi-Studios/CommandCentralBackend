@@ -68,7 +68,7 @@ namespace CommandCentral.PreDefs
                     transaction.Commit();
                 }
 
-                Logging.Log.Info("Persisted {0} defs for PreDef {1}.".With(preDef.Definitions.Count, preDef.TypeFullName));
+                Logging.Log.Info("Persisted {0} defs for PreDef {1}.".With(preDef.Definitions.Count, typeof(T).Name));
             }
         }
     }

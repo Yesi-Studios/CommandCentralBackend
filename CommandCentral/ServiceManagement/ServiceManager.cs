@@ -80,6 +80,7 @@ namespace CommandCentral.ServiceManagement
 
                 if (launchOptions.Rebuild)
                 {
+                    Log.Info("Rebuilding database '{0}'...".With(launchOptions.Database));
                     DataAccess.DataProvider.InitializeAndRebuild(connectionString, launchOptions.Database);
                     Entities.Watchbill.WatchAssignment.WatchAssignmentMapping.UpdateForeignKeyRule();
 
@@ -87,6 +88,14 @@ namespace CommandCentral.ServiceManagement
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.WatchQualification>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Sex>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchbillStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchShiftType>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchEligibilityGroup>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchAssignmentState>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.PhoneNumberType>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Paygrade>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.MusterStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.DutyStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.AccountHistoryType>();
                 }
                 else
                 {
@@ -98,9 +107,7 @@ namespace CommandCentral.ServiceManagement
                 Entities.MusterRecord.SetupMuster();
                 Entities.Watchbill.Watchbill.SetupAlerts();
 
-
                 //All startup methods have run, now we need to launch the service itself.
-
                 //Ok, so now we have a valid port.  Let's set up the service.
                 if (launchOptions.SecurityMode == CLI.SecurityModes.HTTPSOnly || launchOptions.SecurityMode == CLI.SecurityModes.Both)
                 {
