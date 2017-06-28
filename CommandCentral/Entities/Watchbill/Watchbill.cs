@@ -137,7 +137,7 @@ namespace CommandCentral.Entities.Watchbill
                     FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
             {
                 if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial"))
                     throw new Exception("You may not move to the open for inputs state from anything other than the initial state.");
@@ -239,9 +239,9 @@ namespace CommandCentral.Entities.Watchbill
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs"))
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                     throw new Exception("You may not move to the closed for inputs state from anything other than the open for inputs state.");
 
                 //We now also need to load all persons in the watchbill's chain of command.
@@ -306,9 +306,9 @@ namespace CommandCentral.Entities.Watchbill
             }
             //Make sure there are assignments for each shift.  
             //Inform the chain of command that the watchbill is open for review.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs"))
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
                     throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
 
                 if (!this.WatchShifts.All(y => y.WatchAssignment != null))
@@ -377,7 +377,7 @@ namespace CommandCentral.Entities.Watchbill
             //Tell the chain of command the watchbill is published.
             else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Published"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
                     throw new Exception("You may not move to the published state from anything other than the under review state.");
 
                 //Let's send an email to each person who is on watch, informing them of their watches.
@@ -664,7 +664,7 @@ namespace CommandCentral.Entities.Watchbill
         /// <returns></returns>
         public virtual bool CanEditStructure()
         {
-            return CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial") || CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs");
+            return CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial") || CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs");
         }
 
         /// <summary>
@@ -721,7 +721,7 @@ namespace CommandCentral.Entities.Watchbill
             //Here, we're also going to set up any watch input requirements alerts we need for each watchbill that is in the open for inputs state.
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
-                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs").Id).List();
+                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs").Id).List();
 
                 foreach (var watchbill in watchbills)
                 {

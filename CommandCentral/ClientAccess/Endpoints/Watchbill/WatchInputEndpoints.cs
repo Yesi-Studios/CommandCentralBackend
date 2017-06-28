@@ -123,7 +123,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
                             
                             //Let's also check the watchbill's state.
-                            if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+                            if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                                 throw new CommandCentralException("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                             var inputToInsert = new WatchInput
@@ -194,7 +194,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.

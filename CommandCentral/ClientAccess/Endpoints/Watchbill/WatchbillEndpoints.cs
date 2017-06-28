@@ -57,7 +57,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                     //And make sure we're at a state where population can occur.
-                    if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+                    if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                         throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
 
                     watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);

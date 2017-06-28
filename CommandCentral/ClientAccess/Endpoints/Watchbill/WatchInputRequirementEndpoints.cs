@@ -27,7 +27,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbills = session.QueryOver<Entities.Watchbill.Watchbill>()
-                            .Where(x => x.CurrentState.Id == Entities.ReferenceLists.ReferenceListHelper<Entities.ReferenceLists.Watchbill.WatchbillStatus>.Find("OpenForInputs").Id)
+                            .Where(x => x.CurrentState.Id == Entities.ReferenceLists.ReferenceListHelper<Entities.ReferenceLists.Watchbill.WatchbillStatus>.Find("Open for Inputs").Id)
                             .List();
 
                         var final = watchbills.Select(watchbill =>

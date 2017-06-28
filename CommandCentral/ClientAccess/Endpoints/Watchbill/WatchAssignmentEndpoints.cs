@@ -490,9 +490,9 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         if (!isCommandCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);
 
-                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("ClosedForInputs") &&
+                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs") &&
                             watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Published") &&
-                            watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("UnderReview"))
+                            watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
 
                         Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();

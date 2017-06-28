@@ -79,7 +79,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             //Now we also need to add the event to client's account history.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("FailedLogin"),
+                                AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Failed Login"),
                                 EventTime = token.CallTime
                             });
 
@@ -273,7 +273,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Let's also add the account history object here.
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("RegistrationStarted"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Registration Started"),
                         EventTime = token.CallTime
                     });
 
@@ -368,7 +368,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Also put the account history object on the person.
                     pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("RegistrationCompleted"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Registration Completed"),
                         EventTime = token.CallTime
                     });
 
@@ -481,7 +481,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("PasswordResetInitiated"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Reset Initiated"),
                         EventTime = token.CallTime
                     });
 
@@ -580,7 +580,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Let's also add the account history. 
                     pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("PasswordResetCompleted"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Reset Completed"),
                         EventTime = token.CallTime
                     });
 
@@ -645,7 +645,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     self.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("PasswordChanged"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Changed"),
                         EventTime = token.CallTime
                     });
 
@@ -726,7 +726,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("UsernameForgotten"),
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Username Forgotten"),
                         EventTime = token.CallTime
                     });
 

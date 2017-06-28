@@ -1,5 +1,5 @@
 ﻿{
-  "TypeFullName": "CommandCentral.Entities.ReferenceLists.PhoneType",
+  "TypeFullName": "CommandCentral.Entities.ReferenceLists.PhoneNumberType",
   "Definitions": [
     {
       "Id": "2DC87F0E-6862-40E8-B56C-EEE0BE4396C2",
