@@ -35,6 +35,12 @@ namespace CommandCentral.Email.EmailInterface
                 }
             }
 
+            if (template == null)
+                throw new ArgumentNullException("template");
+
+            if (model == null)
+                throw new ArgumentNullException("model");
+
             return RazorEngine.Razor.Parse(template, model);
         }
     }

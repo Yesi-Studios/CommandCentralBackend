@@ -47,8 +47,8 @@ namespace CommandCentral.ServiceManagement
             try
             {
 
-                Log.RegisterLoggers();
                 Email.EmailInterface.CCEmailMessage.InitializeEmail(launchOptions.SMTPHosts);
+                Log.RegisterLoggers();
 
                 //Do arg validation.
                 if ((launchOptions.Rebuild) && 
@@ -64,11 +64,9 @@ namespace CommandCentral.ServiceManagement
 
                 _options = launchOptions;
 
-                Log.Info("Starting service startup...");
+                InitializeFluentScheduler();
 
-                FluentScheduler.JobManager.UseUtcTime();
-                FluentSchedulerRegistry = new FluentScheduler.Registry();
-                FluentScheduler.JobManager.Initialize(FluentSchedulerRegistry);
+                Log.Info("Starting service startup...");
 
                 //Now we need to run all start up methods.
                 //First let's make our connection string.
@@ -127,11 +125,19 @@ namespace CommandCentral.ServiceManagement
                 _host.Open();
 
                 Log.Info("Service is live and listening on '{0}'.".With(_host.BaseAddresses.First().AbsoluteUri));
+
+                Logging.Log.Exception(new Exception("test ex message"), "test ex message");
             }
             catch (Exception e)
             {
                 Log.Exception(e, "An error occurred during service start up");
             }
+        }
+
+        public static void InitializeFluentScheduler()
+        {
+            FluentScheduler.JobManager.UseUtcTime();
+            FluentScheduler.JobManager.Initialize();
         }
 
         /// <summary>

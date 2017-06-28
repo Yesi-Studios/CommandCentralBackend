@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommandCentral.Test
+namespace CommandCentral.Test.ReferenceListTests
 {
     [TestClass]
     public class CommandDepartmentDivisionTests
