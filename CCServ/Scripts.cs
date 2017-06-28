@@ -4,15 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using CCServ.Entities.Watchbill;
-using CCServ.Entities.ReferenceLists.Watchbill;
-using CCServ.Entities;
+using CommandCentral.Entities.Watchbill;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Entities;
 using System.Diagnostics;
 using NHibernate.Criterion;
 using AtwoodUtils;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 
-namespace CCServ
+namespace CommandCentral
 {
     static class Scripts
     {
@@ -116,8 +116,6 @@ namespace CCServ
                         total);
                     text += Environment.NewLine;
                 }
-
-                //File.WriteAllText(@"C:\Users\dkatwoo\Source\Repos\CommandCentralBackend4\CCServ\data.txt", text);
             }
         }
 

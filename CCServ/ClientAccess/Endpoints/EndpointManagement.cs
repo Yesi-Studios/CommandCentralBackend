@@ -5,10 +5,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.Logging;
+using CommandCentral.Authorization;
+using CommandCentral.Logging;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class EndpointManagement
     {

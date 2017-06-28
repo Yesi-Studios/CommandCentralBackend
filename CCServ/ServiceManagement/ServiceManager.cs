@@ -10,14 +10,14 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Logging;
-using CCServ.ServiceManagement;
-using CCServ.ServiceManagement.Service;
+using CommandCentral.Logging;
+using CommandCentral.ServiceManagement;
+using CommandCentral.ServiceManagement.Service;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace CCServ.ServiceManagement
+namespace CommandCentral.ServiceManagement
 {
     /// <summary>
     /// Contains the actual web host instance and manages stopping and starting the service.

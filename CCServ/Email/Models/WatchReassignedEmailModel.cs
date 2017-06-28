@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Models
+namespace CommandCentral.Email.Models
 {
     /// <summary>
     /// The email model that should be sent to the watch reassigned email templates.

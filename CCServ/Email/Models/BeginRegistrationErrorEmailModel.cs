@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Models
+namespace CommandCentral.Email.Models
 {
     /// <summary>
     /// Contains the parameters for the model sent to the begin registration error email.

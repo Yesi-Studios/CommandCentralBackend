@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Provides members that describe an endpoint.  Intended to allow dynamic endpoint invocation.

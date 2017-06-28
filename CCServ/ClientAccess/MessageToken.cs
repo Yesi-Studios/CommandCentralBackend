@@ -6,7 +6,7 @@ using NHibernate;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Describes a message token, including its Access Methods.  Intended to be used to track an interaction with the client.

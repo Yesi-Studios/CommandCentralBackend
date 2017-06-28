@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
-using CCServ.DataAccess;
+using CommandCentral.DataAccess;
 using AtwoodUtils;
 using NHibernate.Criterion;
-using CCServ.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
 
-namespace CCServ.Entities.Watchbill
+namespace CommandCentral.Entities.Watchbill
 {
     /// <summary>
     /// A watch assignment which ties a person to a watch shift and indicates if the assignment has been completed, or what status it is in.

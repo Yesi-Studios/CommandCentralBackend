@@ -1,4 +1,4 @@
-﻿using CCServ.Entities.Watchbill;
+﻿using CommandCentral.Entities.Watchbill;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using Itenso.TimePeriod;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
     /// Contains all of the endpoints for interacting with the watch shift object.

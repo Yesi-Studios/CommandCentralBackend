@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ
+namespace CommandCentral
 {
     /// <summary>
     /// The interface that makes an object commentable.

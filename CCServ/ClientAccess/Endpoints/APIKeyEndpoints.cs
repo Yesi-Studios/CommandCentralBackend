@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains all the endpoints for the API Keys.

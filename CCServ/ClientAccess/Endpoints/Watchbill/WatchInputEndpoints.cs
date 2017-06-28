@@ -1,16 +1,16 @@
-﻿using CCServ.Entities.Watchbill;
+﻿using CommandCentral.Entities.Watchbill;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Authorization;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
     /// Contains all the endpoints for interacting with watch inputs.

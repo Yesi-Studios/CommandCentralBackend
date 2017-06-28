@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 
-namespace CCServ.Logging.Loggers
+namespace CommandCentral.Logging.Loggers
 {
     class ConsoleLogger : ILogger
     {
@@ -20,7 +20,7 @@ namespace CCServ.Logging.Loggers
         {
             get
             {
-                return "CCSERV Console Logger";
+                return "CommandCentral Console Logger";
             }
         }
 

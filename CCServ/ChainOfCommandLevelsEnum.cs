@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ
+namespace CommandCentral
 {
     /// <summary>
     /// Describes the levels of chain of command.

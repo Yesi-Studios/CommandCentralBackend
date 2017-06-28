@@ -1,4 +1,4 @@
-﻿namespace CCServ
+﻿namespace CommandCentral
 {
     partial class WindowsServiceEntry
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization
+namespace CommandCentral.Authorization
 {
     /// <summary>
     /// Provides an object for wrapping two persons together in an authorization context.

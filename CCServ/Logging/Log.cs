@@ -8,10 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Collections.Concurrent;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using AtwoodUtils;
 
-namespace CCServ.Logging
+namespace CommandCentral.Logging
 {
     /// <summary>
     /// Encapsulates and abstracts logging operations.  Provides logging to the windows event system, the console, the database, and email in the case of errors.

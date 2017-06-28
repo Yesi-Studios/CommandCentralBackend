@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation.Results;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Indicates the sex of a given person.

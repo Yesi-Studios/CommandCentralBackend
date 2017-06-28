@@ -1,4 +1,4 @@
-﻿using CCServ.ClientAccess;
+﻿using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CommandCentral.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
     /// A watch bill group is the means by which a watchbill coordinator or other administrator 

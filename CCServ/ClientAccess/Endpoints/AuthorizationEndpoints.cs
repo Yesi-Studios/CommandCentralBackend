@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
-using CCServ.Entities;
+using CommandCentral.ClientAccess;
+using CommandCentral.Entities;
 using AtwoodUtils;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class AuthorizationEndpoints
     {

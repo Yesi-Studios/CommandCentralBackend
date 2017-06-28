@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains the feedback endpoints.
@@ -61,7 +61,7 @@ namespace CCServ.ClientAccess.Endpoints
                 .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                 .BCC(Email.EmailInterface.CCEmailMessage.PersonalDeveloperAddresses)
                 .Subject("Command Central Feedback")
-                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.Feedback_HTML.html", model)
+                .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.Feedback_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
     }

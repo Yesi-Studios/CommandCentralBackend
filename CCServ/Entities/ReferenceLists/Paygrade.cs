@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     public class Paygrade : ReferenceListItemBase
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization.Groups
+namespace CommandCentral.Authorization.Groups
 {
     /// <summary>
     /// Defines different types of access.

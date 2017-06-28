@@ -1,4 +1,4 @@
-﻿using CCServ.ClientAccess;
+﻿using CommandCentral.ClientAccess;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using NHibernate.Criterion;
 using AtwoodUtils;
 using System.Globalization;
 
-namespace CCServ
+namespace CommandCentral
 {
     /// <summary>
     /// Generates a muster report for a given day and sends the muster report by email.
@@ -80,7 +80,7 @@ namespace CCServ
                             new System.Net.Mail.MailAddress("usn.gordon.inscom.list.nsag-nioc-ga-xo@mail.mil", "XO"))
                         .BCC(Email.EmailInterface.CCEmailMessage.PersonalDeveloperAddresses)
                         .Subject("Muster Report - " + model.MusterDateTime.ToString("D", CultureInfo.CreateSpecificCulture("en-US")))
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.MusterReport_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.MusterReport_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     transaction.Commit();

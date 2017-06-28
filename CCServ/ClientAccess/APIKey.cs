@@ -1,11 +1,11 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 using System.Linq;
 using AtwoodUtils;
-using CCServ.Logging;
+using CommandCentral.Logging;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Describes a single API Key.

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     static class WatchInputRequirementEndpoints
     {

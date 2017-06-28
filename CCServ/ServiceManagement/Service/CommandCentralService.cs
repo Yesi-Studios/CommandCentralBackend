@@ -12,14 +12,14 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.DataAccess;
+using CommandCentral.DataAccess;
 using System.Linq.Expressions;
-using CCServ.ClientAccess;
-using CCServ.Logging;
+using CommandCentral.ClientAccess;
+using CommandCentral.Logging;
 using Polly;
 using System.Net;
 
-namespace CCServ.ServiceManagement.Service
+namespace CommandCentral.ServiceManagement.Service
 {
     /// <summary>
     /// Describes the service and its implementation of the endpoints.

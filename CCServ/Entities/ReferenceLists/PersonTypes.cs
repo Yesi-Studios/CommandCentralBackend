@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     public static class PersonTypes
     {

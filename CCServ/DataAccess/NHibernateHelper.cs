@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using CCServ.Entities;
+using CommandCentral.Entities;
 using FluentNHibernate.Cfg;
 using FluentNHibernate.Cfg.Db;
 using NHibernate;
@@ -10,12 +10,12 @@ using NHibernate.Cfg;
 using NHibernate.Metadata;
 using System.Linq;
 using AtwoodUtils;
-using CCServ.Logging;
+using CommandCentral.Logging;
 using MySql.Data.MySqlClient;
 using System.IO;
-using CCServ.ServiceManagement;
+using CommandCentral.ServiceManagement;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// Provides singleton managed access to NHibernate sessions.

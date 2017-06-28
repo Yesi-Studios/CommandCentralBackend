@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.EmailInterface
+namespace CommandCentral.Email.EmailInterface
 {
     internal static class TemplateHelper
     {

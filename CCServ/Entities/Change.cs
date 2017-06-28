@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Linq;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using AtwoodUtils;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single change

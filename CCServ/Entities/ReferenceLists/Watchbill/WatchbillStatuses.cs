@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CommandCentral.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
     /// Contains all the predefined watchbill statuses.

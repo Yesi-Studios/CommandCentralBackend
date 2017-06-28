@@ -2,7 +2,7 @@
 using FluentNHibernate.Mapping;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single account confirmation.  This is created when a client attempts to register an account.

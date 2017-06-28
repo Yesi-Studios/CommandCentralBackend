@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Describes the container that is used to return data to the client. This object provides a reliable structure of data so that the client knows what to expect while allowing us to return exception data as well.

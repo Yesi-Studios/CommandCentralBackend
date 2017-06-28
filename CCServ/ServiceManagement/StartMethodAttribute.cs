@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ServiceManagement
+namespace CommandCentral.ServiceManagement
 {
     /// <summary>
     /// This attribute indicates that the following method should be run when the service launches with the given priority.

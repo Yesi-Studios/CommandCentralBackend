@@ -1,10 +1,10 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     
 

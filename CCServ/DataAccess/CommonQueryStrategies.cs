@@ -1,5 +1,5 @@
 ﻿using AtwoodUtils;
-using CCServ.Entities.Watchbill;
+using CommandCentral.Entities.Watchbill;
 using NHibernate.Criterion;
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// Provides some commonly used query strategies.

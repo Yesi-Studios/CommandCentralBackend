@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains all the endpoints relating to change events.

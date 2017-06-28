@@ -5,7 +5,7 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using System.Collections.Generic;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single email address along with its data access methods

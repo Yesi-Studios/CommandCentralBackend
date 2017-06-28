@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.Entities.Watchbill;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Authorization;
+using CommandCentral.Entities.Watchbill;
+using CommandCentral.Entities.ReferenceLists;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
     /// Contains all of the endpoints for interacting with the parent watchbill object.

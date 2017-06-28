@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.ClientAccess;
+using CommandCentral.Authorization;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Criterion;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single Department and all of its divisions.

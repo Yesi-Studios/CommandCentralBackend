@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Email.Models
+namespace CommandCentral.Email.Models
 {
     public class BeginPasswordResetEmailModel
     {

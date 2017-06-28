@@ -8,7 +8,7 @@ using NHibernate;
 using NHibernate.Criterion;
 using System.Linq.Expressions;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// Stores the current state of a query as it is built before being submitted to the database.

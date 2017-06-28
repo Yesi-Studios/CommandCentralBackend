@@ -1,13 +1,13 @@
-﻿using CCServ.Entities;
+﻿using CommandCentral.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class NewsItemEndpoints
     {

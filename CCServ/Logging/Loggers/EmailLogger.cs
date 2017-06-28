@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 
-namespace CCServ.Logging.Loggers
+namespace CommandCentral.Logging.Loggers
 {
     class EmailLogger : ILogger
     {
@@ -13,7 +13,7 @@ namespace CCServ.Logging.Loggers
         {
             get
             {
-                return "CCSERV Email Logger";
+                return "CommandCentral Email Logger";
             }
         }
 
@@ -41,7 +41,7 @@ namespace CCServ.Logging.Loggers
                 .To(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                 .CC(Email.EmailInterface.CCEmailMessage.PersonalDeveloperAddresses)
                 .Subject("Command Central Critical Message")
-                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CriticalMessage_HTML.html", model)
+                .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.CriticalMessage_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
 
@@ -59,7 +59,7 @@ namespace CCServ.Logging.Loggers
                 .To(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                 .CC(Email.EmailInterface.CCEmailMessage.PersonalDeveloperAddresses)
                 .Subject("Command Central Fatal Error")
-                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FatalError_HTML.html", model)
+                .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.FatalError_HTML.html", model)
                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
         }
 

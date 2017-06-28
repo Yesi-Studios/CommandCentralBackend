@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 using AtwoodUtils;
 
-namespace CCServ
+namespace CommandCentral
 {
     /// <summary>
     /// A wrapper around a division/department/command.

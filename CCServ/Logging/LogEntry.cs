@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.Logging
+namespace CommandCentral.Logging
 {
     /// <summary>
     /// Represents a log message in the database.

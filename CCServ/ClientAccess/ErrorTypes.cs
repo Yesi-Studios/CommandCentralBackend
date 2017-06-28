@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// A list of error types.

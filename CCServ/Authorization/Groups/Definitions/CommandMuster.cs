@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization.Groups.Definitions
+namespace CommandCentral.Authorization.Groups.Definitions
 {
     public class CommandMuster : PermissionGroup
     {

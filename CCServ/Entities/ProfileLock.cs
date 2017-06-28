@@ -1,12 +1,12 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using System.Collections.Generic;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single profile lock.

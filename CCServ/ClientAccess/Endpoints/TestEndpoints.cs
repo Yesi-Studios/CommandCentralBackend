@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using AtwoodUtils;
 using System.Globalization;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains some test endpoints.

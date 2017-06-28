@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Entities;
+using CommandCentral.Entities;
 using NHibernate.Linq;
 using AtwoodUtils;
 using System.Reflection;
 
-namespace CCServ.ChangeEventSystem
+namespace CommandCentral.ChangeEventSystem
 {
     /// <summary>
     /// A number of members to assist in dealing with change events.

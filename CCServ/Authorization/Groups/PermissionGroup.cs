@@ -6,10 +6,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Logging;
+using CommandCentral.Logging;
 using NHibernate.Criterion;
 
-namespace CCServ.Authorization.Groups
+namespace CommandCentral.Authorization.Groups
 {
     /// <summary>
     /// All permission groups must inherit from this in order to be included into the permissions system.

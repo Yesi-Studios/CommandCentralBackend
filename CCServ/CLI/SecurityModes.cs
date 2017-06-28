@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.CLI
+namespace CommandCentral.CLI
 {
     public enum SecurityModes
     {

@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.CustomTypes;
-using CCServ.Entities;
+using CommandCentral.CustomTypes;
+using CommandCentral.Entities;
 
-namespace CCServ.Email.Models
+namespace CommandCentral.Email.Models
 {
     /// <summary>
     /// The email model sent to the muster email template.

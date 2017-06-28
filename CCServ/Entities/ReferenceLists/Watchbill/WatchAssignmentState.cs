@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CommandCentral.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
     /// Defines a watch assignment state, which indicates if a watch was stood, acknowledged, and other things.

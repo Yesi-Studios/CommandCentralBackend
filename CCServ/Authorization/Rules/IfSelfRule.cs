@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization.Rules
+namespace CommandCentral.Authorization.Rules
 {
     /// <summary>
     /// Returns true if the client's Id matches the person's Id.

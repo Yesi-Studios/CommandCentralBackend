@@ -1,4 +1,4 @@
-﻿using CCServ.Entities;
+﻿using CommandCentral.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using AtwoodUtils;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 
-namespace CCServ.ChangeEventSystem
+namespace CommandCentral.ChangeEventSystem
 {
     /// <summary>
     /// Defines the basic members of a change event.

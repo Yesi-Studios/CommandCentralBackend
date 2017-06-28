@@ -9,7 +9,7 @@ using NHibernate.Criterion;
 using AtwoodUtils;
 using System.Linq.Expressions;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// Groups a number of properties in order to declare common behavior about them.  

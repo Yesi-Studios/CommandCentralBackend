@@ -1,12 +1,12 @@
 ﻿using AtwoodUtils;
-using CCServ.Entities;
+using CommandCentral.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ChangeEventSystem.ChangeEvents
+namespace CommandCentral.ChangeEventSystem.ChangeEvents
 {
     /// <summary>
     /// The event that should be raised when a new person is created.
@@ -91,7 +91,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
                     .CreateDefault()
                     .To(emailAddress)
                     .Subject("{0} Event".FormatS(this.EventName))
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.NewPersonChangeEvent_HTML.html", new Email.Models.NewPersonChangeEventEmailModel { ChangeEvent = this }));
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.NewPersonChangeEvent_HTML.html", new Email.Models.NewPersonChangeEventEmailModel { ChangeEvent = this }));
             }
 
             Parallel.ForEach(emails, email =>

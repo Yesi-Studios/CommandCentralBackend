@@ -1,4 +1,4 @@
-﻿using CCServ.ClientAccess;
+﻿using CommandCentral.ClientAccess;
 using System.Linq;
 using FluentNHibernate.Mapping;
 using System;
@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using AtwoodUtils;
 using FluentValidation;
 using NHibernate.Criterion;
-using CCServ.Authorization;
-using CCServ.Logging;
+using CommandCentral.Authorization;
+using CommandCentral.Logging;
 using FluentValidation.Results;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single command, such as NIOC GA and all of its departments and divisions.

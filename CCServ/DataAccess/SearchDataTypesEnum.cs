@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// Indicates the different ways a value can be searched.

@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
-using CCServ.Authorization;
-using CCServ.Logging;
-using CCServ.Entities;
+using CommandCentral.Authorization;
+using CommandCentral.Logging;
+using CommandCentral.Entities;
 using Newtonsoft.Json.Linq;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class MusterEndpoints
     {

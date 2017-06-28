@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.Runtime.InteropServices;
-using CCServ.CLI.Options;
+using CommandCentral.CLI.Options;
 using System.ServiceProcess;
 using System.Threading;
 using System.Globalization;
 using System.Reflection;
 
-namespace CCServ.CLI
+namespace CommandCentral.CLI
 {
     /// <summary>
     /// Main Class

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Logging.Loggers
+namespace CommandCentral.Logging.Loggers
 {
     /// <summary>
     /// The logger that writes messages to the database.

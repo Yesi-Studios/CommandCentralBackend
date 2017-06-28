@@ -4,9 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Logging;
+using CommandCentral.Logging;
 
-namespace CCServ.WindowsService
+namespace CommandCentral.WindowsService
 {
     /// <summary>
     /// Provides methods for installing the windows service version of the application.

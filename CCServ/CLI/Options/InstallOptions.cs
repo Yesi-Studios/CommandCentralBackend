@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 
-namespace CCServ.CLI.Options
+namespace CommandCentral.CLI.Options
 {
     public class InstallOptions
     {

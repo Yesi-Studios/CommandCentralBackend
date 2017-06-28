@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Authorization.Groups;
+using CommandCentral.Authorization.Groups;
 
-namespace CCServ.Authorization.Rules
+namespace CommandCentral.Authorization.Rules
 {
     /// <summary>
     /// The base class for all authorization rules.  All authorization rules that inherit from this type are responsible for declaring their own operation by overriding the AuthorizationOperation method.

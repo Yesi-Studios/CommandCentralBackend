@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Logging
+namespace CommandCentral.Logging
 {
     public enum MessageTypes
     {

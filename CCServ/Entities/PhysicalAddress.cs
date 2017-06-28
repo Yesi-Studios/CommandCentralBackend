@@ -4,9 +4,9 @@ using System.Net;
 using AtwoodUtils;
 using FluentNHibernate.Mapping;
 using FluentValidation;
-using CCServ.DataAccess;
+using CommandCentral.DataAccess;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single physical address

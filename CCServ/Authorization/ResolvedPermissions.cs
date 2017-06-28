@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization
+namespace CommandCentral.Authorization
 {
     /// <summary>
     /// Defines a class that stores a permission group after it has been refined.

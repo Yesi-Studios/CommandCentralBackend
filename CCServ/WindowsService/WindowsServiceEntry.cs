@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ
+namespace CommandCentral
 {
     /// <summary>
     /// Contains the windows service entry.  This is akin to the Program class for the interactive version.

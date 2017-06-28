@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
-using CCServ.Authorization;
+using CommandCentral.ClientAccess;
+using CommandCentral.Authorization;
 using AtwoodUtils;
 using NHibernate.Metadata;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class ReferenceListEndpoints
     {

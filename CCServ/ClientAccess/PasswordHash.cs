@@ -29,7 +29,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Salted password hashing with PBKDF2-SHA1.

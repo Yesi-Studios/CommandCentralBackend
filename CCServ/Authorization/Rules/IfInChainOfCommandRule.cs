@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Authorization.Rules
+namespace CommandCentral.Authorization.Rules
 {
     /// <summary>
     /// Returns true if the client is in the person's chain of command.

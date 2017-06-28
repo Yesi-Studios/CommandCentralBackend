@@ -5,15 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
-using CCServ.Entities.ReferenceLists.Watchbill;
-using CCServ.ClientAccess;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
+using CommandCentral.ClientAccess;
 using System.Globalization;
 using AtwoodUtils;
 using NHibernate;
 using NHibernate.Type;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 
-namespace CCServ.Entities.Watchbill
+namespace CommandCentral.Entities.Watchbill
 {
     /// <summary>
     /// Describes a single watchbill, which is a collection of watch days, shifts in those days, and inputs.
@@ -166,7 +166,7 @@ namespace CCServ.Entities.Watchbill
                             .To(group.Value)
                             .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                             .Subject("Watchbill Inputs Required")
-                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillInputRequired_HTML.html", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillInputRequired_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                     }
 
@@ -217,7 +217,7 @@ namespace CCServ.Entities.Watchbill
                                     .To(addressGroup)
                                     .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                     .Subject("Watchbill Open For Inputs")
-                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillOpenForInputs_HTML.html", model)
                                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                             }
@@ -285,7 +285,7 @@ namespace CCServ.Entities.Watchbill
                                     .To(addressGroup)
                                     .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                     .Subject("Watchbill Closed For Inputs")
-                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
                                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                             }
 
@@ -357,7 +357,7 @@ namespace CCServ.Entities.Watchbill
                                     .To(addressGroup)
                                     .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                     .Subject("Watchbill Under Review")
-                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillUnderReview_HTML.html", model)
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillUnderReview_HTML.html", model)
                                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                             }
                         }).ConfigureAwait(false);
@@ -397,7 +397,7 @@ namespace CCServ.Entities.Watchbill
                             .To(emailAddresses)
                             .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                             .Subject("Watch Assigned")
-                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchAssigned_HTML.html", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchAssigned_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                     }).ConfigureAwait(false);
                 }
@@ -444,7 +444,7 @@ namespace CCServ.Entities.Watchbill
                                     .To(addressGroup)
                                     .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                     .Subject("Watchbill Published")
-                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchbillPublished_HTML.html", model)
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillPublished_HTML.html", model)
                                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                             }
 
@@ -700,7 +700,7 @@ namespace CCServ.Entities.Watchbill
                             .To(emailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                             .Subject("Watch Input Requirements")
-                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.WatchInputRequirements_HTML.html", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchInputRequirements_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                     }
                 }
@@ -769,7 +769,7 @@ namespace CCServ.Entities.Watchbill
                                         .To(addresses)
                                         .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                         .Subject("Upcoming Watch")
-                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.UpcomingWatch_HTML.html", model)
+                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.UpcomingWatch_HTML.html", model)
                                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                                     assignment.NumberOfAlertsSent++;
@@ -795,7 +795,7 @@ namespace CCServ.Entities.Watchbill
                                         .To(addresses)
                                         .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
                                         .Subject("Upcoming Watch")
-                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.UpcomingWatch_HTML.html", model)
+                                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.UpcomingWatch_HTML.html", model)
                                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                                     assignment.NumberOfAlertsSent++;

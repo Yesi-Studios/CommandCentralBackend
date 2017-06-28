@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Logging;
+using CommandCentral.Logging;
 
-namespace CCServ.Authorization
+namespace CommandCentral.Authorization
 {
     /// <summary>
     /// Extensions that help with authorization stuff.  Mostly operating on multiple permission groups.

@@ -1,4 +1,4 @@
-﻿using CCServ.Entities;
+﻿using CommandCentral.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.ChangeEventSystem.ChangeEvents
+namespace CommandCentral.ChangeEventSystem.ChangeEvents
 {
     /// <summary>
     /// The event that should be raised when a person's division, department and/or command changes.
@@ -105,7 +105,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
                     .CreateDefault()
                     .To(emailAddress)
                     .Subject("{0} Event".FormatS(this.EventName))
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AssignmentChangedEvent_HTML.html", new Email.Models.AssignmentChangedEventEmailModel { ChangeEvent = this }));
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.AssignmentChangedEvent_HTML.html", new Email.Models.AssignmentChangedEventEmailModel { ChangeEvent = this }));
             }
 
             Parallel.ForEach(emails, email =>

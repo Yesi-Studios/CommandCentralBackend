@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 
-namespace CCServ.Authorization.Groups.Definitions
+namespace CommandCentral.Authorization.Groups.Definitions
 {
     /// <summary>
     /// The Command Leadership permission group. For the top leadership in the command.

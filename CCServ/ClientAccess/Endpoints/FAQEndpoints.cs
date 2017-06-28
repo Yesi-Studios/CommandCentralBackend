@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.Entities;
+using CommandCentral.Authorization;
+using CommandCentral.Entities;
 using NHibernate.Criterion;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// All the FAQ endpoints.

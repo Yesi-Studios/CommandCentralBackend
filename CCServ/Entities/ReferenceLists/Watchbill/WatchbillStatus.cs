@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CommandCentral.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
     /// Defines a single watch bill status, which is used to indicate at which position in the process a watchbill is at.  

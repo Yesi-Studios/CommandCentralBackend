@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using AtwoodUtils;
-using CCServ.Authorization;
+using CommandCentral.Authorization;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single News Item and its members, including its DB access members.

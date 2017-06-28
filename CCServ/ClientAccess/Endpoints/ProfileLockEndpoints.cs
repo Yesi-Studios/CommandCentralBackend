@@ -1,13 +1,13 @@
 ﻿using System;
 using FluentNHibernate.Mapping;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using System.Collections.Generic;
 using AtwoodUtils;
 using System.Linq;
-using CCServ.Entities;
-using CCServ.Authorization;
+using CommandCentral.Entities;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     /// <summary>
     /// Contains all those endpoints for profile locks.

@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using AtwoodUtils;
 using System.Reflection;
 
-namespace CCServ.Authorization.Groups
+namespace CommandCentral.Authorization.Groups
 {
     /// <summary>
     /// Builds a property group for a permission group.

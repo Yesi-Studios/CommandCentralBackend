@@ -7,7 +7,7 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// A comment.  It's assigned to an object where users can comment on it.

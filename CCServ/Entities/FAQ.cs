@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// A single frequently asked question.

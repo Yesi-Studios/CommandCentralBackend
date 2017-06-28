@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using CCServ.Authorization;
-using CCServ.ClientAccess;
-using CCServ.Entities.ReferenceLists;
-using CCServ.DataAccess;
+using CommandCentral.Authorization;
+using CommandCentral.ClientAccess;
+using CommandCentral.Entities.ReferenceLists;
+using CommandCentral.DataAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Transform;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 using AtwoodUtils;
-using CCServ.ServiceManagement;
-using CCServ.Logging;
+using CommandCentral.ServiceManagement;
+using CommandCentral.Logging;
 using System.Reflection;
 using NHibernate.Type;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 using System.Web.Script.Serialization;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single person and all their properties and data access methods.

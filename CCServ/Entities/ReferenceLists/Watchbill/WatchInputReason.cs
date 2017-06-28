@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using FluentValidation.Results;
 using NHibernate.Criterion;
 
-namespace CCServ.Entities.ReferenceLists.Watchbill
+namespace CommandCentral.Entities.ReferenceLists.Watchbill
 {
     /// <summary>
     /// Defines a watch input reason.  This is used to provide a selection of reasons as to why a person can not stand watch.

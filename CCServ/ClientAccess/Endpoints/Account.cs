@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CCServ.Authorization;
-using CCServ.DataAccess;
-using CCServ.Entities;
+using CommandCentral.Authorization;
+using CommandCentral.DataAccess;
+using CommandCentral.Entities;
 using NHibernate.Transform;
 using AtwoodUtils;
 
-namespace CCServ.ClientAccess.Endpoints
+namespace CommandCentral.ClientAccess.Endpoints
 {
     static class Account
     {
@@ -72,7 +72,7 @@ namespace CCServ.ClientAccess.Endpoints
                                 .CreateDefault()
                                 .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                                 .Subject("Security Alert : Failed Login")
-                                .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FailedAccountLogin_HTML.html", model)
+                                .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.FailedAccountLogin_HTML.html", model)
                                 .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                             //Now we also need to add the event to client's account history.
@@ -234,7 +234,7 @@ namespace CCServ.ClientAccess.Endpoints
                             .CreateDefault()
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Security Alert : Reregistration Attempt")
-                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.ReregistrationError_HTML.html", beginRegModel)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                         throw new CommandCentralException("A user has already claimed that account.  That user has been notified of your attempt to claim the account." +
@@ -291,7 +291,7 @@ namespace CCServ.ClientAccess.Endpoints
                             .CreateDefault()
                             .To(person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, person.ToString())))
                             .Subject("Confirm Command Central Account")
-                            .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.AccountConfirmation_HTML.html", model)
+                            .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.AccountConfirmation_HTML.html", model)
                             .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     transaction.Commit();
@@ -384,7 +384,7 @@ namespace CCServ.ClientAccess.Endpoints
                         .CreateDefault()
                         .To(pendingAccountConfirmation.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingAccountConfirmation.Person.ToString())))
                         .Subject("Account Registered!")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.CompletedAccountRegistration_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.CompletedAccountRegistration_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     //Now delete the pending account confirmation.  We don't need it anymore.
@@ -511,7 +511,7 @@ namespace CCServ.ClientAccess.Endpoints
                         .CreateDefault()
                         .To(new System.Net.Mail.MailAddress(dodEmailAddress.Address, person.ToString()))
                         .Subject("Password Reset")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.BeginPasswordReset_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.BeginPasswordReset_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     transaction.Commit();
@@ -596,7 +596,7 @@ namespace CCServ.ClientAccess.Endpoints
                         .CreateDefault()
                         .To(pendingPasswordReset.Person.EmailAddresses.Select(x => new System.Net.Mail.MailAddress(x.Address, pendingPasswordReset.Person.ToString())))
                         .Subject("Password Reset")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.FinishPasswordReset_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.FinishPasswordReset_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     session.Delete(pendingPasswordReset);
@@ -657,7 +657,7 @@ namespace CCServ.ClientAccess.Endpoints
                         .CreateDefault()
                         .To(self.EmailAddresses.Where(x => x.IsDodEmailAddress).Select(x => new System.Net.Mail.MailAddress(x.Address, model.FriendlyName)))
                         .Subject("Password Changed")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.PasswordChanged_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.PasswordChanged_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     session.Update(self);
@@ -720,7 +720,7 @@ namespace CCServ.ClientAccess.Endpoints
                         .CreateDefault()
                         .To(new System.Net.Mail.MailAddress(emailAddress.Address, emailAddress.ToString()))
                         .Subject("Forgot Username")
-                        .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.ForgotUsername_HTML.html", model)
+                        .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.ForgotUsername_HTML.html", model)
                         .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
 
                     person.AccountHistory.Add(new AccountHistoryEvent

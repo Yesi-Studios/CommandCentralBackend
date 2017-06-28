@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
-using CCServ.Authorization;
-using CCServ.Logging;
+using CommandCentral.Authorization;
+using CommandCentral.Logging;
 using NHibernate.Type;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single muster record, intended to archive the fact that a person claimed that another person was in a given state at a given time.

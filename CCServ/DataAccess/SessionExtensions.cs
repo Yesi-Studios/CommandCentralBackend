@@ -9,13 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
 using System.Collections;
-using CCServ.Entities;
+using CommandCentral.Entities;
 using System.Linq;
 using NHibernate.Collection;
 using NHibernate.Type;
 using System.Linq.Expressions;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// A collection of extensions to NHibernate's session object.

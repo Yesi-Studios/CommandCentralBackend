@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Email.Models
+namespace CommandCentral.Email.Models
 {
     /// <summary>
     /// The email model to be used for a name changed event.

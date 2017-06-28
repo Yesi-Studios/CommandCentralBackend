@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using AtwoodUtils;
 using System.Linq;
 using NHibernate.Criterion;
 
-namespace CCServ.Entities.ReferenceLists
+namespace CommandCentral.Entities.ReferenceLists
 {
     /// <summary>
     /// Describes a single NEC.

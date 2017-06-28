@@ -8,9 +8,9 @@ using NHibernate;
 using AtwoodUtils;
 using NHibernate.Criterion;
 using System.Linq.Expressions;
-using CCServ.ClientAccess;
+using CommandCentral.ClientAccess;
 
-namespace CCServ.DataAccess
+namespace CommandCentral.DataAccess
 {
     /// <summary>
     /// A query strategy instructs the application as to how to query for a specific group of properties.

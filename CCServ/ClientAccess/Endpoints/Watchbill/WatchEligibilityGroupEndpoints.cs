@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Entities.ReferenceLists.Watchbill;
-using CCServ.Authorization;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Authorization;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
     /// The endpoints for interacting with the eligibility groups.

@@ -1,12 +1,12 @@
 ﻿using System;
-using CCServ.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists;
 using FluentNHibernate.Mapping;
 using FluentValidation;
 using System.Linq;
 using AtwoodUtils;
 using System.Collections.Generic;
 
-namespace CCServ.Entities
+namespace CommandCentral.Entities
 {
     /// <summary>
     /// Describes a single Phone number along with its data access members and properties

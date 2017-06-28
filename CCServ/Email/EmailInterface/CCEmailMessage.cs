@@ -9,9 +9,9 @@ using AtwoodUtils;
 using System.Reflection;
 using System.IO;
 using System.Net.Mime;
-using CCServ.ServiceManagement;
+using CommandCentral.ServiceManagement;
 
-namespace CCServ.Email.EmailInterface
+namespace CommandCentral.Email.EmailInterface
 {
     /// <summary>
     /// The base of the mail system.

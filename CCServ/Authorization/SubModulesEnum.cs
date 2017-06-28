@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.Authorization
+namespace CommandCentral.Authorization
 {
     /// <summary>
     /// A list of all the submodules in the main module.  

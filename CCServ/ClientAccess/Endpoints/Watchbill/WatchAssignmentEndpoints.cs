@@ -1,17 +1,17 @@
-﻿using CCServ.Entities.Watchbill;
+﻿using CommandCentral.Entities.Watchbill;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.Authorization;
-using CCServ.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Authorization;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
 using System.Reflection;
 using NHibernate.Transform;
-using CCServ.Entities;
+using CommandCentral.Entities;
 
-namespace CCServ.ClientAccess.Endpoints.Watchbill
+namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
     /// <summary>
     /// Defines all of the endpoints used to interact with the watch assignment object.

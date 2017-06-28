@@ -1,12 +1,12 @@
 ﻿using AtwoodUtils;
-using CCServ.Entities;
+using CommandCentral.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CCServ.ChangeEventSystem.ChangeEvents
+namespace CommandCentral.ChangeEventSystem.ChangeEvents
 {
     /// <summary>
     /// The event that should be raised when a person's name changes.  A name change is reflected by the First, Middle, and Last names.
@@ -105,7 +105,7 @@ namespace CCServ.ChangeEventSystem.ChangeEvents
                     .CreateDefault()
                     .To(emailAddress)
                     .Subject("{0} Event".FormatS(this.EventName))
-                    .HTMLAlternateViewUsingTemplateFromEmbedded("CCServ.Email.Templates.NameChangedEvent_HTML.html", new Email.Models.NameChangedEventEmailModel { ChangeEvent = this }));
+                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.NameChangedEvent_HTML.html", new Email.Models.NameChangedEventEmailModel { ChangeEvent = this }));
             }
 
             Parallel.ForEach(emails, email =>

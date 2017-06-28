@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using CCServ.Authorization;
-using CCServ.Entities;
+using CommandCentral.Authorization;
+using CommandCentral.Entities;
 using FluentNHibernate.Mapping;
 
-namespace CCServ.ClientAccess
+namespace CommandCentral.ClientAccess
 {
     /// <summary>
     /// Describes a single authentication session and provides members for interacting with that session.

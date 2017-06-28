@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AtwoodUtils;
-using CCServ.ServiceManagement;
+using CommandCentral.ServiceManagement;
 
-namespace CCServ.Authorization
+namespace CommandCentral.Authorization
 {
     /// <summary>
     /// Utilities to help consumers interact with permissions.
