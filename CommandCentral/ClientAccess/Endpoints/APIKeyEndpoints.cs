@@ -29,7 +29,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("You don't have permission to view API keys - you must be a developer.", ErrorTypes.Authorization);
 
             //Client has permission, show them the api keys and the names.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 token.SetResult(session.QueryOver<APIKey>().List());
             }

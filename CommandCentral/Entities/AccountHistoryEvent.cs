@@ -41,7 +41,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} @ {1}".FormatS(this.AccountHistoryEventType, this.EventTime);
+            return "{0} @ {1}".With(this.AccountHistoryEventType, this.EventTime);
         }
 
         /// <summary>

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.Entities.ReferenceLists.Watchbill;
 using CommandCentral.Authorization;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
@@ -44,7 +45,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 return personId;
             }).ToList();
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -75,7 +76,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         groupFromDB.EligiblePersons.Clear();
                         foreach (var person in persons)
                         {
-                            if (person.DutyStatus == Entities.ReferenceLists.DutyStatuses.Loss)
+                            if (person.DutyStatus == ReferenceListHelper<DutyStatus>.Find("Loss"))
                                 failures.Add(person);
                             else
                                 groupFromDB.EligiblePersons.Add(person);

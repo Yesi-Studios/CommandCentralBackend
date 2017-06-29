@@ -31,7 +31,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchShiftId))
                 throw new CommandCentralException("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -88,7 +88,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 Points = x.Points
             }).ToList();
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -174,7 +174,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!valdiationResult.IsValid)
                 throw new AggregateException(valdiationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -235,7 +235,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -288,7 +288,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             var ids = token.Args["ids"].CastJToken<List<Guid>>();
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {

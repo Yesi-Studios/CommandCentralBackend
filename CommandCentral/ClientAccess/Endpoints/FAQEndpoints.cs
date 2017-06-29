@@ -35,7 +35,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The faqid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -68,7 +68,7 @@ namespace CommandCentral.ClientAccess.Endpoints
         private static void LoadFAQs(MessageToken token)
         {
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -112,7 +112,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatS(e.Message), ErrorTypes.Validation);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".With(e.Message), ErrorTypes.Validation);
             }
 
             //Ok now we know we have the FAQ.  Now let's see if it's valid.
@@ -122,7 +122,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -192,11 +192,11 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
             catch (Exception e)
             {
-                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".FormatS(e.Message), ErrorTypes.Validation);
+                throw new CommandCentralException("There was an error while trying to parse the FAQ you sent.  Error: {0}".With(e.Message), ErrorTypes.Validation);
             }
 
             //We can head right into the session since we're going to delete this FAQ.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

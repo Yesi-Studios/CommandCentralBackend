@@ -163,7 +163,7 @@ namespace CommandCentral.DataAccess
 
                 //Do the validation.
                 if ((from.HasValue && to.HasValue) && from > to)
-                    throw new CommandCentralException("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".FormatS(from, to), ErrorTypes.Validation);
+                    throw new CommandCentralException("The dates, From:'{0}' and To:'{1}', were invalid.  'From' may not be after 'To'.".With(from, to), ErrorTypes.Validation);
 
                 if (from == to)
                 {

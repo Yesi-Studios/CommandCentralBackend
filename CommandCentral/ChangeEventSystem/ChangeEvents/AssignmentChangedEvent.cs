@@ -104,7 +104,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
                 emails.Add(Email.EmailInterface.CCEmailMessage
                     .CreateDefault()
                     .To(emailAddress)
-                    .Subject("{0} Event".FormatS(this.EventName))
+                    .Subject("{0} Event".With(this.EventName))
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.AssignmentChangedEvent_HTML.html", new Email.Models.AssignmentChangedEventEmailModel { ChangeEvent = this }));
             }
 

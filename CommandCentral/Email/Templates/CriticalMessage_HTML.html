@@ -270,7 +270,6 @@
                                                                                                         <div style="color:#555555;line-height:120%;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
                                                                                                             <div style="font-size:12px;line-height:14px;color:#555555;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;">
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px"><strong><span style="font-size: 12px; line-height: 14px;"><span style="color: rgb(255, 255, 255); font-size: 16px; line-height: 19px;">Authentication Session</span></span></strong></p>
-
                                                                                                                 @if (@Model.Token == null || @Model.Token.AuthenticationSession == null)
                                                                                                                 {
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
@@ -280,6 +279,29 @@
                                                                                                                 else
                                                                                                                 {
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Friendly Name: @Model.Token.AuthenticationSession.Person</span>
+                                                                                                                </p>
+                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                    @if (Model.Token.AuthenticationSession.Person.PhoneNumbers != null && Model.Token.AuthenticationSession.Person.PhoneNumbers.Any())
+                                                                                                                    {
+                                                                                                                    var number = Model.Token.AuthenticationSession.Person.PhoneNumbers.FirstOrDefault(x => x.IsContactable || x.IsPreferred);
+                                                                                                                    if (number == null)
+                                                                                                                    {
+                                                                                                                    number = Model.Token.AuthenticationSession.Person.PhoneNumbers.FirstOrDefault(x => x.PhoneType.Value == "Work");
+                                                                                                                    }
+                                                                                                                    string text = "NA";
+                                                                                                                    if (number != null)
+                                                                                                                    {
+                                                                                                                    text = number.Number;
+                                                                                                                    }
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Phone Number: @text </span>
+                                                                                                                    }
+                                                                                                                    else
+                                                                                                                    {
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Client Phone Number: NA </span>
+                                                                                                                    }
+                                                                                                                </p>
+                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Session Id: @Model.Token.AuthenticationSession.Id</span>
                                                                                                                 </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
@@ -287,9 +309,6 @@
                                                                                                                 </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Id: @Model.Token.AuthenticationSession.Person.Id</span>
-                                                                                                                </p>
-                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Person Friendly Name: @Model.Token.AuthenticationSession.Person</span>
                                                                                                                 </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Logout Time: @Model.Token.AuthenticationSession.LogoutTime</span>
@@ -317,15 +336,17 @@
                                                                                                         <div style="color:#555555;line-height:120%;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
                                                                                                             <div style="font-size:12px;line-height:14px;color:#555555;font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;text-align:left;">
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 16px; line-height: 19px; color: rgb(255, 255, 255);">Message Token Information</span>&nbsp;<br></p>
-
                                                                                                                 @if (@Model.Token == null)
                                                                                                                 {
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">No token information available.  This critical message originated outside the scope of a request.</span>
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">No token information available.  This error occurred outside the scope of a request.</span>
                                                                                                                 </p>
                                                                                                                 }
                                                                                                                 else
                                                                                                                 {
+                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
+                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Endpoint: @Model.Token.CalledEndpoint</span>
+                                                                                                                </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Message Id: @Model.Token.Id</span>
                                                                                                                 </p>
@@ -337,18 +358,6 @@
                                                                                                                 </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Call Time: @Model.Token.CallTime</span>
-                                                                                                                </p>
-                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Raw JSON Request: @Model.Token.RawRequestBodyForLogging</span>
-                                                                                                                </p>
-                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Endpoint: @Model.Token.CalledEndpoint</span>
-                                                                                                                </p>
-                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Raw JSON Result: @Model.Token.RawResponseBody</span>
-                                                                                                                </p>
-                                                                                                                <p style="margin: 0;font-size: 12px;line-height: 14px">
-                                                                                                                    <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">State: @Model.Token.State</span>
                                                                                                                 </p>
                                                                                                                 <p style="margin: 0;font-size: 12px;line-height: 14px">
                                                                                                                     <span style="color: rgb(255, 255, 255); font-size: 12px; line-height: 14px;">Handled Time: @Model.Token.HandledTime UTC</span>

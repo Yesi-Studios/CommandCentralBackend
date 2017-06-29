@@ -34,7 +34,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -105,7 +105,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -136,7 +136,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the division, {0}, because it is referenced on {1} profile(s).".FormatS(division, persons.Count), ErrorTypes.Validation);
+                            throw new CommandCentralException("We were unable to delete the division, {0}, because it is referenced on {1} profile(s).".With(division, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else
@@ -162,7 +162,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id != default(Guid))
                 {

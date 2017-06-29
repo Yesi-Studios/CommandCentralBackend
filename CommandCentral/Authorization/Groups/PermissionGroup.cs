@@ -22,6 +22,13 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         public static ConcurrentBag<PermissionGroup> AllPermissionGroups { get; set; }
 
+        static PermissionGroup()
+        {
+            AllPermissionGroups = new ConcurrentBag<PermissionGroup>(Assembly.GetExecutingAssembly().GetTypes()
+                .Where(x => typeof(PermissionGroup).IsAssignableFrom(x) && x != typeof(PermissionGroup))
+                .Select(x => (PermissionGroup)Activator.CreateInstance(x)));
+        }
+
         #region Properties
 
         /// <summary>
@@ -142,33 +149,6 @@ namespace CommandCentral.Authorization.Groups
         public void CanEditMembershipOf(params Type[] permissionGroups)
         {
             GroupsCanEditMembershipOf.AddRange(permissionGroups.Select(x => x.Name));
-        }
-
-        #endregion
-
-        #region Startup Methods
-
-        /// <summary>
-        /// Scans the entire assembly looking for any types that implement permission groups, creates an instance of them, and then saves them.
-        /// <para />
-        /// Validates that no two permission groups have the same name.
-        /// </summary>
-        [ServiceManagement.StartMethod(Priority = 17)]
-        private static void ScanPermissions(CLI.Options.LaunchOptions launchOptions)
-        {
-            Log.Info("Collecting permissions...");
-
-            var groups = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(x => typeof(PermissionGroup).IsAssignableFrom(x) && x != typeof(PermissionGroup))
-                .Select(x => (PermissionGroup)Activator.CreateInstance(x))
-                .ToList();
-
-            if (groups.GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
-                throw new Exception("Atwood, you gave two groups the same name again.  Fix it; this is embarrassing.  I will not start up until you do.");
-
-            AllPermissionGroups = new ConcurrentBag<PermissionGroup>(groups);
-
-            Log.Info("Found {0} permission group(s): {1}".FormatS(AllPermissionGroups.Count, String.Join(", ", AllPermissionGroups.Select(x => x.GroupName))));
         }
 
         #endregion

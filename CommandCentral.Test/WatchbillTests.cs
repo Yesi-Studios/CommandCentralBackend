@@ -4,11 +4,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace CommandCentral.Test
 {
     [TestClass]
-    public class UnitTest1
+    public class WatchbillTests
     {
-        [TestMethod]
-        public void TestMethod1()
-        {
-        }
+        
     }
 }

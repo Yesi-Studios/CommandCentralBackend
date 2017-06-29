@@ -21,7 +21,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, ClientAccess.MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -36,7 +36,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<ReligiousPreference>().Where(x => x.Value.IsInsensitiveLike(relPref.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(relPref.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".With(relPref.Value), ErrorTypes.Validation);
 
                     var relPrefFromDB = session.Get<ReligiousPreference>(relPref.Id);
 
@@ -68,7 +68,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void Delete(System.Guid id, bool forceDelete, ClientAccess.MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -95,7 +95,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".FormatS(relPref, persons.Count), ErrorTypes.Validation);
+                            throw new CommandCentralException("We were unable to delete the religious preference, {0}, because it is referenced on {1} profile(s).".With(relPref, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else
@@ -120,7 +120,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

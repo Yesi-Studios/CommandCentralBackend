@@ -34,7 +34,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchInputId))
                 throw new CommandCentralException("Your watch input id parameter's format was invalid.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -97,7 +97,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 return newInput;
             });
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -123,7 +123,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 throw new CommandCentralException("You are not authorized to submit inputs for this person.", ErrorTypes.Validation);
                             
                             //Let's also check the watchbill's state.
-                            if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
+                            if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                                 throw new CommandCentralException("You may not submit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                             var inputToInsert = new WatchInput
@@ -179,7 +179,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -194,7 +194,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
-                        if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
+                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now let's confirm that our client is allowed to submit inputs for this person.
@@ -246,7 +246,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -261,7 +261,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
-                        if (watchbill.CurrentState != WatchbillStatuses.OpenForInputs)
+                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now we also need the permissions to determine if this client can edit this input.

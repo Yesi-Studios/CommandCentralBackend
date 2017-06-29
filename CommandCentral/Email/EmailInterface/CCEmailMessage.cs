@@ -439,7 +439,7 @@ namespace CommandCentral.Email.EmailInterface
             }
             else
             {
-                Logging.Log.Debug("An email was suppressed (no smtp hosts).  Subject: {0}".FormatS(Message.Subject));
+                Logging.Log.Debug("An email was suppressed (no smtp hosts).  Subject: {0}".With(Message.Subject));
             }
         }
 
@@ -450,12 +450,10 @@ namespace CommandCentral.Email.EmailInterface
         /// <summary>
         /// Initializes any config variables here during startup.
         /// </summary>
-        /// <param name="options"></param>
-        [StartMethod()]
-        private static void InitializeEmail(CLI.Options.LaunchOptions options)
+        public static void InitializeEmail(params string[] smtpHosts)
         {
-            if (!options.SMTPHosts.All(x => String.IsNullOrWhiteSpace(x)))
-                SMTPHostAddresses = options.SMTPHosts.ToList();
+            if (!smtpHosts.All(x => String.IsNullOrWhiteSpace(x)))
+                SMTPHostAddresses = smtpHosts.ToList();
         }
 
         #endregion

@@ -134,7 +134,7 @@ namespace CommandCentral.DataAccess
 
                     if (propertyGroup == null)
                     {
-                        throw new CommandCentralException("The member, {0}, declared no search strategy!  ".FormatS(propertyExpression.GetPropertyName()) +
+                        throw new CommandCentralException("The member, {0}, declared no search strategy!  ".With(propertyExpression.GetPropertyName()) +
                             "This is most likely because it is not searchable.  " +
                             "If you believe this is in error, please contact us.", ErrorTypes.Validation);
                     }
@@ -167,7 +167,7 @@ namespace CommandCentral.DataAccess
 
                 if (propertyGroup == null)
                 {
-                    throw new CommandCentralException("The member, {0}, declared no search strategy!  ".FormatS(filter.Key.Name) +
+                    throw new CommandCentralException("The member, {0}, declared no search strategy!  ".With(filter.Key.Name) +
                             "This is most likely because it is not searchable.  " +
                             "If you believe this is in error, please contact us.", ErrorTypes.Validation);
                 }

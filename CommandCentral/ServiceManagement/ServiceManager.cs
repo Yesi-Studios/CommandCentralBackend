@@ -47,32 +47,59 @@ namespace CommandCentral.ServiceManagement
             try
             {
 
-                //Do arg validation.
-                if ((launchOptions.Rebuild || launchOptions.GIGO != 0) && 
-                    String.Equals(launchOptions.Database, "command_central", StringComparison.CurrentCultureIgnoreCase) &&
-                    String.Equals(launchOptions.Server, "147.51.62.50", StringComparison.CurrentCultureIgnoreCase))
-                    throw new Exception("Go fuck yourself and try to delete the production database or sully it with your garbage.");
-
-                _options = launchOptions;
-
-                Log.Info("Starting service startup...");
-
-                FluentScheduler.JobManager.UseUtcTime();
-                FluentSchedulerRegistry = new FluentScheduler.Registry();
-                FluentScheduler.JobManager.Initialize(FluentSchedulerRegistry);
-
-                //Now we need to run all start up methods.
-                RunStartupMethods(launchOptions);
-
-                //All startup methods have run, now we need to launch the service itself.
+                Email.EmailInterface.CCEmailMessage.InitializeEmail(launchOptions.SMTPHosts);
+                Log.RegisterLoggers();
 
                 //Let's determine if our given port is usable.
-                //Make sure the port hasn't been claimed by any other application.
                 if (!Utilities.IsPortAvailable(launchOptions.Port))
                 {
                     throw new Exception("It appears the port '{0}' is already in use. We cannot continue from this.");
                 }
 
+                _options = launchOptions;
+
+                InitializeFluentScheduler();
+
+                Log.Info("Starting service startup...");
+
+                //Now we need to run all start up methods.
+                //First let's make our connection string.
+                var rawConnectionString = "server={0};database={1};user={2};password={3};CertificatePassword={4};SSL Mode={5}"
+                    .With(launchOptions.Server, launchOptions.Database, launchOptions.Username, launchOptions.Password,
+                    launchOptions.CertificatePassword, launchOptions.SecurityMode == CLI.SecurityModes.Both || launchOptions.SecurityMode == CLI.SecurityModes.DBOnly ? "Required" : "None");
+
+                MySql.Data.MySqlClient.MySqlConnectionStringBuilder connectionString = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(rawConnectionString);
+
+                if (launchOptions.Rebuild)
+                {
+                    Log.Info("Rebuilding database '{0}'...".With(launchOptions.Database));
+                    DataAccess.DataProvider.InitializeAndRebuild(connectionString, launchOptions.Database);
+                    Entities.Watchbill.WatchAssignment.WatchAssignmentMapping.UpdateForeignKeyRule();
+
+                    //Set up all the pre def lists.
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.WatchQualification>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Sex>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchbillStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchShiftType>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchEligibilityGroup>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchAssignmentState>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.PhoneNumberType>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Paygrade>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.MusterStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.DutyStatus>();
+                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.AccountHistoryType>();
+                }
+                else
+                {
+                    DataAccess.DataProvider.Initialize(connectionString);
+                }
+
+                ClientAccess.ServiceEndpoint.ScanEndpoints();
+
+                Entities.MusterRecord.SetupMuster();
+                Entities.Watchbill.Watchbill.SetupAlerts();
+
+                //All startup methods have run, now we need to launch the service itself.
                 //Ok, so now we have a valid port.  Let's set up the service.
                 if (launchOptions.SecurityMode == CLI.SecurityModes.HTTPSOnly || launchOptions.SecurityMode == CLI.SecurityModes.Both)
                 {
@@ -91,12 +118,18 @@ namespace CommandCentral.ServiceManagement
                 
                 _host.Open();
 
-                Log.Info("Service is live and listening on '{0}'.".FormatS(_host.BaseAddresses.First().AbsoluteUri));
+                Log.Info("Service is live and listening on '{0}'.".With(_host.BaseAddresses.First().AbsoluteUri));
             }
             catch (Exception e)
             {
                 Log.Exception(e, "An error occurred during service start up");
             }
+        }
+
+        public static void InitializeFluentScheduler()
+        {
+            FluentScheduler.JobManager.UseUtcTime();
+            FluentScheduler.JobManager.Initialize();
         }
 
         /// <summary>
@@ -106,59 +139,6 @@ namespace CommandCentral.ServiceManagement
         {
             if (_host != null && _host.State != CommunicationState.Closed)
                 _host.Close();
-        }
-
-        /// <summary>
-        /// Scans the entire executing assembly for any methods that want to be run at service start up.
-        /// </summary>
-        /// <returns></returns>
-        private static void RunStartupMethods(CLI.Options.LaunchOptions launchOptions)
-        {
-            Log.Info("Scanning for startup methods.");
-
-            //Scan for all start up methods.
-            var startupMethods = Assembly.GetExecutingAssembly().GetTypes()
-                    .SelectMany(x => x.GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
-                    .Where(x => x.GetCustomAttribute<StartMethodAttribute>() != null)
-                    .Select(x =>
-                    {
-                        //Make sure all start up methods follow the same pattern.
-                        if (x.ReturnType != typeof(void) || x.GetParameters().Length != 1 || x.GetParameters()[0].ParameterType != typeof(CLI.Options.LaunchOptions))
-                            throw new ArgumentException("The method, '{0}', in the type, '{1}', does not match the signature of a startup method!".FormatS(x.Name, x.DeclaringType.Name));
-
-                        //Create the method's call and compile it.
-                        var parameters = x.GetParameters()
-                           .Select(p => Expression.Parameter(p.ParameterType, p.Name))
-                           .ToArray();
-                        var call = Expression.Call(null, x, parameters);
-                        var startupMethod = (Action<CLI.Options.LaunchOptions>)Expression.Lambda(call, parameters).Compile();
-
-
-                        var startupMethodAttribute = x.GetCustomAttribute<StartMethodAttribute>();
-
-                        return new
-                        {
-                            Method = startupMethod,
-                            Priority = startupMethodAttribute.Priority,
-                            Name = x.Name
-                        };
-
-                    }).GroupBy(x => x.Priority).OrderByDescending(x => x.Key);
-
-            //Now run them all in order.  We allow multiple of the same priority, in which case they will execute in a random order within that priority.
-            Log.Info("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
-
-            //Write to the console here because the logging system hasn't been set up yet.
-            Console.WriteLine("Executing {0} startup method(s). ({1})".FormatS(startupMethods.Count(), String.Join(", ", startupMethods.Select(x => x.ToList().First().Priority))));
-            foreach (var group in startupMethods)
-            {
-                //We can say first because we know there's only one.
-                var infos = group.ToList();
-
-                Log.Info("Executing startup method(s) {0} with priority {1}.".FormatS(String.Join(", ", infos.Select(x => x.Name)), group.Key));
-                
-                infos.ForEach(x => x.Method(launchOptions));
-            }
         }
     }
 }

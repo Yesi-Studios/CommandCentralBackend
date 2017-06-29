@@ -8,6 +8,7 @@ using CommandCentral.DataAccess;
 using CommandCentral.Entities;
 using NHibernate.Transform;
 using AtwoodUtils;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.ClientAccess.Endpoints
 {
@@ -40,7 +41,7 @@ namespace CommandCentral.ClientAccess.Endpoints
         {
             token.Args.AssertContainsKeys("username", "password");
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -78,7 +79,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             //Now we also need to add the event to client's account history.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.FailedLogin,
+                                AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Failed Login"),
                                 EventTime = token.CallTime
                             });
 
@@ -107,7 +108,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             //Also put the account history on the client.
                             person.AccountHistory.Add(new AccountHistoryEvent
                             {
-                                AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.Login,
+                                AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Login"),
                                 EventTime = token.CallTime
                             });
 
@@ -139,7 +140,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
 
             //First we need to release any profile locks owned by this person.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -166,7 +167,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             //Cool, we also need to update the client.
             token.AuthenticationSession.Person.AccountHistory.Add(new AccountHistoryEvent
             {
-                AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.Logout,
+                AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Logout"),
                 EventTime = token.CallTime
             });
         }
@@ -205,7 +206,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The continue link you sent was not a valid URI.", ErrorTypes.Validation);
 
             //Let's do our work in a new session so that we don't affect the authentication information.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -272,7 +273,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Let's also add the account history object here.
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.RegistrationStarted,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Registration Started"),
                         EventTime = token.CallTime
                     });
 
@@ -335,7 +336,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             //Finally, we'll update the profile with an account history event.
             //Then return. ... fuck, ok, here we go.
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -367,7 +368,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Also put the account history object on the person.
                     pendingAccountConfirmation.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.RegistrationCompleted,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Registration Completed"),
                         EventTime = token.CallTime
                     });
 
@@ -451,7 +452,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
 
             //Here we go
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -480,7 +481,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.PasswordResetInitiated,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Reset Initiated"),
                         EventTime = token.CallTime
                     });
 
@@ -553,7 +554,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             //If it is, we'll set the password and then send the user an email telling them that the password was reset.
             //We'll also log the event on the user's profile.
 
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -579,7 +580,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Let's also add the account history. 
                     pendingPasswordReset.Person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.PasswordResetCompleted,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Reset Completed"),
                         EventTime = token.CallTime
                     });
 
@@ -633,7 +634,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("Your old password was incorrect.", ErrorTypes.Authorization);
 
             //Now we need to do the password update work in another session
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -644,7 +645,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     self.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.PasswordChanged,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Password Changed"),
                         EventTime = token.CallTime
                     });
 
@@ -694,7 +695,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The ssn must not be null or empty.", ErrorTypes.Validation);
 
             //Now let's go load the user with this ssn.
-            using (var session = NHibernateHelper.CreateStatefulSession())
+            using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -707,7 +708,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     //Now let's get the client's DOD email address.
                     var emailAddress = person.EmailAddresses.FirstOrDefault(x => x.IsDodEmailAddress) ??
-                        throw new Exception("The user, '{0}', has a claimed account but no DOD email address.  Somehow.".FormatS(person.ToString()));
+                        throw new Exception("The user, '{0}', has a claimed account but no DOD email address.  Somehow.".With(person.ToString()));
 
                     var model = new Email.Models.ForgotPasswordModel
                     {
@@ -725,7 +726,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                     person.AccountHistory.Add(new AccountHistoryEvent
                     {
-                        AccountHistoryEventType = Entities.ReferenceLists.AccountHistoryTypes.UsernameForgotten,
+                        AccountHistoryEventType = ReferenceListHelper<AccountHistoryType>.Find("Username Forgotten"),
                         EventTime = token.CallTime
                     });
 

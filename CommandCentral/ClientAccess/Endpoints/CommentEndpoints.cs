@@ -31,7 +31,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 throw new CommandCentralException("The id parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -83,7 +83,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -129,7 +129,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -184,7 +184,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //We passed validation, let's get a sesssion and do ze work.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try

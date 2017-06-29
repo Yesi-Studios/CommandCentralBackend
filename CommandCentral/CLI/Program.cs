@@ -82,18 +82,6 @@ namespace CommandCentral.CLI
                         ServiceManagement.ServiceManager.StartService((LaunchOptions)invokedVerbInstance);
                         break;
                     }
-                case "install":
-                    {
-                        var installOptions = (InstallOptions)invokedVerbInstance;
-                        WindowsService.WindowsServiceInstaller.InstallService(System.Reflection.Assembly.GetExecutingAssembly().Location, installOptions.ServiceName, installOptions.ServiceDisplayName);
-                        break;
-                    }
-                case "uninstall":
-                    {
-                        var uninstallOptions = (UninstallOptions)invokedVerbInstance;
-                        WindowsService.WindowsServiceInstaller.UninstallService(uninstallOptions.ServiceName);
-                        break;
-                    }
                 default:
                     {
                         "Fell to default statement in verb switch for verb: {0}.".WriteLine();

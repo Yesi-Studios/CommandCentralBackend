@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AtwoodUtils;
 using CommandCentral.CustomTypes;
 using CommandCentral.Entities;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.Email.Models
 {
@@ -48,7 +49,7 @@ namespace CommandCentral.Email.Models
         {
             get
             {
-                return Entities.ReferenceLists.MusterStatuses.AllMusterStatuses.Select(x => x.Value).OrderBy(x => x).ToList();
+                return ReferenceListHelper<MusterStatus>.All().Select(x => x.Value).OrderBy(x => x).ToList();
             }
         }
 
@@ -59,7 +60,7 @@ namespace CommandCentral.Email.Models
         {
             get
             {
-                return Entities.ReferenceLists.DutyStatuses.AllDutyStatuses.Select(x => x.Value).OrderBy(x => x).ToList();
+                return ReferenceListHelper<DutyStatus>.All().Select(x => x.Value).OrderBy(x => x).ToList();
             }
         }
 

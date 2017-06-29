@@ -21,7 +21,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -36,7 +36,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<Designation>().Where(x => x.Value.IsInsensitiveLike(designation.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(designation.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".With(designation.Value), ErrorTypes.Validation);
 
                     var designationFromDB = session.Get<Designation>(designation.Id);
 
@@ -68,7 +68,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -95,7 +95,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the designation, {0}, because it is referenced on {1} profile(s).".FormatS(designation, persons.Count), ErrorTypes.Validation);
+                            throw new CommandCentralException("We were unable to delete the designation, {0}, because it is referenced on {1} profile(s).".With(designation, persons.Count), ErrorTypes.Validation);
 
                         }
                     }
@@ -121,7 +121,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

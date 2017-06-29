@@ -21,7 +21,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, ClientAccess.MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -36,7 +36,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     //Here, we're going to see if the value already exists.  
                     //This is in response to a bug in which duplicate value entries will cause a bug.
                     if (session.QueryOver<UIC>().Where(x => x.Value.IsInsensitiveLike(uic.Value)).RowCount() != 0)
-                        throw new CommandCentralException("The value, '{0}', already exists in the list.".FormatS(uic.Value), ErrorTypes.Validation);
+                        throw new CommandCentralException("The value, '{0}', already exists in the list.".With(uic.Value), ErrorTypes.Validation);
 
                     var uicFromDB = session.Get<UIC>(uic.Id);
 
@@ -68,7 +68,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override void Delete(System.Guid id, bool forceDelete, ClientAccess.MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
                 try
@@ -95,7 +95,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         else
                         {
                             //There were references but we can't delete them.
-                            throw new CommandCentralException("We were unable to delete the uic, {0}, because it is referenced on {1} profile(s).".FormatS(uic, persons.Count), ErrorTypes.Validation);
+                            throw new CommandCentralException("We were unable to delete the uic, {0}, because it is referenced on {1} profile(s).".With(uic, persons.Count), ErrorTypes.Validation);
                         }
                     }
                     else
@@ -120,7 +120,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

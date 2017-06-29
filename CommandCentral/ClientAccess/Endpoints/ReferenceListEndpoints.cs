@@ -47,11 +47,11 @@ namespace CommandCentral.ClientAccess.Endpoints
             {
                 if (editableOnly)
                 {
-                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var names = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => (typeof(EditableReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
                         .Select(x => x.Key);
 
-                    using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                    using (var session = DataAccess.DataProvider.CreateStatefulSession())
                     {
                         var result = session.QueryOver<EditableReferenceListItemBase>()
                             .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
@@ -72,11 +72,11 @@ namespace CommandCentral.ClientAccess.Endpoints
                 }
                 else
                 {
-                    var names = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var names = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => (typeof(ReferenceListItemBase)).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)))
                         .Select(x => x.Key);
 
-                    using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                    using (var session = DataAccess.DataProvider.CreateStatefulSession())
                     {
                         var result = session.QueryOver<ReferenceListItemBase>()
                             .Cacheable().CacheMode(NHibernate.CacheMode.Normal)
@@ -104,7 +104,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 //Here the client wants all reference list types that aren't the given ones.
                 if (editableOnly)
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var metadatas = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
 
                     foreach (var metadata in metadatas)
@@ -114,7 +114,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 }
                 else
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var metadatas = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && !entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
 
                     foreach (var metadata in metadatas)
@@ -127,7 +127,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             {
                 if (editableOnly)
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var metadatas = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => typeof(EditableReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
 
                     foreach (var metadata in metadatas)
@@ -137,7 +137,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 }
                 else
                 {
-                    var metadatas = DataAccess.NHibernateHelper.GetAllEntityMetadata()
+                    var metadatas = DataAccess.DataProvider.GetAllEntityMetadata()
                         .Where(x => typeof(ReferenceListItemBase).IsAssignableFrom(x.Value.GetMappedClass(NHibernate.EntityMode.Poco)) && entityNames.Contains(x.Key, StringComparer.CurrentCultureIgnoreCase));
 
                     foreach (var metadata in metadatas)
@@ -195,7 +195,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             string entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
-            var metadata = DataAccess.NHibernateHelper.GetEntityMetadata(entityName);
+            var metadata = DataAccess.DataProvider.GetEntityMetadata(entityName);
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
@@ -227,7 +227,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             string entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
-            var metadata = DataAccess.NHibernateHelper.GetEntityMetadata(entityName);
+            var metadata = DataAccess.DataProvider.GetEntityMetadata(entityName);
 
             //Ok, now let's see if it's a reference list.
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))

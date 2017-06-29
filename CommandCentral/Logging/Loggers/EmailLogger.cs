@@ -51,7 +51,7 @@ namespace CommandCentral.Logging.Loggers
             {
                 Exception = ex,
                 OriginalMessage = message,
-                Token = token ?? new MessageToken()
+                Token = token
             };
 
             Email.EmailInterface.CCEmailMessage

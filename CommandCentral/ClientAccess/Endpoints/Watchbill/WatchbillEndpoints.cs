@@ -7,6 +7,7 @@ using AtwoodUtils;
 using CommandCentral.Authorization;
 using CommandCentral.Entities.Watchbill;
 using CommandCentral.Entities.ReferenceLists;
+using CommandCentral.Entities.ReferenceLists.Watchbill;
 
 namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
@@ -42,7 +43,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             }
 
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
@@ -56,7 +57,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                     //And make sure we're at a state where population can occur.
-                    if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.ClosedForInputs)
+                    if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
                         throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
 
                     watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
@@ -182,7 +183,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
 
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -229,8 +230,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
                 throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
 
-            var elGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups
-                .FirstOrDefault(x => Guid.Equals(x.Id, eligibilityGroupId)) ??
+            var elGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(eligibilityGroupId) ??
                 throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
 
             var range = token.Args["range"].CastJToken<TimeRange>();
@@ -240,7 +240,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             {
                 Command = token.AuthenticationSession.Person.Command,
                 CreatedBy = token.AuthenticationSession.Person,
-                CurrentState = Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial,
+                CurrentState = ReferenceListHelper<WatchbillStatus>.Find("Initial"),
                 Id = Guid.NewGuid(),
                 LastStateChange = token.CallTime,
                 LastStateChangedBy = token.AuthenticationSession.Person,
@@ -255,19 +255,21 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //Let's make sure the client is allowed to make a watchbill with this eligibility group.
-            var ellGroup = Entities.ReferenceLists.Watchbill.WatchEligibilityGroups.AllWatchEligibilityGroups.FirstOrDefault(x => Guid.Equals(x.Id, watchbillToInsert.EligibilityGroup.Id)) ??
-                throw new CommandCentralException("You failed to provide a proper eligibilty group.", ErrorTypes.Validation);
+            var ellGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(watchbillToInsert.EligibilityGroup.Id) ??
+                throw new CommandCentralException("You failed to provide a proper eligibility group.", ErrorTypes.Validation);
 
             if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[ellGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
                 throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                     "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
                     try
                     {
+                        watchbillToInsert.EligibilityGroup = session.Merge(watchbillToInsert.EligibilityGroup);
+
                         session.Save(watchbillToInsert);
 
                         token.SetResult(watchbillToInsert);
@@ -303,7 +305,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -365,7 +367,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
             
             //Now let's go get the watchbill from the database.
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 using (var transaction = session.BeginTransaction())
                 {
@@ -380,7 +382,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
                         //Check the state.
-                        if (watchbillFromDB.CurrentState != Entities.ReferenceLists.Watchbill.WatchbillStatuses.Initial)
+                        if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Initial"))
                             throw new CommandCentralException("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
 
                         session.Delete(watchbillFromDB);

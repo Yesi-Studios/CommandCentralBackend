@@ -102,9 +102,9 @@ namespace CommandCentral.Entities
             if (IsPreferred)
                 preferences.Add("P");
             
-            string final = preferences.Any() ? "({0})".FormatS(String.Join("|", preferences)) : "";
+            string final = preferences.Any() ? "({0})".With(String.Join("|", preferences)) : "";
 
-            return "{0} {1}".FormatS(Address, final);
+            return "{0} {1}".With(Address, final);
         }
 
         #endregion

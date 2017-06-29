@@ -45,9 +45,9 @@ namespace CommandCentral.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogDebug(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.DataProvider.IsReady)
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -82,9 +82,9 @@ namespace CommandCentral.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogInformation(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.DataProvider.IsReady)
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -119,9 +119,9 @@ namespace CommandCentral.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogCritical(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.DataProvider.IsReady)
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -156,9 +156,9 @@ namespace CommandCentral.Logging.Loggers
         /// <param name="callerFilePath"></param>
         public void LogWarning(string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
-            if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.DataProvider.IsReady)
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try
@@ -195,9 +195,9 @@ namespace CommandCentral.Logging.Loggers
         public void LogException(Exception ex, string message, ClientAccess.MessageToken token, string callerMemberName, int callerLineNumber, string callerFilePath)
         {
 
-            if (DataAccess.NHibernateHelper.IsReady)
+            if (DataAccess.DataProvider.IsReady)
             {
-                using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+                using (var session = DataAccess.DataProvider.CreateStatefulSession())
                 using (var transaction = session.BeginTransaction())
                 {
                     try

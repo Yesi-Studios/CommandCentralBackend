@@ -49,7 +49,7 @@ namespace CommandCentral.Entities.ReferenceLists.Watchbill
         /// <param name="token"></param>
         public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
-            using (var session = DataAccess.NHibernateHelper.CreateStatefulSession())
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 if (id == default(Guid))
                 {

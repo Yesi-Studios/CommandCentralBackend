@@ -32,7 +32,7 @@ namespace CommandCentral.Authorization
                 var group = Groups.PermissionGroup.AllPermissionGroups.FirstOrDefault(x => x.GroupName.SafeEquals(groupName));
 
                 if (group == null)
-                    throw new Exception("The group name, '{0}', was not valid.".FormatS(groupName));
+                    throw new Exception("The group name, '{0}', was not valid.".With(groupName));
 
                 groups.Add(group);
             }
