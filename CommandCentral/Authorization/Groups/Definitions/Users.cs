@@ -51,7 +51,8 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     x => x.HasCompletedAWARE,
                     x => x.ADAMSTrainingDate,
                     x => x.BilletAssignment,
-                    x => x.WatchAssignments))
+                    x => x.WatchAssignments,
+                    x => x.PhoneNumbers))
                 .And.CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.Id,
                     x => x.LastName,

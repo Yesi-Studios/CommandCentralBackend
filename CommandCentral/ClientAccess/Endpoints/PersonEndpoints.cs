@@ -182,20 +182,37 @@ namespace CommandCentral.ClientAccess.Endpoints
                     {
                         bool wasSet = false;
 
-                        switch (propertyName.ToLower())
+                        switch (propertyName)
                         {
-                            case "command":
-                            case "department":
-                            case "division":
+                            case nameof(Person.Command):
+                            case nameof(Person.Department):
+                            case nameof(Person.Division):
                                 {
                                     returnData.Add(propertyName, DataProvider.GetIdentifier(personMetadata.GetPropertyValue(person, propertyName, NHibernate.EntityMode.Poco)));
 
                                     wasSet = true;
                                     break;
                                 }
-                            case "accounthistory":
+                            case nameof(Person.AccountHistory):
                                 {
                                     returnData.Add(propertyName, person.AccountHistory.OrderByDescending(x => x.EventTime).Take(5).ToList());
+
+                                    wasSet = true;
+                                    break;
+                                }
+                            case nameof(Person.PhoneNumbers):
+                                {
+
+                                    //If the client is in this person's chain of command, they can see all phone numbers.  Else, they can only see the work phone numbers.
+                                    //We really just want to know if the client is in ANY chain of command of the client.
+                                    if (resolvedPermissions.IsInChainOfCommand.Any(x => x.Value))
+                                    {
+                                        returnData.Add(propertyName, person.PhoneNumbers);
+                                    }
+                                    else
+                                    {
+                                        returnData.Add(propertyName, person.PhoneNumbers.Where(x => x.PhoneType == ReferenceListHelper<PhoneNumberType>.Find("Work")).ToList());
+                                    }
 
                                     wasSet = true;
                                     break;
@@ -738,8 +755,11 @@ namespace CommandCentral.ClientAccess.Endpoints
                     var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                    var editableFields = resolvedPermissions.EditableFields[nameof(Person)];
-                    var returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
+                    if (!resolvedPermissions.EditableFields.TryGetValue(nameof(Person), out List<string> editableFields))
+                        editableFields = new List<string>();
+
+                    if (!resolvedPermissions.ReturnableFields.TryGetValue(nameof(Person), out List<string> returnableFields))
+                        returnableFields = new List<string>();
 
                     //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
                     foreach (var field in returnableFields.Intersect(editableFields, StringComparer.CurrentCultureIgnoreCase))
