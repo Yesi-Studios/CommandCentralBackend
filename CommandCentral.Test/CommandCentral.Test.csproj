@@ -52,12 +52,16 @@
     <Reference Include="MySql.Server, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MySql.Server.1.1.0.0\lib\net45\MySql.Server.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="NHibernate, Version=4.1.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIKeyTests.cs" />
+    <Compile Include="ConnectionSettings.cs" />
     <Compile Include="EmailTests.cs" />
     <Compile Include="LoggingTests.cs" />
     <Compile Include="ReferenceListTests\CommandDepartmentDivisionTests.cs" />
@@ -72,7 +76,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="connectionsettings.json" />
+    <Content Include="connectionsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="connectionsettings.json.example" />
     <None Include="Playlists\playlist_main_in_memory.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

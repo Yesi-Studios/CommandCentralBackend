@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using AtwoodUtils;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace CommandCentral.Test
 
             server.StartServer(3000);
 
-            var dbName = "commandcentraltestdatabase_" + AtwoodUtils.Utilities.RandomString(5);
+            var dbName = "commandcentraltestdatabase_" + Utilities.RandomString(5);
 
             DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(server.GetConnectionString(dbName)), dbName);
 
@@ -28,13 +29,10 @@ namespace CommandCentral.Test
         [TestMethod]
         public void SetupRealDatabase()
         {
-            MySql.Server.MySqlServer server = MySql.Server.MySqlServer.Instance;
+            var settings = ConnectionSettings.Instance;
+            var connectionString = "server={0};database={1};user={2};password={3};".With(settings.Server, settings.Database, settings.Username, settings.Password);
 
-            server.StartServer(3000);
-
-            var dbName = "commandcentraltestdatabase_" + AtwoodUtils.Utilities.RandomString(5);
-
-            DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(server.GetConnectionString(dbName)), dbName);
+            DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString), settings.Database);
 
             Assert.IsTrue(DataAccess.DataProvider.IsReady);
         }
