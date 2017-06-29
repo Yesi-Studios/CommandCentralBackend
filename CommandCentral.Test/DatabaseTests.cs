@@ -32,7 +32,19 @@ namespace CommandCentral.Test
             var settings = ConnectionSettings.Instance;
             var connectionString = "server={0};database={1};user={2};password={3};".With(settings.Server, settings.Database, settings.Username, settings.Password);
 
-            DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString), settings.Database);
+            
+
+            var result = MySql.Data.MySqlClient.MySqlHelper.ExecuteScalar("server={0};user={1};password={2};".With(settings.Server, settings.Username, settings.Password),
+                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{0}'".With(settings.Database));
+
+            if (result == null || settings.RebuildIfExists)
+            {
+                DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString), settings.Database);
+            }
+            else
+            {
+                DataAccess.DataProvider.Initialize(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString));
+            }
 
             Assert.IsTrue(DataAccess.DataProvider.IsReady);
         }

@@ -76,9 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Content Include="connectionsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="connectionsettings.json" />
     <None Include="connectionsettings.json.example" />
     <None Include="Playlists\playlist_main_on_disk.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
