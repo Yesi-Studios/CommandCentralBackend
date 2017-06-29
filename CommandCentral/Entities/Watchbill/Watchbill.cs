@@ -850,6 +850,8 @@ namespace CommandCentral.Entities.Watchbill
                     x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
                     x.Map(y => y.End).Not.Nullable().CustomType<UtcDateTimeType>();
                 });
+
+                Cache.IncludeAll().ReadWrite();
             }
         }
 

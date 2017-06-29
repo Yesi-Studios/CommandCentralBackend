@@ -50,8 +50,6 @@ namespace CommandCentral.CLI
                 Console.ReadKey(true);
             }
 
-            Console.ReadLine();
-            
         }
 
         private static void Start(string[] args)
