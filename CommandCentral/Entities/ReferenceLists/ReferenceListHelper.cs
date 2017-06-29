@@ -34,9 +34,10 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <returns></returns>
         public static bool AllExist(params string[] values)
         {
+            var array = values.Distinct().ToArray();
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
-                return session.QueryOver<T>().Where(x => x.Value.IsIn(values)).RowCount() == values.Length;
+                return session.QueryOver<T>().Where(x => x.Value.IsIn(array)).RowCount() == values.Length;
             }
         }
 
@@ -47,7 +48,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <returns></returns>
         public static bool AllExist(IEnumerable<string> values)
         {
-            var array = values.ToArray();
+            var array = values.Distinct().ToArray();
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 return session.QueryOver<T>().Where(x => x.Value.IsIn(array)).RowCount() == array.Length;
