@@ -72,6 +72,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="connectionsettings.json" />
+    <None Include="connectionsettings.json.example" />
     <None Include="Playlists\playlist_main_in_memory.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

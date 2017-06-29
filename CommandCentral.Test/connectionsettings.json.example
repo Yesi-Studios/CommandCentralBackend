@@ -1,0 +1,10 @@
+﻿{
+  "username": "USERNAME",
+  "password": "PASSWORD",
+  "database": "test_database",
+  "server": "localhost",
+  "smtphosts": [
+    "localhost"
+  ],
+  "rebuildifexists": false
+}
