@@ -83,6 +83,19 @@ namespace CommandCentral.Entities.ReferenceLists
         }
 
         /// <summary>
+        /// Returns all reference lists whose values match those passed and throws an exception if one or more are not found.
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> FindAll(params string[] values)
+        {
+            foreach (var value in values)
+            {
+                yield return Find(value);
+            }
+        }
+
+        /// <summary>
         /// Gets a reference list with the given id or returns null.
         /// </summary>
         /// <param name="id"></param>

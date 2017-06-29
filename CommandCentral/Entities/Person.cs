@@ -639,7 +639,7 @@ namespace CommandCentral.Entities
                 HasMany(x => x.PhysicalAddresses).Cascade.All();
                 HasMany(x => x.WatchAssignments).Cascade.All();
 
-                HasManyToMany(x => x.WatchQualifications).Cascade.All();
+                HasManyToMany(x => x.WatchQualifications);
 
                 HasMany(x => x.PermissionGroupNames)
                     .KeyColumn("PersonId")

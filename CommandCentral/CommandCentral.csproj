@@ -278,6 +278,7 @@
     <Compile Include="Logging\MessageTypesEnum.cs" />
     <Compile Include="Entities\ReferenceLists\ReferenceListItemBase.cs" />
     <Compile Include="ClientAccess\Endpoints\TestEndpoints.cs" />
+    <Compile Include="Utils\PaygradeUtilities.cs" />
     <Compile Include="WindowsService\WindowsServiceEntry.cs">
       <SubType>Component</SubType>
     </Compile>

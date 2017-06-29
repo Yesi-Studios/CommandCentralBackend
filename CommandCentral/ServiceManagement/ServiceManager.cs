@@ -125,8 +125,6 @@ namespace CommandCentral.ServiceManagement
                 _host.Open();
 
                 Log.Info("Service is live and listening on '{0}'.".With(_host.BaseAddresses.First().AbsoluteUri));
-
-                Logging.Log.Exception(new Exception("test ex message"), "test ex message");
             }
             catch (Exception e)
             {
