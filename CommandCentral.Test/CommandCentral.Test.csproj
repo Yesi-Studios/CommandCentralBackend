@@ -81,7 +81,7 @@
     </Content>
     <None Include="connectionsettings.json.example" />
     <None Include="Playlists\playlist_main_on_disk.orderedtest">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Playlists\playlist_main_in_memory.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
