@@ -50,7 +50,7 @@ namespace CommandCentral.Test
             };
 
             var resolvedPermissions = person.ResolvePermissions(null);
-            person.FirstName = String.Join("|", resolvedPermissions.HighestLevels.Select(x => "{0}:{1}".With(x.Key.ToString().Substring(0, 2), x.Value.ToString().Substring(0, 3))));
+            person.FirstName = String.Join("__", resolvedPermissions.HighestLevels.Select(x => "{0}_{1}".With(x.Key.ToString().Substring(0, 2), x.Value.ToString().Substring(0, 3))));
 
             var emailAddress = "{0}.{1}.{2}.mil@mail.mil".With(person.FirstName, person.MiddleName[0], person.LastName);
 
