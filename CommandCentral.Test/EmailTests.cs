@@ -13,7 +13,7 @@ namespace CommandCentral.Test
         [TestMethod]
         public void SetupEmail()
         {
-            Email.EmailInterface.CCEmailMessage.InitializeEmail();
+            Email.EmailInterface.CCEmailMessage.InitializeEmail(TestSettings.SMTPHosts.ToArray());
         }
 
     }

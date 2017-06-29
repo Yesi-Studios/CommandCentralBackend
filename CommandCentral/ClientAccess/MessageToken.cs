@@ -107,7 +107,6 @@ namespace CommandCentral.ClientAccess
         /// Sets the args of the message token.
         /// </summary>
         /// <param name="body" />
-        /// <param name="convert" />
         public virtual void SetArgs(string body)
         {
             try

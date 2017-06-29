@@ -230,7 +230,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
                 throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
 
-            var elGroup = ReferenceListHelper<Entities.ReferenceLists.Watchbill.WatchEligibilityGroup>.Get(eligibilityGroupId) ??
+            var elGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(eligibilityGroupId) ??
                 throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
 
             var range = token.Args["range"].CastJToken<TimeRange>();

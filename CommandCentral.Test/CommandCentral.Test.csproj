@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIKeyTests.cs" />
-    <Compile Include="ConnectionSettings.cs" />
+    <Compile Include="TestSettings.cs" />
     <Compile Include="EmailTests.cs" />
     <Compile Include="LoggingTests.cs" />
     <Compile Include="ReferenceListTests\CommandDepartmentDivisionTests.cs" />
@@ -76,8 +76,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <EmbeddedResource Include="connectionsettings.json" />
-    <None Include="connectionsettings.json.example" />
     <None Include="Playlists\playlist_main_on_disk.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

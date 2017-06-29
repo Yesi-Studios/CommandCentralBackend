@@ -29,17 +29,15 @@ namespace CommandCentral.Test
         [TestMethod]
         public void SetupRealDatabase()
         {
-            var settings = ConnectionSettings.Instance;
-            var connectionString = "server={0};database={1};user={2};password={3};".With(settings.Server, settings.Database, settings.Username, settings.Password);
+            var connectionString = "server={0};database={1};user={2};password={3};"
+                .With(TestSettings.Server, TestSettings.Database, TestSettings.Username, TestSettings.Password);
 
-            
+            var result = MySql.Data.MySqlClient.MySqlHelper.ExecuteScalar("server={0};user={1};password={2};".With(TestSettings.Server, TestSettings.Username, TestSettings.Password),
+                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{0}'".With(TestSettings.Database));
 
-            var result = MySql.Data.MySqlClient.MySqlHelper.ExecuteScalar("server={0};user={1};password={2};".With(settings.Server, settings.Username, settings.Password),
-                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{0}'".With(settings.Database));
-
-            if (result == null || settings.RebuildIfExists)
+            if (result == null || TestSettings.RebuildIfExists)
             {
-                DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString), settings.Database);
+                DataAccess.DataProvider.InitializeAndRebuild(new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(connectionString), TestSettings.Database);
             }
             else
             {

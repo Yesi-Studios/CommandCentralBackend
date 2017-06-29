@@ -1,4 +1,5 @@
 ﻿using AtwoodUtils;
+using CommandCentral.Authorization;
 using CommandCentral.Authorization.Groups;
 using CommandCentral.Entities;
 using CommandCentral.Entities.ReferenceLists;
@@ -17,38 +18,17 @@ namespace CommandCentral.Test
     [TestClass]
     public class PersonTests
     {
-        static Dictionary<string, int> usernames = new Dictionary<string, int>();
         static Dictionary<string, int> emailAddresses = new Dictionary<string, int>();
 
         public Person CreatePerson(Command command, Department department, Division division, 
-            UIC uic, string lastName, IEnumerable<PermissionGroup> permissionGroups,
+            UIC uic, string lastName, string username, IEnumerable<PermissionGroup> permissionGroups,
             IEnumerable<WatchQualification> watchQuals, Paygrade paygrade)
         {
-            var firstName = String.Join(".", permissionGroups.Select(x => x.GroupName.First().ToString()).OrderBy(x => x));
-            if (String.IsNullOrWhiteSpace(firstName))
-                firstName = "U";
-
-            var username = String.Join(".", permissionGroups.Select(x => x.GroupName.First().ToString()));
-
-            if (usernames.ContainsKey(username))
-            {
-                usernames[username]++;
-            }
-            else
-            {
-                usernames.Add(username, 1);
-            }
-
-            username = username + usernames[username].ToString();
-
-            
-
             var person = new Person()
             {
                 Id = Guid.NewGuid(),
                 LastName = lastName,
-                FirstName = firstName,
-                MiddleName = "{0} {1} {2}".With(command.Value, department.Value, division.Value),
+                MiddleName = division.Value,
                 Command = command,
                 Department = department,
                 Division = division,
@@ -68,6 +48,9 @@ namespace CommandCentral.Test
                 PermissionGroupNames = permissionGroups.Select(x => x.GroupName).ToList(),
                 WatchQualifications = watchQuals.ToList()
             };
+
+            var resolvedPermissions = person.ResolvePermissions(null);
+            person.FirstName = String.Join("|", resolvedPermissions.HighestLevels.Select(x => "{0}:{1}".With(x.Key.ToString().Substring(0, 2), x.Value.ToString().Substring(0, 3))));
 
             var emailAddress = "{0}.{1}.{2}.mil@mail.mil".With(person.FirstName, person.MiddleName[0], person.LastName);
 
@@ -118,7 +101,7 @@ namespace CommandCentral.Test
 
                     var eligibilityGroup = session.Merge(ReferenceListHelper<WatchEligibilityGroup>.Find("Quarterdeck"));
 
-                    var person = CreatePerson(command, department, division, uic, "developer",
+                    var person = CreatePerson(command, department, division, uic, "developer", "dev",
                         new[] { new Authorization.Groups.Definitions.Developers() },
                         ReferenceListHelper<WatchQualification>.All(), ReferenceListHelper<Paygrade>.Find("E5"));
 
@@ -160,7 +143,7 @@ namespace CommandCentral.Test
                             {
 
                                 //Add Sailors
-                                for (int x = 0; x < Utilities.GetRandomNumber(15, 30); x++)
+                                for (int x = 0; x < 30; x++)
                                 {
                                     var paygrade = paygrades.Shuffle().First();
                                     var uic = ReferenceListHelper<UIC>.Random(1).First();
@@ -232,7 +215,7 @@ namespace CommandCentral.Test
                                         throw new Exception("An unknown paygrade was found! {0}".With(paygrade));
                                     }
 
-                                    var person = CreatePerson(command, department, division, uic, "user" + x.ToString(), permGroups, quals, paygrade);
+                                    var person = CreatePerson(command, department, division, uic, "user" + expected.Count.ToString(), "user" + expected.Count.ToString(), permGroups, quals, paygrade);
 
                                     session.Save(person);
 

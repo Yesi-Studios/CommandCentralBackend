@@ -50,12 +50,6 @@ namespace CommandCentral.ServiceManagement
                 Email.EmailInterface.CCEmailMessage.InitializeEmail(launchOptions.SMTPHosts);
                 Log.RegisterLoggers();
 
-                //Do arg validation.
-                if ((launchOptions.Rebuild) && 
-                    String.Equals(launchOptions.Database, "command_central", StringComparison.CurrentCultureIgnoreCase) &&
-                    String.Equals(launchOptions.Server, "147.51.62.50", StringComparison.CurrentCultureIgnoreCase))
-                    throw new Exception("Go fuck yourself and try to delete the production database or sully it with your garbage.");
-
                 //Let's determine if our given port is usable.
                 if (!Utilities.IsPortAvailable(launchOptions.Port))
                 {
