@@ -18,6 +18,7 @@ using CommandCentral.ClientAccess;
 using CommandCentral.Logging;
 using Polly;
 using System.Net;
+using System.ServiceModel.Channels;
 
 namespace CommandCentral.ServiceManagement.Service
 {
@@ -49,7 +50,7 @@ namespace CommandCentral.ServiceManagement.Service
             {
                 Log.Exception(e, "An error occurred during the pre flight options request.");
 
-                WebOperationContext.Current.OutgoingResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                WebOperationContext.Current.OutgoingResponse.StatusCode = HttpStatusCode.InternalServerError;
             }
             
         }
@@ -72,7 +73,7 @@ namespace CommandCentral.ServiceManagement.Service
         /// <param name="data"></param>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public string InvokeGenericEndpointAsync(Stream data, string endpoint)
+        public Message InvokeGenericEndpointAsync(Stream data, string endpoint)
         {
             AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
@@ -196,12 +197,12 @@ namespace CommandCentral.ServiceManagement.Service
                                 throw result.FinalException;
                             }
 
-                            return new ReturnContainer
+                            return GetResponse(new ReturnContainer
                             {
                                 StatusCode = HttpStatusCode.OK,
                                 ErrorType = ErrorTypes.Null,
                                 ReturnValue = token.Result
-                            }.Serialize();
+                            });
                         }
                         catch (AggregateException e) when (e.InnerExceptions.All(x => x.GetType() == typeof(CommandCentralException)))
                         {
@@ -213,13 +214,13 @@ namespace CommandCentral.ServiceManagement.Service
 
                             WebOperationContext.Current.OutgoingResponse.StatusCode = (HttpStatusCode)((CommandCentralException)e.InnerExceptions.First()).ErrorType.GetMatchStatusCode();
 
-                            return new ReturnContainer
+                            return GetResponse(new ReturnContainer
                             {
                                 ErrorMessages = e.InnerExceptions.Select(x => x.Message).ToList(),
                                 ErrorType = ((CommandCentralException)e.InnerExceptions.First()).ErrorType,
                                 ReturnValue = null,
                                 StatusCode = WebOperationContext.Current.OutgoingResponse.StatusCode
-                            }.Serialize();
+                            });
                         }
                         catch (CommandCentralException e)
                         {
@@ -228,13 +229,13 @@ namespace CommandCentral.ServiceManagement.Service
 
                             WebOperationContext.Current.OutgoingResponse.StatusCode = e.ErrorType.GetMatchStatusCode();
 
-                            return new ReturnContainer
+                            return GetResponse(new ReturnContainer
                             {
                                 ErrorMessages = new List<string> { e.Message },
                                 ErrorType = e.ErrorType,
                                 ReturnValue = null,
                                 StatusCode = WebOperationContext.Current.OutgoingResponse.StatusCode
-                            }.Serialize();
+                            });
                         }
                         catch (Exception e) //if we can catch the exception here don't rethrow it.  We can handle it here by logging the message and sending back to the client.
                         {
@@ -249,14 +250,14 @@ namespace CommandCentral.ServiceManagement.Service
                             //Set the outgoing status code and then release.
                             WebOperationContext.Current.OutgoingResponse.StatusCode = HttpStatusCode.InternalServerError;
 
-                            return new ReturnContainer
+                            return GetResponse(new ReturnContainer
                             {
                                 ErrorMessages = new List<string> { "A fatal error occurred within the backend service.  We are extremely sorry for this inconvenience." +
                                     "  The developers have been alerted and a trained monkey(s) has been dispatched." },
                                 ErrorType = ErrorTypes.Fatal,
                                 ReturnValue = null,
-                                StatusCode = System.Net.HttpStatusCode.InternalServerError
-                            }.Serialize();
+                                StatusCode = HttpStatusCode.InternalServerError
+                            });
                         }
                     }
                 }
@@ -268,13 +269,13 @@ namespace CommandCentral.ServiceManagement.Service
                 //Set the outgoing status code and then release.
                 WebOperationContext.Current.OutgoingResponse.StatusCode = HttpStatusCode.InternalServerError;
 
-                return new ReturnContainer
+                return GetResponse(new ReturnContainer
                 {
                     ErrorMessages = new List<string> { "It appears our database is currently offline.  We'll be back up and running shortly!" },
                     ErrorType = ErrorTypes.Fatal,
                     ReturnValue = null,
                     StatusCode = HttpStatusCode.InternalServerError
-                }.Serialize();
+                });
             }
         }
 
@@ -302,7 +303,7 @@ namespace CommandCentral.ServiceManagement.Service
         /// <param name="token"></param>
         /// <param name="session">The session on which to do our authentication work.</param>
         /// <returns></returns>
-        private static void AuthenticateMessage(MessageToken token, NHibernate.ISession session)
+        private void AuthenticateMessage(MessageToken token, NHibernate.ISession session)
         {
 
             //Get the authenticationtoken.
@@ -324,6 +325,15 @@ namespace CommandCentral.ServiceManagement.Service
             token.AuthenticationSession = authenticationSession;
             //HACK
             token.AuthenticationSession.Person.PermissionGroups = Authorization.AuthorizationUtilities.GetPermissionGroupsFromNames(token.AuthenticationSession.Person.PermissionGroupNames, true);
+        }
+
+        /// <summary>
+        /// Sets the response on the current context.
+        /// </summary>
+        /// <param name="response"></param>
+        private Message GetResponse(ReturnContainer response)
+        {
+            return WebOperationContext.Current.CreateTextResponse(response.Serialize(), "application/json; charset=utf-8", Encoding.UTF8);
         }
 
         #endregion
