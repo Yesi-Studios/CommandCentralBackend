@@ -18,7 +18,6 @@ using CommandCentral.ClientAccess;
 using CommandCentral.Logging;
 using Polly;
 using System.Net;
-using System.ServiceModel.Channels;
 
 namespace CommandCentral.ServiceManagement.Service
 {
