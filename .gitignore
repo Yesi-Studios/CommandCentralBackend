@@ -188,3 +188,5 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 /CommandCentral.Test/connectionsettings.json
+/.vs/slnx.sqlite-journal
+/.vs/slnx.sqlite
