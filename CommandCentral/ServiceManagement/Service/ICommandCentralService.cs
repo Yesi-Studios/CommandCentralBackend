@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace CommandCentral.ServiceManagement.Service
         /// <returns></returns>
         [OperationContract]
         [WebInvoke(UriTemplate = "/{endpoint}", Method = "POST", BodyStyle = WebMessageBodyStyle.WrappedRequest, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
-        string InvokeGenericEndpointAsync(Stream data, string endpoint);
+        Message InvokeGenericEndpointAsync(Stream data, string endpoint);
 
         /// <summary>
         /// The prototype for the endpoint method that replied to all preflight options requests.
