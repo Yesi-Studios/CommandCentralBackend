@@ -18,10 +18,10 @@ namespace AtwoodUtils
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static IList<T> Shuffle<T>(this IEnumerable<T> source)
+        public static List<T> Shuffle<T>(this IEnumerable<T> source)
         {
             var list = source.ToList();
-            Random random = new Random(DateTime.Now.Millisecond);
+            var random = new Random(DateTime.Now.Millisecond);
 
             int n = list.Count;
             while (n > 1)
