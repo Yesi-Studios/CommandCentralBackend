@@ -8,6 +8,7 @@ using AtwoodUtils;
 using CommandCentral.CustomTypes;
 using CommandCentral.Entities;
 using CommandCentral.Entities.ReferenceLists;
+using CommandCentral.Entities.Muster;
 
 namespace CommandCentral.Email.Models
 {
@@ -22,25 +23,9 @@ namespace CommandCentral.Email.Models
         public Person Creator { get; set; }
 
         /// <summary>
-        /// The date time of the muster.
+        /// The muster period for which we're sending this email.
         /// </summary>
-        public DateTime MusterDateTime { get; set; }
-
-        /// <summary>
-        /// The time that the muster rolls over.
-        /// </summary>
-        public Time RollOverTime
-        {
-            get
-            {
-                return MusterRecord.RolloverTime;
-            }
-        }
-
-        /// <summary>
-        /// The list of muster records in this report.
-        /// </summary>
-        public List<MusterRecord> Records { get; set; }
+        public MusterPeriod MusterPeriod { get; set; }
 
         /// <summary>
         /// Returns all string muster statuses.
@@ -63,26 +48,5 @@ namespace CommandCentral.Email.Models
                 return ReferenceListHelper<DutyStatus>.All().Select(x => x.Value).OrderBy(x => x).ToList();
             }
         }
-
-        /// <summary>
-        /// Returns the total records with the given muster status.
-        /// </summary>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public List<MusterRecord> GetRecordsWithMusterStatus(string status)
-        {
-            return Records.Where(x => x.MusterStatus.SafeEquals(status)).ToList();
-        }
-
-        /// <summary>
-        /// Returns the total records with the given duty status.
-        /// </summary>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public List<MusterRecord> GetRecordsWithDutyStatus(string status)
-        {
-            return Records.Where(x => x.DutyStatus.SafeEquals(status)).ToList();
-        }
-
     }
 }

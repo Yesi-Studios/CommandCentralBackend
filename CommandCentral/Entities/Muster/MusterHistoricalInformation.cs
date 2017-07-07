@@ -27,6 +27,5 @@ namespace CommandCentral.Entities.Muster
             this.UIC = person.UIC?.ToString();
             this.DutyStatus = person.DutyStatus?.ToString();
         }
-
     }
 }

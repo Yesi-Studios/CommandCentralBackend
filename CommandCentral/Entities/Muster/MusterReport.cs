@@ -9,7 +9,7 @@ using AtwoodUtils;
 using System.Globalization;
 using CommandCentral.Entities.ReferenceLists;
 
-namespace CommandCentral
+namespace CommandCentral.Entities.Muster
 {
     /// <summary>
     /// Generates a muster report for a given day and sends the muster report by email.
@@ -20,7 +20,7 @@ namespace CommandCentral
         #region Properties
 
         /// <summary>
-        /// The date for which to build this msuter report.
+        /// The date for which to build this muster report.
         /// </summary>
         public DateTime MusterDate { get; set; }
 
@@ -62,7 +62,7 @@ namespace CommandCentral
             {
                 try
                 {
-                    model.Records = session.QueryOver<Entities.Person>()
+                    model.Records = session.QueryOver<Person>()
                         .Where(x => x.DutyStatus.Id != ReferenceListHelper<DutyStatus>.Find("Loss").Id)
                         .Select(x => x.CurrentMusterRecord)
                         .List<Entities.MusterRecord>()
