@@ -220,7 +220,7 @@
     <Compile Include="Entities\Comment.cs" />
     <Compile Include="Entities\FAQ.cs" />
     <Compile Include="Entities\Muster\MusterHistoricalInformation.cs" />
-    <Compile Include="Entities\Muster\MusterPeriodArchive.cs" />
+    <Compile Include="Entities\Muster\MusterPeriod_Archived.cs" />
     <Compile Include="Entities\Muster\MusterRecord_Archived.cs" />
     <Compile Include="Entities\Muster\MusterPeriod.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />

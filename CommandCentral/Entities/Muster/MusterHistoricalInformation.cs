@@ -19,13 +19,13 @@ namespace CommandCentral.Entities.Muster
 
         public MusterHistoricalInformation(Person person)
         {
-            this.Paygrade = person.Paygrade.ToString();
-            this.Designation = person.Designation.ToString();
-            this.Division = person.Division.ToString();
-            this.Department = person.Department.ToString();
-            this.Command = person.Command.ToString();
-            this.UIC = person.UIC.ToString();
-            this.DutyStatus = person.DutyStatus.ToString();
+            this.Paygrade = person.Paygrade?.ToString();
+            this.Designation = person.Designation?.ToString();
+            this.Division = person.Division?.ToString();
+            this.Department = person.Department?.ToString();
+            this.Command = person.Command?.ToString();
+            this.UIC = person.UIC?.ToString();
+            this.DutyStatus = person.DutyStatus?.ToString();
         }
     }
 }
