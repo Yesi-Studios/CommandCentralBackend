@@ -224,9 +224,10 @@
     <Compile Include="Entities\Muster\MusterRecord_Archived.cs" />
     <Compile Include="Entities\Muster\MusterPeriod.cs" />
     <Compile Include="Entities\Muster\MusterRecord.cs" />
+    <Compile Include="Entities\Muster\MusterUtilities.cs" />
     <Compile Include="Entities\ReferenceLists\ReferenceListHelper.cs" />
     <Compile Include="ICommentable.cs" />
-    <Compile Include="MusterReport.cs" />
+    <Compile Include="Entities\Muster\MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroup.cs" />
