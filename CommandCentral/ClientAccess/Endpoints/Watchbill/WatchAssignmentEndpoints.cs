@@ -485,8 +485,9 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        bool isCoordinator = token.AuthenticationSession.Person.ResolvePermissions(null)
-                            .HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] >= ChainOfCommandLevels.Division;
+                        var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
+
+                        bool isCoordinator = permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] >= ChainOfCommandLevels.Division;
 
                         if (!isCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not a watchbill coordinator.", ErrorTypes.Authorization);
@@ -495,6 +496,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Published") &&
                             watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
                             throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the assignment, published or under review state.", ErrorTypes.Authorization);
+
+                        if (permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command
+                            && watchbill.CurrentState == ReferenceListHelper<WatchbillStatus>.Find("Published"))
+                            throw new CommandCentralException("You may not assign watch standers during the published phase.", ErrorTypes.Authorization);
 
                         Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
 
