@@ -493,14 +493,14 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                                     var watchInputs = watchbill.WatchInputs.Where(input => input.IsConfirmed && input.Person.Id == person.Id).ToList();
 
-                                    var mostRecentWatch = person.WatchAssignments.OrderByDescending(ass => ass.WatchShift.Range.Start).First();
+                                    var mostRecentWatch = person.WatchAssignments.OrderByDescending(ass => ass.WatchShift.Range.Start).FirstOrDefault();
 
                                     return new
                                     {
                                         Person = person,
                                         Points = points,
                                         WatchInputs = watchInputs,
-                                        MostRecentWatchAssignment = new 
+                                        MostRecentWatchAssignment = (mostRecentWatch != null) ? new 
                                         {
                                             mostRecentWatch.AcknowledgedBy,
                                             mostRecentWatch.AssignedBy,
@@ -520,7 +520,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                                 mostRecentWatch.WatchShift.ShiftType,
                                                 mostRecentWatch.WatchShift.Title
                                             }
-                                        }
+                                        } : null
                                     };
                                 }).ToList()
                             };
