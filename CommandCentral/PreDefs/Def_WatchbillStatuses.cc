@@ -13,8 +13,8 @@
     },
     {
       "Id": "34092469-541A-40DF-9729-A74396362131",
-      "Value": "Closed for Inputs",
-      "Description": "The watchbill is no longer accepting watch inputs.  Soon, the it will be populated and released to the watchbill cooridinators for review."
+      "Value": "Assignment",
+      "Description": "The watchbill is now open for coordinators to assign watch standers."
     },
     {
       "Id": "579F6625-3966-446A-85FC-CC6335407D38",

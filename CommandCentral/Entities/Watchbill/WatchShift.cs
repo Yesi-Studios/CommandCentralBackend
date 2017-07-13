@@ -7,6 +7,7 @@ using FluentNHibernate.Mapping;
 using FluentValidation;
 using NHibernate.Type;
 using AtwoodUtils;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.Entities.Watchbill
 {
@@ -19,12 +20,12 @@ namespace CommandCentral.Entities.Watchbill
         #region Properties
 
         /// <summary>
-        /// The unique Id of this watchshift.
+        /// The unique Id of this watch shift.
         /// </summary>
         public virtual Guid Id { get; set; }
 
         /// <summary>
-        /// The comments for thsi shift.
+        /// The comments for this shift.
         /// </summary>
         public virtual IList<Comment> Comments { get; set; } = new List<Comment>();
 
@@ -49,6 +50,11 @@ namespace CommandCentral.Entities.Watchbill
         /// An empty collection here indicates this shift has not yet been assigned.
         /// </summary>
         public virtual WatchAssignment WatchAssignment { get; set; }
+
+        /// <summary>
+        /// The division that must fill this watch shift.
+        /// </summary>
+        public virtual Division DivisionAssignedTo { get; set; }
 
         /// <summary>
         /// Indicates the type of this shift:  Is it JOOD, OOD, etc.
@@ -101,6 +107,7 @@ namespace CommandCentral.Entities.Watchbill
                 References(x => x.ShiftType).Not.Nullable();
                 References(x => x.WatchAssignment).Cascade.All();
                 References(x => x.Watchbill);
+                References(x => x.DivisionAssignedTo);
 
                 Map(x => x.Title).Not.Nullable();
                 Map(x => x.Points).Not.Nullable();

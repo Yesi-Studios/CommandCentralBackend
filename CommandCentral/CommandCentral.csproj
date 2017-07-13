@@ -209,7 +209,7 @@
     <Compile Include="Email\Models\UpcomingWatchEmailModel.cs" />
     <Compile Include="Email\Models\WatchInputRequirementsEmailModel.cs" />
     <Compile Include="Email\Models\WatchReassignedEmailModel.cs" />
-    <Compile Include="Email\Models\WatchbillClosedForInputsEmailModel.cs" />
+    <Compile Include="Email\Models\WatchbillOpenForAssignmentsEmailModel.cs" />
     <Compile Include="Email\Models\WatchAssignedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillPublishedEmailModel.cs" />
     <Compile Include="Email\Models\WatchbillUnderReviewEmailModel.cs" />
@@ -381,7 +381,7 @@
     <EmbeddedResource Include="Email\Templates\WatchAssigned_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Email\Templates\WatchbillClosedForInputs_HTML.html">
+    <EmbeddedResource Include="Email\Templates\WatchbillOpenForAssignments_HTML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Email\Templates\WatchbillUnderReview_HTML.html">

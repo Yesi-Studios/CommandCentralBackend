@@ -8,6 +8,7 @@ using CommandCentral.Authorization;
 using CommandCentral.Entities.Watchbill;
 using CommandCentral.Entities.ReferenceLists;
 using CommandCentral.Entities.ReferenceLists.Watchbill;
+using CommandCentral.Entities;
 
 namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 {
@@ -32,36 +33,11 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
 
-            bool doPopulation = false;
-            if (token.Args.ContainsKey("dopopulation"))
-            {
-                bool? test = token.Args["dopopulation"] as bool?;
-                if (test.HasValue)
-                    doPopulation = test.Value;
-                else
-                    throw new CommandCentralException("Your 'dopopulation' parameter was in an invalid format.", ErrorTypes.Validation);
-            }
-
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
-
-                if (doPopulation)
-                {
-                    //Make sure the client is allowed to.  It's not actually a security issue if the client does the population,
-                    //but we may as well restrict it because the population method is very expensive.
-                    if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
-                        throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                            "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
-
-                    //And make sure we're at a state where population can occur.
-                    if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
-                        throw new CommandCentralException("You may not populate this watchbill - a watchbill must be in the Closed for Inputs state in order to populate it.", ErrorTypes.Validation);
-
-                    watchbillFromDB.PopulateWatchbill(token.AuthenticationSession.Person, token.CallTime);
-                }
 
                 //We're also going to go see who is in the eligibility group and has no watch qualifications that pertain to this watchbill.
                 //First we need to know all the possible needed watch qualifications.
@@ -365,7 +341,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
-            
+
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
@@ -398,6 +374,74 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         throw;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
+        /// <para />
+        /// Loads recommendations for watches on the watchbill.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = true)]
+        private static void GetWatchRecommendations(MessageToken token)
+        {
+            token.AssertLoggedIn();
+            token.Args.AssertContainsKeys("watchbillid");
+
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+                throw new CommandCentralException("You watchbill id was in the wrong format.", ErrorTypes.Validation);
+
+            using (var session = DataAccess.DataProvider.CreateStatefulSession())
+            {
+                var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                    throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
+
+                var set = new HashSet<WatchShiftType>();
+
+                foreach (var shift in watchbill.WatchShifts)
+                    set.Add(shift.ShiftType);
+
+                Dictionary<WatchShiftType, object> result = new Dictionary<WatchShiftType, object>();
+
+                foreach (var type in set)
+                {
+                    var personsByDivisionWithPoints = watchbill.EligibilityGroup.EligiblePersons
+                        .Where(person => type.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
+                        .GroupBy(x => x.Division).Select(x =>
+                        {
+                            return new
+                            {
+                                Division = x.Key,
+                                RecommendationsByPerson = x.ToList().Select(person =>
+                                {
+
+                                    double points = person.WatchAssignments.Where(z => z.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed"))
+                                    .Sum(z =>
+                                    {
+                                        int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
+
+                                        return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
+                                    });
+
+                                    var watchInputs = watchbill.WatchInputs.Where(input => input.IsConfirmed && input.Person.Id == person.Id).ToList();
+
+                                    return new
+                                    {
+                                        Person = person,
+                                        Points = points,
+                                        WatchInputs = watchInputs
+                                    };
+                                }).ToList().ToDictionary(rec => rec.Person, rec => new { rec.Points, rec.WatchInputs })
+                            };
+
+                        }).ToDictionary(x => x.Division, x => x.RecommendationsByPerson);
+
+                    result[type] = personsByDivisionWithPoints;
+                }
+
+                token.SetResult(result);
             }
         }
     }

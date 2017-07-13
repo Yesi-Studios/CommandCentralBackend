@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace CommandCentral.Email.Models
 {
     /// <summary>
-    /// The email model that is sent to the watchbill closed for inputs template.
+    /// The email model that is sent to the watchbill open for assignments template.
     /// </summary>
-    public class WatchbillClosedForInputsEmailModel
+    public class WatchbillOpenForAssignmentsEmailModel
     {
         /// <summary>
         /// The name or title of the watchbill referenced in the email.
