@@ -656,8 +656,6 @@ namespace CommandCentral.Entities
                         index.Column("PreferenceKey").Type<string>(), element =>
                         element.Column("PreferenceValue").Type<string>())
                     .Cascade.All();
-
-                Cache.ReadWrite();
             }
         }
 

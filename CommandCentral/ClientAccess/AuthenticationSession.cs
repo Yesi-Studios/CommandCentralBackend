@@ -92,8 +92,6 @@ namespace CommandCentral.ClientAccess
                 Map(x => x.LastUsedTime);
                 References(x => x.Person).LazyLoad(Laziness.False);
                 HasMany(x => x.MessageTokens).Inverse().Cascade.All();
-
-                Cache.ReadWrite();
             }
         }
 
