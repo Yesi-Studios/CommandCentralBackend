@@ -88,16 +88,50 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 //We also need to build some additional information into the watch assignments regarding chain of command for the client and the assigned person.
                 List<object> watchShifts = new List<object>();
 
+                var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
+
                 if (watchbillFromDB.WatchShifts.Any())
                 {
                     foreach (var shift in watchbillFromDB.WatchShifts)
                     {
-                        bool isClientResponsibleFor = false;
+                        bool isClientResponsibleForAssignment = false;
 
                         if (shift.WatchAssignment != null)
                         {
                             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(shift.WatchAssignment.PersonAssigned);
-                            isClientResponsibleFor = resolvedPermissions.IsInChainOfCommand[watchbillFromDB.EligibilityGroup.OwningChainOfCommand];
+                            isClientResponsibleForAssignment = resolvedPermissions.IsInChainOfCommand[watchbillFromDB.EligibilityGroup.OwningChainOfCommand];
+                        }
+
+                        bool IsClientResponsibleForShift = false;
+                        if (shift.DivisionAssignedTo != null)
+                        {
+                            switch (permissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand])
+                            {
+                                case ChainOfCommandLevels.Command:
+                                    {
+                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Command == shift.DivisionAssignedTo.Department.Command;
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Department:
+                                    {
+                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Department == shift.DivisionAssignedTo.Department;
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Division:
+                                    {
+                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Division == shift.DivisionAssignedTo;
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Self:
+                                case ChainOfCommandLevels.None:
+                                    {
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        throw new NotImplementedException();
+                                    }
+                            }
                         }
 
                         watchShifts.Add(new
@@ -108,12 +142,12 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             shift.Range,
                             shift.ShiftType,
                             shift.Title,
+                            IsClientResponsibleFor = IsClientResponsibleForShift,
                             Watchbill = new { shift.Watchbill.Id },
                             WatchAssignment = shift.WatchAssignment == null ? null : new
                             {
                                 shift.WatchAssignment.AcknowledgedBy,
                                 shift.WatchAssignment.AssignedBy,
-                                shift.WatchAssignment.CurrentState,
                                 shift.WatchAssignment.DateAcknowledged,
                                 shift.WatchAssignment.DateAssigned,
                                 shift.WatchAssignment.Id,
@@ -121,7 +155,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 shift.WatchAssignment.NumberOfAlertsSent,
                                 shift.WatchAssignment.PersonAssigned,
                                 WatchShift = new { shift.WatchAssignment.WatchShift.Id },
-                                IsClientResponsibleFor = isClientResponsibleFor
+                                IsClientResponsibleFor = isClientResponsibleForAssignment
                             }
                         });
                     }
@@ -405,19 +439,51 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                 Dictionary<WatchShiftType, object> result = new Dictionary<WatchShiftType, object>();
 
+                var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
+
                 foreach (var type in set)
                 {
-                    var personsByDivisionWithPoints = watchbill.EligibilityGroup.EligiblePersons
-                        .Where(person => type.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
-                        .GroupBy(x => x.Division).Select(x =>
+                    var temp = watchbill.EligibilityGroup.EligiblePersons
+                        .Where(person => type.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)));
+
+                    switch (permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand])
+                    {
+                        case ChainOfCommandLevels.Command:
+                            {
+                                temp = temp.Where(x => x.IsInSameCommandAs(token.AuthenticationSession.Person));
+
+                                break;
+                            }
+                        case ChainOfCommandLevels.Department:
+                            {
+                                temp = temp.Where(x => x.IsInSameDepartmentAs(token.AuthenticationSession.Person));
+
+                                break;
+                            }
+                        case ChainOfCommandLevels.Division:
+                            {
+                                temp = temp.Where(x => x.IsInSameDivisionAs(token.AuthenticationSession.Person));
+
+                                break;
+                            }
+                        case ChainOfCommandLevels.None:
+                        case ChainOfCommandLevels.Self:
+                            {
+                                throw new CommandCentralException("You aren't allowed to see watch recommendations.", ErrorTypes.Authorization);
+                            }
+                        default:
+                            throw new NotImplementedException();
+                    }
+
+                    var selection = temp.GroupBy(x => x.Division).Select(x =>
                         {
                             return new
                             {
-                                Division = x.Key,
+                                Division = x.Key.Id,
                                 RecommendationsByPerson = x.ToList().Select(person =>
                                 {
 
-                                    double points = person.WatchAssignments.Where(z => z.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed"))
+                                    double points = person.WatchAssignments
                                     .Sum(z =>
                                     {
                                         int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
@@ -433,12 +499,12 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                         Points = points,
                                         WatchInputs = watchInputs
                                     };
-                                }).ToList().ToDictionary(rec => rec.Person, rec => new { rec.Points, rec.WatchInputs })
+                                }).ToList()
                             };
 
-                        }).ToDictionary(x => x.Division, x => x.RecommendationsByPerson);
+                        }).SelectMany(x => x.RecommendationsByPerson.Select(y => new { y.Person, y.Points, y.WatchInputs }));
 
-                    result[type] = personsByDivisionWithPoints;
+                    result[type] = selection;
                 }
 
                 token.SetResult(result);

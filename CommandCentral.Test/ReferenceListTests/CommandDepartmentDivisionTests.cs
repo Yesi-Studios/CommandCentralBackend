@@ -23,7 +23,7 @@ namespace CommandCentral.Test.ReferenceListTests
             {
                 using (var transaction = session.BeginTransaction())
                 {
-                    for (int x = 0; x < Utilities.GetRandomNumber(2, 4); x++)
+                    for (int x = 0; x < 1; x++)
                     {
                         expected.Add(new Command
                         {

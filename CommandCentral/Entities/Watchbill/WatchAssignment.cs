@@ -60,12 +60,7 @@ namespace CommandCentral.Entities.Watchbill
         /// Indicates if this watch assignment has been acknowledged.
         /// </summary>
         public virtual bool IsAcknowledged { get; set; }
-
-        /// <summary>
-        /// The current state of this watch assignment.
-        /// </summary>
-        public virtual WatchAssignmentState CurrentState { get; set; }
-
+        
         /// <summary>
         /// This is the number of times we've alerted the person assigned that they have watch.
         /// </summary>
@@ -137,7 +132,6 @@ namespace CommandCentral.Entities.Watchbill
                 References(x => x.WatchShift).Not.Nullable().ForeignKey(WatchAssignmentToWatchShiftForeignKeyName);
                 References(x => x.PersonAssigned).Not.Nullable();
                 References(x => x.AssignedBy).Not.Nullable();
-                References(x => x.CurrentState).Not.Nullable();
                 References(x => x.AcknowledgedBy);
 
                 Map(x => x.DateAssigned).Not.Nullable().CustomType<UtcDateTimeType>();
@@ -160,7 +154,6 @@ namespace CommandCentral.Entities.Watchbill
                 RuleFor(x => x.WatchShift).NotEmpty();
                 RuleFor(x => x.PersonAssigned).NotEmpty();
                 RuleFor(x => x.AssignedBy).NotEmpty();
-                RuleFor(x => x.CurrentState).NotEmpty();
                 RuleFor(x => x.DateAssigned).NotEmpty();
 
                 When(x => x.IsAcknowledged, () =>
@@ -190,16 +183,7 @@ namespace CommandCentral.Entities.Watchbill
                     {
                         return CommonQueryStrategies.IdQuery(token.SearchParameter.Key.GetPropertyName(), token.SearchParameter.Value);
                     });
-
-                ForProperties(
-                    x => x.CurrentState)
-                .AsType(SearchDataTypes.String)
-                .CanBeUsedIn(QueryTypes.Advanced)
-                .UsingStrategy(token =>
-                {
-                    return CommonQueryStrategies.ReferenceListValueQuery(token.SearchParameter.Key, token.SearchParameter.Value);
-                });
-
+                
                 ForProperties(
                     x => x.PersonAssigned,
                     x => x.AssignedBy,

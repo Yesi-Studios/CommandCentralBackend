@@ -549,7 +549,7 @@ namespace CommandCentral.Entities.Watchbill
                 {
                     return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
-                        double points = person.WatchAssignments.Where(z => z.CurrentState == ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Completed")).Sum(z =>
+                        double points = person.WatchAssignments.Sum(z =>
                         {
                             int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
@@ -602,7 +602,6 @@ namespace CommandCentral.Entities.Watchbill
                         shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
                         {
                             AssignedBy = client,
-                            CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                             DateAssigned = dateTime,
                             Id = Guid.NewGuid(),
                             PersonAssigned = personToAssign,
@@ -642,7 +641,6 @@ namespace CommandCentral.Entities.Watchbill
                             shift.WatchAssignment = new WatchAssignment
                             {
                                 AssignedBy = client,
-                                CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = dateTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personToAssign,

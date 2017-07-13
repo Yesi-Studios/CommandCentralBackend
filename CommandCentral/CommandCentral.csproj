@@ -223,7 +223,6 @@
     <Compile Include="ICommentable.cs" />
     <Compile Include="MusterReport.cs" />
     <Compile Include="Entities\ReferenceLists\BilletAssignment.cs" />
-    <Compile Include="Entities\ReferenceLists\Watchbill\WatchAssignmentState.cs" />
     <Compile Include="Entities\ReferenceLists\Watchbill\WatchElligibilityGroup.cs" />
     <Compile Include="Entities\Watchbill\WatchAssignment.cs" />
     <Compile Include="Entities\Watchbill\Watchbill.cs" />
@@ -449,9 +448,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PreDefs\Def_WatchEligibilityGroups.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="PreDefs\Def_WatchAssignmentStates.cc" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

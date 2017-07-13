@@ -14,7 +14,7 @@ namespace CommandCentral.Test
         public static string Username { get; } = "root";
         public static string Password { get; } = "password";
         public static List<string> SMTPHosts { get; } = new List<string> { };
-        public static bool RebuildIfExists { get; } = false;
+        public static bool RebuildIfExists { get; } = true;
 
     }
 }

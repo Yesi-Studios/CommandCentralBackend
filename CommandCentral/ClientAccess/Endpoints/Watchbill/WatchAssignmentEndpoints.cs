@@ -84,9 +84,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         var assignments = watchbill.WatchShifts.Select(x => x.WatchAssignment).Where(assignment =>
                         {
-                            if (assignment.CurrentState != ReferenceListHelper<WatchAssignmentState>.Find("Assigned"))
-                                return false;
-
                             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(assignment.PersonAssigned);
 
                             return resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand];
@@ -98,7 +95,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             {
                                 AcknowledgedBy = assignment.AcknowledgedBy,
                                 AssignedBy = assignment.AssignedBy,
-                                CurrentState = assignment.CurrentState,
                                 DateAcknowledged = assignment.DateAcknowledged,
                                 DateAssigned = assignment.DateAssigned,
                                 Id = assignment.Id,
@@ -173,7 +169,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                     {
                                         x.AcknowledgedBy,
                                         x.AssignedBy,
-                                        x.CurrentState,
                                         x.DateAcknowledged,
                                         x.DateAssigned,
                                         x.Id,
@@ -238,15 +233,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         if (ass1.WatchShift.WatchAssignment == null || ass1.WatchShift.WatchAssignment == null)
                             throw new CommandCentralException("Both given watch assignments must have shifts which have already been assigned a watch assignment.", ErrorTypes.Validation);
-
-                        if (ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed"))
-                            throw new CommandCentralException("You may not swap assignments if one of the assignments has been completed, excused, or missed.", ErrorTypes.Validation);
-
+                        
                         if (ass1.WatchShift.Watchbill.Id != ass2.WatchShift.Watchbill.Id)
                             throw new CommandCentralException("You may not swap assignments if those assignments are from different watchbills.", ErrorTypes.Validation);
 
@@ -420,7 +407,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         assignment.IsAcknowledged = true;
                         assignment.AcknowledgedBy = token.AuthenticationSession.Person;
                         assignment.DateAcknowledged = token.CallTime;
-                        assignment.CurrentState = ReferenceListHelper<WatchAssignmentState>.Find("Acknowledged");
 
                         session.Update(assignment);
 
@@ -560,7 +546,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             var assignmentToInsert = new WatchAssignment
                             {
                                 AssignedBy = token.AuthenticationSession.Person,
-                                CurrentState = ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = token.CallTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personAssigned,
