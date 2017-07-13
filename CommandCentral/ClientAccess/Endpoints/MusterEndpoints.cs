@@ -171,7 +171,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
 
             //Where we're going to keep all the persons the client can muster.
-            List<Person> musterablePersons = new List<Person>();
+            IList<Person> musterablePersons = new List<Person>();
 
             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(null);
             var highestLevelInMuster = resolvedPermissions.HighestLevels[ChainsOfCommand.Muster];
@@ -188,19 +188,19 @@ namespace CommandCentral.ClientAccess.Endpoints
                     case ChainOfCommandLevels.Command:
                         {
                             queryOver = queryOver.Where(x => x.Command == token.AuthenticationSession.Person.Command);
-                            musterablePersons = queryOver.List().ToList();
+                            musterablePersons = queryOver.List();
                             break;
                         }
                     case ChainOfCommandLevels.Department:
                         {
                             queryOver = queryOver.Where(x => x.Department == token.AuthenticationSession.Person.Department);
-                            musterablePersons = queryOver.List().ToList();
+                            musterablePersons = queryOver.List();
                             break;
                         }
                     case ChainOfCommandLevels.Division:
                         {
                             queryOver = queryOver.Where(x => x.Division == token.AuthenticationSession.Person.Division);
-                            musterablePersons = queryOver.List().ToList();
+                            musterablePersons = queryOver.List();
                             break;
                         }
                     case ChainOfCommandLevels.Self:

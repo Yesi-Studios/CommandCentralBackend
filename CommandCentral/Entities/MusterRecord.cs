@@ -243,9 +243,43 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public static bool CanClientMusterPerson(Person client, Person person)
         {
-            var resolvedPermissions = client.ResolvePermissions(person);
 
-            return resolvedPermissions.IsInChainOfCommand[ChainsOfCommand.Muster];
+            ChainOfCommandLevels level = ChainOfCommandLevels.None;
+
+            foreach (var group in client.PermissionGroups)
+            {
+                foreach (var coc in group.ChainsOfCommandParts.Where(x => x.ChainOfCommand == ChainsOfCommand.Muster))
+                {
+                    if (level < group.AccessLevel)
+                        level = group.AccessLevel;
+                }
+            }
+
+
+            switch (level)
+            {
+                case ChainOfCommandLevels.Command:
+                    {
+                        return client.IsInSameCommandAs(person);
+                    }
+                case ChainOfCommandLevels.Department:
+                    {
+                        return client.IsInSameDepartmentAs(person);
+                    }
+                case ChainOfCommandLevels.Division:
+                    {
+                        return client.IsInSameDivisionAs(person);
+                    }
+                case ChainOfCommandLevels.None:
+                case ChainOfCommandLevels.Self:
+                    {
+                        return false;
+                    }
+                default:
+                    {
+                        throw new NotImplementedException(nameof(CanClientMusterPerson));
+                    }
+            }
         }
 
         /// <summary>
@@ -374,7 +408,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public static NHibernate.IQueryOver<Person, Person> GetMusterablePersonsQuery(NHibernate.ISession session)
         {
-            return session.QueryOver<Person>().Where(x => x.DutyStatus != ReferenceLists.ReferenceListHelper<ReferenceLists.DutyStatus>.Find("Loss"));
+            return session.QueryOver<Person>().Where(x => x.DutyStatus != ReferenceListHelper<DutyStatus>.Find("Loss"));
         }
 
         #endregion
