@@ -89,6 +89,7 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     .IfInChainOfCommand();
 
             HasChainOfCommand(ChainsOfCommand.Muster);
+            
             HasChainOfCommand(ChainsOfCommand.QuarterdeckWatchbill);
         }
     }

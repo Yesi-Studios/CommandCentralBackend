@@ -8,6 +8,7 @@ using NHibernate.Criterion;
 using CommandCentral.Authorization;
 using CommandCentral.Logging;
 using NHibernate.Type;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.Entities
 {
@@ -468,7 +469,7 @@ namespace CommandCentral.Entities
                     }
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
-                    Log.Info("{0}/{1} person(s) have been mustered so far.".With(persons.Count(x => x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
+                    Log.Info("{0}/{1} person(s) have been mustered so far.".With(persons.Count(x => x.DutyStatus != ReferenceListHelper<DutyStatus>.Find("Loss") && x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
                     Log.Info("Muster finalization status : {0}".With(MusterRecord.IsMusterFinalized ? "Finalized" : "Not Finalized"));
                     Log.Info("Rollover time : {0}".With(MusterRecord.RolloverTime));
                     Log.Info("Current muster date is: {0}".With(GetMusterDate(DateTime.UtcNow).ToString("D")));

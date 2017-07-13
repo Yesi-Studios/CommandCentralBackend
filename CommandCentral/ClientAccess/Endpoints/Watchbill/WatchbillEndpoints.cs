@@ -493,11 +493,34 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                                     var watchInputs = watchbill.WatchInputs.Where(input => input.IsConfirmed && input.Person.Id == person.Id).ToList();
 
+                                    var mostRecentWatch = person.WatchAssignments.OrderByDescending(ass => ass.WatchShift.Range.Start).First();
+
                                     return new
                                     {
                                         Person = person,
                                         Points = points,
-                                        WatchInputs = watchInputs
+                                        WatchInputs = watchInputs,
+                                        MostRecentWatchAssignment = new 
+                                        {
+                                            mostRecentWatch.AcknowledgedBy,
+                                            mostRecentWatch.AssignedBy,
+                                            mostRecentWatch.DateAcknowledged,
+                                            mostRecentWatch.DateAssigned,
+                                            mostRecentWatch.Id,
+                                            mostRecentWatch.IsAcknowledged,
+                                            mostRecentWatch.NumberOfAlertsSent,
+                                            mostRecentWatch.PersonAssigned,
+                                            WatchShift = new
+                                            {
+                                                mostRecentWatch.WatchShift.Id,
+                                                mostRecentWatch.WatchShift.Comments,
+                                                DivisionId = mostRecentWatch.WatchShift.DivisionAssignedTo.Id,
+                                                mostRecentWatch.WatchShift.Points,
+                                                mostRecentWatch.WatchShift.Range,
+                                                mostRecentWatch.WatchShift.ShiftType,
+                                                mostRecentWatch.WatchShift.Title
+                                            }
+                                        }
                                     };
                                 }).ToList()
                             };
