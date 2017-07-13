@@ -22,7 +22,6 @@ namespace CommandCentral.Test.ReferenceListTests
             PreDefUtility.PersistPreDef<WatchbillStatus>();
             PreDefUtility.PersistPreDef<WatchShiftType>();
             PreDefUtility.PersistPreDef<WatchEligibilityGroup>();
-            PreDefUtility.PersistPreDef<WatchAssignmentState>();
             PreDefUtility.PersistPreDef<PhoneNumberType>();
             PreDefUtility.PersistPreDef<Paygrade>();
             PreDefUtility.PersistPreDef<MusterStatus>();
@@ -48,11 +47,7 @@ namespace CommandCentral.Test.ReferenceListTests
             Logging.Log.Info("testing WatchEligibilityGroup");
             Assert.IsTrue(ReferenceListHelper<WatchEligibilityGroup>.All().Count ==
                 PreDefOf<WatchEligibilityGroup>.Get().Definitions.Count);
-
-            Logging.Log.Info("testing WatchAssignmentState");
-            Assert.IsTrue(ReferenceListHelper<WatchAssignmentState>.All().Count ==
-                PreDefOf<WatchAssignmentState>.Get().Definitions.Count);
-
+            
             Logging.Log.Info("testing PhoneNumberType");
             Assert.IsTrue(ReferenceListHelper<PhoneNumberType>.All().Count ==
                 PreDefOf<PhoneNumberType>.Get().Definitions.Count);

@@ -515,8 +515,6 @@ namespace CommandCentral.Entities
                 Map(x => x.Remarks);
                 Map(x => x.Designation);
                 Map(x => x.UIC);
-
-                Cache.ReadWrite();
             }
         }
 

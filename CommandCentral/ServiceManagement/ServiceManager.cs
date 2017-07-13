@@ -82,7 +82,6 @@ namespace CommandCentral.ServiceManagement
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchbillStatus>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchShiftType>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchEligibilityGroup>();
-                    PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Watchbill.WatchAssignmentState>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.PhoneNumberType>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.Paygrade>();
                     PreDefs.PreDefUtility.PersistPreDef<Entities.ReferenceLists.MusterStatus>();

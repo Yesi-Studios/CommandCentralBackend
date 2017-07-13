@@ -261,7 +261,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             throw new Exception("A watch input was not owned by any watchbill.");
 
                         //Check the state.
-                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("OpenForInputs"))
+                        if (watchbill.CurrentState != Entities.ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                             throw new CommandCentralException("You may not edit inputs unless the watchbill is in the Open for Inputs state.", ErrorTypes.Validation);
 
                         //Now we also need the permissions to determine if this client can edit this input.

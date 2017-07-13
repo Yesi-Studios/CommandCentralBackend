@@ -12,6 +12,7 @@ using AtwoodUtils;
 using NHibernate;
 using NHibernate.Type;
 using CommandCentral.Authorization;
+using CommandCentral.Entities.ReferenceLists;
 
 namespace CommandCentral.Entities.Watchbill
 {
@@ -238,11 +239,54 @@ namespace CommandCentral.Entities.Watchbill
                 FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
                 
             }
-            //Inform everyone in the chain of command that the watchbill is closed for inputs.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
+            //Inform everyone in the chain of command that the watchbill is closed for inputs and now accepting assignments.
+            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
             {
                 if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
-                    throw new Exception("You may not move to the closed for inputs state from anything other than the open for inputs state.");
+                    throw new Exception("You may not move to the assignment state from anything other than the open for inputs state.");
+
+
+                //First thing... we're going to assign all the shifts to divisions.
+                var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
+
+                foreach (var shiftGroup in shuffledShiftsByType)
+                {
+                    var remainingShifts = shiftGroup.Count();
+
+                    var personsByDivision = this.EligibilityGroup.EligiblePersons
+                        .Where(p => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => p.WatchQualifications.Contains(watchQual)))
+                        .GroupBy(p => p.Division);
+
+                    var totalPersonsWithQuals = personsByDivision.Select(x => x.Count()).Sum(x => x);
+                    var assignedShiftsByDivisions = new Dictionary<Division, double>();
+                    var finalAssignedShiftsByDivision = new Dictionary<Division, int>();
+
+                    foreach (var personsGroup in personsByDivision)
+                    {
+                        var assignedShifts = (double)shiftGroup.Count() * ((double)personsGroup.Count() / (double)totalPersonsWithQuals);
+                        assignedShiftsByDivisions.Add(personsGroup.Key, assignedShifts);
+
+                        finalAssignedShiftsByDivision[personsGroup.Key] = (int)assignedShifts;
+                        remainingShifts -= (int)assignedShifts;
+                    }
+
+                    var finalAssignments = assignedShiftsByDivisions.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
+
+                    int index = 0;
+                    while (remainingShifts > 0)
+                    {
+                        finalAssignedShiftsByDivision[finalAssignments[index].Key]++;
+                        remainingShifts--;
+                        index++;
+                    }
+
+                    //Now we know how many shifts need to be assigned to each division.
+                    foreach (var pair in finalAssignedShiftsByDivision)
+                    {
+                        foreach (var shift in shiftGroup.Where(x => x.DivisionAssignedTo == null).Take(pair.Value))
+                            shift.DivisionAssignedTo = pair.Key;
+                    }
+                }
 
                 //We now also need to load all persons in the watchbill's chain of command.
                 var groups = new Authorization.Groups.PermissionGroup[] { new Authorization.Groups.Definitions.CommandQuarterdeckWatchbill(),
@@ -276,7 +320,7 @@ namespace CommandCentral.Entities.Watchbill
 
                         Task.Run(() =>
                         {
-                            var model = new Email.Models.WatchbillClosedForInputsEmailModel { Watchbill = this.Title };
+                            var model = new Email.Models.WatchbillOpenForAssignmentsEmailModel { Watchbill = this.Title };
 
                             foreach (var addressGroup in collateralEmailAddresses)
                             {
@@ -284,8 +328,8 @@ namespace CommandCentral.Entities.Watchbill
                                     .CreateDefault()
                                     .To(addressGroup)
                                     .CC(Email.EmailInterface.CCEmailMessage.DeveloperAddress)
-                                    .Subject("Watchbill Closed For Inputs")
-                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillClosedForInputs_HTML.html", model)
+                                    .Subject("Watchbill Open For Assignments")
+                                    .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.WatchbillOpenForAssignments_HTML.html", model)
                                     .SendWithRetryAndFailure(TimeSpan.FromSeconds(1));
                             }
 
@@ -308,8 +352,8 @@ namespace CommandCentral.Entities.Watchbill
             //Inform the chain of command that the watchbill is open for review.
             else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs"))
-                    throw new Exception("You may not move to the under review state from anything other than the closed for inputs state.");
+                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
+                    throw new Exception("You may not move to the under review state from anything other than the assignment state.");
 
                 if (!this.WatchShifts.All(y => y.WatchAssignment != null))
                 {
@@ -505,7 +549,7 @@ namespace CommandCentral.Entities.Watchbill
                 {
                     return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
-                        double points = person.WatchAssignments.Where(z => z.CurrentState == ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Completed")).Sum(z =>
+                        double points = person.WatchAssignments.Sum(z =>
                         {
                             int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
@@ -558,7 +602,6 @@ namespace CommandCentral.Entities.Watchbill
                         shiftsForThisGroup[x].WatchAssignment = new WatchAssignment
                         {
                             AssignedBy = client,
-                            CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                             DateAssigned = dateTime,
                             Id = Guid.NewGuid(),
                             PersonAssigned = personToAssign,
@@ -598,7 +641,6 @@ namespace CommandCentral.Entities.Watchbill
                             shift.WatchAssignment = new WatchAssignment
                             {
                                 AssignedBy = client,
-                                CurrentState = ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = dateTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personToAssign,
@@ -850,8 +892,6 @@ namespace CommandCentral.Entities.Watchbill
                     x.Map(y => y.Start).Not.Nullable().CustomType<UtcDateTimeType>();
                     x.Map(y => y.End).Not.Nullable().CustomType<UtcDateTimeType>();
                 });
-
-                Cache.IncludeAll().ReadWrite();
             }
         }
 

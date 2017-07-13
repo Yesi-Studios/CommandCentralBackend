@@ -84,9 +84,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         var assignments = watchbill.WatchShifts.Select(x => x.WatchAssignment).Where(assignment =>
                         {
-                            if (assignment.CurrentState != ReferenceListHelper<WatchAssignmentState>.Find("Assigned"))
-                                return false;
-
                             var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(assignment.PersonAssigned);
 
                             return resolvedPermissions.IsInChainOfCommand[watchbill.EligibilityGroup.OwningChainOfCommand];
@@ -98,7 +95,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             {
                                 AcknowledgedBy = assignment.AcknowledgedBy,
                                 AssignedBy = assignment.AssignedBy,
-                                CurrentState = assignment.CurrentState,
                                 DateAcknowledged = assignment.DateAcknowledged,
                                 DateAssigned = assignment.DateAssigned,
                                 Id = assignment.Id,
@@ -173,7 +169,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                     {
                                         x.AcknowledgedBy,
                                         x.AssignedBy,
-                                        x.CurrentState,
                                         x.DateAcknowledged,
                                         x.DateAssigned,
                                         x.Id,
@@ -238,15 +233,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
                         if (ass1.WatchShift.WatchAssignment == null || ass1.WatchShift.WatchAssignment == null)
                             throw new CommandCentralException("Both given watch assignments must have shifts which have already been assigned a watch assignment.", ErrorTypes.Validation);
-
-                        if (ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Completed") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Excused") ||
-                            ass1.CurrentState == ReferenceListHelper<WatchAssignmentState>.Find("Missed"))
-                            throw new CommandCentralException("You may not swap assignments if one of the assignments has been completed, excused, or missed.", ErrorTypes.Validation);
-
+                        
                         if (ass1.WatchShift.Watchbill.Id != ass2.WatchShift.Watchbill.Id)
                             throw new CommandCentralException("You may not swap assignments if those assignments are from different watchbills.", ErrorTypes.Validation);
 
@@ -420,7 +407,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         assignment.IsAcknowledged = true;
                         assignment.AcknowledgedBy = token.AuthenticationSession.Person;
                         assignment.DateAcknowledged = token.CallTime;
-                        assignment.CurrentState = ReferenceListHelper<WatchAssignmentState>.Find("Acknowledged");
 
                         session.Update(assignment);
 
@@ -485,15 +471,21 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
-                        bool isCommandCoordinator = token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] == ChainOfCommandLevels.Command;
+                        var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
 
-                        if (!isCommandCoordinator)
-                            throw new CommandCentralException("You are not allowed to create watch assignments if you are not the watchbill command coordinator.", ErrorTypes.Authorization);
+                        bool isCoordinator = permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] >= ChainOfCommandLevels.Division;
 
-                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Closed for Inputs") &&
+                        if (!isCoordinator)
+                            throw new CommandCentralException("You are not allowed to create watch assignments if you are not a watchbill coordinator.", ErrorTypes.Authorization);
+
+                        if (watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Assignment") &&
                             watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Published") &&
                             watchbill.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
-                            throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the closed for inputs, published or under review state.", ErrorTypes.Authorization);
+                            throw new CommandCentralException("You are not allowed to create watch assignments unless the watchbill is in the assignment, published or under review state.", ErrorTypes.Authorization);
+
+                        if (permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command
+                            && watchbill.CurrentState == ReferenceListHelper<WatchbillStatus>.Find("Published"))
+                            throw new CommandCentralException("You may not assign watch standers during the published phase.", ErrorTypes.Authorization);
 
                         Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
 
@@ -506,10 +498,54 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             var watchShift = session.Get<WatchShift>(assignment.WatchShiftId) ??
                                 throw new CommandCentralException("Your watch shift id was not valid.", ErrorTypes.Validation);
 
+                            //Let's look into the permission the client has on the person they're trying to assign and if 
+                            //the watch shift is meant to be assigned to them.
+                            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personAssigned);
+
+                            switch (resolvedPermissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand])
+                            {
+                                case ChainOfCommandLevels.Command:
+                                    {
+                                        if (!token.AuthenticationSession.Person.IsInSameCommandAs(personAssigned))
+                                            throw new CommandCentralException("You may not assign this person to watch.", ErrorTypes.Authorization);
+
+                                        if (watchShift.DivisionAssignedTo.Department.Command != token.AuthenticationSession.Person.Command)
+                                            throw new CommandCentralException("You may not assign a watch to this watch shift.", ErrorTypes.Authorization);
+                                                 
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Department:
+                                    {
+                                        if (!token.AuthenticationSession.Person.IsInSameDepartmentAs(personAssigned))
+                                            throw new CommandCentralException("You may not assign this person to watch.", ErrorTypes.Authorization);
+
+                                        if (watchShift.DivisionAssignedTo.Department != token.AuthenticationSession.Person.Department)
+                                            throw new CommandCentralException("You may not assign a watch to this watch shift.", ErrorTypes.Authorization);
+
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.Division:
+                                    {
+                                        if (!token.AuthenticationSession.Person.IsInSameDivisionAs(personAssigned))
+                                            throw new CommandCentralException("You may not assign this person to watch.", ErrorTypes.Authorization);
+
+                                        if (watchShift.DivisionAssignedTo != token.AuthenticationSession.Person.Division)
+                                            throw new CommandCentralException("You may not assign a watch to this watch shift.", ErrorTypes.Authorization);
+
+                                        break;
+                                    }
+                                case ChainOfCommandLevels.None:
+                                case ChainOfCommandLevels.Self:
+                                    {
+                                        throw new CommandCentralException("You may not assign this person to watch.", ErrorTypes.Authorization);
+                                    }
+                                default:
+                                    throw new NotImplementedException("In create watch assignments.");
+                            }
+
                             var assignmentToInsert = new WatchAssignment
                             {
                                 AssignedBy = token.AuthenticationSession.Person,
-                                CurrentState = Entities.ReferenceLists.ReferenceListHelper<WatchAssignmentState>.Find("Assigned"),
                                 DateAssigned = token.CallTime,
                                 Id = Guid.NewGuid(),
                                 PersonAssigned = personAssigned,
