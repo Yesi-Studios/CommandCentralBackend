@@ -112,43 +112,37 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     foreach (var shift in watchbillFromDB.WatchShifts)
                     {
                         bool isClientResponsibleForAssignment = false;
-
-                        if (shift.WatchAssignment != null)
-                        {
-                            var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(shift.WatchAssignment.PersonAssigned);
-                            isClientResponsibleForAssignment = resolvedPermissions.IsInChainOfCommand[watchbillFromDB.EligibilityGroup.OwningChainOfCommand];
-                        }
-
                         bool IsClientResponsibleForShift = false;
-                        if (shift.DivisionAssignedTo != null)
+
+                        switch (highestLevel)
                         {
-                            switch (highestLevel)
-                            {
-                                case ChainOfCommandLevels.Command:
-                                    {
-                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Command == shift.DivisionAssignedTo.Department.Command;
-                                        break;
-                                    }
-                                case ChainOfCommandLevels.Department:
-                                    {
-                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Department == shift.DivisionAssignedTo.Department;
-                                        break;
-                                    }
-                                case ChainOfCommandLevels.Division:
-                                    {
-                                        IsClientResponsibleForShift = token.AuthenticationSession.Person.Division == shift.DivisionAssignedTo;
-                                        break;
-                                    }
-                                case ChainOfCommandLevels.Self:
-                                case ChainOfCommandLevels.None:
-                                    {
-                                        break;
-                                    }
-                                default:
-                                    {
-                                        throw new NotImplementedException();
-                                    }
-                            }
+                            case ChainOfCommandLevels.Command:
+                                {
+                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Command == shift.DivisionAssignedTo?.Department.Command;
+                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Command == shift.WatchAssignment?.PersonAssigned?.Command;
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Department:
+                                {
+                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Department == shift.DivisionAssignedTo?.Department;
+                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Department == shift.WatchAssignment?.PersonAssigned?.Department;
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Division:
+                                {
+                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Division == shift.DivisionAssignedTo;
+                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Division == shift.WatchAssignment?.PersonAssigned?.Division;
+                                    break;
+                                }
+                            case ChainOfCommandLevels.Self:
+                            case ChainOfCommandLevels.None:
+                                {
+                                    break;
+                                }
+                            default:
+                                {
+                                    throw new NotImplementedException();
+                                }
                         }
 
                         watchShifts.Add(new
