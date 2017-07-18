@@ -50,45 +50,62 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 Dictionary<string, object> analytics = new Dictionary<string, object>();
                 if (watchbillFromDB.WatchShifts.Any())
                 {
-                    var assignments = watchbillFromDB.WatchShifts.Where(x => x.WatchAssignment != null).Select(x => x.WatchAssignment).ToList();
+                    var shiftAssignments = watchbillFromDB.WatchShifts.Where(x => x.DivisionAssignedTo != null);
 
-                    if (assignments.Any())
+                    List<KeyValuePair<Division, object>> statsByDivision = new List<KeyValuePair<Division, object>>();
+                    if (shiftAssignments.Any())
                     {
-                        var statsByDepartment = assignments.GroupBy(x => x.PersonAssigned.Department).Select(group =>
-                        {
-                            var assignmentsInGroup = group.ToList();
+                        var groupings = shiftAssignments.GroupBy(x => x.DivisionAssignedTo);
 
-                            var totalInWatchbill = assignments.Count;
-                            var totalInDepartment = assignmentsInGroup.Count;
-                            var percentageOfTotal = Math.Round(((double)totalInDepartment / (double)totalInWatchbill) * 100, 2);
+                        foreach (var group in groupings)
+                        {
+                            var shiftsInGroup = group.ToList();
+
+                            var totalInWatchbill = watchbillFromDB.WatchShifts.Count;
+                            var totalInDivision = shiftsInGroup.Count;
+                            var percentageOfTotal = Math.Round(((double)totalInDivision / (double)totalInWatchbill) * 100, 2);
                             var totalElligibleInCommand = watchbillFromDB.EligibilityGroup.EligiblePersons.Count;
-                            var totalElligibleInDepartment = watchbillFromDB.EligibilityGroup.EligiblePersons.Where(x => x.Department == group.Key).Count();
-                            var totalElligiblePercentage = Math.Round(((double)totalElligibleInDepartment / (double)totalElligibleInCommand) * 100, 2);
+                            var totalElligibleInDivision = watchbillFromDB.EligibilityGroup.EligiblePersons.Count(x => x.Division == group.Key);
+                            var totalElligiblePercentage = Math.Round(((double)totalElligibleInDivision / (double)totalElligibleInCommand), 2);
                             var percentageDiscrepancy = totalElligiblePercentage - percentageOfTotal;
 
-                            return new KeyValuePair<Department, object>(group.Key, new
+                            statsByDivision.Add(new KeyValuePair<Division, object>(group.Key, new
                             {
                                 TotalInWatchbill = totalInWatchbill,
-                                TotalInDepartment = totalInDepartment,
+                                TotalInDivision = totalInDivision,
                                 PercentageOfTotal = percentageOfTotal,
-                                TotalElligibleInDepartment = totalElligibleInDepartment,
                                 TotalElligibleInCommand = totalElligibleInCommand,
+                                TotalElligibleInDivision = totalElligibleInDivision,
                                 TotalElligiblePercentage = totalElligiblePercentage,
                                 PercentageDiscrepancy = percentageDiscrepancy
-                            });
-                        });
-
-                        analytics["StatisticsByDepartment"] = statsByDepartment;
-
-                        var multipleAssignments = assignments.GroupBy(x => x.PersonAssigned).Where(x => x.Count() != 1).Select(x => new { Person = x.Key, Assignments = x.ToList() }).ToList();
-                        analytics["MultipleAssignments"] = multipleAssignments;
+                            }));
+                        }
                     }
+
+                    analytics["StatisticsByDivision"] = statsByDivision;
+
+                    var multipleAssignments = shiftAssignments
+                        .GroupBy(x => x.WatchAssignment.PersonAssigned)
+                        .Where(x => x.Count() != 1)
+                        .Select(x => new { Person = x.Key, Assignments = x.Select(y => y.WatchAssignment).ToList() })
+                        .ToList();
+                    analytics["MultipleAssignments"] = multipleAssignments;
                 }
+
 
                 //We also need to build some additional information into the watch assignments regarding chain of command for the client and the assigned person.
                 List<object> watchShifts = new List<object>();
 
-                var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
+                ChainOfCommandLevels highestLevel = ChainOfCommandLevels.None;
+
+                foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
+                {
+                    if (group.ChainsOfCommandParts.Any(x => x.ChainOfCommand == ChainsOfCommand.QuarterdeckWatchbill))
+                    {
+                        if (group.AccessLevel > highestLevel)
+                            highestLevel = group.AccessLevel;
+                    }
+                }
 
                 if (watchbillFromDB.WatchShifts.Any())
                 {
@@ -105,7 +122,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         bool IsClientResponsibleForShift = false;
                         if (shift.DivisionAssignedTo != null)
                         {
-                            switch (permissions.HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand])
+                            switch (highestLevel)
                             {
                                 case ChainOfCommandLevels.Command:
                                     {
@@ -500,7 +517,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                         Person = person,
                                         Points = points,
                                         WatchInputs = watchInputs,
-                                        MostRecentWatchAssignment = (mostRecentWatch != null) ? new 
+                                        MostRecentWatchAssignment = (mostRecentWatch != null) ? new
                                         {
                                             mostRecentWatch.AcknowledgedBy,
                                             mostRecentWatch.AssignedBy,
@@ -535,3 +552,4 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
         }
     }
 }
+
