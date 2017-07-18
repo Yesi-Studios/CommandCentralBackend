@@ -531,7 +531,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                             {
                                                 mostRecentWatch.WatchShift.Id,
                                                 mostRecentWatch.WatchShift.Comments,
-                                                DivisionId = mostRecentWatch.WatchShift.DivisionAssignedTo.Id,
+                                                DivisionId = mostRecentWatch.WatchShift.DivisionAssignedTo?.Id,
                                                 mostRecentWatch.WatchShift.Points,
                                                 mostRecentWatch.WatchShift.Range,
                                                 mostRecentWatch.WatchShift.ShiftType,
