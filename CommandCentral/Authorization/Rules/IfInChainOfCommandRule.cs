@@ -22,7 +22,7 @@ namespace CommandCentral.Authorization.Rules
             if (authToken.PersonFromClient == null)
                 return false;
 
-            var coc = this.ParentPropertyGroup.ParentCoC.ChainOfCommand;
+            var coc = ParentPropertyGroup.ParentCoC.ChainOfCommand;
 
             //First find the person's highest level in this module.
             var highestLevel = (ChainOfCommandLevels)authToken.Client.PermissionGroups.SelectMany(x => x.ChainsOfCommandParts).Where(x => x.ChainOfCommand == coc).Max(x => x.ParentPermissionGroup.AccessLevel);

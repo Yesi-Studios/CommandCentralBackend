@@ -40,7 +40,7 @@ namespace AtwoodUtils
 
             var other = (TimeRange)obj;
 
-            return this.End == other.End && this.Start == other.Start;
+            return End == other.End && Start == other.Start;
         }
 
         /// <summary>
@@ -51,8 +51,8 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static bool operator ==(TimeRange x, TimeRange y)
         {
-            if (object.ReferenceEquals(null, x))
-                return object.ReferenceEquals(null, y);
+            if (ReferenceEquals(null, x))
+                return ReferenceEquals(null, y);
 
             return x.Equals(y);
         }

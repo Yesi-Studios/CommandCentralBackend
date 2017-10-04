@@ -77,7 +77,7 @@ namespace CommandCentral.Entities.Watchbill
         /// <summary>
         /// The command at which this watchbill was created.
         /// </summary>
-        public virtual ReferenceLists.Command Command { get; set; }
+        public virtual Command Command { get; set; }
 
         /// <summary>
         /// This is how the watchbill knows the pool of people to use when assigning inputs, and assigning watches.  
@@ -101,19 +101,19 @@ namespace CommandCentral.Entities.Watchbill
         public virtual void SetState(WatchbillStatus desiredState, DateTime setTime, Person person, ISession session)
         {
             //Don't allow same changes.
-            if (this.CurrentState == desiredState)
+            if (CurrentState == desiredState)
             {
                 throw new Exception("Can't set the state to its same value.");
             }
 
             //If we set a watchbill's state to initial, then remove all the assignments from it, 
             //leaving a watchbill with only its days and shifts.
-            if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial"))
+            if (desiredState == ReferenceListHelper<WatchbillStatus>.Find("Initial"))
             {
-                this.InputRequirements.Clear();
-                this.WatchInputs.Clear();
+                InputRequirements.Clear();
+                WatchInputs.Clear();
 
-                foreach (var shift in this.WatchShifts)
+                foreach (var shift in WatchShifts)
                 {
                     if (shift.WatchAssignment != null)
                     {
@@ -123,25 +123,25 @@ namespace CommandCentral.Entities.Watchbill
                 }
 
                 //We also need to remove the job.
-                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == this.Id.ToString()))
-                    FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
+                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == Id.ToString()))
+                    FluentScheduler.JobManager.RemoveJob(Id.ToString());
             }
             //Inform all the people who need to provide inputs along with all the people who are in its chain of command.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
+            else if (desiredState == ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial"))
+                if (CurrentState == null || CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Initial"))
                     throw new Exception("You may not move to the open for inputs state from anything other than the initial state.");
 
-                foreach (var elPerson in this.EligibilityGroup.EligiblePersons)
+                foreach (var elPerson in EligibilityGroup.EligiblePersons)
                 {
-                    this.InputRequirements.Add(new WatchInputRequirement
+                    InputRequirements.Add(new WatchInputRequirement
                     {
                         Id = Guid.NewGuid(),
                         Person = elPerson
                     });
                 }
 
-                var emailAddressesByPerson = this.EligibilityGroup.EligiblePersons
+                var emailAddressesByPerson = EligibilityGroup.EligiblePersons
                     .Select(x => new KeyValuePair<string, List<System.Net.Mail.MailAddress>>(x.ToString(), x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())).ToList())).ToList();
 
                 //Start a new task to send all the emails.
@@ -149,7 +149,7 @@ namespace CommandCentral.Entities.Watchbill
                 {
                     foreach (var group in emailAddressesByPerson)
                     {
-                        var model = new Email.Models.WatchbillInputRequiredEmailModel { FriendlyName = group.Key, Watchbill = this.Title };
+                        var model = new Email.Models.WatchbillInputRequiredEmailModel { FriendlyName = group.Key, Watchbill = Title };
 
                         Email.EmailInterface.CCEmailMessage
                             .CreateDefault()
@@ -186,19 +186,19 @@ namespace CommandCentral.Entities.Watchbill
                         }
                         queryString += " ) and person.Command = :command";
                         var persons = internalSession.CreateQuery(queryString)
-                            .SetParameter("command", this.Command)
+                            .SetParameter("command", Command)
                             .List<Person>();
 
                         //Now with these people who are the duty holders.
                         var collateralEmailAddresses = persons.Select(x => 
                                     x.EmailAddresses.Where(y => y.IsPreferred).Select(y => new System.Net.Mail.MailAddress(y.Address, x.ToString())).ToList()).ToList();
 
-                        var uniqueWatchQuals = this.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications).Distinct();
-                        var personNamesWithoutWatchQualifications = this.EligibilityGroup.EligiblePersons.Where(p => !p.WatchQualifications.Any(qual => uniqueWatchQuals.Contains(qual))).Select(x => x.ToString()).ToList();
+                        var uniqueWatchQuals = WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications).Distinct();
+                        var personNamesWithoutWatchQualifications = EligibilityGroup.EligiblePersons.Where(p => !p.WatchQualifications.Any(qual => uniqueWatchQuals.Contains(qual))).Select(x => x.ToString()).ToList();
 
                         Task.Run(() =>
                         {
-                            var model = new Email.Models.WatchbillOpenForInputsEmailModel { WatchbillTitle = this.Title, NotQualledPersonsFriendlyNames = personNamesWithoutWatchQualifications };
+                            var model = new Email.Models.WatchbillOpenForInputsEmailModel { WatchbillTitle = Title, NotQualledPersonsFriendlyNames = personNamesWithoutWatchQualifications };
 
                             foreach (var addressGroup in collateralEmailAddresses)
                             {
@@ -225,24 +225,24 @@ namespace CommandCentral.Entities.Watchbill
                 }
 
                 //We now need to register the job that will send emails every day to alert people to the inputs they are responsible for.
-                FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(this.Id), s => s.WithName(this.Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
+                FluentScheduler.JobManager.AddJob(() => SendWatchInputRequirementsAlertEmail(Id), s => s.WithName(Id.ToString()).ToRunNow().AndEvery(1).Days().At(4, 0));
                 
             }
             //Inform everyone in the chain of command that the watchbill is closed for inputs and now accepting assignments.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
+            else if (desiredState == ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
+                if (CurrentState == null || CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs"))
                     throw new Exception("You may not move to the assignment state from anything other than the open for inputs state.");
 
 
                 //First thing... we're going to assign all the shifts to divisions.
-                var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
+                var shuffledShiftsByType = WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
 
                 foreach (var shiftGroup in shuffledShiftsByType)
                 {
                     var remainingShifts = shiftGroup.Count();
 
-                    var personsByDivision = this.EligibilityGroup.EligiblePersons
+                    var personsByDivision = EligibilityGroup.EligiblePersons
                         .Where(p => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => p.WatchQualifications.Contains(watchQual)))
                         .GroupBy(p => p.Division);
 
@@ -300,7 +300,7 @@ namespace CommandCentral.Entities.Watchbill
                         }
                         queryString += " ) and person.Command = :command";
                         var persons = internalSession.CreateQuery(queryString)
-                            .SetParameter("command", this.Command)
+                            .SetParameter("command", Command)
                             .List<Person>();
 
                         //Now with these people who are the duty holders.
@@ -309,7 +309,7 @@ namespace CommandCentral.Entities.Watchbill
 
                         Task.Run(() =>
                         {
-                            var model = new Email.Models.WatchbillOpenForAssignmentsEmailModel { Watchbill = this.Title };
+                            var model = new Email.Models.WatchbillOpenForAssignmentsEmailModel { Watchbill = Title };
 
                             foreach (var addressGroup in collateralEmailAddresses)
                             {
@@ -334,17 +334,17 @@ namespace CommandCentral.Entities.Watchbill
                     }
                 }
 
-                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == this.Id.ToString()))
-                    FluentScheduler.JobManager.RemoveJob(this.Id.ToString());
+                if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == Id.ToString()))
+                    FluentScheduler.JobManager.RemoveJob(Id.ToString());
             }
             //Make sure there are assignments for each shift.  
             //Inform the chain of command that the watchbill is open for review.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
+            else if (desiredState == ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
+                if (CurrentState == null || CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Assignment"))
                     throw new Exception("You may not move to the under review state from anything other than the assignment state.");
 
-                if (!this.WatchShifts.All(y => y.WatchAssignment != null))
+                if (!WatchShifts.All(y => y.WatchAssignment != null))
                 {
                     throw new Exception("A watchbill may not move into the 'Under Review' state unless the all watch shifts have been assigned.");
                 }
@@ -372,7 +372,7 @@ namespace CommandCentral.Entities.Watchbill
                         }
                         queryString += " ) and person.Command = :command";
                         var persons = internalSession.CreateQuery(queryString)
-                            .SetParameter("command", this.Command)
+                            .SetParameter("command", Command)
                             .List<Person>();
 
                         //Now with these people who are the duty holders.
@@ -381,7 +381,7 @@ namespace CommandCentral.Entities.Watchbill
 
                         Task.Run(() =>
                         {
-                            var model = new Email.Models.WatchbillUnderReviewEmailModel { Watchbill = this.Title };
+                            var model = new Email.Models.WatchbillUnderReviewEmailModel { Watchbill = Title };
 
                             foreach (var addressGroup in collateralEmailAddresses)
                             {
@@ -408,18 +408,18 @@ namespace CommandCentral.Entities.Watchbill
             }
             //Move the watchbill into its published state, tell everyone who has watch which watches they have.
             //Tell the chain of command the watchbill is published.
-            else if (desiredState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Published"))
+            else if (desiredState == ReferenceListHelper<WatchbillStatus>.Find("Published"))
             {
-                if (this.CurrentState == null || this.CurrentState != ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
+                if (CurrentState == null || CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Under Review"))
                     throw new Exception("You may not move to the published state from anything other than the under review state.");
 
                 //Let's send an email to each person who is on watch, informing them of their watches.
-                var assignmentsByPerson = this.WatchShifts.Select(x => x.WatchAssignment)
+                var assignmentsByPerson = WatchShifts.Select(x => x.WatchAssignment)
                     .GroupBy(x => x.PersonAssigned);
 
                 foreach (var assignments in assignmentsByPerson)
                 {
-                    var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = this.Title };
+                    var model = new Email.Models.WatchAssignedEmailModel { FriendlyName = assignments.Key.ToString(), WatchAssignments = assignments.ToList(), Watchbill = Title };
 
                     var emailAddresses = assignments.Key.EmailAddresses.Where(x => x.IsPreferred).Select(x => new System.Net.Mail.MailAddress(x.Address, assignments.Key.ToString())).ToList();
 
@@ -459,7 +459,7 @@ namespace CommandCentral.Entities.Watchbill
                         }
                         queryString += " ) and person.Command = :command";
                         var persons = internalSession.CreateQuery(queryString)
-                            .SetParameter("command", this.Command)
+                            .SetParameter("command", Command)
                             .List<Person>();
 
                         //Now with these people who are the duty holders, get their preferred email addresses.
@@ -468,7 +468,7 @@ namespace CommandCentral.Entities.Watchbill
 
                         Task.Run(() =>
                         {
-                            var model = new Email.Models.WatchbillPublishedEmailModel { Watchbill = this.Title };
+                            var model = new Email.Models.WatchbillPublishedEmailModel { Watchbill = Title };
 
                             foreach (var addressGroup in collateralEmailAddresses)
                             {
@@ -497,9 +497,9 @@ namespace CommandCentral.Entities.Watchbill
                 throw new NotImplementedException("Not implemented default case in the set watchbill state method.");
             }
 
-            this.CurrentState = desiredState;
-            this.LastStateChange = setTime;
-            this.LastStateChangedBy = person;
+            CurrentState = desiredState;
+            LastStateChange = setTime;
+            LastStateChangedBy = person;
         }
 
         /// <summary>
@@ -518,25 +518,25 @@ namespace CommandCentral.Entities.Watchbill
 
             //First we need to know how many shifts of each type are in this watchbill.
             //And we need to know how many eligible people in each department there are.
-            var shuffledShiftsByType = this.WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
+            var shuffledShiftsByType = WatchShifts.Shuffle().GroupBy(x => x.ShiftType);
 
             foreach (var shiftGroup in shuffledShiftsByType)
             {
                 var remainingShifts = new List<WatchShift>(shiftGroup.OrderByDescending(x => x.Points));
 
                 //Get all persons from the el group who have all the required watch qualifications for the current watch type.
-                var personsByDepartment = this.EligibilityGroup.EligiblePersons
+                var personsByDepartment = EligibilityGroup.EligiblePersons
                     .Where(person => shiftGroup.Key.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)))
                     .Shuffle()
                     .GroupBy(person => person.Department);
 
                 var totalPersonsWithQuals = personsByDepartment.Select(x => x.Count()).Sum(x => x);
 
-                var assignedShiftsByDepartment = new Dictionary<ReferenceLists.Department, double>();
+                var assignedShiftsByDepartment = new Dictionary<Department, double>();
 
                 var assignablePersonsByDepartment = personsByDepartment.Select(x =>
                 {
-                    return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
+                    return new KeyValuePair<Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
                         var points = person.WatchAssignments.Sum(z =>
                         {
@@ -567,16 +567,16 @@ namespace CommandCentral.Entities.Watchbill
                         //Determine who is about to stand this watch.
                         if (!assignablePersonsByDepartment[personsGroup.Key].TryNext(person =>
                         {
-                            if (this.WatchInputs.Any(input => input.IsConfirmed && 
+                            if (WatchInputs.Any(input => input.IsConfirmed && 
                                 input.Person.Id == person.Id && 
                                 new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
                                 .OverlapsWith(new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End, true))))
                                 return false;
 
-                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
+                            if (person.DateOfArrival.HasValue && Range.Start < person.DateOfArrival.Value.AddMonths(1))
                                 return false;
 
-                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
+                            if (person.EAOS.HasValue && Range.Start < person.EAOS.Value.AddMonths(-1))
                                 return false;
 
                             if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shiftsForThisGroup[x].Range.Start, shiftsForThisGroup[x].Range.End).HasInside(person.DateOfBirth.Value.Date))
@@ -609,16 +609,16 @@ namespace CommandCentral.Entities.Watchbill
                     {
                         if (assignablePersonsByDepartment.Any() && assignablePersonsByDepartment[finalAssignments[x].Key].TryNext(person =>
                         {
-                            if (this.WatchInputs.Any(input => input.IsConfirmed &&
+                            if (WatchInputs.Any(input => input.IsConfirmed &&
                                 input.Person.Id == person.Id &&
                                 new Itenso.TimePeriod.TimeRange(input.Range.Start, input.Range.End, true)
                                     .OverlapsWith(new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, true))))
                                 return false;
 
-                            if (person.DateOfArrival.HasValue && this.Range.Start < person.DateOfArrival.Value.AddMonths(1))
+                            if (person.DateOfArrival.HasValue && Range.Start < person.DateOfArrival.Value.AddMonths(1))
                                 return false;
 
-                            if (person.EAOS.HasValue && this.Range.Start < person.EAOS.Value.AddMonths(-1))
+                            if (person.EAOS.HasValue && Range.Start < person.EAOS.Value.AddMonths(-1))
                                 return false;
 
                             if (person.DateOfBirth.HasValue && new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End).HasInside(person.DateOfBirth.Value.Date))
@@ -655,7 +655,7 @@ namespace CommandCentral.Entities.Watchbill
 
             var resolvedPermissions = person.ResolvePermissions(null);
 
-            var highestLevelForWatchbill = resolvedPermissions.HighestLevels[this.EligibilityGroup.OwningChainOfCommand];
+            var highestLevelForWatchbill = resolvedPermissions.HighestLevels[EligibilityGroup.OwningChainOfCommand];
 
             if (highestLevelForWatchbill == ChainOfCommandLevels.None)
                 return new List<WatchInputRequirement>();
@@ -664,19 +664,19 @@ namespace CommandCentral.Entities.Watchbill
             {
                 case ChainOfCommandLevels.Command:
                     {
-                        return this.InputRequirements.Where(x => x.Person.IsInSameCommandAs(person));
+                        return InputRequirements.Where(x => x.Person.IsInSameCommandAs(person));
                     }
                 case ChainOfCommandLevels.Department:
                     {
-                        return this.InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(person));
+                        return InputRequirements.Where(x => x.Person.IsInSameDepartmentAs(person));
                     }
                 case ChainOfCommandLevels.Division:
                     {
-                        return this.InputRequirements.Where(x => x.Person.IsInSameDivisionAs(person));
+                        return InputRequirements.Where(x => x.Person.IsInSameDivisionAs(person));
                     }
                 case ChainOfCommandLevels.Self:
                     {
-                        return this.InputRequirements.Where(x => x.Person.Id == person.Id);
+                        return InputRequirements.Where(x => x.Person.Id == person.Id);
                     }
                 case ChainOfCommandLevels.None:
                     {
@@ -695,7 +695,7 @@ namespace CommandCentral.Entities.Watchbill
         /// <returns></returns>
         public virtual bool CanEditStructure()
         {
-            return CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Initial") || CurrentState == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs");
+            return CurrentState == ReferenceListHelper<WatchbillStatus>.Find("Initial") || CurrentState == ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs");
         }
 
         /// <summary>
@@ -752,7 +752,7 @@ namespace CommandCentral.Entities.Watchbill
             //Here, we're also going to set up any watch input requirements alerts we need for each watchbill that is in the open for inputs state.
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
-                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == ReferenceLists.ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs").Id).List();
+                var watchbills = session.QueryOver<Watchbill>().Where(x => x.CurrentState.Id == ReferenceListHelper<WatchbillStatus>.Find("Open for Inputs").Id).List();
 
                 foreach (var watchbill in watchbills)
                 {

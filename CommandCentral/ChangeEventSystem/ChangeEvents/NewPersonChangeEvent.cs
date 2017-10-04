@@ -69,8 +69,8 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// <param name="about"></param>
         public NewPersonChangeEvent(Person by, Person about)
         {
-            this.EventRaisedBy = by;
-            this.EventRaisedAbout = about;
+            EventRaisedBy = by;
+            EventRaisedAbout = about;
         }
 
         #endregion
@@ -82,7 +82,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// </summary>
         public void SendEmail()
         {
-            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(this.EventRaisedAbout, this).ToList();
+            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(EventRaisedAbout, this).ToList();
             var emails = new List<Email.EmailInterface.CCEmailMessage>();
 
             foreach (var emailAddress in emailAddresses)
@@ -90,7 +90,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
                 emails.Add(Email.EmailInterface.CCEmailMessage
                     .CreateDefault()
                     .To(emailAddress)
-                    .Subject("{0} Event".With(this.EventName))
+                    .Subject("{0} Event".With(EventName))
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.NewPersonChangeEvent_HTML.html", new Email.Models.NewPersonChangeEventEmailModel { ChangeEvent = this }));
             }
 

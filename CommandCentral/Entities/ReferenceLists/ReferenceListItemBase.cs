@@ -62,7 +62,7 @@ namespace CommandCentral.Entities.ReferenceLists
             if (other == null)
                 return false;
 
-            return this.Id == other.Id && this.Value == other.Value && this.Description == other.Description;
+            return Id == other.Id && Value == other.Value && Description == other.Description;
         }
 
         /// <summary>
@@ -73,8 +73,8 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <returns></returns>
         public static bool operator ==(ReferenceListItemBase x, ReferenceListItemBase y)
         {
-            if (object.ReferenceEquals(null, x))
-                return object.ReferenceEquals(null, y);
+            if (ReferenceEquals(null, x))
+                return ReferenceEquals(null, y);
 
             return x.Equals(y);
         }

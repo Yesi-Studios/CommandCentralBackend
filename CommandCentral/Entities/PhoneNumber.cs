@@ -80,11 +80,11 @@ namespace CommandCentral.Entities
             if (other == null)
                 return false;
 
-            return Object.Equals(other.Number, this.Number) &&
-                   Object.Equals(other.Id, this.Id) &&
-                   Object.Equals(other.IsContactable, this.IsContactable) &&
-                   Object.Equals(other.IsPreferred, this.IsPreferred) &&
-                   Object.Equals(other.PhoneType, this.PhoneType);
+            return Object.Equals(other.Number, Number) &&
+                   Object.Equals(other.Id, Id) &&
+                   Object.Equals(other.IsContactable, IsContactable) &&
+                   Object.Equals(other.IsPreferred, IsPreferred) &&
+                   Object.Equals(other.PhoneType, PhoneType);
         }
 
         /// <summary>

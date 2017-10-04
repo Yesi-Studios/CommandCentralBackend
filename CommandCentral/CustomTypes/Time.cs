@@ -68,7 +68,7 @@ namespace CommandCentral.CustomTypes
         {
             return String.Format(
                 "{0:00}:{1:00}:{2:00}",
-                this.Hours, this.Minutes, this.Seconds);
+                Hours, Minutes, Seconds);
         }
 
         /// <summary>

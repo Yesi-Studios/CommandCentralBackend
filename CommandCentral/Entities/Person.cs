@@ -43,7 +43,7 @@ namespace CommandCentral.Entities
         {
             get
             {
-                return this.ToString();
+                return ToString();
             }
         }
 
@@ -421,10 +421,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
-            if (person == null || this.Command == null || person.Command == null)
+            if (person == null || Command == null || person.Command == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id;
+            return Command.Id == person.Command.Id;
         }
 
         /// <summary>
@@ -434,10 +434,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
-            if (person == null || this.Department == null || person.Department == null)
+            if (person == null || Department == null || person.Department == null)
                 return false;
 
-            return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
+            return IsInSameCommandAs(person) && Department.Id == person.Department.Id;
         }
 
         /// <summary>
@@ -447,10 +447,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
-            if (person == null || this.Division == null || person.Division == null)
+            if (person == null || Division == null || person.Division == null)
                 return false;
 
-            return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
+            return IsInSameDepartmentAs(person) && Division.Id == person.Division.Id;
         }
 
         /// <summary>
@@ -499,35 +499,35 @@ namespace CommandCentral.Entities
                     {
                         case ChainOfCommandLevels.Command:
                             {
-                                if (this.Command == null)
+                                if (Command == null)
                                     continue;
 
                                 queryString += " and person.Command = :command";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command);
+                                    .SetParameter("command", Command);
                                 break;
                             }
                         case ChainOfCommandLevels.Department:
                             {
-                                if (this.Command == null || this.Department == null)
+                                if (Command == null || Department == null)
                                     continue;
 
                                 queryString += " and person.Command = :command and person.Department = :department";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command)
-                                    .SetParameter("department", this.Department);
+                                    .SetParameter("command", Command)
+                                    .SetParameter("department", Department);
                                 break;
                             }
                         case ChainOfCommandLevels.Division:
                             {
-                                if (this.Command == null || this.Department == null || this.Division == null)
+                                if (Command == null || Department == null || Division == null)
                                     continue;
 
                                 queryString += " and person.Command = :command and person.Department = :department and person.Division = :division";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command)
-                                    .SetParameter("department", this.Department)
-                                    .SetParameter("division", this.Division);
+                                    .SetParameter("command", Command)
+                                    .SetParameter("department", Department)
+                                    .SetParameter("division", Division);
                                 break;
                             }
                         default:

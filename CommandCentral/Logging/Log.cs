@@ -46,7 +46,7 @@ namespace CommandCentral.Logging
 
                 _loggers.Add(logger);
 
-                Log.Info("Hello {0}, you were registered successfully!".With(logger.Name), null);
+                Info("Hello {0}, you were registered successfully!".With(logger.Name), null);
 
             }
             catch

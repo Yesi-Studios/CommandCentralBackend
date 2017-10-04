@@ -33,7 +33,7 @@ namespace CommandCentral
         /// </summary>
         public MusterReport(DateTime musterDate)
         {
-            this.MusterDate = musterDate;
+            MusterDate = musterDate;
         }
 
         #endregion
@@ -48,7 +48,7 @@ namespace CommandCentral
         {
             var model = new Email.Models.MusterReportEmailModel()
             {
-                MusterDateTime = this.MusterDate
+                MusterDateTime = MusterDate
             };
 
             if (token == null || token.AuthenticationSession == null)

@@ -24,7 +24,7 @@ namespace CommandCentral.Authorization.Groups.Definitions
 
             HasAccessLevel(ChainOfCommandLevels.Command);
 
-            HasChainOfCommand(Authorization.ChainsOfCommand.Main)
+            HasChainOfCommand(ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
                     x => x.DateOfBirth,
                     x => x.Ethnicity,

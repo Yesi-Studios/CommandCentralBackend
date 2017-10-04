@@ -25,7 +25,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         /// <param name="item"></param>
         /// <param name="token"></param>
-        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, ClientAccess.MessageToken token)
+        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -72,7 +72,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <param name="id"></param>
         /// <param name="forceDelete"></param>
         /// <param name="token"></param>
-        public override void Delete(System.Guid id, bool forceDelete, ClientAccess.MessageToken token)
+        public override void Delete(Guid id, bool forceDelete, MessageToken token)
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())

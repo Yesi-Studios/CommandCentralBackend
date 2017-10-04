@@ -340,7 +340,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
                                 "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
 
-                        var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(stateId) ??
+                        var clientState = session.Get<WatchbillStatus>(stateId) ??
                             throw new CommandCentralException("Your state id did not reference a real state.", ErrorTypes.Validation);
 
                         //If the state is different, we need to move the state as well.  There's a method for that.

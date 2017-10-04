@@ -70,8 +70,7 @@ namespace CommandCentral.Email.EmailInterface
         /// <returns></returns>
         public static CCEmailMessage CreateDefault()
         {
-            return CCEmailMessage
-                    .From(DeveloperAddress)
+            return From(DeveloperAddress)
                     .BCC(DeveloperAddress)
                     .ReplyTo(DeveloperAddress)
                     .HighProperty()

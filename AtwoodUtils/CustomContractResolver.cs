@@ -28,7 +28,7 @@ namespace AtwoodUtils
             return property;
         }
 
-        protected override JsonContract CreateContract(System.Type objectType)
+        protected override JsonContract CreateContract(Type objectType)
         {
             if (typeof(NHibernate.Proxy.INHibernateProxy).IsAssignableFrom(objectType))
                 return base.CreateContract(objectType.BaseType);

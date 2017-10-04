@@ -43,9 +43,9 @@ namespace CommandCentral
         /// <param name="com"></param>
         public Assignment(Division div, Department dep, Command com)
         {
-            this.Division = div;
-            this.Department = dep;
-            this.Command = com;
+            Division = div;
+            Department = dep;
+            Command = com;
         }
 
         /// <summary>
@@ -54,9 +54,9 @@ namespace CommandCentral
         /// <param name="div"></param>
         public Assignment(Division div)
         {
-            this.Division = div;
-            this.Department = div?.Department;
-            this.Command = this.Department?.Command;
+            Division = div;
+            Department = div?.Department;
+            Command = Department?.Command;
         }
 
         #endregion

@@ -45,7 +45,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return this.Question;
+            return Question;
         }
 
         #endregion

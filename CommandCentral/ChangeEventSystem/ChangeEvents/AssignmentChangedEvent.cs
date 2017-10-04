@@ -81,10 +81,10 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// <param name="newAssignment"></param>
         public AssignmentChangedEvent(Person eventRaisedBy, Person eventRaisedAbout, Assignment oldAssignment, Assignment newAssignment)
         {
-            this.EventRaisedBy = eventRaisedBy;
-            this.EventRaisedAbout = eventRaisedAbout;
-            this.OldAssignment = oldAssignment;
-            this.NewAssignment = newAssignment;
+            EventRaisedBy = eventRaisedBy;
+            EventRaisedAbout = eventRaisedAbout;
+            OldAssignment = oldAssignment;
+            NewAssignment = newAssignment;
         }
 
         #endregion
@@ -96,7 +96,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// </summary>
         public void SendEmail()
         {
-            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(this.EventRaisedAbout, this).ToList();
+            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(EventRaisedAbout, this).ToList();
             var emails = new List<Email.EmailInterface.CCEmailMessage>();
 
             foreach (var emailAddress in emailAddresses)
@@ -104,7 +104,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
                 emails.Add(Email.EmailInterface.CCEmailMessage
                     .CreateDefault()
                     .To(emailAddress)
-                    .Subject("{0} Event".With(this.EventName))
+                    .Subject("{0} Event".With(EventName))
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.AssignmentChangedEvent_HTML.html", new Email.Models.AssignmentChangedEventEmailModel { ChangeEvent = this }));
             }
 
