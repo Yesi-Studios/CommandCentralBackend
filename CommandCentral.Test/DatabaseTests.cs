@@ -15,7 +15,7 @@ namespace CommandCentral.Test
         public static void SetupInMemoryDatabase()
         {
 
-            MySql.Server.MySqlServer server = MySql.Server.MySqlServer.Instance;
+            var server = MySql.Server.MySqlServer.Instance;
 
             server.StartServer(3000);
 

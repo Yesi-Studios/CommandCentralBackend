@@ -46,7 +46,7 @@ namespace CommandCentral
         /// <param name="token">The message token representing the request that caused the report to be generated.  If null, the system generates the report.</param>
         public void SendReport(MessageToken token = null)
         {
-            Email.Models.MusterReportEmailModel model = new Email.Models.MusterReportEmailModel()
+            var model = new Email.Models.MusterReportEmailModel()
             {
                 MusterDateTime = this.MusterDate
             };

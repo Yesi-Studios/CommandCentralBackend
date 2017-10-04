@@ -97,7 +97,7 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         public void SendEmail()
         {
             var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(this.EventRaisedAbout, this).ToList();
-            List<Email.EmailInterface.CCEmailMessage> emails = new List<Email.EmailInterface.CCEmailMessage>();
+            var emails = new List<Email.EmailInterface.CCEmailMessage>();
 
             foreach (var emailAddress in emailAddresses)
             {

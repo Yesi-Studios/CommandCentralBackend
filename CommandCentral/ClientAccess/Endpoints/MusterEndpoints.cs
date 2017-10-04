@@ -122,7 +122,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     throw new CommandCentralException("You were not authorized to muster one or more of the persons you tried to muster.", ErrorTypes.Authorization);
 
                 //Ok, the client is allowed to muster them.  Now we need to set their current muster statuses.
-                for (int x = 0; x < persons.Count; x++)
+                for (var x = 0; x < persons.Count; x++)
                 {
                     //If the client doesn't have a current muster status, and their duty status isn't Loss, then give them a muster status. 
                     if (persons[x].CurrentMusterRecord == null)

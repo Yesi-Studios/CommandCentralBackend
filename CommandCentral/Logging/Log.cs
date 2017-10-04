@@ -167,7 +167,7 @@ namespace CommandCentral.Logging
         {
             if (logMessage.Length > maxMessageLength)
             {
-                string truncatedWarningText = string.Format(CultureInfo.CurrentCulture, "... | Log Message Truncated [ Limit: {0} ]", maxMessageLength);
+                var truncatedWarningText = string.Format(CultureInfo.CurrentCulture, "... | Log Message Truncated [ Limit: {0} ]", maxMessageLength);
 
                 // Set the message to the max minus enough room to add the truncate warning.
                 logMessage = logMessage.Substring(0, maxMessageLength - truncatedWarningText.Length);

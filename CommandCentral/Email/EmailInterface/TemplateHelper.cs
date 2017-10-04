@@ -23,7 +23,7 @@ namespace CommandCentral.Email.EmailInterface
         public static string RenderTemplate(string resourcePath, object model, Assembly assembly)
         {
 
-            if (!_compiledTemplates.TryGetValue(resourcePath, out string template))
+            if (!_compiledTemplates.TryGetValue(resourcePath, out var template))
             {
                 using (var stream = assembly.GetManifestResourceStream(resourcePath))
                 using (var reader = new StreamReader(stream))

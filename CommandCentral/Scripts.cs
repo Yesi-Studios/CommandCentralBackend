@@ -26,12 +26,12 @@ namespace CommandCentral
 
                 var data = watchbill.WatchShifts.Select(x => x.WatchAssignment).GroupBy(x => x.PersonAssigned.Department);
 
-                string text = "";
+                var text = "";
                 foreach (var group in data)
                 {
 
-                    int totalDep = session.QueryOver<Person>().Where(x => x.Department.Id == group.Key.Id).RowCount();
-                    int total = session.QueryOver<Person>().RowCount();
+                    var totalDep = session.QueryOver<Person>().Where(x => x.Department.Id == group.Key.Id).RowCount();
+                    var total = session.QueryOver<Person>().RowCount();
 
                     text += "{0} : {1}% ({2}/{3}) vs {4}% ({5}/{6})"
                         .With(group.Key,

@@ -76,10 +76,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchbillid", "personid");
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.

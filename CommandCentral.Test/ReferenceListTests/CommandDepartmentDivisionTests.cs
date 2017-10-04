@@ -23,7 +23,7 @@ namespace CommandCentral.Test.ReferenceListTests
             {
                 using (var transaction = session.BeginTransaction())
                 {
-                    for (int x = 0; x < 1; x++)
+                    for (var x = 0; x < 1; x++)
                     {
                         expected.Add(new Command
                         {
@@ -63,7 +63,7 @@ namespace CommandCentral.Test.ReferenceListTests
 
                     foreach (var command in commands)
                     {
-                        for (int x = 0; x < Utilities.GetRandomNumber(2, 4); x++)
+                        for (var x = 0; x < Utilities.GetRandomNumber(2, 4); x++)
                         {
                             expected.Add(new Department
                             {
@@ -106,7 +106,7 @@ namespace CommandCentral.Test.ReferenceListTests
 
                     foreach (var department in departments)
                     {
-                        for (int x = 0; x < Utilities.GetRandomNumber(2, 4); x++)
+                        for (var x = 0; x < Utilities.GetRandomNumber(2, 4); x++)
                         {
                            expected.Add(new Division
                             {

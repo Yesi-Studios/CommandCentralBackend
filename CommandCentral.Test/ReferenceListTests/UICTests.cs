@@ -25,7 +25,7 @@ namespace CommandCentral.Test.ReferenceListTests
                     using (var transaction = session.BeginTransaction())
                     {
 
-                        for (int x = 0; x < Utilities.GetRandomNumber(5, 10); x++)
+                        for (var x = 0; x < Utilities.GetRandomNumber(5, 10); x++)
                         {
                             expected.Add(new UIC
                             {

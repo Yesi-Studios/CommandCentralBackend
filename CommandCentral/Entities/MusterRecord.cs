@@ -153,7 +153,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Musterer);
@@ -196,7 +196,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public static DateTime GetMusterDate(DateTime dateTime)
         {
-            System.Globalization.GregorianCalendar gregCalendar = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.USEnglish);
+            var gregCalendar = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.USEnglish);
 
             
 
@@ -244,7 +244,7 @@ namespace CommandCentral.Entities
         public static bool CanClientMusterPerson(Person client, Person person)
         {
 
-            ChainOfCommandLevels level = ChainOfCommandLevels.None;
+            var level = ChainOfCommandLevels.None;
 
             foreach (var group in client.PermissionGroups)
             {
@@ -311,7 +311,7 @@ namespace CommandCentral.Entities
                         throw new Exception("Not all muster records are from the same day during finalization!");
 
                     //Ok we have all the persons and their muster records.  #thatwaseasy
-                    foreach (Person person in persons)
+                    foreach (var person in persons)
                     {
                         if (person.CurrentMusterRecord == null)
                             throw new Exception("{0}'s current muster status was null.".With(person.ToString()));
@@ -441,7 +441,7 @@ namespace CommandCentral.Entities
                     {
                         Log.Info("Correcting {0} persons with incorrect muster records...".With(personsWithIncorrectRecords.Count));
 
-                        int current = 0;
+                        var current = 0;
                         //Ok so each of these people's current muster records are for the wrong day.
                         //What we need to do is look up that day's muster record for this person and see if they have one.
                         //If they don't have one, the muster needs to get updated.

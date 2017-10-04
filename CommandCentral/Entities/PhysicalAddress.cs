@@ -104,7 +104,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Address);

@@ -37,7 +37,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid");
 
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("The person id you send was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -76,7 +76,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("personid", "permissiongroups");
 
             //Get the person's Id.
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("Your person Id parameter was in the wrong format.", ErrorTypes.Validation);
 
             List<string> desiredPermissionGroups = null;
@@ -112,8 +112,8 @@ namespace CommandCentral.ClientAccess.Endpoints
                     var changes = currentGroups.Concat(desiredPermissionGroups).GroupBy(x => x).Where(x => x.Count() == 1).Select(x => x.First()).ToList();
 
                     //Now go through all the requested changes and make sure the client can make them.
-                    List<string> failures = new List<string>();
-                    foreach (string groupName in changes)
+                    var failures = new List<string>();
+                    foreach (var groupName in changes)
                     {
                         //First is the easy one.  Can client the edit the permission group's membership at all?
                         if (!resolvedPermissions.EditablePermissionGroups.Contains(groupName))
@@ -125,7 +125,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             //Here we get the group the client is trying to edit.  We know the client is allowed to edit its membership at this point.
                             var group = Authorization.Groups.PermissionGroup.AllPermissionGroups.First(x => x.GroupName.SafeEquals(groupName));
                              
-                            ChainOfCommandLevels highestPermissionLevelInGroups = ChainOfCommandLevels.None;
+                            var highestPermissionLevelInGroups = ChainOfCommandLevels.None;
                             var selection = resolvedPermissions.HighestLevels
                                 .Where(x => group.ChainsOfCommandParts.Select(y => y.ChainOfCommand).Contains(x.Key));
 

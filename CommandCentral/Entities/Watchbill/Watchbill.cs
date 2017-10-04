@@ -261,7 +261,7 @@ namespace CommandCentral.Entities.Watchbill
 
                     var finalAssignments = assignedShiftsByDivisions.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
 
-                    int index = 0;
+                    var index = 0;
                     while (remainingShifts > 0)
                     {
                         finalAssignedShiftsByDivision[finalAssignments[index].Key]++;
@@ -538,9 +538,9 @@ namespace CommandCentral.Entities.Watchbill
                 {
                     return new KeyValuePair<ReferenceLists.Department, ConditionalForeverList<Person>>(x.Key, new ConditionalForeverList<Person>(x.ToList().OrderBy(person =>
                     {
-                        double points = person.WatchAssignments.Sum(z =>
+                        var points = person.WatchAssignments.Sum(z =>
                         {
-                            int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
+                            var totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
                             return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
                         });
@@ -559,7 +559,7 @@ namespace CommandCentral.Entities.Watchbill
                     //From our list of shifts, take as many as we're supposed to assign.
                     var shiftsForThisGroup = remainingShifts.Take((int)assignedShifts).ToList();
 
-                    for (int x = 0; x < shiftsForThisGroup.Count; x++)
+                    for (var x = 0; x < shiftsForThisGroup.Count; x++)
                     {
                         //Ok, since we're going to assign it, we can go ahead and remove it.
                         remainingShifts.Remove(shiftsForThisGroup[x]);
@@ -584,7 +584,7 @@ namespace CommandCentral.Entities.Watchbill
 
                             return true;
 
-                        }, out Person personToAssign))
+                        }, out var personToAssign))
                             throw new CommandCentralException("Department {0} had no person that could stand shift {1}.".With(personsGroup.Key, shiftsForThisGroup[x]), ErrorTypes.Validation);
 
                         //Create the watch assignment.
@@ -605,7 +605,7 @@ namespace CommandCentral.Entities.Watchbill
                 var finalAssignments = assignedShiftsByDepartment.OrderByDescending(x => x.Value - Math.Truncate(x.Value)).ToList();
                 foreach (var shift in remainingShifts)
                 {
-                    for (int x = 0; x < finalAssignments.Count; x++)
+                    for (var x = 0; x < finalAssignments.Count; x++)
                     {
                         if (assignablePersonsByDepartment.Any() && assignablePersonsByDepartment[finalAssignments[x].Key].TryNext(person =>
                         {
@@ -625,7 +625,7 @@ namespace CommandCentral.Entities.Watchbill
                                 return false;
 
                             return true;
-                        }, out Person personToAssign))
+                        }, out var personToAssign))
                         {
                             shift.WatchAssignment = new WatchAssignment
                             {

@@ -121,7 +121,7 @@ namespace CommandCentral.DataAccess
         {
             var searchParameters = properties.ToDictionary(x => x, x => rawTerm);
 
-            QueryOver<T, T> result = QueryOver.Of<T>();
+            var result = QueryOver.Of<T>();
 
             //First, we're going to split the raw term
             foreach (var term in (rawTerm as string).Split(null))
@@ -159,7 +159,7 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         private QueryOver<T, T> CreateAdvancedQuery(Dictionary<Expression<Func<T, object>>, object> filters)
         {
-            QueryOver<T, T> result = QueryOver.Of<T>();
+            var result = QueryOver.Of<T>();
 
             foreach (var filter in filters)
             {

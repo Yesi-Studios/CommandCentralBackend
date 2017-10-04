@@ -32,7 +32,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchAssignmentId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchAssignmentId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -70,7 +70,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchbillid");
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchassignmentid parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -138,7 +138,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.Args.AssertContainsKeys("filters");
 
             //Get the filters!
-            Dictionary<string, object> filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
+            var filters = token.Args["filters"].CastJToken<Dictionary<string, object>>();
 
             //Make sure all the keys are real
             foreach (var key in filters.Keys)
@@ -210,8 +210,8 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id1", "id2");
 
-            if (!Guid.TryParse(token.Args["id1"] as string, out Guid id1) ||
-                !Guid.TryParse(token.Args["id2"] as string, out Guid id2))
+            if (!Guid.TryParse(token.Args["id1"] as string, out var id1) ||
+                !Guid.TryParse(token.Args["id2"] as string, out var id2))
             {
                 throw new CommandCentralException("One or more of your ids were in the wrong format.", ErrorTypes.Validation);
             }
@@ -375,7 +375,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("Your assignment id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -443,10 +443,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             var watchAssignmentsFromClient = watchAssToken.Select(x =>
             {
 
-                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.PersonAssigned)), out Guid personAssignedId))
+                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.PersonAssigned)), out var personAssignedId))
                     throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
 
-                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.WatchShift)), out Guid watchShitId))
+                if (!Guid.TryParse(x.Value<string>(nameof(WatchAssignment.WatchShift)), out var watchShitId))
                     throw new CommandCentralException("Your person assigned id was in the wrong format.", ErrorTypes.Validation);
 
                 var watchAss = new
@@ -458,7 +458,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 return watchAss;
             });
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -468,12 +468,12 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         //Let's make sure all the watch assignments are from the same watchbill, and there shifts and people are real.
-                        Entities.Watchbill.Watchbill watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
+                        var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
                             throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
 
                         var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
 
-                        bool isCoordinator = permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] >= ChainOfCommandLevels.Division;
+                        var isCoordinator = permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand] >= ChainOfCommandLevels.Division;
 
                         if (!isCoordinator)
                             throw new CommandCentralException("You are not allowed to create watch assignments if you are not a watchbill coordinator.", ErrorTypes.Authorization);
@@ -487,7 +487,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                             && watchbill.CurrentState == ReferenceListHelper<WatchbillStatus>.Find("Published"))
                             throw new CommandCentralException("You may not assign watch standers during the published phase.", ErrorTypes.Authorization);
 
-                        Dictionary<WatchAssignment, List<WatchInput>> assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
+                        var assignmentWarnings = new Dictionary<WatchAssignment, List<WatchInput>>();
 
                         foreach (var assignment in watchAssignmentsFromClient)
                         {

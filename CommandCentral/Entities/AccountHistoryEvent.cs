@@ -68,7 +68,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Id.GetHashCode();
                 hash = hash * 23 + Utilities.GetSafeHashCode(AccountHistoryEventType);

@@ -696,7 +696,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Ethnicity ethnicity = DataProvider.CreateStatefulSession().Get<Ethnicity>(x.Id);
+                        var ethnicity = DataProvider.CreateStatefulSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
                             return false;
@@ -709,7 +709,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        ReligiousPreference pref = DataProvider.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
+                        var pref = DataProvider.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
                             return false;
@@ -722,7 +722,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Designation designation = DataProvider.CreateStatefulSession().Get<Designation>(x.Id);
+                        var designation = DataProvider.CreateStatefulSession().Get<Designation>(x.Id);
 
                         if (designation == null)
                             return false;
@@ -735,7 +735,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Division division = DataProvider.CreateStatefulSession().Get<Division>(x.Id);
+                        var division = DataProvider.CreateStatefulSession().Get<Division>(x.Id);
 
                         if (division == null)
                             return false;
@@ -748,7 +748,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Department department = DataProvider.CreateStatefulSession().Get<Department>(x.Id);
+                        var department = DataProvider.CreateStatefulSession().Get<Department>(x.Id);
 
                         if (department == null)
                             return false;
@@ -761,7 +761,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Command command = DataProvider.CreateStatefulSession().Get<Command>(x.Id);
+                        var command = DataProvider.CreateStatefulSession().Get<Command>(x.Id);
 
                         if (command == null)
                             return false;
@@ -774,7 +774,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        NEC nec = DataProvider.CreateStatefulSession().Get<NEC>(x.Id);
+                        var nec = DataProvider.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
@@ -804,7 +804,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        UIC uic = DataProvider.CreateStatefulSession().Get<UIC>(x.Id);
+                        var uic = DataProvider.CreateStatefulSession().Get<UIC>(x.Id);
 
                         if (uic == null)
                             return false;
@@ -983,7 +983,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
@@ -1021,7 +1021,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
@@ -1069,7 +1069,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))

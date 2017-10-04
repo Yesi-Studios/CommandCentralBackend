@@ -98,7 +98,7 @@ namespace CommandCentral.Entities.ReferenceLists
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Id.GetHashCode();
                 hash = hash * 23 + (string.IsNullOrEmpty(Value) ? "".GetHashCode() : Value.GetHashCode());

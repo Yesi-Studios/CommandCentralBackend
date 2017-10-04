@@ -121,7 +121,7 @@ namespace CommandCentral.Test
 
         public static void CreateUsers()
         {
-            List<Guid> expected = new List<Guid>();
+            var expected = new List<Guid>();
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
@@ -143,13 +143,13 @@ namespace CommandCentral.Test
                             {
 
                                 //Add Sailors
-                                for (int x = 0; x < 30; x++)
+                                for (var x = 0; x < 30; x++)
                                 {
                                     var paygrade = paygrades.Shuffle().First();
                                     var uic = ReferenceListHelper<UIC>.Random(1).First();
 
-                                    List<WatchQualification> quals = new List<WatchQualification>();
-                                    List<PermissionGroup> permGroups = new List<PermissionGroup>();
+                                    var quals = new List<WatchQualification>();
+                                    var permGroups = new List<PermissionGroup>();
 
                                     var permChance = Utilities.GetRandomNumber(0, 100);
 

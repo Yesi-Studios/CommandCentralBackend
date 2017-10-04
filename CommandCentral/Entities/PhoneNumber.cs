@@ -56,15 +56,15 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            List<string> preferences = new List<string>();
+            var preferences = new List<string>();
             if (IsContactable)
                 preferences.Add("C");
             if (IsPreferred)
                 preferences.Add("P");
             
-            string final = preferences.Any() ? "({0})".With(String.Join("|", preferences)) : "";
+            var final = preferences.Any() ? "({0})".With(String.Join("|", preferences)) : "";
 
-            char phoneType = PhoneType.Value.First();
+            var phoneType = PhoneType.Value.First();
 
             return "{0} ({1}) {2}".With(Number, phoneType, final);
         }
@@ -95,7 +95,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Number);

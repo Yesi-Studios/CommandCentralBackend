@@ -31,7 +31,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("faqid");
 
             //Get the Id.
-            if (!Guid.TryParse(token.Args["faqid"] as string, out Guid faqId))
+            if (!Guid.TryParse(token.Args["faqid"] as string, out var faqId))
                 throw new CommandCentralException("The faqid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.

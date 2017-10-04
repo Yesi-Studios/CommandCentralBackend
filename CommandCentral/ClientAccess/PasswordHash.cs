@@ -56,12 +56,12 @@ namespace CommandCentral.ClientAccess
         public static string CreateHash(string password)
         {
             // Generate a random salt
-            RNGCryptoServiceProvider csprng = new RNGCryptoServiceProvider();
-            byte[] salt = new byte[SALT_BYTE_SIZE];
+            var csprng = new RNGCryptoServiceProvider();
+            var salt = new byte[SALT_BYTE_SIZE];
             csprng.GetBytes(salt);
 
             // Hash the password and encode the parameters
-            byte[] hash = Pbkdf2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
+            var hash = Pbkdf2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
             return PBKDF2_ITERATIONS + ":" +
                 Convert.ToBase64String(salt) + ":" +
                 Convert.ToBase64String(hash);
@@ -77,12 +77,12 @@ namespace CommandCentral.ClientAccess
         {
             // Extract the parameters from the hash
             char[] delimiter = { ':' };
-            string[] split = correctHash.Split(delimiter);
-            int iterations = int.Parse(split[ITERATION_INDEX]);
-            byte[] salt = Convert.FromBase64String(split[SALT_INDEX]);
-            byte[] hash = Convert.FromBase64String(split[PBKDF2_INDEX]);
+            var split = correctHash.Split(delimiter);
+            var iterations = int.Parse(split[ITERATION_INDEX]);
+            var salt = Convert.FromBase64String(split[SALT_INDEX]);
+            var hash = Convert.FromBase64String(split[PBKDF2_INDEX]);
 
-            byte[] testHash = Pbkdf2(password, salt, iterations, hash.Length);
+            var testHash = Pbkdf2(password, salt, iterations, hash.Length);
             return SlowEquals(hash, testHash);
         }
 
@@ -96,8 +96,8 @@ namespace CommandCentral.ClientAccess
         /// <returns>True if both byte arrays are equal. False otherwise.</returns>
         private static bool SlowEquals(byte[] a, byte[] b)
         {
-            uint diff = (uint)a.Length ^ (uint)b.Length;
-            for (int i = 0; i < a.Length && i < b.Length; i++)
+            var diff = (uint)a.Length ^ (uint)b.Length;
+            for (var i = 0; i < a.Length && i < b.Length; i++)
                 diff |= (uint)(a[i] ^ b[i]);
             return diff == 0;
         }
@@ -112,7 +112,7 @@ namespace CommandCentral.ClientAccess
         /// <returns>A hash of the password.</returns>
         private static byte[] Pbkdf2(string password, byte[] salt, int iterations, int outputBytes)
         {
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt) { IterationCount = iterations };
+            var pbkdf2 = new Rfc2898DeriveBytes(password, salt) { IterationCount = iterations };
             return pbkdf2.GetBytes(outputBytes);
         }
     }

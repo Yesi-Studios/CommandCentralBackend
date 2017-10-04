@@ -33,14 +33,14 @@ namespace CommandCentral.DataAccess
         /// <returns></returns>
         public static IEnumerable<Change> GetChangesFromDirtyProperties<T>(this ISession session, T entity) where T : class, new()
         {
-            string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
+            var entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
                 throw new Exception("We attempted to find the entity name for a non-entity: {0}".With(typeof(T)));
 
             var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);
             var key = new EntityKey(persister.GetIdentifier(entity, EntityMode.Poco), persister, EntityMode.Poco);
             var entityEntry = session.GetSessionImplementation().PersistenceContext.GetEntry(session.GetSessionImplementation().PersistenceContext.GetEntity(key));
 
-            object[] currentState = persister.GetPropertyValues(entity, EntityMode.Poco);
+            var currentState = persister.GetPropertyValues(entity, EntityMode.Poco);
 
             //Find dirty will give us all the properties that are dirty, but because of some grade A NHibernate level bullshit, it won't look at collection for us.
             var indices = persister.FindDirty(currentState.ToArray(), entityEntry.LoadedState, entity, session.GetSessionImplementation());
@@ -60,7 +60,7 @@ namespace CommandCentral.DataAccess
             }
 
             //Here we walk through the collections ourselves in order to determine what has changed.
-            for (int x = 0; x < persister.PropertyTypes.Length; x++)
+            for (var x = 0; x < persister.PropertyTypes.Length; x++)
             {
                 if (typeof(CollectionType).IsAssignableFrom(persister.PropertyTypes[x].GetType()))
                 {
@@ -90,7 +90,7 @@ namespace CommandCentral.DataAccess
         public static TProperty GetLoadedPropertyValue<T, TProperty>(this ISession session, T entity, Expression<Func<T, TProperty>> selector) where T: class
         {
 
-            string entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
+            var entityName = session.GetSessionImplementation().Factory.TryGetGuessEntityName(typeof(T)) ??
                 throw new Exception("We attempted to find the entity name for a non-entity: {0}".With(typeof(T)));
 
             var persister = session.GetSessionImplementation().GetEntityPersister(entityName, entity);

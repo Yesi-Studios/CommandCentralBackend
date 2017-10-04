@@ -29,7 +29,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id", "personids");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid elGroupId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var elGroupId))
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
 
             var idsToken = token.Args["personids"].CastJToken();
@@ -39,7 +39,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             var ids = idsToken.Select(rawId =>
             {
-                if (!Guid.TryParse(rawId.ToString(), out Guid personId))
+                if (!Guid.TryParse(rawId.ToString(), out var personId))
                     throw new CommandCentralException("One or more of your person ids were in the wrong format.", ErrorTypes.Validation);
 
                 return personId;
@@ -72,7 +72,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         //This method will cause a pretty big batch update to occur on the database but that's ok.
                         //We also don't allow people whose duty status is set to loss.  We don't want to fail though; instead,
                         //We're just going to send a list back to the client of all those people we failed to add.
-                        List<Entities.Person> failures = new List<Entities.Person>();
+                        var failures = new List<Entities.Person>();
                         groupFromDB.EligiblePersons.Clear();
                         foreach (var person in persons)
                         {

@@ -30,7 +30,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
@@ -47,12 +47,12 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
 
                 //We're also going to build some analytics for the client about this watchbill.
-                Dictionary<string, object> analytics = new Dictionary<string, object>();
+                var analytics = new Dictionary<string, object>();
                 if (watchbillFromDB.WatchShifts.Any())
                 {
                     var shiftAssignments = watchbillFromDB.WatchShifts.Where(x => x.DivisionAssignedTo != null);
 
-                    List<KeyValuePair<Division, object>> statsByDivision = new List<KeyValuePair<Division, object>>();
+                    var statsByDivision = new List<KeyValuePair<Division, object>>();
                     if (shiftAssignments.Any())
                     {
                         var groupings = shiftAssignments.GroupBy(x => x.DivisionAssignedTo);
@@ -94,9 +94,9 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
 
                 //We also need to build some additional information into the watch assignments regarding chain of command for the client and the assigned person.
-                List<object> watchShifts = new List<object>();
+                var watchShifts = new List<object>();
 
-                ChainOfCommandLevels highestLevel = ChainOfCommandLevels.None;
+                var highestLevel = ChainOfCommandLevels.None;
 
                 foreach (var group in token.AuthenticationSession.Person.PermissionGroups)
                 {
@@ -111,8 +111,8 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 {
                     foreach (var shift in watchbillFromDB.WatchShifts)
                     {
-                        bool isClientResponsibleForAssignment = false;
-                        bool IsClientResponsibleForShift = false;
+                        var isClientResponsibleForAssignment = false;
+                        var IsClientResponsibleForShift = false;
 
                         switch (highestLevel)
                         {
@@ -248,7 +248,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             var title = token.Args["title"] as string;
 
-            if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
+            if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out var eligibilityGroupId))
                 throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
 
             var elGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(eligibilityGroupId) ??
@@ -257,7 +257,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             var range = token.Args["range"].CastJToken<TimeRange>();
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
-            Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
+            var watchbillToInsert = new Entities.Watchbill.Watchbill
             {
                 Command = token.AuthenticationSession.Person.Command,
                 CreatedBy = token.AuthenticationSession.Person,
@@ -319,10 +319,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id", "stateid");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchbill id was not in the right format", ErrorTypes.Validation);
 
-            if (!Guid.TryParse(token.Args["stateid"] as string, out Guid stateId))
+            if (!Guid.TryParse(token.Args["stateid"] as string, out var stateId))
                 throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
@@ -384,7 +384,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchbillId))
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
@@ -435,7 +435,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchbillid");
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("You watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -448,7 +448,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 foreach (var shift in watchbill.WatchShifts)
                     set.Add(shift.ShiftType);
 
-                Dictionary<WatchShiftType, object> result = new Dictionary<WatchShiftType, object>();
+                var result = new Dictionary<WatchShiftType, object>();
 
                 var permissions = token.AuthenticationSession.Person.ResolvePermissions(null);
 
@@ -494,10 +494,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                                 RecommendationsByPerson = x.ToList().Select(person =>
                                 {
 
-                                    double points = person.WatchAssignments
+                                    var points = person.WatchAssignments
                                     .Sum(z =>
                                     {
-                                        int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
+                                        var totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
 
                                         return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
                                     });

@@ -25,7 +25,7 @@ namespace CommandCentral.Authorization
         /// <returns></returns>
         public static List<Groups.PermissionGroup> GetPermissionGroupsFromNames(IEnumerable<string> groupNames, bool includeDefaults)
         {
-            List<Groups.PermissionGroup> groups = new List<Groups.PermissionGroup>();
+            var groups = new List<Groups.PermissionGroup>();
 
             foreach (var groupName in groupNames)
             {

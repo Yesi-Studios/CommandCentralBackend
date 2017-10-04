@@ -38,7 +38,7 @@ namespace AtwoodUtils
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            TimeRange other = (TimeRange)obj;
+            var other = (TimeRange)obj;
 
             return this.End == other.End && this.Start == other.Start;
         }

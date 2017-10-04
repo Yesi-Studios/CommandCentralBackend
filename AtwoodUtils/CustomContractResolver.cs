@@ -16,7 +16,7 @@ namespace AtwoodUtils
     {
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {
-            JsonProperty property = base.CreateProperty(member, memberSerialization);
+            var property = base.CreateProperty(member, memberSerialization);
 
             var atts = property.AttributeProvider.GetAttributes(typeof(ConditionalJsonIgnoreAttribute), true);
 

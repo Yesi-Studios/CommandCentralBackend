@@ -39,7 +39,7 @@ namespace AtwoodUtils
 
         private static double ConvertDegreesToRadians(double degrees)
         {
-            double radians = (Math.PI / 180) * degrees;
+            var radians = (Math.PI / 180) * degrees;
             return (radians);
         }
 
@@ -53,16 +53,16 @@ namespace AtwoodUtils
 
         public static string GenerateSSN(string delimiter = "")
         {
-            int iThree = GetRandomNumber(132, 921);
-            int iTwo = GetRandomNumber(12, 83);
-            int iFour = GetRandomNumber(1423, 9211);
+            var iThree = GetRandomNumber(132, 921);
+            var iTwo = GetRandomNumber(12, 83);
+            var iFour = GetRandomNumber(1423, 9211);
             return iThree.ToString() + delimiter + iTwo.ToString() + delimiter + iFour.ToString();
         }
 
         public static bool ScrambledEquals<T>(IEnumerable<T> list1, IEnumerable<T> list2)
         {
             var cnt = new Dictionary<T, int>();
-            foreach (T s in list1)
+            foreach (var s in list1)
             {
                 if (cnt.ContainsKey(s))
                 {
@@ -73,7 +73,7 @@ namespace AtwoodUtils
                     cnt.Add(s, 1);
                 }
             }
-            foreach (T s in list2)
+            foreach (var s in list2)
             {
                 if (cnt.ContainsKey(s))
                 {
@@ -89,8 +89,8 @@ namespace AtwoodUtils
 
         public static string GenerateDoDId()
         {
-            string result = "";
-            for (int x = 0; x < 10; x++)
+            var result = "";
+            for (var x = 0; x < 10; x++)
             {
                 result += GetRandomNumber(1, 9).ToString();
             }
@@ -198,7 +198,7 @@ namespace AtwoodUtils
             if (left == null || right == null)
                 return false;
 
-            Dictionary<T, int> dict = new Dictionary<T, int>();
+            var dict = new Dictionary<T, int>();
 
             foreach (var member in left)
             {
@@ -268,7 +268,7 @@ namespace AtwoodUtils
             }
 
             var idProperty = elementType.GetProperties().FirstOrDefault(x => x.Name.SafeEquals(keyPropertyName));
-            HashSet<object> foundIds = new HashSet<object>();
+            var foundIds = new HashSet<object>();
 
             foreach (var leftValue in left)
             {
@@ -342,7 +342,7 @@ namespace AtwoodUtils
             if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
                 return true;
 
-            Type baseType = givenType.BaseType;
+            var baseType = givenType.BaseType;
             if (baseType == null) return false;
 
             return IsAssignableToGenericType(baseType, genericType);
@@ -356,7 +356,7 @@ namespace AtwoodUtils
         /// <returns></returns>
         static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly) where T : Attribute
         {
-            foreach (Type type in assembly.GetTypes())
+            foreach (var type in assembly.GetTypes())
             {
                 if (type.GetCustomAttributes(typeof(T), true).Length > 0)
                 {
@@ -372,7 +372,7 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static string ConvertStreamToString(Stream data)
         {
-            using (StreamReader reader = new StreamReader(data))
+            using (var reader = new StreamReader(data))
                 return reader.ReadToEnd();
         }
 
@@ -424,14 +424,14 @@ namespace AtwoodUtils
 
             var numElements = lines[0].Length;
             var maxValues = new int[numElements];
-            for (int x = 0; x < numElements; x++)
+            for (var x = 0; x < numElements; x++)
             {
                 maxValues[x] = lines.Max(y => y[x].Length) + padding;
             }
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
-            bool isFirst = true;
+            var isFirst = true;
             foreach (var line in lines)
             {
                 if (!isFirst)
@@ -439,7 +439,7 @@ namespace AtwoodUtils
                     sb.AppendLine();
                 }
                 isFirst = false;
-                for (int x = 0; x < line.Length; x++)
+                for (var x = 0; x < line.Length; x++)
                 {
                     var value = line[x];
                     sb.Append(value.PadRight(maxValues[x]));
@@ -502,8 +502,8 @@ namespace AtwoodUtils
             if (tableNames == null || !names.Any())
                 throw new ArgumentException("The table names argument may not be empty or null.");
 
-            string str = "";
-            for (int x = 0; x < names.Count; x++)
+            var str = "";
+            for (var x = 0; x < names.Count; x++)
             {
                 if (x == 0)
                     str += string.Format("`{0}` ", names.ElementAt(x));
@@ -523,7 +523,7 @@ namespace AtwoodUtils
         /// <returns></returns>
         public static bool IsPortAvailable(int port)
         {
-            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
 
             return !ipGlobalProperties.GetActiveTcpConnections().ToList().Exists(x => x.LocalEndPoint.Port == port)
                 && !ipGlobalProperties.GetActiveTcpListeners().ToList().Exists(x => x.Port == port);

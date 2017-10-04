@@ -88,13 +88,13 @@ namespace CommandCentral.CustomTypes
             if (elements.Count != 3)
                 return false;
 
-            if (!Int32.TryParse(elements[0], out int hours) || hours < 0 || hours > 24)
+            if (!Int32.TryParse(elements[0], out var hours) || hours < 0 || hours > 24)
                 return false;
 
-            if (!Int32.TryParse(elements[1], out int minutes) || minutes < 0 || minutes > 59)
+            if (!Int32.TryParse(elements[1], out var minutes) || minutes < 0 || minutes > 59)
                 return false;
 
-            if (!Int32.TryParse(elements[2], out int seconds) || seconds < 0 || seconds > 59)
+            if (!Int32.TryParse(elements[2], out var seconds) || seconds < 0 || seconds > 59)
                 return false;
 
             //All of our parsing went well!  Success!
