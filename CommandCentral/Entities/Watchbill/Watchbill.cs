@@ -88,17 +88,6 @@ namespace CommandCentral.Entities.Watchbill
 
         #endregion
 
-        #region ctors
-
-        /// <summary>
-        /// Creates a new watchbill, setting all collection to empty.
-        /// </summary>
-        public Watchbill()
-        {
-        }
-
-        #endregion
-
         #region Methods
 
         /// <summary>
@@ -917,46 +906,7 @@ namespace CommandCentral.Entities.Watchbill
                 RuleFor(x => x.WatchShifts).SetCollectionValidator(new WatchShift.WatchShiftValidator());
                 RuleFor(x => x.InputRequirements).SetCollectionValidator(new WatchInputRequirement.WatchInputRequirementValidator());
                 RuleFor(x => x.Range).Must(x => x.Start <= x.End);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-                Custom(watchbill =>
-                {
-                    var shiftsByType = watchbill.WatchShifts.GroupBy(x => x.ShiftType);
-
-                    List<string> errorElements = new List<string>();
-
-                    //Make sure that none of the shifts overlap.
-                    foreach (var group in shiftsByType)
-                    {
-                        var shifts = group.ToList();
-                        foreach (var shift in shifts)
-                        {
-                            var shiftRange = new Itenso.TimePeriod.TimeRange(shift.Range.Start, shift.Range.End, false);
-                            foreach (var otherShift in shifts.Where(x => x.Id != shift.Id))
-                            {
-                                var otherShiftRange = new Itenso.TimePeriod.TimeRange(otherShift.Range.Start, otherShift.Range.End, false);
-                                if (shiftRange.OverlapsWith(otherShiftRange))
-                                {
-                                    errorElements.Add("{0} shifts: {1}".With(group.Key.ToString(), String.Join(" ; ", otherShiftRange.ToString())));
-                                }
-                            }
-                        }
-                    }
-
-                    var watchbillTimeRange = new Itenso.TimePeriod.TimeRange(watchbill.Range.Start, watchbill.Range.End, true);
-
-                    if (errorElements.Any())
-                    {
-                        string str = "One or more shifts with the same type overlap:  {0}"
-                            .With(String.Join(" | ", errorElements));
-                        return new FluentValidation.Results.ValidationFailure(nameof(watchbill.WatchShifts), str);
-                    }
-
-                    return null;
-                });
-#pragma warning restore CS0618 // Type or member is obsolete
             }
         }
-
     }
 }
