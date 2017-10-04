@@ -4,15 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class LoggingTests
+    public static class LoggingTests
     {
 
-        [TestMethod]
-        public void InitializeLogger()
+        public static void InitializeLogger()
         {
             Logging.Log.RegisterLoggers();
             Logging.Log.Info("test info message");

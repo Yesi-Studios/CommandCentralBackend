@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test.ReferenceListTests
 {
-    [TestClass]
-    public class CommandDepartmentDivisionTests
+    public static class CommandDepartmentDivisionTests
     {
-        [TestMethod]
-        public void CreateCommands()
+        public static void CreateCommands()
         {
             Logging.Log.Info("Creating commands...");
 
@@ -48,8 +48,7 @@ namespace CommandCentral.Test.ReferenceListTests
             }
         }
 
-        [TestMethod]
-        public void CreateDepartments()
+        public static void CreateDepartments()
         {
             Logging.Log.Info("Creating departments...");
 
@@ -92,8 +91,7 @@ namespace CommandCentral.Test.ReferenceListTests
 
         }
 
-        [TestMethod]
-        public void CreateDivisions()
+        public static void CreateDivisions()
         {
             Logging.Log.Info("Creating divisions...");
 

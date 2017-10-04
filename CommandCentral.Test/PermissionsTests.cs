@@ -6,15 +6,14 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class PermissionsTests
+    public static class PermissionsTests
     {
-
-        [TestMethod]
-        public void EnsureNoDuplicatePermissions()
+        public static void EnsureNoDuplicatePermissions()
         {
             var thereAreDupes = PermissionGroup.AllPermissionGroups.GroupBy(x => x.GroupName, StringComparer.CurrentCultureIgnoreCase).Any(x => x.Count() > 1);
 

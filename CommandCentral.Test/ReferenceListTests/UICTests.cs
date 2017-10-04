@@ -6,18 +6,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test.ReferenceListTests
 {
-    [TestClass]
-    public class UICTests
+    public static class UICTests
     {
-
-        [TestMethod]
-        public void CreateUICs()
+        public static void CreateUICs()
         {
 
-            List<UIC> expected = new List<UIC>();
+            var expected = new List<UIC>();
 
             try
             {

@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class DatabaseTests
+    public static class DatabaseTests
     {
-        [TestMethod]
-        public void SetupInMemoryDatabase()
+        public static void SetupInMemoryDatabase()
         {
 
             MySql.Server.MySqlServer server = MySql.Server.MySqlServer.Instance;
@@ -26,8 +26,7 @@ namespace CommandCentral.Test
             Assert.IsTrue(DataAccess.DataProvider.IsReady);
         }
 
-        [TestMethod]
-        public void SetupRealDatabase()
+        public static void SetupRealDatabase()
         {
             var connectionString = "server={0};database={1};user={2};password={3};"
                 .With(TestSettings.Server, TestSettings.Database, TestSettings.Username, TestSettings.Password);
@@ -47,8 +46,7 @@ namespace CommandCentral.Test
             Assert.IsTrue(DataAccess.DataProvider.IsReady);
         }
 
-        [TestMethod]
-        public void UpdateForeignKeyRuleForWatchAssignment()
+        public static void UpdateForeignKeyRuleForWatchAssignment()
         {
             Entities.Watchbill.WatchAssignment.WatchAssignmentMapping.UpdateForeignKeyRule();
         }

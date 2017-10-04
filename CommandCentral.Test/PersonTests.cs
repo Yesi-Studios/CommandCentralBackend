@@ -12,15 +12,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using NUnit.Framework.Internal;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class PersonTests
+    public static class PersonTests
     {
         static Dictionary<string, int> emailAddresses = new Dictionary<string, int>();
 
-        public Person CreatePerson(Command command, Department department, Division division, 
+        public static Person CreatePerson(Command command, Department department, Division division, 
             UIC uic, string lastName, string username, IEnumerable<PermissionGroup> permissionGroups,
             IEnumerable<WatchQualification> watchQuals, Paygrade paygrade)
         {
@@ -87,8 +89,7 @@ namespace CommandCentral.Test
             return person;
         }
 
-        [TestMethod]
-        public void CreateDeveloper()
+        public static void CreateDeveloper()
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
@@ -118,8 +119,7 @@ namespace CommandCentral.Test
             }
         }
 
-        [TestMethod]
-        public void CreateUsers()
+        public static void CreateUsers()
         {
             List<Guid> expected = new List<Guid>();
 
@@ -215,7 +215,7 @@ namespace CommandCentral.Test
                                         throw new Exception("An unknown paygrade was found! {0}".With(paygrade));
                                     }
 
-                                    var person = CreatePerson(command, department, division, uic, "user" + expected.Count.ToString(), "user" + expected.Count.ToString(), permGroups, quals, paygrade);
+                                    var person = CreatePerson(command, department, division, uic, "user" + expected.Count, "user" + expected.Count.ToString(), permGroups, quals, paygrade);
 
                                     session.Save(person);
 

@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class SchedulerTests
+    public static class SchedulerTests
     {
-        [TestMethod]
-        public void InitializeFluentScheduler()
+        public static void InitializeFluentScheduler()
         {
             ServiceManagement.ServiceManager.InitializeFluentScheduler();
         }
