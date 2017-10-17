@@ -47,8 +47,8 @@ namespace CommandCentral.ClientAccess.Endpoints
                 {
                     try
                     {
-                        string username = token.Args["username"] as string;
-                        string password = token.Args["password"] as string;
+                        var username = token.Args["username"] as string;
+                        var password = token.Args["password"] as string;
 
                         //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
                         //This is ok because the username field is marked unique so this shouldn't happen and if it does then we want an exception.
@@ -94,7 +94,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                         else
                         {
                             //Cool then we can make a new authentication session.
-                            AuthenticationSession ses = new AuthenticationSession
+                            var ses = new AuthenticationSession
                             {
                                 IsActive = true,
                                 LastUsedTime = token.CallTime,
@@ -198,8 +198,8 @@ namespace CommandCentral.ClientAccess.Endpoints
 
             token.Args.AssertContainsKeys("continuelink", "ssn");
 
-            string ssn = token.Args["ssn"] as string;
-            string continueLink = token.Args["continueLink"] as string;
+            var ssn = token.Args["ssn"] as string;
+            var continueLink = token.Args["continueLink"] as string;
 
             //Let's just do some basic validation and make sure it's a real URI.
             if (!Uri.IsWellFormedUriString(continueLink, UriKind.Absolute))
@@ -324,9 +324,9 @@ namespace CommandCentral.ClientAccess.Endpoints
         {
             token.Args.AssertContainsKeys("username", "password", "accountconfirmationid");
 
-            string username = token.Args["username"] as string;
-            string password = token.Args["password"] as string;
-            if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out Guid accountConfirmationId))
+            var username = token.Args["username"] as string;
+            var password = token.Args["password"] as string;
+            if (!Guid.TryParse(token.Args["accountconfirmationid"] as string, out var accountConfirmationId))
                 throw new CommandCentralException("The account confirmation ID you sent was not in the right format.", ErrorTypes.Validation);
 
             //Now we're going to try to find a pending account confirmation for the Id the client gave us.  
@@ -423,8 +423,8 @@ namespace CommandCentral.ClientAccess.Endpoints
             //First, let's make sure the args are present.
             token.Args.AssertContainsKeys("email", "ssn", "continuelink");
 
-            string email = token.Args["email"] as string;
-            string ssn = token.Args["ssn"] as string;
+            var email = token.Args["email"] as string;
+            var ssn = token.Args["ssn"] as string;
 
             //Let's get the continue link
             var continueLink = token.Args["continuelink"] as string;
@@ -542,12 +542,12 @@ namespace CommandCentral.ClientAccess.Endpoints
             //First, let's make sure the args are present.
             token.Args.AssertContainsKeys("passwordresetid", "password");
 
-            string password = token.Args["password"] as string;
-            if (!Guid.TryParse(token.Args["passwordresetid"] as string, out Guid passwordResetId))
+            var password = token.Args["password"] as string;
+            if (!Guid.TryParse(token.Args["passwordresetid"] as string, out var passwordResetId))
                 throw new CommandCentralException("The password reset ID you sent was not in the right format.", ErrorTypes.Validation);
             
             //Create the hash.
-            string passwordHash = PasswordHash.CreateHash(password);
+            var passwordHash = PasswordHash.CreateHash(password);
 
             //Ok, we're going to use the password reset Id to load the pending password reset.
             //If we get one, we'll make sure it's still valid.
@@ -625,8 +625,8 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("oldpassword", "newpassword");
 
-            string oldPassword = token.Args["oldpassword"] as string;
-            string newPassword = token.Args["newpassword"] as string;
+            var oldPassword = token.Args["oldpassword"] as string;
+            var newPassword = token.Args["newpassword"] as string;
 
             //First let's confirm the old password is actually the client's old password.
             var correct = PasswordHash.ValidatePassword(oldPassword, token.AuthenticationSession.Person.PasswordHash);
@@ -689,7 +689,7 @@ namespace CommandCentral.ClientAccess.Endpoints
         {
             token.Args.AssertContainsKeys("ssn");
 
-            string ssn = token.Args["ssn"] as string;
+            var ssn = token.Args["ssn"] as string;
 
             if (string.IsNullOrWhiteSpace(ssn))
                 throw new CommandCentralException("The ssn must not be null or empty.", ErrorTypes.Validation);

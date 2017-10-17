@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class APIKeyTests
+    public static class APIKeyTests
     {
 
         /// <summary>
@@ -21,8 +22,7 @@ namespace CommandCentral.Test
             Id = Guid.Parse("90FDB89F-282B-4BD6-840B-CEF597615728")
         };
 
-        [TestMethod]
-        public void EnsureDefaultAPIKeyExistsAndAddIfItDoesnt()
+        public static void EnsureDefaultAPIKeyExistsAndAddIfItDoesnt()
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {

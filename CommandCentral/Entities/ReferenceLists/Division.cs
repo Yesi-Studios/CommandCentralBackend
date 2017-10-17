@@ -40,7 +40,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 try
                 {
                     //First try to get the department this thing is a part of.
-                    if (!Guid.TryParse(item.Value<string>("departmentid"), out Guid departmentId))
+                    if (!Guid.TryParse(item.Value<string>("departmentid"), out var departmentId))
                         throw new CommandCentralException("The department id was not valid.", ErrorTypes.Validation);
 
                     var departmentFromClient = session.Get<Department>(departmentId) ??
@@ -174,7 +174,7 @@ namespace CommandCentral.Entities.ReferenceLists
                     if (token.Args.ContainsKey("departmentid"))
                     {
                         //Yes we were!
-                        if (!Guid.TryParse(token.Args["departmentid"] as string, out Guid departmentId))
+                        if (!Guid.TryParse(token.Args["departmentid"] as string, out var departmentId))
                         {
                             throw new CommandCentralException("The department id was not valid.", ErrorTypes.Validation);
                         }

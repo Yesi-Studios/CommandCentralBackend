@@ -70,8 +70,7 @@ namespace CommandCentral.Email.EmailInterface
         /// <returns></returns>
         public static CCEmailMessage CreateDefault()
         {
-            return CCEmailMessage
-                    .From(DeveloperAddress)
+            return From(DeveloperAddress)
                     .BCC(DeveloperAddress)
                     .ReplyTo(DeveloperAddress)
                     .HighProperty()
@@ -366,11 +365,11 @@ namespace CommandCentral.Email.EmailInterface
         {
             assembly = typeof(CCEmailMessage).Assembly;
 
-            ContentType mimeType = new ContentType("text/html");
+            var mimeType = new ContentType("text/html");
 
             var content = TemplateHelper.RenderTemplate(resourcePath, model, assembly);
 
-            AlternateView view = AlternateView.CreateAlternateViewFromString(content, mimeType);
+            var view = AlternateView.CreateAlternateViewFromString(content, mimeType);
 
             Message.AlternateViews.Add(view);
 
@@ -415,7 +414,7 @@ namespace CommandCentral.Email.EmailInterface
 
             if (_clients.Any())
             {
-                SmtpClient attemptClient = _clients.First();
+                var attemptClient = _clients.First();
 
                 Task.Run(() =>
                 {

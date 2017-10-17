@@ -64,7 +64,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
             //The person from the client... let's make sure that it is valid.  If it passes validation then it can be inserted.
             //For security we're going to take only the parameters that we need explicitly from the client.  All others will be thrown out. #whitelisting
-            Person newPerson = new Person
+            var newPerson = new Person
             {
                 FirstName = personFromClient.FirstName,
                 MiddleName = personFromClient.MiddleName,
@@ -152,7 +152,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid");
 
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataProvider.CreateStatefulSession())
@@ -164,9 +164,9 @@ namespace CommandCentral.ClientAccess.Endpoints
                 //Now that we have the person back, let's resolve the permissions for this person.
                 var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(person);
 
-                Dictionary<string, object> returnData = new Dictionary<string, object>();
+                var returnData = new Dictionary<string, object>();
 
-                List<string> returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
+                var returnableFields = resolvedPermissions.ReturnableFields[nameof(Person)];
 
                 var personMetadata = DataProvider.GetEntityMetadata(nameof(Person));
 
@@ -180,7 +180,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     }
                     else
                     {
-                        bool wasSet = false;
+                        var wasSet = false;
 
                         switch (propertyName)
                         {
@@ -253,7 +253,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid");
             
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             //Let's load the person we were given.  We need the object for the permissions check.
@@ -266,7 +266,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 //Now let's get permissions and see if the client is allowed to view AccountHistory.
                 var permissions = token.AuthenticationSession.Person.ResolvePermissions(person);
 
-                bool canView = permissions.ReturnableFields[nameof(Person)].Contains(PropertySelector.SelectPropertyFrom<Person>(x => x.AccountHistory).Name);
+                var canView = permissions.ReturnableFields[nameof(Person)].Contains(PropertySelector.SelectPropertyFrom<Person>(x => x.AccountHistory).Name);
 
                 if (!canView)
                     throw new CommandCentralException("You are not allowed to view the account history of this person's profile.", ErrorTypes.Authorization);
@@ -288,7 +288,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid");
 
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("The person Id you sent was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataProvider.CreateStatefulSession())
@@ -305,7 +305,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     {
                         foreach (var level in chainOfCommandType.Value)
                         {
-                            for (int x = 0; x < level.Value.Count; x++)
+                            for (var x = 0; x < level.Value.Count; x++)
                             {
                                 level.Value[x] = session.Merge(level.Value[x]);
                             }
@@ -342,13 +342,13 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("searchterm");
 
-            string searchTerm = token.Args["searchterm"] as string;
+            var searchTerm = token.Args["searchterm"] as string;
 
             //Let's require a search term.  That's nice.
             if (String.IsNullOrEmpty(searchTerm))
                 throw new CommandCentralException("You must send a search term. A blank term isn't valid. Sorry :(", ErrorTypes.Validation);
 
-            bool showHidden = false;
+            var showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
             {
                 showHidden = Convert.ToBoolean(token.Args["showhidden"]);
@@ -376,7 +376,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                     //Do our permissions check here for each person.
                     var returnableFields = token.AuthenticationSession.Person.ResolvePermissions(person).ReturnableFields[nameof(Person)];
 
-                    Dictionary<string, string> result = new Dictionary<string, string>
+                    var result = new Dictionary<string, string>
                     {
                         { "Id", person.Id.ToString() }
                     };
@@ -430,7 +430,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("filters", "returnfields");
 
-            Dictionary<string, object> filters = token.Args["filters"]
+            var filters = token.Args["filters"]
                 .CastJToken<Dictionary<string, object>>() ??
                     new Dictionary<string, object>();
 
@@ -453,7 +453,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             if (filters.ContainsKey("Division"))
                                 filters.Remove("Division");
 
-                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(nameof(Person), out List<string> fields);
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(nameof(Person), out var fields);
                             if (fields == null)
                                 fields = new List<string>();
 
@@ -473,7 +473,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             //First, if the filters have department, delete it.
                             if (filters.ContainsKey("Department"))
                                 filters.Remove("Department");
-                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(nameof(Person), out List<string> fields);
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(nameof(Person), out var fields);
                             if (fields == null)
                                 fields = new List<string>();
 
@@ -495,7 +495,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                             if (filters.ContainsKey("Command"))
                                 filters.Remove("Command");
 
-                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command].TryGetValue(nameof(Person), out List<string> fields);
+                            resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command].TryGetValue(nameof(Person), out var fields);
                             if (fields == null)
                                 fields = new List<string>();
 
@@ -525,7 +525,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Now let's determine if we're doing a geo query.
-            bool isGeoQuery = false;
+            var isGeoQuery = false;
             double centerLat = -1, centerLong = -1, radius = -1;
 
             //If the client sent any one of the three geoquery paramters, then make sure they sent all of them.
@@ -543,10 +543,10 @@ namespace CommandCentral.ClientAccess.Endpoints
                 radius = (double)token.Args["radius"];
             }
 
-            List<string> returnFields = token.Args["returnfields"].CastJToken<List<string>>();
+            var returnFields = token.Args["returnfields"].CastJToken<List<string>>();
 
             //Instruct us to show hidden profiles, or hide them.
-            bool showHidden = false;
+            var showHidden = false;
             if (token.Args.ContainsKey("showhidden"))
             {
                 showHidden = (bool)token.Args["showhidden"];
@@ -604,7 +604,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
                 //Here we iterate over every returned person, do an authorization check and cast the results into DTOs.
                 //Important note: the client expects every field to be a string.  We don't return object results. :(
-                List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+                var result = new List<Dictionary<string, string>>();
 
                 var rawResults = query.GetExecutableQueryOver(session)
                     .TransformUsing(Transformers.DistinctRootEntity) //This part here "should" give us distinct elements.
@@ -638,7 +638,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                         else
                         {
                             //So there's no home address, so let's check against any address.
-                            bool passed = false;
+                            var passed = false;
 
                             foreach (var address in person.PhysicalAddresses)
                             {
@@ -735,7 +735,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 try
                 {
                     //Ok now we need to see if a lock exists for the person the client wants to edit.  Later we'll see if the client owns that lock.
-                    ProfileLock profileLock = session.QueryOver<ProfileLock>()
+                    var profileLock = session.QueryOver<ProfileLock>()
                                             .Where(x => x.LockedPerson.Id == personFromClient.Id)
                                             .SingleOrDefault() ??
                                             throw new CommandCentralException("In order to edit this person, you must first take a lock on the person.", ErrorTypes.Validation);
@@ -749,16 +749,16 @@ namespace CommandCentral.ClientAccess.Endpoints
                         throw new CommandCentralException("The lock on this person is owned by '{0}' and will expire in {1} minutes unless the owner closes the profile prior to that.".With(profileLock.Owner.ToString(), profileLock.GetTimeRemaining().TotalMinutes), ErrorTypes.LockOwned);
 
                     //Ok, so it's a valid person and the client owns the lock, now let's load the person by their ID, and see what they look like in the database.
-                    Person personFromDB = session.Get<Person>(personFromClient.Id) ??
+                    var personFromDB = session.Get<Person>(personFromClient.Id) ??
                         throw new CommandCentralException("The person you supplied had an Id that belongs to no actual person.", ErrorTypes.Validation);
 
                     var resolvedPermissions = token.AuthenticationSession.Person.ResolvePermissions(personFromDB);
 
                     //Get the editable and returnable fields and also those fields that, even if they are edited, will be ignored.
-                    if (!resolvedPermissions.EditableFields.TryGetValue(nameof(Person), out List<string> editableFields))
+                    if (!resolvedPermissions.EditableFields.TryGetValue(nameof(Person), out var editableFields))
                         editableFields = new List<string>();
 
-                    if (!resolvedPermissions.ReturnableFields.TryGetValue(nameof(Person), out List<string> returnableFields))
+                    if (!resolvedPermissions.ReturnableFields.TryGetValue(nameof(Person), out var returnableFields))
                         returnableFields = new List<string>();
 
                     //Go through all returnable fields that the client is allowed to edit and then move the values into the person from the database.
@@ -854,7 +854,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
 
             var searchStrategy = new Person.PersonQueryProvider();
-            Dictionary<string, object> result = new Dictionary<string, object>();
+            var result = new Dictionary<string, object>();
             foreach (var info in typeof(Person).GetProperties())
             {
                 result.Add(info.Name, new

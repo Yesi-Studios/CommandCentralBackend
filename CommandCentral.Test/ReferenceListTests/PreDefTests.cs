@@ -7,15 +7,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CommandCentral.Test.ReferenceListTests
 {
-    [TestClass]
-    public class PreDefTests
+    public static class PreDefTests
     {
 
-        [TestMethod]
-        public void AddPreDefs()
+        public static void AddPreDefs()
         {
             PreDefUtility.PersistPreDef<WatchQualification>();
             PreDefUtility.PersistPreDef<Sex>();
@@ -68,6 +68,5 @@ namespace CommandCentral.Test.ReferenceListTests
             Assert.IsTrue(ReferenceListHelper<AccountHistoryType>.All().Count ==
                 PreDefOf<AccountHistoryType>.Get().Definitions.Count);
         }
-
     }
 }

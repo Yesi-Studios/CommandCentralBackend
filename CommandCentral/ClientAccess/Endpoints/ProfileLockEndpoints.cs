@@ -33,7 +33,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("personid");
 
-            if (!Guid.TryParse(token.Args["personid"] as string, out Guid personId))
+            if (!Guid.TryParse(token.Args["personid"] as string, out var personId))
                 throw new CommandCentralException("The 'personid' parameter was not valid", ErrorTypes.Validation);
 
             //Do our work in a new session
@@ -146,10 +146,10 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("profilelockid");
 
-            if (!Guid.TryParse(token.Args["profilelockid"] as string, out Guid profileLockId))
+            if (!Guid.TryParse(token.Args["profilelockid"] as string, out var profileLockId))
                 throw new CommandCentralException("The 'profilelockid' parameter was not valid", ErrorTypes.Validation);
 
-            bool forceRelease = false;
+            var forceRelease = false;
             if (token.Args.ContainsKey("forcerelease"))
             {
                 forceRelease = (bool)token.Args["forcerelease"];

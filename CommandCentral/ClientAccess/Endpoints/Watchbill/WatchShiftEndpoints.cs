@@ -28,7 +28,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchShiftId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchShiftId))
                 throw new CommandCentralException("Your watch shift id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -76,7 +76,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 throw new CommandCentralException("An error occurred while trying to parse your watch shifts.", ErrorTypes.Validation);
             }
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchbill id was in the wrong format.", ErrorTypes.Validation);
 
             var watchShiftsToInsert = watchShiftsFromClient.Select(x => new WatchShift
@@ -232,7 +232,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("Your id was in the wrong format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())

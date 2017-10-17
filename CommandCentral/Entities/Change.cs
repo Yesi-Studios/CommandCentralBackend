@@ -76,13 +76,13 @@ namespace CommandCentral.Entities
             if (other == null)
                 return false;
 
-            return Object.Equals(other.Editee.Id, this.Editee.Id) &&
-                   Object.Equals(other.Editor.Id, this.Editor.Id) &&
-                   Object.Equals(other.Id, this.Id) &&
-                   Object.Equals(other.NewValue, this.NewValue) &&
-                   Object.Equals(other.OldValue, this.OldValue) &&
-                   Object.Equals(other.PropertyName, this.PropertyName) &&
-                   Object.Equals(other.Time, this.Time);
+            return Object.Equals(other.Editee.Id, Editee.Id) &&
+                   Object.Equals(other.Editor.Id, Editor.Id) &&
+                   Object.Equals(other.Id, Id) &&
+                   Object.Equals(other.NewValue, NewValue) &&
+                   Object.Equals(other.OldValue, OldValue) &&
+                   Object.Equals(other.PropertyName, PropertyName) &&
+                   Object.Equals(other.Time, Time);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Editee.Id);

@@ -41,7 +41,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return "{0} @ {1}".With(this.AccountHistoryEventType, this.EventTime);
+            return "{0} @ {1}".With(AccountHistoryEventType, EventTime);
         }
 
         /// <summary>
@@ -55,9 +55,9 @@ namespace CommandCentral.Entities
             if (other == null)
                 return false;
 
-            return Object.Equals(other.Id, this.Id) &&
-                   Object.Equals(other.AccountHistoryEventType, this.AccountHistoryEventType) &&
-                   Object.Equals(other.EventTime, this.EventTime);
+            return Object.Equals(other.Id, Id) &&
+                   Object.Equals(other.AccountHistoryEventType, AccountHistoryEventType) &&
+                   Object.Equals(other.EventTime, EventTime);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Id.GetHashCode();
                 hash = hash * 23 + Utilities.GetSafeHashCode(AccountHistoryEventType);

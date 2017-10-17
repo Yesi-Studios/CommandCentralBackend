@@ -43,7 +43,7 @@ namespace CommandCentral.Entities
         {
             get
             {
-                return this.ToString();
+                return ToString();
             }
         }
 
@@ -421,10 +421,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameCommandAs(Person person)
         {
-            if (person == null || this.Command == null || person.Command == null)
+            if (person == null || Command == null || person.Command == null)
                 return false;
 
-            return this.Command.Id == person.Command.Id;
+            return Command.Id == person.Command.Id;
         }
 
         /// <summary>
@@ -434,10 +434,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameDepartmentAs(Person person)
         {
-            if (person == null || this.Department == null || person.Department == null)
+            if (person == null || Department == null || person.Department == null)
                 return false;
 
-            return IsInSameCommandAs(person) && this.Department.Id == person.Department.Id;
+            return IsInSameCommandAs(person) && Department.Id == person.Department.Id;
         }
 
         /// <summary>
@@ -447,10 +447,10 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public virtual bool IsInSameDivisionAs(Person person)
         {
-            if (person == null || this.Division == null || person.Division == null)
+            if (person == null || Division == null || person.Division == null)
                 return false;
 
-            return IsInSameDepartmentAs(person) && this.Division.Id == person.Division.Id;
+            return IsInSameDepartmentAs(person) && Division.Id == person.Division.Id;
         }
 
         /// <summary>
@@ -499,35 +499,35 @@ namespace CommandCentral.Entities
                     {
                         case ChainOfCommandLevels.Command:
                             {
-                                if (this.Command == null)
+                                if (Command == null)
                                     continue;
 
                                 queryString += " and person.Command = :command";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command);
+                                    .SetParameter("command", Command);
                                 break;
                             }
                         case ChainOfCommandLevels.Department:
                             {
-                                if (this.Command == null || this.Department == null)
+                                if (Command == null || Department == null)
                                     continue;
 
                                 queryString += " and person.Command = :command and person.Department = :department";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command)
-                                    .SetParameter("department", this.Department);
+                                    .SetParameter("command", Command)
+                                    .SetParameter("department", Department);
                                 break;
                             }
                         case ChainOfCommandLevels.Division:
                             {
-                                if (this.Command == null || this.Department == null || this.Division == null)
+                                if (Command == null || Department == null || Division == null)
                                     continue;
 
                                 queryString += " and person.Command = :command and person.Department = :department and person.Division = :division";
                                 query = session.CreateQuery(queryString)
-                                    .SetParameter("command", this.Command)
-                                    .SetParameter("department", this.Department)
-                                    .SetParameter("division", this.Division);
+                                    .SetParameter("command", Command)
+                                    .SetParameter("department", Department)
+                                    .SetParameter("division", Division);
                                 break;
                             }
                         default:
@@ -696,7 +696,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Ethnicity ethnicity = DataProvider.CreateStatefulSession().Get<Ethnicity>(x.Id);
+                        var ethnicity = DataProvider.CreateStatefulSession().Get<Ethnicity>(x.Id);
 
                         if (ethnicity == null)
                             return false;
@@ -709,7 +709,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        ReligiousPreference pref = DataProvider.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
+                        var pref = DataProvider.CreateStatefulSession().Get<ReligiousPreference>(x.Id);
 
                         if (pref == null)
                             return false;
@@ -722,7 +722,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Designation designation = DataProvider.CreateStatefulSession().Get<Designation>(x.Id);
+                        var designation = DataProvider.CreateStatefulSession().Get<Designation>(x.Id);
 
                         if (designation == null)
                             return false;
@@ -735,7 +735,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Division division = DataProvider.CreateStatefulSession().Get<Division>(x.Id);
+                        var division = DataProvider.CreateStatefulSession().Get<Division>(x.Id);
 
                         if (division == null)
                             return false;
@@ -748,7 +748,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Department department = DataProvider.CreateStatefulSession().Get<Department>(x.Id);
+                        var department = DataProvider.CreateStatefulSession().Get<Department>(x.Id);
 
                         if (department == null)
                             return false;
@@ -761,7 +761,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        Command command = DataProvider.CreateStatefulSession().Get<Command>(x.Id);
+                        var command = DataProvider.CreateStatefulSession().Get<Command>(x.Id);
 
                         if (command == null)
                             return false;
@@ -774,7 +774,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        NEC nec = DataProvider.CreateStatefulSession().Get<NEC>(x.Id);
+                        var nec = DataProvider.CreateStatefulSession().Get<NEC>(x.Id);
 
                         if (nec == null)
                             return false;
@@ -804,7 +804,7 @@ namespace CommandCentral.Entities
                         if (x == null)
                             return true;
 
-                        UIC uic = DataProvider.CreateStatefulSession().Get<UIC>(x.Id);
+                        var uic = DataProvider.CreateStatefulSession().Get<UIC>(x.Id);
 
                         if (uic == null)
                             return false;
@@ -983,7 +983,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
@@ -1021,7 +1021,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
@@ -1069,7 +1069,7 @@ namespace CommandCentral.Entities
                     if (String.IsNullOrWhiteSpace(str))
                         throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-                    List<string> values = new List<string>();
+                    var values = new List<string>();
                     foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))

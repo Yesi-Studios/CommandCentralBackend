@@ -34,10 +34,10 @@ namespace CommandCentral.DataAccess
             if (String.IsNullOrWhiteSpace(str))
                 throw new CommandCentralException("Your search value must be a string of ids, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-            List<Guid> values = new List<Guid>();
+            var values = new List<Guid>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (!Guid.TryParse(value, out Guid result))
+                if (!Guid.TryParse(value, out var result))
                     throw new CommandCentralException("One of your values was not vallid.", ErrorTypes.Validation);
 
                 values.Add(result);
@@ -74,7 +74,7 @@ namespace CommandCentral.DataAccess
             if (String.IsNullOrWhiteSpace(str))
                 throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-            List<string> values = new List<string>();
+            var values = new List<string>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))
@@ -207,7 +207,7 @@ namespace CommandCentral.DataAccess
             if (String.IsNullOrWhiteSpace(str))
                 throw new CommandCentralException("Your search value must be a string of values, delineated by white space, semicolons, or commas.", ErrorTypes.Validation);
 
-            List<string> values = new List<string>();
+            var values = new List<string>();
             foreach (var value in str.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (String.IsNullOrWhiteSpace(value) || String.IsNullOrWhiteSpace(value.Trim()))

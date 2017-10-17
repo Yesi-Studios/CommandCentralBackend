@@ -43,8 +43,8 @@ namespace AtwoodUtils
         /// <returns></returns>
         public bool TryNext(Func<T, bool> predicate, out T item)
         {
-            int attempts = 0;
-            Stack<T> failures = new Stack<T>();
+            var attempts = 0;
+            var failures = new Stack<T>();
             visitedItems = new List<T>();
 
             while (attempts < _original.Count)

@@ -72,7 +72,7 @@ namespace CommandCentral.Authorization.Groups
         {
             get
             {
-                return this.ParentCoC;
+                return ParentCoC;
             }
         }
 

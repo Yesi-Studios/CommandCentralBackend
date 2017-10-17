@@ -77,7 +77,7 @@ namespace CommandCentral.ServiceManagement.Service
             AddHeadersToOutgoingResponse(WebOperationContext.Current);
 
             //The token we're going to use for this request.
-            MessageToken token = new MessageToken();
+            var token = new MessageToken();
 
             try
             {
@@ -113,7 +113,7 @@ namespace CommandCentral.ServiceManagement.Service
                             Log.Debug(token.ToString());
 
                             //Get the endpoint
-                            if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out ServiceEndpoint description))
+                            if (!ServiceManager.EndpointDescriptions.TryGetValue(token.CalledEndpoint, out var description))
                                 throw new CommandCentralException("The endpoint you requested was not a valid endpoint. If you're certain this should be an endpoint " +
                                     "and you've checked your spelling, yell at the developers.  For further issues, please contact the developers at {0}.".With(Email.EmailInterface.CCEmailMessage.DeveloperAddress.Address),
                                     ErrorTypes.Validation);
@@ -137,7 +137,7 @@ namespace CommandCentral.ServiceManagement.Service
                                 throw new CommandCentralException("You didn't send an 'apikey' parameter.", ErrorTypes.Validation);
 
                             //Ok, so there is an apikey!  Is it legit?
-                            if (!Guid.TryParse(token.Args["apikey"] as string, out Guid apiKey))
+                            if (!Guid.TryParse(token.Args["apikey"] as string, out var apiKey))
                                 throw new CommandCentralException("The 'apikey' parameter was not in the correct format.", ErrorTypes.Validation);
 
                             //Ok, well it's a GUID.   Do we have it in the database?...
@@ -173,7 +173,7 @@ namespace CommandCentral.ServiceManagement.Service
 
                             Log.Debug(token.ToString());
 
-                            bool failedAtLeastOnce = false;
+                            var failedAtLeastOnce = false;
                             //Everything good?  Commit the transaction right before we release.  Included some handling for deadlocks.
                             var result = Policy
                                 .Handle<NHibernate.ADOException>()
@@ -310,7 +310,7 @@ namespace CommandCentral.ServiceManagement.Service
                 throw new CommandCentralException("You failed to send an 'authenticationtoken' parameter.", ErrorTypes.Validation);
 
             //Ok, so there is an authenticationtoken!  Is it legit?
-            if (!Guid.TryParse(token.Args["authenticationtoken"] as string, out Guid authenticationToken))
+            if (!Guid.TryParse(token.Args["authenticationtoken"] as string, out var authenticationToken))
                 throw new CommandCentralException("The 'authenticationtoken' parameter was not in the correct format.", ErrorTypes.Validation);
 
             //Ok, well it's a GUID.   Do we have it in the database?...

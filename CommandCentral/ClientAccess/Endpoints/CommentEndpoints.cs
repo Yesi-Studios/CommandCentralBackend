@@ -27,7 +27,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("id");
 
             //Get the Id.
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("The id parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
@@ -73,7 +73,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 Text = token.Args["text"] as string
             };
 
-            if (!Guid.TryParse(token.Args["entityownerid"] as string, out Guid entityOwnerId))
+            if (!Guid.TryParse(token.Args["entityownerid"] as string, out var entityOwnerId))
                 throw new CommandCentralException("Your id was not in a valid format.", ErrorTypes.Validation);
 
             var validationResult = new Comment.CommentValidator().Validate(comment);

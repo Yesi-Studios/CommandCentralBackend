@@ -19,7 +19,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         /// <param name="item"></param>
         /// <param name="token"></param>
-        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, ClientAccess.MessageToken token)
+        public override void UpdateOrInsert(Newtonsoft.Json.Linq.JToken item, MessageToken token)
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
@@ -118,7 +118,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// </summary>
         /// <param name="id"></param>
         /// <param name="token"></param>
-        public override List<ReferenceListItemBase> Load(System.Guid id, ClientAccess.MessageToken token)
+        public override List<ReferenceListItemBase> Load(Guid id, MessageToken token)
         {
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {

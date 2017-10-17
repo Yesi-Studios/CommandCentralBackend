@@ -23,20 +23,20 @@ namespace CommandCentral.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void LoadReferenceLists(MessageToken token)
         {
-            List<string> entityNames = new List<string>();
+            var entityNames = new List<string>();
             if (token.Args.ContainsKey("entitynames"))
             {
                 entityNames = token.Args["entitynames"].CastJToken<List<string>>();
             }
 
             //Does the client want editable lists?
-            bool editableOnly = false;
+            var editableOnly = false;
             if (token.Args.ContainsKey("editable"))
             {
                 editableOnly = (bool)token.Args["editable"];
             }
 
-            bool exclude = false;
+            var exclude = false;
             if (token.Args.ContainsKey("exclude"))
             {
                 exclude = (bool)token.Args["exclude"];
@@ -149,7 +149,7 @@ namespace CommandCentral.ClientAccess.Endpoints
 
             //Now let's get the Id of the item the client wants.  This can be null, in which case, set the Guid to default and we'll go get multiple lists.
             //If this isn't default afterwards, then the client may only request a single list.
-            Guid id = default(Guid);
+            var id = default(Guid);
             if (token.Args.ContainsKey("id"))
             {
                 if (!Guid.TryParse(token.Args["id"] as string, out id))
@@ -161,7 +161,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (id != default(Guid) && entityNames.Count != 1)
                 throw new CommandCentralException("If you include an Id in your request, then you must only specify a single list from which to load.", ErrorTypes.Validation);
 
-            Dictionary<string, List<ReferenceListItemBase>> results = new Dictionary<string, List<ReferenceListItemBase>>();
+            var results = new Dictionary<string, List<ReferenceListItemBase>>();
             //Cool we have a real item and an Id.  Now let's call its loader.
             foreach (var metadata in metadataWithEntityNames)
             {
@@ -192,7 +192,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
             
-            string entityName = token.Args["entityname"] as string;
+            var entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
             var metadata = DataAccess.DataProvider.GetEntityMetadata(entityName);
@@ -224,7 +224,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!token.AuthenticationSession.Person.PermissionGroups.Any(x => x.AccessibleSubModules.Contains(SubModules.AdminTools.ToString(), StringComparer.CurrentCultureIgnoreCase)))
                 throw new CommandCentralException("You don't have permission to update or create reference lists.", ErrorTypes.Authorization);
 
-            string entityName = token.Args["entityname"] as string;
+            var entityName = token.Args["entityname"] as string;
 
             //Ok so we were given an entity name, let's make sure that it is both an editable reference list and a real entity.
             var metadata = DataAccess.DataProvider.GetEntityMetadata(entityName);
@@ -233,10 +233,10 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!typeof(EditableReferenceListItemBase).IsAssignableFrom(metadata.GetMappedClass(NHibernate.EntityMode.Poco)))
                 throw new CommandCentralException("That entity was not a valid editable reference list.", ErrorTypes.Validation);
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("Your id parameter was in the wrong format.", ErrorTypes.Validation);
 
-            bool forceDelete = false;
+            var forceDelete = false;
             if (token.Args.ContainsKey("forcedelete"))
             {
                 forceDelete = (bool)token.Args["forcedelete"];

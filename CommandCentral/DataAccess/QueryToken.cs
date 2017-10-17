@@ -48,8 +48,8 @@ namespace CommandCentral.DataAccess
         /// </summary>
         public QueryToken(QueryOver<T, T> query, KeyValuePair<Expression<Func<T, object>>, object> searchParameter)
         {
-            this.Query = query ?? throw new ArgumentNullException("query");
-            this.SearchParameter = searchParameter;
+            Query = query ?? throw new ArgumentNullException("query");
+            SearchParameter = searchParameter;
         }
     }
 }

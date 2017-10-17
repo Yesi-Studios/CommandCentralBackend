@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace CommandCentral.Test
 {
-    [TestClass]
-    public class EmailTests
+    public static class EmailTests
     {
-        [TestMethod]
-        public void SetupEmail()
+        public static void SetupEmail()
         {
             Email.EmailInterface.CCEmailMessage.InitializeEmail(TestSettings.SMTPHosts.ToArray());
         }

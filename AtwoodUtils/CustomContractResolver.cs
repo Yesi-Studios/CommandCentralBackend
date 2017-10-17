@@ -16,7 +16,7 @@ namespace AtwoodUtils
     {
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {
-            JsonProperty property = base.CreateProperty(member, memberSerialization);
+            var property = base.CreateProperty(member, memberSerialization);
 
             var atts = property.AttributeProvider.GetAttributes(typeof(ConditionalJsonIgnoreAttribute), true);
 
@@ -28,7 +28,7 @@ namespace AtwoodUtils
             return property;
         }
 
-        protected override JsonContract CreateContract(System.Type objectType)
+        protected override JsonContract CreateContract(Type objectType)
         {
             if (typeof(NHibernate.Proxy.INHibernateProxy).IsAssignableFrom(objectType))
                 return base.CreateContract(objectType.BaseType);

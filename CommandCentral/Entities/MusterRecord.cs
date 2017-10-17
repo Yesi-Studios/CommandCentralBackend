@@ -114,7 +114,7 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public override string ToString()
         {
-            return this.MusterStatus;
+            return MusterStatus;
         }
 
         /// <summary>
@@ -128,21 +128,21 @@ namespace CommandCentral.Entities
             if (other == null)
                 return false;
 
-            return Object.Equals(other.Id, this.Id) &&
-                   Object.Equals(other.Musterer == null ? Guid.Empty : other.Musterer.Id, this.Musterer == null ? Guid.Empty : this.Musterer.Id) &&
-                   Object.Equals(other.Musteree.Id, this.Musteree.Id) &&
-                   Object.Equals(other.Paygrade, this.Paygrade) &&
-                   Object.Equals(other.Designation, this.Designation) &&
-                   Object.Equals(other.UIC, this.UIC) &&
-                   Object.Equals(other.Division, this.Division) &&
-                   Object.Equals(other.Department, this.Department) &&
-                   Object.Equals(other.Command, this.Command) &&
-                   Object.Equals(other.MusterStatus, this.MusterStatus) &&
-                   Object.Equals(other.DutyStatus, this.DutyStatus) &&
-                   Object.Equals(other.SubmitTime, this.SubmitTime) &&
-                   Object.Equals(other.MusterDate, this.MusterDate) &&
-                   Object.Equals(other.HasBeenSubmitted, this.HasBeenSubmitted) &&
-                   Object.Equals(other.Remarks, this.Remarks);
+            return Object.Equals(other.Id, Id) &&
+                   Object.Equals(other.Musterer == null ? Guid.Empty : other.Musterer.Id, Musterer == null ? Guid.Empty : Musterer.Id) &&
+                   Object.Equals(other.Musteree.Id, Musteree.Id) &&
+                   Object.Equals(other.Paygrade, Paygrade) &&
+                   Object.Equals(other.Designation, Designation) &&
+                   Object.Equals(other.UIC, UIC) &&
+                   Object.Equals(other.Division, Division) &&
+                   Object.Equals(other.Department, Department) &&
+                   Object.Equals(other.Command, Command) &&
+                   Object.Equals(other.MusterStatus, MusterStatus) &&
+                   Object.Equals(other.DutyStatus, DutyStatus) &&
+                   Object.Equals(other.SubmitTime, SubmitTime) &&
+                   Object.Equals(other.MusterDate, MusterDate) &&
+                   Object.Equals(other.HasBeenSubmitted, HasBeenSubmitted) &&
+                   Object.Equals(other.Remarks, Remarks);
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Musterer);
@@ -196,12 +196,12 @@ namespace CommandCentral.Entities
         /// <returns></returns>
         public static DateTime GetMusterDate(DateTime dateTime)
         {
-            System.Globalization.GregorianCalendar gregCalendar = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.USEnglish);
+            var gregCalendar = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.USEnglish);
 
             
 
-            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(MusterRecord.RolloverTime.GetSeconds())), 
-                dateTime.Date.AddSeconds(MusterRecord.RolloverTime.GetSeconds())))
+            if (dateTime.InclusiveBetween(dateTime.Date.Subtract(TimeSpan.FromHours(24) - TimeSpan.FromSeconds(RolloverTime.GetSeconds())), 
+                dateTime.Date.AddSeconds(RolloverTime.GetSeconds())))
                 return dateTime.Date;
             else
             {
@@ -244,7 +244,7 @@ namespace CommandCentral.Entities
         public static bool CanClientMusterPerson(Person client, Person person)
         {
 
-            ChainOfCommandLevels level = ChainOfCommandLevels.None;
+            var level = ChainOfCommandLevels.None;
 
             foreach (var group in client.PermissionGroups)
             {
@@ -311,7 +311,7 @@ namespace CommandCentral.Entities
                         throw new Exception("Not all muster records are from the same day during finalization!");
 
                     //Ok we have all the persons and their muster records.  #thatwaseasy
-                    foreach (Person person in persons)
+                    foreach (var person in persons)
                     {
                         if (person.CurrentMusterRecord == null)
                             throw new Exception("{0}'s current muster status was null.".With(person.ToString()));
@@ -322,7 +322,7 @@ namespace CommandCentral.Entities
                         person.CurrentMusterRecord.DutyStatus = person.DutyStatus.ToString();
                         if (!person.CurrentMusterRecord.HasBeenSubmitted)
                         {
-                            person.CurrentMusterRecord.MusterStatus = ReferenceLists.ReferenceListHelper<ReferenceLists.MusterStatus>.Find("UA").ToString();
+                            person.CurrentMusterRecord.MusterStatus = ReferenceListHelper<MusterStatus>.Find("UA").ToString();
                             person.CurrentMusterRecord.SubmitTime = DateTime.UtcNow;
                         }
                         person.CurrentMusterRecord.HasBeenSubmitted = true;
@@ -441,7 +441,7 @@ namespace CommandCentral.Entities
                     {
                         Log.Info("Correcting {0} persons with incorrect muster records...".With(personsWithIncorrectRecords.Count));
 
-                        int current = 0;
+                        var current = 0;
                         //Ok so each of these people's current muster records are for the wrong day.
                         //What we need to do is look up that day's muster record for this person and see if they have one.
                         //If they don't have one, the muster needs to get updated.
@@ -504,12 +504,12 @@ namespace CommandCentral.Entities
 
                     //Ok, at this point, we know that we have muster records for today.  Let's just tell the host how far along we are.
                     Log.Info("{0}/{1} person(s) have been mustered so far.".With(persons.Count(x => x.DutyStatus != ReferenceListHelper<DutyStatus>.Find("Loss") && x.CurrentMusterRecord.HasBeenSubmitted), persons.Count));
-                    Log.Info("Muster finalization status : {0}".With(MusterRecord.IsMusterFinalized ? "Finalized" : "Not Finalized"));
-                    Log.Info("Rollover time : {0}".With(MusterRecord.RolloverTime));
+                    Log.Info("Muster finalization status : {0}".With(IsMusterFinalized ? "Finalized" : "Not Finalized"));
+                    Log.Info("Rollover time : {0}".With(RolloverTime));
                     Log.Info("Current muster date is: {0}".With(GetMusterDate(DateTime.UtcNow).ToString("D")));
 
-                    Log.Info("Registering muster roll over to occur every day at '{0}'".With(MusterRecord.RolloverTime));
-                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(MusterRecord.RolloverTime.Hours, MusterRecord.RolloverTime.Minutes));
+                    Log.Info("Registering muster roll over to occur every day at '{0}'".With(RolloverTime));
+                    FluentScheduler.JobManager.AddJob(() => RolloverMuster(true), s => s.ToRunEvery(1).Days().At(RolloverTime.Hours, RolloverTime.Minutes));
 
                     transaction.Commit();
                 }

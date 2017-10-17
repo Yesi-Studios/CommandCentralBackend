@@ -31,7 +31,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid watchInputId))
+            if (!Guid.TryParse(token.Args["id"] as string, out var watchInputId))
                 throw new CommandCentralException("Your watch input id parameter's format was invalid.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -69,7 +69,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("watchinputs", "watchbillid");
 
-            if (!Guid.TryParse(token.Args["watchbillid"] as string, out Guid watchbillId))
+            if (!Guid.TryParse(token.Args["watchbillid"] as string, out var watchbillId))
                 throw new CommandCentralException("Your watchbill id was not in the right format.", ErrorTypes.Validation);
 
             var inputsToken = token.Args["watchinputs"].CastJToken();
@@ -79,10 +79,10 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
 
             var inputsFromClient = inputsToken.Select(input =>
             {
-                if (!Guid.TryParse(input["InputReason"]?.Value<string>("Id"), out Guid inputReasonId))
+                if (!Guid.TryParse(input["InputReason"]?.Value<string>("Id"), out var inputReasonId))
                     throw new CommandCentralException("Your input reason id was in the wrong format.", ErrorTypes.Validation);
 
-                if (!Guid.TryParse(input["person"]?.Value<string>("Id"), out Guid personId))
+                if (!Guid.TryParse(input["person"]?.Value<string>("Id"), out var personId))
                     throw new CommandCentralException("Your person id was in the wrong format.", ErrorTypes.Validation);
 
                 var range = input["Range"].CastJToken<TimeRange>();
@@ -176,7 +176,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
@@ -243,7 +243,7 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.AssertLoggedIn();
             token.Args.AssertContainsKeys("id");
 
-            if (!Guid.TryParse(token.Args["id"] as string, out Guid id))
+            if (!Guid.TryParse(token.Args["id"] as string, out var id))
                 throw new CommandCentralException("Your id was not in the right format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())

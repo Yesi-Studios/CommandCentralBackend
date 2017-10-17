@@ -28,7 +28,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             token.Args.AssertContainsKeys("newsitemid");
 
             //Ok, so there is a newsitemid!  Is it legit?
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out var newsItemId))
                 throw new CommandCentralException("The newsitemid parameter was not in the correct format.", ErrorTypes.Validation);
 
             //We passed validation, let's get a sesssion and do ze work.
@@ -122,7 +122,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (!token.AuthenticationSession.Person.PermissionGroups.CanAccessSubmodules(SubModules.EditNews.ToString()))
                 throw new CommandCentralException("You do not have permission to manage the news.", ErrorTypes.Authorization);
 
-            string title = token.Args["title"] as string;
+            var title = token.Args["title"] as string;
             List<string> paragraphs = null;
 
             //Do the cast here in case it fails.
@@ -137,7 +137,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Now build the whole news item.
-            NewsItem newsItem = new NewsItem
+            var newsItem = new NewsItem
             {
                 Id = Guid.NewGuid(),
                 CreationTime = token.CallTime,
@@ -196,7 +196,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Get the news item id from the client.
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out var newsItemId))
                 throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
 
             //Before we go get the news item from the database, let's get the title and the paragraphs from the client.  Both are optional.
@@ -215,7 +215,7 @@ namespace CommandCentral.ClientAccess.Endpoints
                 try
                 {
                     //Ok, it's a good news item so now we're going to compare it to the one in the database.
-                    NewsItem newsItem = session.Get<NewsItem>(newsItemId) ??
+                    var newsItem = session.Get<NewsItem>(newsItemId) ??
                         throw new CommandCentralException("A news item with that Id was not found in the database.", ErrorTypes.Validation);
 
                     //Ok, now let's put the values into the news item and then ask if it's valid.
@@ -267,7 +267,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             }
 
             //Get the news item id from the client.
-            if (!Guid.TryParse(token.Args["newsitemid"] as string, out Guid newsItemId))
+            if (!Guid.TryParse(token.Args["newsitemid"] as string, out var newsItemId))
                 throw new CommandCentralException("The news item id you sent was not in a valid format.", ErrorTypes.Validation);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())

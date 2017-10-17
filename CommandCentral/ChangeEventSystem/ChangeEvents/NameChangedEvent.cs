@@ -81,10 +81,10 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// <param name="newName"></param>
         public NameChangedEvent(Person by, Person about, string oldName, string newName)
         {
-            this.EventRaisedBy = by;
-            this.EventRaisedAbout = about;
-            this.OldName = oldName;
-            this.NewName = newName;
+            EventRaisedBy = by;
+            EventRaisedAbout = about;
+            OldName = oldName;
+            NewName = newName;
         }
 
         #endregion
@@ -96,15 +96,15 @@ namespace CommandCentral.ChangeEventSystem.ChangeEvents
         /// </summary>
         public void SendEmail()
         {
-            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(this.EventRaisedAbout, this).ToList();
-            List<Email.EmailInterface.CCEmailMessage> emails = new List<Email.EmailInterface.CCEmailMessage>();
+            var emailAddresses = ChangeEventHelper.GetValidSubscriptionEmailAddresses(EventRaisedAbout, this).ToList();
+            var emails = new List<Email.EmailInterface.CCEmailMessage>();
 
             foreach (var emailAddress in emailAddresses)
             {
                 emails.Add(Email.EmailInterface.CCEmailMessage
                     .CreateDefault()
                     .To(emailAddress)
-                    .Subject("{0} Event".With(this.EventName))
+                    .Subject("{0} Event".With(EventName))
                     .HTMLAlternateViewUsingTemplateFromEmbedded("CommandCentral.Email.Templates.NameChangedEvent_HTML.html", new Email.Models.NameChangedEventEmailModel { ChangeEvent = this }));
             }
 

@@ -28,8 +28,8 @@ namespace CommandCentral.Authorization
         /// <param name="newPersonFromClient"></param>
         public AuthorizationToken(Entities.Person client, Entities.Person newPersonFromClient)
         {
-            this.Client = client;
-            this.PersonFromClient = newPersonFromClient;
+            Client = client;
+            PersonFromClient = newPersonFromClient;
         }
     }
 }

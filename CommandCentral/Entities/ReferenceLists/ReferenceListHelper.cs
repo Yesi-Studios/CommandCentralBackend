@@ -103,7 +103,7 @@ namespace CommandCentral.Entities.ReferenceLists
         /// <returns></returns>
         public static T Get(string id)
         {
-            if (!Guid.TryParse(id, out Guid result))
+            if (!Guid.TryParse(id, out var result))
                 return null;
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())

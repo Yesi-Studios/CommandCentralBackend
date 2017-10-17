@@ -28,7 +28,7 @@ namespace CommandCentral.DataAccess
 
         private static ISessionFactory _sessionFactory;
 
-        private static NHibernate.Tool.hbm2ddl.SchemaExport _schema;
+        private static SchemaExport _schema;
 
         private static ConcurrentDictionary<string, IClassMetadata> _allClassMetadata;
 

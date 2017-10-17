@@ -12,14 +12,14 @@ namespace AtwoodUtils
 
             var numElements = lines[0].Length;
             var maxValues = new int[numElements];
-            for (int x = 0; x < numElements; x++)
+            for (var x = 0; x < numElements; x++)
             {
                 maxValues[x] = lines.Max(y => (y[x] ?? "").Length) + padding;
             }
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
-            bool isFirst = true;
+            var isFirst = true;
             foreach (var line in lines)
             {
                 if (!isFirst)
@@ -27,7 +27,7 @@ namespace AtwoodUtils
                     sb.AppendLine();
                 }
                 
-                for (int x = 0; x < line.Length; x++)
+                for (var x = 0; x < line.Length; x++)
                 {
                     var value = line[x];
                     sb.Append((value ?? "").PadRight(maxValues[x]));

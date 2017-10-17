@@ -25,7 +25,7 @@ namespace CommandCentral
         public CommandCentralException(string message, ErrorTypes type) 
             : base(message)
         {
-            this.ErrorType = type;
+            ErrorType = type;
         }
     }
 }

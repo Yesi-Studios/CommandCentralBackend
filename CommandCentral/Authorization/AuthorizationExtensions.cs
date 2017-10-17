@@ -46,7 +46,7 @@ namespace CommandCentral.Authorization
             };
 
             //Let's do some work here to get either the permission groups or the permission group names and turn them into groups.
-            List<Groups.PermissionGroup> groups = client.PermissionGroups;
+            var groups = client.PermissionGroups;
 
             if ((groups == null || !groups.Any()) && client.PermissionGroupNames.Any())
             {
@@ -90,7 +90,7 @@ namespace CommandCentral.Authorization
                         .ToList()
                         .ForEach(x =>
                         {
-                            if (resolvedPermissions.EditableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                            if (resolvedPermissions.EditableFields.TryGetValue(x.DeclaringType.Name, out var fields))
                             {
                                 if (!fields.Contains(x.Name))
                                     fields.Add(x.Name);
@@ -111,7 +111,7 @@ namespace CommandCentral.Authorization
                         .ToList()
                         .ForEach(x =>
                         {
-                            if (resolvedPermissions.ReturnableFields.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                            if (resolvedPermissions.ReturnableFields.TryGetValue(x.DeclaringType.Name, out var fields))
                             {
                                 if (!fields.Contains(x.Name))
                                     fields.Add(x.Name);
@@ -128,9 +128,9 @@ namespace CommandCentral.Authorization
                         .ToList()
                         .ForEach(x =>
                         {
-                            if (resolvedPermissions.PrivelegedReturnableFields.TryGetValue(group.AccessLevel, out Dictionary<string, List<string>> fieldsByType))
+                            if (resolvedPermissions.PrivelegedReturnableFields.TryGetValue(group.AccessLevel, out var fieldsByType))
                             {
-                                if (fieldsByType.TryGetValue(x.DeclaringType.Name, out List<string> fields))
+                                if (fieldsByType.TryGetValue(x.DeclaringType.Name, out var fields))
                                 {
                                     if (!fields.Contains(x.Name))
                                         fields.Add(x.Name);
@@ -152,7 +152,7 @@ namespace CommandCentral.Authorization
             //Any field I can return at the command level, I can return at the division level.
             foreach (var pair in resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Command])
             {
-                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(pair.Key, out List<string> fields))
+                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department].TryGetValue(pair.Key, out var fields))
                 {
                     fields = fields.Concat(pair.Value).Distinct().ToList();
                 }
@@ -164,7 +164,7 @@ namespace CommandCentral.Authorization
 
             foreach (var pair in resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Department])
             {
-                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(pair.Key, out List<string> fields))
+                if (resolvedPermissions.PrivelegedReturnableFields[ChainOfCommandLevels.Division].TryGetValue(pair.Key, out var fields))
                 {
                     fields = fields.Concat(pair.Value).Distinct().ToList();
                 }

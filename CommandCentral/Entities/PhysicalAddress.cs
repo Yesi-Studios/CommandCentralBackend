@@ -85,15 +85,15 @@ namespace CommandCentral.Entities
             if (other == null)
                 return false;
 
-            return Object.Equals(other.Id, this.Id) &&
-                   Object.Equals(other.Address, this.Address) &&
-                   Object.Equals(other.City, this.City) &&
-                   Object.Equals(other.State, this.State) &&
-                   Object.Equals(other.ZipCode, this.ZipCode) &&
-                   Object.Equals(other.Country, this.Country) &&
-                   Object.Equals(other.IsHomeAddress, this.IsHomeAddress) &&
-                   Object.Equals(other.Latitude, this.Latitude) &&
-                   Object.Equals(other.Longitude, this.Longitude);
+            return Object.Equals(other.Id, Id) &&
+                   Object.Equals(other.Address, Address) &&
+                   Object.Equals(other.City, City) &&
+                   Object.Equals(other.State, State) &&
+                   Object.Equals(other.ZipCode, ZipCode) &&
+                   Object.Equals(other.Country, Country) &&
+                   Object.Equals(other.IsHomeAddress, IsHomeAddress) &&
+                   Object.Equals(other.Latitude, Latitude) &&
+                   Object.Equals(other.Longitude, Longitude);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace CommandCentral.Entities
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
 
                 hash = hash * 23 + Utilities.GetSafeHashCode(Id);
                 hash = hash * 23 + Utilities.GetSafeHashCode(Address);

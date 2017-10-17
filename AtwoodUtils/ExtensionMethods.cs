@@ -23,13 +23,13 @@ namespace AtwoodUtils
             var list = source.ToList();
             var random = new Random(DateTime.Now.Millisecond);
 
-            int n = list.Count;
+            var n = list.Count;
             while (n > 1)
             {
                 n--;
-                int k = random.Next(n + 1);
+                var k = random.Next(n + 1);
 
-                T t = list[k];
+                var t = list[k];
                 list[k] = list[n];
                 list[n] = t;
             }
@@ -82,11 +82,11 @@ namespace AtwoodUtils
 
             using (var stream = new MemoryStream())
             {
-                BinaryFormatter formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter();
                 formatter.Serialize(stream, obj);
                 stream.Seek(0, SeekOrigin.Begin);
 
-                T result = (T)formatter.Deserialize(stream);
+                var result = (T)formatter.Deserialize(stream);
 
                 return result;
             }

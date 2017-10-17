@@ -122,7 +122,7 @@ namespace CommandCentral.Entities.ReferenceLists
                         if (token.Args.ContainsKey("commandid"))
                         {
                             //Yes we were!
-                            if (!Guid.TryParse(token.Args["commandid"] as string, out Guid commandId))
+                            if (!Guid.TryParse(token.Args["commandid"] as string, out var commandId))
                                 throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation);
 
                             //Cool, give them back the departments in this command.
@@ -166,7 +166,7 @@ namespace CommandCentral.Entities.ReferenceLists
                 try
                 {
                     //First try to get the command this thing is supposed to be a part of.
-                    if (!Guid.TryParse(item.Value<string>("commandid"), out Guid commandId))
+                    if (!Guid.TryParse(item.Value<string>("commandid"), out var commandId))
                         throw new CommandCentralException("The command id was not valid.", ErrorTypes.Validation);
 
                     var commandFromClient = session.Get<Command>(commandId) ??

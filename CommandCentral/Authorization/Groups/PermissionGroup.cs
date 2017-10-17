@@ -70,7 +70,7 @@ namespace CommandCentral.Authorization.Groups
         /// </summary>
         public PermissionGroup()
         {
-            GroupName = this.GetType().Name;
+            GroupName = GetType().Name;
             ChainsOfCommandParts = new List<ChainOfCommandPart>();
             AccessibleSubModules = new List<string>();
             GroupsCanEditMembershipOf = new List<string>();
@@ -86,7 +86,7 @@ namespace CommandCentral.Authorization.Groups
         /// <param name="name"></param>
         public void Name(string name)
         {
-            this.GroupName = name;
+            GroupName = name;
         }
 
         /// <summary>
