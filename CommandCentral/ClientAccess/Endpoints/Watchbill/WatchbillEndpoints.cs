@@ -31,67 +31,29 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.Args.AssertContainsKeys("id");
 
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id parameter's format was invalid.", ErrorTypes.Validation);
+                throw new CommandCentralException("Your watchbill id parameter's format was invalid.",
+                    ErrorTypes.Validation);
 
             //Now let's go get the watchbill from the database.
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
+                                      throw new CommandCentralException(
+                                          "Your watchbill's id was not valid.  Please consider creating the watchbill first.",
+                                          ErrorTypes.Validation);
 
                 //We're also going to go see who is in the eligibility group and has no watch qualifications that pertain to this watchbill.
                 //First we need to know all the possible needed watch qualifications.
-                var watchQualifications = watchbillFromDB.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications);
+                var watchQualifications =
+                    watchbillFromDB.WatchShifts.SelectMany(x => x.ShiftType.RequiredWatchQualifications);
 
                 var personsWithoutAtLeastOneQualification = watchbillFromDB.EligibilityGroup.EligiblePersons
-                    .Where(person => !person.WatchQualifications.Any(qual => watchQualifications.Contains(qual)));
-
-                //We're also going to build some analytics for the client about this watchbill.
-                Dictionary<string, object> analytics = new Dictionary<string, object>();
-                if (watchbillFromDB.WatchShifts.Any())
-                {
-                    var shiftAssignments = watchbillFromDB.WatchShifts.Where(x => x.DivisionAssignedTo != null);
-
-                    List<KeyValuePair<Division, object>> statsByDivision = new List<KeyValuePair<Division, object>>();
-                    if (shiftAssignments.Any())
-                    {
-                        var groupings = shiftAssignments.GroupBy(x => x.DivisionAssignedTo);
-
-                        foreach (var group in groupings)
-                        {
-                            var shiftsInGroup = group.ToList();
-
-                            var totalInWatchbill = watchbillFromDB.WatchShifts.Count;
-                            var totalInDivision = shiftsInGroup.Count;
-                            var percentageOfTotal = Math.Round(((double)totalInDivision / (double)totalInWatchbill) * 100, 2);
-                            var totalElligibleInCommand = watchbillFromDB.EligibilityGroup.EligiblePersons.Count;
-                            var totalElligibleInDivision = watchbillFromDB.EligibilityGroup.EligiblePersons.Count(x => x.Division == group.Key);
-                            var totalElligiblePercentage = Math.Round(((double)totalElligibleInDivision / (double)totalElligibleInCommand), 2);
-                            var percentageDiscrepancy = totalElligiblePercentage - percentageOfTotal;
-
-                            statsByDivision.Add(new KeyValuePair<Division, object>(group.Key, new
-                            {
-                                TotalInWatchbill = totalInWatchbill,
-                                TotalInDivision = totalInDivision,
-                                PercentageOfTotal = percentageOfTotal,
-                                TotalElligibleInCommand = totalElligibleInCommand,
-                                TotalElligibleInDivision = totalElligibleInDivision,
-                                TotalElligiblePercentage = totalElligiblePercentage,
-                                PercentageDiscrepancy = percentageDiscrepancy
-                            }));
-                        }
-                    }
-
-                    analytics["StatisticsByDivision"] = statsByDivision;
-
-                    var multipleAssignments = shiftAssignments
-                        .GroupBy(x => x.WatchAssignment.PersonAssigned)
-                        .Where(x => x.Count() != 1)
-                        .Select(x => new { Person = x.Key, Assignments = x.Select(y => y.WatchAssignment).ToList() })
-                        .ToList();
-                    analytics["MultipleAssignments"] = multipleAssignments;
-                }
-
+                                                                           .Where(person =>
+                                                                                      !person.WatchQualifications.Any(
+                                                                                          qual =>
+                                                                                              watchQualifications
+                                                                                                  .Contains(
+                                                                                                      qual)));
 
                 //We also need to build some additional information into the watch assignments regarding chain of command for the client and the assigned person.
                 List<object> watchShifts = new List<object>();
@@ -117,77 +79,90 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                         switch (highestLevel)
                         {
                             case ChainOfCommandLevels.Command:
-                                {
-                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Command == shift.DivisionAssignedTo?.Department.Command;
-                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Command == shift.WatchAssignment?.PersonAssigned?.Command;
-                                    break;
-                                }
+                            {
+                                IsClientResponsibleForShift =
+                                    token.AuthenticationSession.Person.Command ==
+                                    shift.DivisionAssignedTo?.Department.Command;
+                                isClientResponsibleForAssignment =
+                                    token.AuthenticationSession.Person.Command ==
+                                    shift.WatchAssignment?.PersonAssigned?.Command;
+                                break;
+                            }
                             case ChainOfCommandLevels.Department:
-                                {
-                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Department == shift.DivisionAssignedTo?.Department;
-                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Department == shift.WatchAssignment?.PersonAssigned?.Department;
-                                    break;
-                                }
+                            {
+                                IsClientResponsibleForShift =
+                                    token.AuthenticationSession.Person.Department ==
+                                    shift.DivisionAssignedTo?.Department;
+                                isClientResponsibleForAssignment =
+                                    token.AuthenticationSession.Person.Department ==
+                                    shift.WatchAssignment?.PersonAssigned?.Department;
+                                break;
+                            }
                             case ChainOfCommandLevels.Division:
-                                {
-                                    IsClientResponsibleForShift = token.AuthenticationSession.Person.Division == shift.DivisionAssignedTo;
-                                    isClientResponsibleForAssignment = token.AuthenticationSession.Person.Division == shift.WatchAssignment?.PersonAssigned?.Division;
-                                    break;
-                                }
+                            {
+                                IsClientResponsibleForShift =
+                                    token.AuthenticationSession.Person.Division == shift.DivisionAssignedTo;
+                                isClientResponsibleForAssignment =
+                                    token.AuthenticationSession.Person.Division ==
+                                    shift.WatchAssignment?.PersonAssigned?.Division;
+                                break;
+                            }
                             case ChainOfCommandLevels.Self:
                             case ChainOfCommandLevels.None:
-                                {
-                                    break;
-                                }
+                            {
+                                break;
+                            }
                             default:
-                                {
-                                    throw new NotImplementedException();
-                                }
+                            {
+                                throw new NotImplementedException();
+                            }
                         }
 
                         watchShifts.Add(new
-                        {
-                            shift.Id,
-                            shift.Comments,
-                            shift.Points,
-                            shift.Range,
-                            shift.ShiftType,
-                            shift.Title,
-                            IsClientResponsibleFor = IsClientResponsibleForShift,
-                            Watchbill = new { shift.Watchbill.Id },
-                            WatchAssignment = shift.WatchAssignment == null ? null : new
-                            {
-                                shift.WatchAssignment.AcknowledgedBy,
-                                shift.WatchAssignment.AssignedBy,
-                                shift.WatchAssignment.DateAcknowledged,
-                                shift.WatchAssignment.DateAssigned,
-                                shift.WatchAssignment.Id,
-                                shift.WatchAssignment.IsAcknowledged,
-                                shift.WatchAssignment.NumberOfAlertsSent,
-                                shift.WatchAssignment.PersonAssigned,
-                                WatchShift = new { shift.WatchAssignment.WatchShift.Id },
-                                IsClientResponsibleFor = isClientResponsibleForAssignment
-                            }
-                        });
+                                        {
+                                            shift.Id,
+                                            shift.Comments,
+                                            shift.Points,
+                                            shift.Range,
+                                            shift.ShiftType,
+                                            shift.Title,
+                                            IsClientResponsibleFor = IsClientResponsibleForShift,
+                                            Watchbill = new {shift.Watchbill.Id},
+                                            WatchAssignment = shift.WatchAssignment == null
+                                                ? null
+                                                : new
+                                                  {
+                                                      shift.WatchAssignment.AcknowledgedBy,
+                                                      shift.WatchAssignment.AssignedBy,
+                                                      shift.WatchAssignment.DateAcknowledged,
+                                                      shift.WatchAssignment.DateAssigned,
+                                                      shift.WatchAssignment.Id,
+                                                      shift.WatchAssignment.IsAcknowledged,
+                                                      shift.WatchAssignment.NumberOfAlertsSent,
+                                                      shift.WatchAssignment.PersonAssigned,
+                                                      WatchShift = new {shift.WatchAssignment.WatchShift.Id},
+                                                      IsClientResponsibleFor = isClientResponsibleForAssignment
+                                                  }
+                                        });
                     }
                 }
 
                 token.SetResult(new
-                {
-                    watchbillFromDB.CreatedBy,
-                    watchbillFromDB.CurrentState,
-                    watchbillFromDB.EligibilityGroup,
-                    watchbillFromDB.Id,
-                    watchbillFromDB.InputRequirements,
-                    watchbillFromDB.LastStateChange,
-                    watchbillFromDB.LastStateChangedBy,
-                    watchbillFromDB.Title,
-                    watchbillFromDB.Range,
-                    WatchShifts = watchShifts,
-                    watchbillFromDB.WatchInputs,
-                    NotQualledPersons = personsWithoutAtLeastOneQualification,
-                    Analytics = analytics
-                });
+                                {
+                                    watchbillFromDB.CreatedBy,
+                                    watchbillFromDB.CurrentState,
+                                    watchbillFromDB.EligibilityGroup,
+                                    watchbillFromDB.Id,
+                                    watchbillFromDB.InputRequirements,
+                                    watchbillFromDB.LastStateChange,
+                                    watchbillFromDB.LastStateChangedBy,
+                                    watchbillFromDB.Title,
+                                    watchbillFromDB.Range,
+                                    WatchShifts = watchShifts,
+                                    watchbillFromDB.WatchInputs,
+                                    NotQualledPersons = personsWithoutAtLeastOneQualification,
+                                    Analytics = new Dictionary<string, object> {{"MultipleAssignments", null}}
+                                });
             }
         }
 
@@ -211,16 +186,24 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         token.SetResult(session.QueryOver<Entities.Watchbill.Watchbill>().List().Select(watchbill => new
-                        {
-                            watchbill.Id,
-                            watchbill.CreatedBy,
-                            watchbill.CurrentState,
-                            watchbill.LastStateChange,
-                            watchbill.LastStateChangedBy,
-                            watchbill.Range,
-                            watchbill.Title,
-                            watchbill.EligibilityGroup
-                        }));
+                                                                                                                     {
+                                                                                                                         watchbill
+                                                                                                                             .Id,
+                                                                                                                         watchbill
+                                                                                                                             .CreatedBy,
+                                                                                                                         watchbill
+                                                                                                                             .CurrentState,
+                                                                                                                         watchbill
+                                                                                                                             .LastStateChange,
+                                                                                                                         watchbill
+                                                                                                                             .LastStateChangedBy,
+                                                                                                                         watchbill
+                                                                                                                             .Range,
+                                                                                                                         watchbill
+                                                                                                                             .Title,
+                                                                                                                         watchbill
+                                                                                                                             .EligibilityGroup
+                                                                                                                     }));
 
                         transaction.Commit();
                     }
@@ -249,39 +232,49 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             var title = token.Args["title"] as string;
 
             if (!Guid.TryParse(token.Args["eligibilitygroupid"] as string, out Guid eligibilityGroupId))
-                throw new CommandCentralException("Your eligibility group id was in the wrong format.", ErrorTypes.Validation);
+                throw new CommandCentralException("Your eligibility group id was in the wrong format.",
+                    ErrorTypes.Validation);
 
             var elGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(eligibilityGroupId) ??
-                throw new CommandCentralException("The eligibility group did not exist.", ErrorTypes.Validation);
+                          throw new CommandCentralException("The eligibility group did not exist.",
+                              ErrorTypes.Validation);
 
             var range = token.Args["range"].CastJToken<TimeRange>();
 
             NHibernate.NHibernateUtil.Initialize(token.AuthenticationSession.Person.Command);
             Entities.Watchbill.Watchbill watchbillToInsert = new Entities.Watchbill.Watchbill
-            {
-                Command = token.AuthenticationSession.Person.Command,
-                CreatedBy = token.AuthenticationSession.Person,
-                CurrentState = ReferenceListHelper<WatchbillStatus>.Find("Initial"),
-                Id = Guid.NewGuid(),
-                LastStateChange = token.CallTime,
-                LastStateChangedBy = token.AuthenticationSession.Person,
-                Title = title,
-                EligibilityGroup = elGroup,
-                Range = range
-            };
+                                                             {
+                                                                 Command = token.AuthenticationSession.Person.Command,
+                                                                 CreatedBy = token.AuthenticationSession.Person,
+                                                                 CurrentState =
+                                                                     ReferenceListHelper<WatchbillStatus>.Find(
+                                                                         "Initial"),
+                                                                 Id = Guid.NewGuid(),
+                                                                 LastStateChange = token.CallTime,
+                                                                 LastStateChangedBy =
+                                                                     token.AuthenticationSession.Person,
+                                                                 Title = title,
+                                                                 EligibilityGroup = elGroup,
+                                                                 Range = range
+                                                             };
 
             var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillToInsert);
 
             if (!validationResult.IsValid)
-                throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+                throw new AggregateException(
+                    validationResult.Errors.Select(
+                        x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
 
             //Let's make sure the client is allowed to make a watchbill with this eligibility group.
             var ellGroup = ReferenceListHelper<WatchEligibilityGroup>.Get(watchbillToInsert.EligibilityGroup.Id) ??
-                throw new CommandCentralException("You failed to provide a proper eligibility group.", ErrorTypes.Validation);
+                           throw new CommandCentralException("You failed to provide a proper eligibility group.",
+                               ErrorTypes.Validation);
 
-            if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[ellGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+            if (token.AuthenticationSession.Person.ResolvePermissions(null)
+                     .HighestLevels[ellGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
                 throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                    "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                                                  "You must have command level permissions in the related chain of command.",
+                    ErrorTypes.Authorization);
 
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
@@ -320,7 +313,8 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             token.Args.AssertContainsKeys("id", "stateid");
 
             if (!Guid.TryParse(token.Args["id"] as string, out Guid watchbillId))
-                throw new CommandCentralException("Your watchbill id was not in the right format", ErrorTypes.Validation);
+                throw new CommandCentralException("Your watchbill id was not in the right format",
+                    ErrorTypes.Validation);
 
             if (!Guid.TryParse(token.Args["stateid"] as string, out Guid stateId))
                 throw new CommandCentralException("Your state id was not in the right format", ErrorTypes.Validation);
@@ -333,27 +327,38 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
+                                              throw new CommandCentralException(
+                                                  "Your watchbill's id was not valid.  Please consider creating the watchbill first.",
+                                                  ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null)
+                                 .HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] !=
+                            ChainOfCommandLevels.Command)
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                                                              "You must have command level permissions in the related chain of command.",
+                                ErrorTypes.Authorization);
 
                         var clientState = session.Get<Entities.ReferenceLists.Watchbill.WatchbillStatus>(stateId) ??
-                            throw new CommandCentralException("Your state id did not reference a real state.", ErrorTypes.Validation);
+                                          throw new CommandCentralException(
+                                              "Your state id did not reference a real state.", ErrorTypes.Validation);
 
                         //If the state is different, we need to move the state as well.  There's a method for that.
                         if (watchbillFromDB.CurrentState != clientState)
                         {
                             //It looks like the client is trying to change the state.
-                            watchbillFromDB.SetState(clientState, token.CallTime, token.AuthenticationSession.Person, session);
+                            watchbillFromDB.SetState(clientState, token.CallTime, token.AuthenticationSession.Person,
+                                session);
                         }
 
-                        var validationResult = new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromDB);
+                        var validationResult =
+                            new Entities.Watchbill.Watchbill.WatchbillValidator().Validate(watchbillFromDB);
 
                         if (!validationResult.IsValid)
-                            throw new AggregateException(validationResult.Errors.Select(x => new CommandCentralException(x.ErrorMessage, ErrorTypes.Validation)));
+                            throw new AggregateException(
+                                validationResult.Errors.Select(
+                                    x => new CommandCentralException(x.ErrorMessage,
+                                        ErrorTypes.Validation)));
 
                         session.Update(watchbillFromDB);
 
@@ -368,7 +373,6 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     }
                 }
             }
-
         }
 
         /// <summary>
@@ -395,20 +399,28 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                     try
                     {
                         var watchbillFromDB = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                            throw new CommandCentralException("Your watchbill's id was not valid.  Please consider creating the watchbill first.", ErrorTypes.Validation);
+                                              throw new CommandCentralException(
+                                                  "Your watchbill's id was not valid.  Please consider creating the watchbill first.",
+                                                  ErrorTypes.Validation);
 
                         //Ok so there's a watchbill.  Let's get the ell group to determine the permissions.
-                        if (token.AuthenticationSession.Person.ResolvePermissions(null).HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] != ChainOfCommandLevels.Command)
+                        if (token.AuthenticationSession.Person.ResolvePermissions(null)
+                                 .HighestLevels[watchbillFromDB.EligibilityGroup.OwningChainOfCommand] !=
+                            ChainOfCommandLevels.Command)
                             throw new CommandCentralException("You are not allowed to edit this watchbill.  " +
-                                "You must have command level permissions in the related chain of command.", ErrorTypes.Authorization);
+                                                              "You must have command level permissions in the related chain of command.",
+                                ErrorTypes.Authorization);
 
                         //Check the state.
                         if (watchbillFromDB.CurrentState != ReferenceListHelper<WatchbillStatus>.Find("Initial"))
-                            throw new CommandCentralException("You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.", ErrorTypes.Validation);
+                            throw new CommandCentralException(
+                                "You may not delete a watchbill that is not in the initial state.  Please consider changing its state first.",
+                                ErrorTypes.Validation);
 
                         session.Delete(watchbillFromDB);
 
-                        if (FluentScheduler.JobManager.RunningSchedules.Any(x => x.Name == watchbillFromDB.Id.ToString()))
+                        if (FluentScheduler.JobManager.RunningSchedules.Any(
+                            x => x.Name == watchbillFromDB.Id.ToString()))
                             FluentScheduler.JobManager.RemoveJob(watchbillFromDB.Id.ToString());
 
                         transaction.Commit();
@@ -441,7 +453,8 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
             using (var session = DataAccess.DataProvider.CreateStatefulSession())
             {
                 var watchbill = session.Get<Entities.Watchbill.Watchbill>(watchbillId) ??
-                    throw new CommandCentralException("Your watchbill id was not valid.", ErrorTypes.Validation);
+                                throw new CommandCentralException("Your watchbill id was not valid.",
+                                    ErrorTypes.Validation);
 
                 var set = new HashSet<WatchShiftType>();
 
@@ -455,88 +468,177 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
                 foreach (var type in set)
                 {
                     var temp = watchbill.EligibilityGroup.EligiblePersons
-                        .Where(person => type.RequiredWatchQualifications.All(watchQual => person.WatchQualifications.Contains(watchQual)));
+                                        .Where(person => type.RequiredWatchQualifications.All(
+                                                   watchQual =>
+                                                       person.WatchQualifications.Contains(watchQual)));
 
                     switch (permissions.HighestLevels[watchbill.EligibilityGroup.OwningChainOfCommand])
                     {
                         case ChainOfCommandLevels.Command:
-                            {
-                                temp = temp.Where(x => x.IsInSameCommandAs(token.AuthenticationSession.Person));
+                        {
+                            temp = temp.Where(x => x.IsInSameCommandAs(token.AuthenticationSession.Person));
 
-                                break;
-                            }
+                            break;
+                        }
                         case ChainOfCommandLevels.Department:
-                            {
-                                temp = temp.Where(x => x.IsInSameDepartmentAs(token.AuthenticationSession.Person));
+                        {
+                            temp = temp.Where(x => x.IsInSameDepartmentAs(token.AuthenticationSession.Person));
 
-                                break;
-                            }
+                            break;
+                        }
                         case ChainOfCommandLevels.Division:
-                            {
-                                temp = temp.Where(x => x.IsInSameDivisionAs(token.AuthenticationSession.Person));
+                        {
+                            temp = temp.Where(x => x.IsInSameDivisionAs(token.AuthenticationSession.Person));
 
-                                break;
-                            }
+                            break;
+                        }
                         case ChainOfCommandLevels.None:
                         case ChainOfCommandLevels.Self:
-                            {
-                                throw new CommandCentralException("You aren't allowed to see watch recommendations.", ErrorTypes.Authorization);
-                            }
+                        {
+                            throw new CommandCentralException("You aren't allowed to see watch recommendations.",
+                                ErrorTypes.Authorization);
+                        }
                         default:
                             throw new NotImplementedException();
                     }
 
                     var selection = temp.GroupBy(x => x.Division).Select(x =>
-                        {
-                            return new
-                            {
-                                Division = x.Key.Id,
-                                RecommendationsByPerson = x.ToList().Select(person =>
-                                {
+                                                                         {
+                                                                             return new
+                                                                                    {
+                                                                                        Division = x.Key.Id,
+                                                                                        RecommendationsByPerson = x
+                                                                                            .ToList().Select(person =>
+                                                                                                             {
+                                                                                                                 double
+                                                                                                                     points
+                                                                                                                         = person
+                                                                                                                             .WatchAssignments
+                                                                                                                             .Sum(
+                                                                                                                                 z =>
+                                                                                                                                 {
+                                                                                                                                     int
+                                                                                                                                         totalMonths
+                                                                                                                                             = (
+                                                                                                                                                 int
+                                                                                                                                             ) Math
+                                                                                                                                                 .Round(
+                                                                                                                                                     DateTime
+                                                                                                                                                         .UtcNow
+                                                                                                                                                         .Subtract(
+                                                                                                                                                             z.WatchShift
+                                                                                                                                                              .Range
+                                                                                                                                                              .Start)
+                                                                                                                                                         .TotalDays /
+                                                                                                                                                     (365.2425 /
+                                                                                                                                                      12
+                                                                                                                                                     ));
 
-                                    double points = person.WatchAssignments
-                                    .Sum(z =>
-                                    {
-                                        int totalMonths = (int)Math.Round(DateTime.UtcNow.Subtract(z.WatchShift.Range.Start).TotalDays / (365.2425 / 12));
+                                                                                                                                     return
+                                                                                                                                         z.WatchShift
+                                                                                                                                          .Points /
+                                                                                                                                         (Math
+                                                                                                                                              .Pow(
+                                                                                                                                                  1.35,
+                                                                                                                                                  totalMonths) +
+                                                                                                                                          -1
+                                                                                                                                         );
+                                                                                                                                 });
 
-                                        return z.WatchShift.Points / (Math.Pow(1.35, totalMonths) + -1);
-                                    });
+                                                                                                                 var
+                                                                                                                     watchInputs
+                                                                                                                         = watchbill
+                                                                                                                             .WatchInputs
+                                                                                                                             .Where(
+                                                                                                                                 input =>
+                                                                                                                                     input
+                                                                                                                                         .IsConfirmed &&
+                                                                                                                                     input
+                                                                                                                                         .Person
+                                                                                                                                         .Id ==
+                                                                                                                                     person
+                                                                                                                                         .Id)
+                                                                                                                             .ToList();
 
-                                    var watchInputs = watchbill.WatchInputs.Where(input => input.IsConfirmed && input.Person.Id == person.Id).ToList();
+                                                                                                                 var
+                                                                                                                     mostRecentWatch
+                                                                                                                         = person
+                                                                                                                             .WatchAssignments
+                                                                                                                             .OrderByDescending(
+                                                                                                                                 ass =>
+                                                                                                                                     ass
+                                                                                                                                         .WatchShift
+                                                                                                                                         .Range
+                                                                                                                                         .Start)
+                                                                                                                             .FirstOrDefault();
 
-                                    var mostRecentWatch = person.WatchAssignments.OrderByDescending(ass => ass.WatchShift.Range.Start).FirstOrDefault();
-
-                                    return new
-                                    {
-                                        Person = person,
-                                        Points = points,
-                                        WatchInputs = watchInputs,
-                                        MostRecentWatchAssignment = (mostRecentWatch != null) ? new
-                                        {
-                                            mostRecentWatch.AcknowledgedBy,
-                                            mostRecentWatch.AssignedBy,
-                                            mostRecentWatch.DateAcknowledged,
-                                            mostRecentWatch.DateAssigned,
-                                            mostRecentWatch.Id,
-                                            mostRecentWatch.IsAcknowledged,
-                                            mostRecentWatch.NumberOfAlertsSent,
-                                            mostRecentWatch.PersonAssigned,
-                                            WatchShift = new
-                                            {
-                                                mostRecentWatch.WatchShift.Id,
-                                                mostRecentWatch.WatchShift.Comments,
-                                                DivisionId = mostRecentWatch.WatchShift.DivisionAssignedTo?.Id,
-                                                mostRecentWatch.WatchShift.Points,
-                                                mostRecentWatch.WatchShift.Range,
-                                                mostRecentWatch.WatchShift.ShiftType,
-                                                mostRecentWatch.WatchShift.Title
-                                            }
-                                        } : null
-                                    };
-                                }).ToList()
-                            };
-
-                        }).SelectMany(x => x.RecommendationsByPerson.Select(y => new { y.Person, y.Points, y.WatchInputs }));
+                                                                                                                 return
+                                                                                                                     new
+                                                                                                                     {
+                                                                                                                         Person
+                                                                                                                         = person,
+                                                                                                                         Points
+                                                                                                                         = points,
+                                                                                                                         WatchInputs
+                                                                                                                         = watchInputs,
+                                                                                                                         MostRecentWatchAssignment
+                                                                                                                         = (
+                                                                                                                             mostRecentWatch !=
+                                                                                                                             null
+                                                                                                                         )
+                                                                                                                             ? new
+                                                                                                                               {
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .AcknowledgedBy,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .AssignedBy,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .DateAcknowledged,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .DateAssigned,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .Id,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .IsAcknowledged,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .NumberOfAlertsSent,
+                                                                                                                                   mostRecentWatch
+                                                                                                                                       .PersonAssigned,
+                                                                                                                                   WatchShift
+                                                                                                                                   = new
+                                                                                                                                     {
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .Id,
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .Comments,
+                                                                                                                                         DivisionId
+                                                                                                                                         = mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .DivisionAssignedTo
+                                                                                                                                             ?.Id,
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .Points,
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .Range,
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .ShiftType,
+                                                                                                                                         mostRecentWatch
+                                                                                                                                             .WatchShift
+                                                                                                                                             .Title
+                                                                                                                                     }
+                                                                                                                               }
+                                                                                                                             : null
+                                                                                                                     };
+                                                                                                             }).ToList()
+                                                                                    };
+                                                                         }).SelectMany(
+                        x => x.RecommendationsByPerson.Select(
+                            y => new {y.Person, y.Points, y.WatchInputs}));
 
                     result[type] = selection;
                 }
@@ -546,4 +648,3 @@ namespace CommandCentral.ClientAccess.Endpoints.Watchbill
         }
     }
 }
-
