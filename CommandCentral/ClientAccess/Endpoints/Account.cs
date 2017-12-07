@@ -180,7 +180,7 @@ namespace CommandCentral.ClientAccess.Endpoints
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
         /// <para />
-        /// Begins the registration process by sending an email to the account to whom the SSN belongs.  
+        /// Begins the registration process by sending an email to the account to whom the DoD Id belongs.  
         /// This email contains a confirmation key that has also been inserted into the database.
         /// <para />
         /// If the account doesn't have an email address associated to it yet, throw an error.
@@ -188,7 +188,7 @@ namespace CommandCentral.ClientAccess.Endpoints
         /// If the account is already claimed, then trying to start the registration process for this account looks pretty bad and we send an email to a bunch of people to inform them that this happened.
         /// <para />
         /// Client Parameters: <para />
-        ///     SSN - The ssn that belongs to the account for which the client wants to start the registration process.
+        ///     DoD Id - The DoD Id that belongs to the account for which the client wants to start the registration process.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -407,12 +407,12 @@ namespace CommandCentral.ClientAccess.Endpoints
         /// <summary>
         /// WARNING!  THIS METHOD IS EXPOSED TO THE CLIENT AND IS NOT INTENDED FOR INTERNAL USE.  AUTHENTICATION, AUTHORIZATION AND VALIDATION MUST BE HANDLED PRIOR TO DB INTERACTION.
         /// <para />
-        /// In order to start a password reset, we're going to use the given email address and ssn to load the person's is claimed field.  If is claimed is false, 
+        /// In order to start a password reset, we're going to use the given email address and dod id to load the person's is claimed field.  If is claimed is false, 
         /// then the account hasn't been claimed yet and you can't reset the password.  
         /// <para />
         /// Client Parameters: <para />
         ///     email : The email address of the account we want to reset <para/>
-        ///     ssn : The SSN of the account we want to reset.
+        ///     dodid : The DoD Id of the account we want to reset.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -693,7 +693,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (string.IsNullOrWhiteSpace(dodId))
                 throw new CommandCentralException("The DoD Id must not be null or empty.", ErrorTypes.Validation);
 
-            //Now let's go load the user with this ssn.
+            //Now let's go load the user with this dod id.
             using (var session = DataProvider.CreateStatefulSession())
             using (var transaction = session.BeginTransaction())
             {
