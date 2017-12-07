@@ -58,7 +58,6 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
-                    x => x.SSN,
                     x => x.Suffix,
                     x => x.DateOfBirth,
                     x => x.Sex,

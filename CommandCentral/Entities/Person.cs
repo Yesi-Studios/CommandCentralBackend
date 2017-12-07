@@ -18,6 +18,7 @@ using NHibernate.Type;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 using System.Web.Script.Serialization;
+using Remotion.Linq.Collections;
 
 namespace CommandCentral.Entities
 {
@@ -64,12 +65,6 @@ namespace CommandCentral.Entities
         /// </summary>
         [ConditionalJsonIgnore]
         public virtual string MiddleName { get; set; }
-
-        /// <summary>
-        /// The person's SSN.
-        /// </summary>
-        [ConditionalJsonIgnore]
-        public virtual string SSN { get; set; }
 
         /// <summary>
         /// The person's DoD Id which allows us to communicate with other systems about this person.
@@ -605,7 +600,6 @@ namespace CommandCentral.Entities
                 Map(x => x.LastName).Not.Nullable().Length(40);
                 Map(x => x.FirstName).Not.Nullable().Length(40);
                 Map(x => x.MiddleName).Nullable().Length(40);
-                Map(x => x.SSN).Not.Nullable().Length(40).Unique();
                 Map(x => x.DoDId).Unique();
                 Map(x => x.DateOfBirth).Not.Nullable();
                 Map(x => x.Remarks).Nullable().Length(150);
@@ -678,8 +672,6 @@ namespace CommandCentral.Entities
                     .WithMessage("The middle name must not exceed 40 characters.");
                 RuleFor(x => x.Suffix).Length(0, 40)
                     .WithMessage("The suffix must not exceed 40 characters.");
-                RuleFor(x => x.SSN).NotEmpty().Must(x => System.Text.RegularExpressions.Regex.IsMatch(x, @"^(?!\b(\d)\1+-(\d)\1+-(\d)\1+\b)(?!123-45-6789|219-09-9999|078-05-1120)(?!666|000|9\d{2})\d{3}(?!00)\d{2}(?!0{4})\d{4}$"))
-                    .WithMessage("The SSN must be valid and contain only numbers.");
                 RuleFor(x => x.DateOfBirth).NotEmpty()
                     .WithMessage("The DOB must not be left blank.");
                 RuleFor(x => x.PRD).NotEmpty()
@@ -688,6 +680,7 @@ namespace CommandCentral.Entities
                     .WithMessage("The sex must not be left blank.");
                 RuleFor(x => x.Remarks).Length(0, 150)
                     .WithMessage("Remarks must not exceed 150 characters.");
+                RuleFor(x => x.DoDId).NotEmpty().Must(x => x.All(Char.IsNumber) && x.Length == 10).WithMessage("A dod id must be all numbers with a length of 10.");
                 RuleFor(x => x.Command).NotEmpty().WithMessage("A person must have a command.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
                 RuleFor(x => x.Department).NotEmpty().WithMessage("A person must have a department.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
                 RuleFor(x => x.Division).NotEmpty().WithMessage("A person must have a division.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
@@ -882,7 +875,6 @@ namespace CommandCentral.Entities
                 });
 
                 ForProperties(
-                    x => x.SSN,
                     x => x.Suffix,
                     x => x.Remarks,
                     x => x.Supervisor,

@@ -40,7 +40,6 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     x => x.PermissionGroupNames,
                     x => x.AccountHistory,
                     x => x.Changes,
-                    x => x.SSN,
                     x => x.DoDId,
                     x => x.PRD,
                     x => x.BilletAssignment))

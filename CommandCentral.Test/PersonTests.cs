@@ -35,7 +35,6 @@ namespace CommandCentral.Test
                 Department = department,
                 Division = division,
                 UIC = uic,
-                SSN = Utilities.GenerateSSN(),
                 DoDId = Utilities.GenerateDoDId(),
                 IsClaimed = true,
                 Username = username,

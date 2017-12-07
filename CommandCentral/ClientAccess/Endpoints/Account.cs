@@ -195,10 +195,9 @@ namespace CommandCentral.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void BeginRegistration(MessageToken token)
         {
+            token.Args.AssertContainsKeys("continuelink", "dodid");
 
-            token.Args.AssertContainsKeys("continuelink", "ssn");
-
-            var ssn = token.Args["ssn"] as string;
+            var dodid = token.Args["dodid"] as string;
             var continueLink = token.Args["continueLink"] as string;
 
             //Let's just do some basic validation and make sure it's a real URI.
@@ -212,11 +211,11 @@ namespace CommandCentral.ClientAccess.Endpoints
                 try
                 {
                     //The query itself.  Note that SingleOrDefault will throw an exception if more than one person comes back.
-                    //This is ok because the ssn field is marked unique so this shouldn't happen and if it does then we want an exception.
+                    //This is ok because the dod id field is marked unique so this shouldn't happen and if it does then we want an exception.
                     var person = session.QueryOver<Person>()
-                        .Where(x => x.SSN == ssn)
+                        .Where(x => x.DoDId == dodid)
                         .SingleOrDefault<Person>() ??
-                        throw new CommandCentralException("That ssn belongs to no profile.", ErrorTypes.Validation);
+                        throw new CommandCentralException("That dod id belongs to no profile.", ErrorTypes.Validation);
 
                     //Ok, so we have a single profile.  Let's see if it's already been claimed.
                     if (person.IsClaimed)
@@ -421,10 +420,10 @@ namespace CommandCentral.ClientAccess.Endpoints
         private static void EndpointMethod_BeginPasswordReset(MessageToken token)
         {
             //First, let's make sure the args are present.
-            token.Args.AssertContainsKeys("email", "ssn", "continuelink");
+            token.Args.AssertContainsKeys("email", "dodid", "continuelink");
 
             var email = token.Args["email"] as string;
-            var ssn = token.Args["ssn"] as string;
+            var dodId = token.Args["dodid"] as string;
 
             //Let's get the continue link
             var continueLink = token.Args["continuelink"] as string;
@@ -447,7 +446,7 @@ namespace CommandCentral.ClientAccess.Endpoints
             if (mailAddress.Host != "mail.mil")
                 throw new CommandCentralException("The email you sent was not a valid DoD email.  We require that you use your military email to do the password reset.", ErrorTypes.Validation);
 
-            //Now we need to go load the profile that matches this email address/ssn combination.
+            //Now we need to go load the profile that matches this email address/dodid combination.
             //Then we need to ensure that there is only one profile and that the profile we get is claimed (you can't reset a password that doesn't exist.)
             //If that all is good, then we'll create the pending password reset, log the event on the profile, and then send the client an email.
 
@@ -457,17 +456,17 @@ namespace CommandCentral.ClientAccess.Endpoints
             {
                 try
                 {
-                    //Find the user who has the given email address and has the given ssn.
+                    //Find the user who has the given email address and has the given dod id.
                     var person = session.QueryOver<Person>()
-                        .Where(x => x.SSN == ssn)
+                        .Where(x => x.DoDId == dodId)
                         .Fetch(x => x.EmailAddresses).Eager
                         .JoinQueryOver<EmailAddress>(x => x.EmailAddresses)
                         .Where(x => x.Address == email)
                         .TransformUsing(Transformers.DistinctRootEntity)
                         .SingleOrDefault<Person>() ??
-                        throw new CommandCentralException("That ssn/email address combination belongs to no profile.", ErrorTypes.Authentication);
+                        throw new CommandCentralException("That dodId/email address combination belongs to no profile.", ErrorTypes.Authentication);
 
-                    //Ok so the ssn and email address gave us a single profile back.  Now we just need to make sure it's claimed.
+                    //Ok so the dodId and email address gave us a single profile back.  Now we just need to make sure it's claimed.
                     if (!person.IsClaimed)
                         throw new CommandCentralException("That profile has not yet been claimed and therefore can not have its password reset.  Please consider trying to register first.", ErrorTypes.Validation);
 
@@ -687,12 +686,12 @@ namespace CommandCentral.ClientAccess.Endpoints
         [EndpointMethod(AllowArgumentLogging = true, AllowResponseLogging = true, RequiresAuthentication = false)]
         private static void ForgotUsername(MessageToken token)
         {
-            token.Args.AssertContainsKeys("ssn");
+            token.Args.AssertContainsKeys("dodid");
 
-            var ssn = token.Args["ssn"] as string;
+            var dodId = token.Args["dodid"] as string;
 
-            if (string.IsNullOrWhiteSpace(ssn))
-                throw new CommandCentralException("The ssn must not be null or empty.", ErrorTypes.Validation);
+            if (string.IsNullOrWhiteSpace(dodId))
+                throw new CommandCentralException("The DoD Id must not be null or empty.", ErrorTypes.Validation);
 
             //Now let's go load the user with this ssn.
             using (var session = DataProvider.CreateStatefulSession())
@@ -700,8 +699,8 @@ namespace CommandCentral.ClientAccess.Endpoints
             {
                 try
                 {
-                    var person = session.QueryOver<Person>().Where(x => x.SSN == ssn).SingleOrDefault() ??
-                        throw new CommandCentralException("That ssn was not valid.", ErrorTypes.Validation);
+                    var person = session.QueryOver<Person>().Where(x => x.DoDId == dodId).SingleOrDefault() ??
+                        throw new CommandCentralException("That dod id was not valid.", ErrorTypes.Validation);
 
                     if (!person.IsClaimed)
                         throw new CommandCentralException("Please register your account first!", ErrorTypes.Validation);

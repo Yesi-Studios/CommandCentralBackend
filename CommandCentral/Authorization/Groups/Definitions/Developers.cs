@@ -31,7 +31,6 @@ namespace CommandCentral.Authorization.Groups.Definitions
 
             HasChainOfCommand(ChainsOfCommand.Main)
                 .CanReturn(PropertySelector.SelectPropertiesFrom<Entities.Person>(
-                    x => x.SSN,
                     x => x.DateOfBirth,
                     x => x.Ethnicity,
                     x => x.ReligiousPreference,
@@ -64,7 +63,6 @@ namespace CommandCentral.Authorization.Groups.Definitions
                     x => x.LastName,
                     x => x.FirstName,
                     x => x.MiddleName,
-                    x => x.SSN,
                     x => x.Suffix,
                     x => x.DateOfBirth,
                     x => x.Sex,

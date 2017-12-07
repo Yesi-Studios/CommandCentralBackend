@@ -76,7 +76,6 @@ namespace CommandCentral.ClientAccess.Endpoints
                 UIC = personFromClient.UIC,
                 Designation = personFromClient.Designation,
                 Sex = personFromClient.Sex,
-                SSN = personFromClient.SSN,
                 DoDId = personFromClient.DoDId,
                 DateOfBirth = personFromClient.DateOfBirth,
                 DateOfArrival = personFromClient.DateOfArrival,
@@ -108,10 +107,10 @@ namespace CommandCentral.ClientAccess.Endpoints
             {
                 try
                 {
-                    //Let's make sure no one with that SSN exists...
-                    if (session.QueryOver<Person>().Where(x => x.SSN == newPerson.SSN).RowCount() != 0)
+                    //Let's make sure no one with that dod id exists...
+                    if (session.QueryOver<Person>().Where(x => x.DoDId == newPerson.DoDId).RowCount() != 0)
                     {
-                        throw new CommandCentralException("A person with that SSN already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation);
+                        throw new CommandCentralException("A person with that DoD Id already exists.  Please consider using the search function to look for your user.", ErrorTypes.Validation);
                     }
 
                     //The person is a valid object.  Let's go ahead and insert it.  If insertion fails it's most likely because we violated a Uniqueness rule in the database.
