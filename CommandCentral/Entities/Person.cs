@@ -680,7 +680,7 @@ namespace CommandCentral.Entities
                     .WithMessage("The sex must not be left blank.");
                 RuleFor(x => x.Remarks).Length(0, 150)
                     .WithMessage("Remarks must not exceed 150 characters.");
-                RuleFor(x => x.DoDId).NotEmpty().Must(x => x.All(Char.IsNumber) && x.Length == 10).WithMessage("A dod id must be all numbers with a length of 10.");
+                RuleFor(x => x.DoDId).NotEmpty().Must(x => !String.IsNullOrWhiteSpace(x) && x.All(Char.IsNumber) && x.Length == 10).WithMessage("A dod id must be all numbers with a length of 10.");
                 RuleFor(x => x.Command).NotEmpty().WithMessage("A person must have a command.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
                 RuleFor(x => x.Department).NotEmpty().WithMessage("A person must have a department.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
                 RuleFor(x => x.Division).NotEmpty().WithMessage("A person must have a division.  If you are trying to indicate this person left the command, please set his or her duty status to 'LOSS'.");
